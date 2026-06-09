@@ -2,7 +2,7 @@
  * Diamond Cute Studio 💎 — Cloudflare Worker
  * LINE Flex Message Notification
  *
- * Secrets (Dashboard → Settings → Variables and Secrets):
+ * Secrets (set in Dashboard → Settings → Variables and Secrets):
  *   LINE_TOKEN   = Channel Access Token
  *   LINE_USER_ID = User ID (U-prefix)
  */
@@ -10,13 +10,14 @@
 export default {
   async fetch(request, env) {
 
+    // CORS preflight
     if (request.method === 'OPTIONS') {
-      return corsResponse(null, 204);
+      return cors(null, 204);
     }
 
     const url = new URL(request.url);
 
-    // POST /notify
+    // ─── POST /notify ───────────────────────────
     if (request.method === 'POST' && url.pathname === '/notify') {
       try {
         const body = await request.json();
@@ -29,248 +30,164 @@ export default {
           },
           body: JSON.stringify({
             to: env.LINE_USER_ID,
-            messages: [buildFlexCard(body)]
+            messages: [buildOrderCard(body)]
           })
         });
 
         const result = await lineRes.json();
         if (!lineRes.ok) {
-          console.error('LINE error:', JSON.stringify(result));
-          return corsResponse(jsonRes({ ok: false, error: result }), 502);
+          console.error('LINE API error:', JSON.stringify(result));
+          return cors(json({ ok: false, error: result }), 502);
         }
 
-        return corsResponse(jsonRes({ ok: true }));
+        return cors(json({ ok: true }));
 
       } catch (e) {
-        return corsResponse(jsonRes({ ok: false, error: e.message }), 500);
+        return cors(json({ ok: false, error: e.message }), 500);
       }
     }
 
-    // GET /health
+    // ─── GET /health ────────────────────────────
     if (request.method === 'GET' && url.pathname === '/health') {
-      return corsResponse(jsonRes({
-        ok: true,
-        service: 'DMC Studio Notify Worker',
-        ts: new Date().toISOString()
-      }));
+      return cors(json({ ok: true, service: 'DMC Studio Notify', ts: new Date().toISOString() }));
     }
 
-    return corsResponse(jsonRes({ ok: false, error: 'Not found' }), 404);
+    return cors(json({ ok: false, error: 'Not found' }), 404);
   }
 };
 
 // ════════════════════════════════════════════════
-//  FLEX MESSAGE CARD
+//  BUILD FLEX MESSAGE CARD
 // ════════════════════════════════════════════════
-
-function buildFlexCard(data) {
+function buildOrderCard(data) {
   const {
-    orderId        = '—',
-    customerName   = '—',
-    customerPhone  = '—',
-    itemsSummary   = '—',
-    total          = 0,
-    paymentMethod  = '—',
-    address        = '—',
-    note           = '',
+    orderId       = '—',
+    customerName  = '—',
+    customerPhone = '—',
+    itemsSummary  = '—',
+    total         = 0,
+    paymentMethod = '—',
+    address       = '—',
+    note          = '',
     shippingMethod = '—',
   } = data;
 
-  const isPP     = paymentMethod === 'promptpay';
-  const payLabel = isPP ? 'PromptPay QR' : 'เก็บเงินปลายทาง';
-  const payIcon  = isPP ? '📱' : '🚚';
+  const payLabel = paymentMethod === 'promptpay' ? '📱 PromptPay QR' : '🚚 เก็บเงินปลายทาง';
   const totalStr = '฿' + Number(total).toLocaleString('th-TH');
-
-  const now = new Date().toLocaleString('th-TH', {
+  const now      = new Date().toLocaleString('th-TH', {
     timeZone: 'Asia/Bangkok',
-    day:    '2-digit',
-    month:  'short',
-    year:   'numeric',
-    hour:   '2-digit',
-    minute: '2-digit'
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
   });
-
-  // TODO: แทน URL ไซต์จริงของคุณ
-  const ADMIN_URL = 'https://YOUR_GITHUB_PAGES_URL/admin.html';
 
   return {
     type: 'flex',
-    altText: `💎 ออเดอร์ใหม่ #${orderId} · ${customerName} · ${totalStr}`,
+    altText: `📦 ออเดอร์ใหม่ #${orderId} — ${customerName} (${totalStr})`,
     contents: {
       type: 'bubble',
       size: 'kilo',
 
-      // ───── HEADER ─────
+      // ── Header ──
       header: {
         type: 'box',
         layout: 'vertical',
-        paddingAll: '0px',
+        backgroundColor: '#0EA5E9',
+        paddingAll: '16px',
         contents: [
           {
             type: 'box',
-            layout: 'vertical',
-            paddingAll: '18px',
-            paddingBottom: '14px',
-            background: {
-              type: 'linearGradient',
-              angle: '135deg',
-              startColor: '#0EA5E9',
-              endColor:   '#6366F1'
-            },
+            layout: 'horizontal',
             contents: [
-              // top row
-              {
-                type: 'box',
-                layout: 'horizontal',
-                contents: [
-                  {
-                    type: 'text',
-                    text: '💎 Diamond Cute Studio',
-                    color: '#FFFFFF',
-                    size: 'xs',
-                    weight: 'bold',
-                    flex: 1
-                  },
-                  {
-                    type: 'box',
-                    layout: 'vertical',
-                    contents: [
-                      {
-                        type: 'text',
-                        text: '🛍 NEW ORDER',
-                        color: '#BAE6FD',
-                        size: 'xxs',
-                        weight: 'bold',
-                        align: 'end'
-                      }
-                    ]
-                  }
-                ]
-              },
-              // order id
               {
                 type: 'text',
-                text: `#${orderId}`,
+                text: '💎 Diamond Cute Studio',
                 color: '#FFFFFF',
-                size: 'xxl',
+                size: 'sm',
                 weight: 'bold',
-                margin: 'sm'
+                flex: 1
               },
-              // timestamp
               {
                 type: 'text',
-                text: `🕐 ${now}`,
-                color: '#BAE6FD',
-                size: 'xxs',
-                margin: 'xs'
+                text: '🛍️ ออเดอร์ใหม่',
+                color: '#DBEAFE',
+                size: 'xs',
+                align: 'end'
               }
             ]
+          },
+          {
+            type: 'text',
+            text: `#${orderId}`,
+            color: '#FFFFFF',
+            size: 'xl',
+            weight: 'bold',
+            margin: 'sm'
+          },
+          {
+            type: 'text',
+            text: now,
+            color: '#BFDBFE',
+            size: 'xs',
+            margin: 'xs'
           }
         ]
       },
 
-      // ───── BODY ─────
+      // ── Body ──
       body: {
         type: 'box',
         layout: 'vertical',
         paddingAll: '16px',
-        spacing: 'none',
+        spacing: 'md',
         contents: [
 
-          // ── ยอดรวม highlight ──
+          // ── ราคา (big) ──
           {
             type: 'box',
             layout: 'horizontal',
             backgroundColor: '#F0F9FF',
-            cornerRadius: '10px',
+            cornerRadius: '8px',
             paddingAll: '12px',
-            margin: 'none',
             contents: [
-              {
-                type: 'box',
-                layout: 'vertical',
-                flex: 1,
-                contents: [
-                  { type: 'text', text: 'ยอดชำระ', size: 'xxs', color: '#64748B' },
-                  { type: 'text', text: totalStr, size: 'xl', weight: 'bold', color: '#0369A1', margin: 'xs' }
-                ]
-              },
-              {
-                type: 'box',
-                layout: 'vertical',
-                alignItems: 'flex-end',
-                contents: [
-                  {
-                    type: 'box',
-                    layout: 'vertical',
-                    backgroundColor: isPP ? '#DBEAFE' : '#DCFCE7',
-                    cornerRadius: '20px',
-                    paddingAll: '6px',
-                    paddingStart: '10px',
-                    paddingEnd: '10px',
-                    contents: [
-                      {
-                        type: 'text',
-                        text: `${payIcon} ${payLabel}`,
-                        size: 'xxs',
-                        color: isPP ? '#1D4ED8' : '#166534',
-                        weight: 'bold'
-                      }
-                    ]
-                  }
-                ]
-              }
+              { type: 'text', text: '💰 ยอดรวม', size: 'sm', color: '#0369A1', flex: 1 },
+              { type: 'text', text: totalStr, size: 'lg', weight: 'bold', color: '#0EA5E9', align: 'end' }
             ]
           },
 
-          { type: 'box', layout: 'vertical', height: '12px', contents: [] },
+          // ── Divider ──
+          { type: 'separator', color: '#E0F2FE' },
 
-          // ── Info rows ──
-          infoCard('👤', 'ชื่อลูกค้า',  customerName),
-          infoCard('📞', 'โทรศัพท์',    customerPhone),
-          infoCard('🛒', 'รายการสินค้า', itemsSummary),
-          infoCard('🚚', 'ขนส่ง',        shippingMethod),
-          infoCard('📍', 'ที่อยู่จัดส่ง', address),
+          // ── ข้อมูลลูกค้า ──
+          infoRow('👤', 'ลูกค้า',    customerName),
+          infoRow('📞', 'เบอร์',     customerPhone),
+          infoRow('🛒', 'สินค้า',   itemsSummary),
+          infoRow('💳', 'ชำระ',     payLabel),
+          infoRow('🚚', 'ขนส่ง',    shippingMethod),
+          infoRow('📍', 'ที่อยู่',   address),
 
-          // ── หมายเหตุ ──
+          // ── หมายเหตุ (ถ้ามี) ──
           ...(note ? [
-            { type: 'box', layout: 'vertical', height: '10px', contents: [] },
+            { type: 'separator', color: '#E0F2FE' },
             {
               type: 'box',
               layout: 'vertical',
               backgroundColor: '#FFFBEB',
-              cornerRadius: '10px',
+              cornerRadius: '8px',
               paddingAll: '10px',
-              borderColor: '#FDE68A',
               contents: [
-                {
-                  type: 'box',
-                  layout: 'horizontal',
-                  contents: [
-                    { type: 'text', text: '💬', size: 'sm', flex: 0 },
-                    { type: 'text', text: ' หมายเหตุ', size: 'xs', weight: 'bold', color: '#92400E', flex: 1 }
-                  ]
-                },
-                {
-                  type: 'text',
-                  text: note,
-                  size: 'sm',
-                  color: '#78350F',
-                  wrap: true,
-                  margin: 'xs'
-                }
+                { type: 'text', text: '💬 หมายเหตุ', size: 'xs', color: '#92400E', weight: 'bold' },
+                { type: 'text', text: note, size: 'sm', color: '#78350F', wrap: true, margin: 'xs' }
               ]
             }
           ] : [])
         ]
       },
 
-      // ───── FOOTER ─────
+      // ── Footer ──
       footer: {
         type: 'box',
-        layout: 'vertical',
+        layout: 'horizontal',
         paddingAll: '12px',
-        paddingTop: '8px',
         spacing: 'sm',
         contents: [
           {
@@ -280,91 +197,69 @@ function buildFlexCard(data) {
             height: 'sm',
             action: {
               type: 'uri',
-              label: '⚙️  เปิด Admin Dashboard',
-              uri: ADMIN_URL
-            }
+              label: '⚙️ จัดการออเดอร์',
+              uri: 'https://YOUR_GITHUB_PAGES_URL/admin.html'
+            },
+            flex: 1
           },
           {
-            type: 'box',
-            layout: 'horizontal',
-            contents: [
-              {
-                type: 'text',
-                text: 'Diamond Cute Studio · ระบบแจ้งเตือนอัตโนมัติ',
-                size: 'xxs',
-                color: '#94A3B8',
-                align: 'center',
-                wrap: true
-              }
-            ]
+            type: 'button',
+            style: 'secondary',
+            height: 'sm',
+            action: {
+              type: 'uri',
+              label: '📋 ดูรายละเอียด',
+              uri: 'https://YOUR_GITHUB_PAGES_URL/admin.html#orders'
+            },
+            flex: 1
           }
         ]
       },
 
       styles: {
         header: { separator: false },
-        body:   { backgroundColor: '#FFFFFF' },
-        footer: { separator: true, separatorColor: '#E2E8F0' }
+        footer: { separator: true, separatorColor: '#E0F2FE' }
       }
     }
   };
 }
 
-// ─── Info row component ───────────────────────
-function infoCard(icon, label, value) {
+// ─── Helper: แถวข้อมูลแต่ละบรรทัด ───
+function infoRow(icon, label, value) {
   return {
     type: 'box',
     layout: 'horizontal',
-    paddingTop: '7px',
-    paddingBottom: '7px',
-    borderColor: '#F1F5F9',
     contents: [
       {
         type: 'text',
-        text: icon,
-        size: 'sm',
-        flex: 0,
-        offsetTop: '1px'
-      },
-      {
-        type: 'text',
-        text: label,
+        text: `${icon} ${label}`,
         size: 'xs',
-        color: '#94A3B8',
-        flex: 3,
-        margin: 'sm',
-        offsetTop: '2px'
+        color: '#64748B',
+        flex: 2,
+        offsetTop: '1px'
       },
       {
         type: 'text',
         text: String(value || '—'),
         size: 'xs',
-        color: '#1E293B',
-        flex: 5,
+        color: '#0F172A',
+        flex: 4,
         wrap: true,
-        align: 'end',
-        weight: 'bold'
+        align: 'end'
       }
     ]
   };
 }
 
-// ─── Utility ─────────────────────────────────
-function jsonRes(data) {
-  return new Response(JSON.stringify(data), {
-    headers: { 'Content-Type': 'application/json' }
-  });
-}
-
-function corsResponse(res, status = 200) {
-  const h = {
+// ─── Helpers ───
+function json(data)           { return new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } }); }
+function cors(res, status = 200) {
+  const headers = {
     'Access-Control-Allow-Origin':  '*',
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
-  if (res === null) return new Response(null, { status, headers: h });
-  return new Response(res.body, {
-    status,
-    headers: { ...Object.fromEntries(res.headers), ...h }
-  });
+  if (res === null) return new Response(null, { status, headers });
+  const r = new Response(res.body, { status, headers: { ...Object.fromEntries(res.headers), ...headers } });
+  return r;
 }

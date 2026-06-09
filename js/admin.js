@@ -9,7 +9,7 @@
 // IMPORTANT: Change this before deployment!
 // Run in console: DMC.pbkdf2Hash('your_password', 'dmc_salt_2025') to generate hash
 // Then paste the result here
-const ADMIN_HASH = "REPLACE_WITH_PBKDF2_HASH";
+const ADMIN_HASH = "fb5b004bb4e02cac4331bfea6f381aca097f069b1e1dc2fb5e863a44318f5b43";
 const ADMIN_SALT = "dmc_diamond_studio_salt_v1";
 
 let db = null;

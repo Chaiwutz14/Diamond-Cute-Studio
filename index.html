@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="th" data-theme="sky">
 <head>
-  <script src="js/theme-init.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Diamond Cute Studio 💎 บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ ป้ายร้านค้า QR Code คุณภาพระดับมืออาชีพ ส่งทั่วไทย">
-  <meta name="theme-color" content="#0EA5E9">
   <title>Diamond Cute Studio 💎 — หน้าแรก</title>
-
-  
+  <script src="js/theme-init.js"></script>
   <link rel="stylesheet" href="css/themes.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/navbar.css">
@@ -19,82 +16,67 @@
 
 <div id="navbar-mount"></div>
 
-<!-- ═══ HERO ═══ -->
+<!-- HERO -->
 <section class="hero">
   <div class="hero-bg"></div>
   <canvas id="hero-canvas"></canvas>
-
   <div class="hero-inner">
+
     <div class="hero-content">
       <div class="hero-eyebrow anim-fade-up">
         <span class="eyebrow-dot"></span>
         งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ
       </div>
-
       <h1 class="hero-title anim-fade-up anim-delay-1">
         ทำให้ทุกภาพ<br>
         <span class="line-accent">กลายเป็นของที่ระลึก</span><br>
         ที่สวยงามที่สุด
       </h1>
-
       <p class="hero-desc anim-fade-up anim-delay-2">
         บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน<br>
         ป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย
       </p>
-
       <div class="hero-cta anim-fade-up anim-delay-3">
         <a href="catalog.html" class="btn btn-primary btn-xl">🛍️ ดูสินค้าทั้งหมด</a>
         <a href="gallery.html" class="btn btn-secondary btn-xl">📸 ดูตัวอย่างงาน</a>
       </div>
-
       <div class="hero-trust anim-fade-up anim-delay-4">
-        <div class="trust-item">
-          <span class="trust-icon">📦</span>
-          <span><span class="trust-val">500+</span> ออเดอร์</span>
-        </div>
+        <div class="trust-item"><span class="trust-icon">📦</span><span><span class="trust-val">500+</span> ออเดอร์</span></div>
         <div class="trust-sep"></div>
-        <div class="trust-item">
-          <span class="trust-icon">⭐</span>
-          <span><span class="trust-val">4.9/5</span> รีวิว</span>
-        </div>
+        <div class="trust-item"><span class="trust-icon">⭐</span><span><span class="trust-val">4.9/5</span> รีวิว</span></div>
         <div class="trust-sep"></div>
-        <div class="trust-item">
-          <span class="trust-icon">🚀</span>
-          <span><span class="trust-val">1-3</span> วันทำการ</span>
-        </div>
+        <div class="trust-item"><span class="trust-icon">🚀</span><span><span class="trust-val">1-3</span> วันทำการ</span></div>
         <div class="trust-sep"></div>
-        <div class="trust-item">
-          <span class="trust-icon">🛡️</span>
-          <span><span class="trust-val">รับประกัน</span> คุณภาพ</span>
-        </div>
+        <div class="trust-item"><span class="trust-icon">🛡️</span><span><span class="trust-val">รับประกัน</span> คุณภาพ</span></div>
       </div>
     </div>
 
-    <!-- Hero Visual (desktop) -->
+    <!-- Hero Card Carousel -->
     <div class="hero-visual">
-      <div class="hero-cards">
-        <div class="hcard hcard-lg" style="height:270px">
+      <div class="hero-carousel" id="hero-carousel">
+        <div class="hcard hcard-lg hc-active" data-idx="0">
           <div class="hcard-inner">
             <span class="hcard-emoji">📸</span>
             <div class="hcard-label">โพลารอยด์</div>
             <div class="hcard-sub">3×4 · 4×6 · Square</div>
-            <div class="hcard-dots">
-              <div class="hcard-dot on"></div>
-              <div class="hcard-dot on"></div>
-              <div class="hcard-dot"></div>
-            </div>
+            <div class="hcard-dots"><div class="hcard-dot on"></div><div class="hcard-dot on"></div><div class="hcard-dot"></div></div>
           </div>
         </div>
-        <div class="hcard hcard-sm" style="height:195px">
+        <div class="hcard hcard-sm hc-back" data-idx="1">
           <div class="hcard-inner">
             <span class="hcard-emoji">🪪</span>
             <div class="hcard-label">บัตรแขวนคอ</div>
             <div class="hcard-sub">PVC · ทนทาน</div>
           </div>
         </div>
+        <div class="hcard hcard-sm hc-hidden" data-idx="2">
+          <div class="hcard-inner">
+            <span class="hcard-emoji">💼</span>
+            <div class="hcard-label">นามบัตร</div>
+            <div class="hcard-sub">100 ใบ · พรีเมียม</div>
+          </div>
+        </div>
       </div>
-
-      <!-- Float badge — CSS animation only, no JS loop -->
       <div class="hero-float-badge">
         <span class="float-badge-icon">✅</span>
         <div class="float-badge-text">
@@ -103,20 +85,17 @@
         </div>
       </div>
     </div>
+
   </div>
 </section>
 
-<!-- ═══ CATEGORIES ═══ -->
+<!-- CATEGORIES -->
 <section class="section categories">
   <div class="section-inner">
     <div class="section-header">
-      <div>
-        <h2 class="section-title">หมวดหมู่ <span class="text-accent">สินค้า</span></h2>
-        <p class="section-sub">เลือกประเภทที่ต้องการ มีครบทุกอย่าง</p>
-      </div>
+      <div><h2 class="section-title">หมวดหมู่ <span class="text-accent">สินค้า</span></h2><p class="section-sub">เลือกประเภทที่ต้องการ มีครบทุกอย่าง</p></div>
       <a href="catalog.html" class="see-all-link">ดูทั้งหมด →</a>
     </div>
-
     <div class="cat-grid" id="categories-grid">
       <a href="catalog.html?cat=polaroid"      class="cat-card"><span class="cat-icon">📸</span><div class="cat-name">รูปโพลารอยด์</div><div class="cat-count">12 รายการ</div></a>
       <a href="catalog.html?cat=lanyard"       class="cat-card"><span class="cat-icon">🪪</span><div class="cat-name">บัตรแขวนคอ</div><div class="cat-count">8 รายการ</div></a>
@@ -130,17 +109,13 @@
   </div>
 </section>
 
-<!-- ═══ FEATURED PRODUCTS ═══ -->
+<!-- FEATURED PRODUCTS -->
 <section class="section" style="padding-top:0">
   <div class="section-inner">
     <div class="section-header">
-      <div>
-        <h2 class="section-title">สินค้า<span class="text-accent">แนะนำ</span></h2>
-        <p class="section-sub">คัดมาเฉพาะที่ลูกค้าชื่นชอบ</p>
-      </div>
+      <div><h2 class="section-title">สินค้า<span class="text-accent">แนะนำ</span></h2><p class="section-sub">คัดมาเฉพาะที่ลูกค้าชื่นชอบ</p></div>
       <a href="catalog.html" class="see-all-link">ดูทั้งหมด →</a>
     </div>
-
     <div class="product-grid" id="featured-products">
       <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-3)">
         <span class="spinner" style="display:block;margin:0 auto .75rem"></span>
@@ -150,7 +125,7 @@
   </div>
 </section>
 
-<!-- ═══ PROMO BANNER ═══ -->
+<!-- PROMO BANNER -->
 <div class="promo-section">
   <div class="promo-banner">
     <div class="promo-inner">
@@ -159,17 +134,15 @@
         <h3>ออเดอร์แรก ลด 15%</h3>
         <p>สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย</p>
       </div>
-      <a href="catalog.html" class="btn btn-primary btn-lg">สั่งเลย →</a>
+      <a href="catalog.html" class="btn btn-primary btn-lg" style="background:#fff;color:var(--accent-dark)">สั่งเลย →</a>
     </div>
   </div>
 </div>
 
-<!-- ═══ FEATURES ═══ -->
+<!-- FEATURES -->
 <section class="section" style="padding-top:0">
   <div class="section-inner">
-    <div class="section-header">
-      <div><h2 class="section-title">ทำไมต้อง <span class="text-accent">Diamond Cute Studio?</span></h2></div>
-    </div>
+    <div class="section-header"><div><h2 class="section-title">ทำไมต้อง <span class="text-accent">Diamond Cute Studio?</span></h2></div></div>
     <div class="features-grid">
       <div class="feature-card"><div class="feature-icon">🎨</div><div class="feature-title">คุณภาพพรีเมียม</div><div class="feature-desc">วัสดุคุณภาพสูง สีสดใส ทนทาน ไม่ซีดจาง มาตรฐานระดับมืออาชีพ</div></div>
       <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">ผลิตรวดเร็ว</div><div class="feature-desc">ส่วนใหญ่เสร็จใน 1-3 วันทำการ มีบริการด่วนสำหรับงานเร่ง</div></div>
@@ -179,7 +152,7 @@
   </div>
 </section>
 
-<!-- ═══ FOOTER ═══ -->
+<!-- FOOTER -->
 <footer class="footer">
   <div class="footer-main">
     <div class="footer-brand">
@@ -221,45 +194,11 @@
   </div>
 </footer>
 
-
-    <div class="theme-option active" data-theme="sky">
-      <div class="theme-swatch" style="background:linear-gradient(135deg,#0EA5E9,#38BDF8)"></div>
-      Sky Fresh (สว่าง)
-    </div>
-    <div class="theme-option" data-theme="sakura">
-      <div class="theme-swatch" style="background:linear-gradient(135deg,#EC4899,#F472B6)"></div>
-      Sakura Pink (ชมพู)
-    </div>
-    <div class="theme-option" data-theme="mint">
-      <div class="theme-swatch" style="background:linear-gradient(135deg,#10B981,#34D399)"></div>
-      Forest Mint (เขียว)
-    </div>
-    <div class="theme-option" data-theme="peach">
-      <div class="theme-swatch" style="background:linear-gradient(135deg,#F97316,#FB923C)"></div>
-      Sunset Peach (ส้ม)
-    </div>
-    <div class="theme-option" data-theme="lavender">
-      <div class="theme-swatch" style="background:linear-gradient(135deg,#8B5CF6,#A78BFA)"></div>
-      Lavender (ม่วง)
-    </div>
-    <div class="theme-option" data-theme="midnight">
-      <div class="theme-swatch" style="background:linear-gradient(135deg,#111827,#38BDF8)"></div>
-      Midnight Pro (มืด)
-    </div>
-  </div>
-
-  <button class="theme-toggle-btn" id="theme-toggle-btn" title="เปลี่ยนธีม" aria-label="Theme Switcher">
-    🎨
-  </button>
-</div>
-
 <div id="toast-container"></div>
-
 <script src="js/utils.js"></script>
 <script src="js/navbar.js"></script>
-<script src="js/home.js"></script>
-
 <script src="js/theme-switcher.js"></script>
 <script src="js/admin-access.js"></script>
+<script src="js/home.js"></script>
 </body>
 </html>

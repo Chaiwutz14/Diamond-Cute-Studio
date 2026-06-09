@@ -6,12 +6,12 @@
 // ─── Firebase Config ───
 // TODO: Replace with your actual Firebase project config
 const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyB7bssyVp57OOX2Q0PDcmjdL259VuEOP-0",
-  authDomain:        "diamond-cute-studio.firebaseapp.com",
-  projectId:         "diamond-cute-studio",
-  storageBucket:     "diamond-cute-studio.firebasestorage.app",
-  messagingSenderId: "896135008460",
-  appId:             "1:896135008460:web:be9bb385f3aca1533f3269"
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
 };
 
 // ─── Firebase Ready Promise ───
@@ -72,7 +72,7 @@ function getFirebaseReady() {
 function getDb() { return _db; }
 
 // ─── ImgBB Upload ───
-const IMGBB_API_KEY = "df00a7ad6294a89bc99d7c6f900e7393"; // TODO: replace
+const IMGBB_API_KEY = "YOUR_IMGBB_API_KEY"; // TODO: replace
 
 async function uploadToImgBB(file) {
   const formData = new FormData();
@@ -96,12 +96,17 @@ async function uploadToImgBB(file) {
 // ─── Cloudflare Worker LINE Notify ───
 const CF_WORKER_URL = "https://YOUR_WORKER.workers.dev"; // TODO: replace
 
-async function sendLineNotify(message) {
+async function sendLineNotify(payload) {
   try {
+    // payload can be a string (legacy) or an orderData object (Flex Card)
+    const body = typeof payload === 'string'
+      ? { message: payload }
+      : payload;
+
     const res = await fetch(`${CF_WORKER_URL}/notify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message })
+      body: JSON.stringify(body)
     });
     return res.ok;
   } catch (e) {
@@ -304,7 +309,7 @@ function saveCart(cart) {
 
 function addToCart(item) {
   const cart = getCart();
-  const existing = cart.find(i => i.id === item.id && i.options === item.options);
+  const existing = cart.find(i => i.id === item.id && (i.options||'') === (item.options||''));
   if (existing) {
     existing.qty += item.qty || 1;
   } else {

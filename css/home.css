@@ -223,3 +223,121 @@
   .cat-card{padding:.95rem .5rem}
   .footer-main{grid-template-columns:1fr}
 }
+
+/* ════════════════════════════════
+   HERO CARD CAROUSEL
+════════════════════════════════ */
+.hero-carousel {
+  position: relative;
+  width: 210px; height: 310px;
+}
+
+/* Active card — front, large */
+.hero-carousel .hcard.hc-active {
+  position: absolute;
+  left: 0; top: 0;
+  width: 185px;
+  z-index: 3;
+  cursor: default;
+  transform: none;
+  transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Back card — peeking from behind */
+.hero-carousel .hcard.hc-back {
+  position: absolute;
+  left: 70px; top: 60px;
+  width: 130px;
+  z-index: 2;
+  cursor: pointer;
+  opacity: 0.85;
+  transform: scale(0.92) rotate(3deg);
+  transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hero-carousel .hcard.hc-back:hover {
+  opacity: 1;
+  transform: scale(0.96) rotate(2deg) translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Hidden — 3rd card waiting offscreen */
+.hero-carousel .hcard.hc-hidden {
+  position: absolute;
+  left: 50px; top: 80px;
+  width: 120px;
+  z-index: 1;
+  opacity: 0;
+  transform: scale(0.8) rotate(6deg);
+  pointer-events: none;
+  transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Swap animation class */
+.hero-carousel .hcard.hc-exiting {
+  transform: scale(0.85) rotate(-4deg) translateX(30px);
+  opacity: 0.6;
+  z-index: 1;
+}
+
+/* Dot indicator */
+.hc-dots {
+  display: flex; gap: 5px;
+  justify-content: center;
+  margin-top: 8px;
+  position: absolute;
+  bottom: -20px; left: 0; right: 0;
+}
+.hc-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--border); transition: all 0.25s;
+}
+.hc-dot.on {
+  background: var(--accent);
+  width: 16px; border-radius: 3px;
+}
+
+/* ── Hero Card Carousel — Fan Stack ── */
+.hero-carousel {
+  position: relative;
+  width: 310px; height: 290px;
+}
+.hero-carousel .hcard {
+  position: absolute;
+  border-radius: 20px; overflow: hidden;
+  transition: all 0.45s cubic-bezier(0.34,1.56,0.64,1);
+}
+/* ใหญ่สุด หน้าซ้าย */
+.hero-carousel .hcard.hc-active {
+  left:0; top:0; width:172px; height:245px;
+  z-index:3; cursor:default; opacity:1; transform:none;
+  box-shadow:var(--shadow-hover);
+}
+/* กลาง โผล่ขวา */
+.hero-carousel .hcard.hc-back {
+  left:148px; top:32px; width:146px; height:204px;
+  z-index:2; cursor:pointer; opacity:0.93; transform:none;
+  box-shadow:var(--shadow-card);
+}
+.hero-carousel .hcard.hc-back:hover {
+  opacity:1; transform:translateY(-5px);
+  box-shadow:var(--shadow-hover);
+}
+/* เล็กสุด โผล่ขวาสุด */
+.hero-carousel .hcard.hc-hidden {
+  left:200px; top:60px; width:120px; height:168px;
+  z-index:1; opacity:0.82; pointer-events:auto;
+  cursor:pointer; transform:none;
+}
+.hero-carousel .hcard.hc-hidden:hover {
+  opacity:1; transform:translateY(-5px);
+}
+.hc-dots {
+  display:flex; gap:5px;
+  position:absolute; bottom:-24px; left:6px;
+}
+.hc-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--border); transition:all .25s;
+}
+.hc-dot.on { background:var(--accent); width:16px; border-radius:3px; }

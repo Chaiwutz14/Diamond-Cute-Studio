@@ -245,18 +245,30 @@ function bindSlipUpload() {
   const previewImg  = document.getElementById('slip-img');
 
   zone?.addEventListener('click', () => input?.click());
+  zone?.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('active'); });
+  zone?.addEventListener('dragleave', () => zone.classList.remove('active'));
+  zone?.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('active');
+    const file = e.dataTransfer.files[0];
+    if (file?.type.startsWith('image/')) handleSlipFile(file);
+  });
   input?.addEventListener('change', () => {
     const file = input.files[0];
-    if (!file) return;
+    if (file) handleSlipFile(file);
+  });
+
+  function handleSlipFile(file) {
+    // Store file reference for upload on submit (NOT base64)
+    window._slipFile = file;
     const reader = new FileReader();
     reader.onload = e => {
       if (previewImg)  previewImg.src = e.target.result;
       if (previewWrap) previewWrap.style.display = '';
       if (zone)        zone.style.display = 'none';
-      slipUrl = e.target.result; // local preview; real upload happens on submit
+      slipUrl = 'pending_upload'; // placeholder — actual URL set during submitOrder
     };
     reader.readAsDataURL(file);
-  });
+  }
 }
 
 // ─── Coupon ───
@@ -302,6 +314,17 @@ async function submitOrder() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:0.4rem"></span> กำลังส่งออเดอร์...';
 
+  // Upload slip image to ImgBB first (avoid storing base64 in Firestore)
+  if (selectedPayment === 'promptpay' && window._slipFile) {
+    try {
+      const uploaded = await DMC.uploadToImgBB(window._slipFile);
+      slipUrl = uploaded.url;
+    } catch (e) {
+      console.warn('ImgBB upload failed, continuing without slip URL:', e);
+      slipUrl = '';
+    }
+  }
+
   const cart    = DMC.getCart();
   const orderId = DMC.generateOrderId();
 
@@ -341,17 +364,8 @@ async function submitOrder() {
     }
 
     // LINE Notify
-    const lineMsg = [
-      '🛍️ ออเดอร์ใหม่! Diamond Cute Studio',
-      `📦 #${orderId}`,
-      `👤 ${orderData.customerName} · ${orderData.customerPhone}`,
-      `🛒 ${orderData.itemsSummary}`,
-      `💰 ${DMC.formatPrice(total)} (${selectedPayment === 'promptpay' ? 'PromptPay' : 'COD'})`,
-      `📍 ${orderData.address}`,
-      orderData.note ? `💬 ${orderData.note}` : ''
-    ].filter(Boolean).join('\n');
-
-    await DMC.sendLineNotify(lineMsg);
+    // Send structured data to Worker (builds Flex Card)
+    await DMC.sendLineNotify(orderData);
 
     // Clear cart
     DMC.saveCart([]);

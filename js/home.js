@@ -10,6 +10,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ─── Hero Particle Canvas ───
   initParticles();
 
+  // ─── Hero Card Carousel ───
+  initHeroCarousel();
+
+  // ─── Hero Card Carousel ───
+  initHeroCarousel();
+
   // ─── Load Firebase + Products ───
   try {
     const db = await DMC.getFirebaseReady();
@@ -286,5 +292,121 @@ function initScrollAnimations() {
     el.style.transform = 'translateY(20px)';
     el.style.transition = `opacity 0.5s ease ${i * 0.05}s, transform 0.5s ease ${i * 0.05}s`;
     obs.observe(el);
+  });
+}
+
+// ─── Hero Card Carousel ───────────────────────
+function initHeroCarousel() {
+  const carousel = document.getElementById('hero-carousel');
+  if (!carousel) return;
+
+  const cards = Array.from(carousel.querySelectorAll('.hcard'));
+  if (cards.length < 2) return;
+
+  // Build dot indicators
+  const dotsWrap = document.createElement('div');
+  dotsWrap.className = 'hc-dots';
+  cards.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'hc-dot' + (i === 0 ? ' on' : '');
+    dotsWrap.appendChild(d);
+  });
+  carousel.appendChild(dotsWrap);
+
+  let activeIdx = 0;
+
+  function goTo(nextIdx) {
+    if (nextIdx === activeIdx) return;
+    const dots = dotsWrap.querySelectorAll('.hc-dot');
+
+    // Remove all state classes
+    cards.forEach(c => c.classList.remove('hc-active','hc-back','hc-hidden','hc-exiting'));
+
+    // Assign new states: active → front, next in line → back, rest → hidden
+    cards.forEach((card, i) => {
+      const rel = ((i - nextIdx) + cards.length) % cards.length;
+      if (rel === 0)               card.classList.add('hc-active');
+      else if (rel === 1)          card.classList.add('hc-back');
+      else                         card.classList.add('hc-hidden');
+    });
+
+    activeIdx = nextIdx;
+
+    // Update dots
+    dots.forEach((d, i) => d.classList.toggle('on', i === activeIdx));
+  }
+
+  // Click on back card → bring it to front
+  cards.forEach((card, i) => {
+    card.addEventListener('click', () => {
+      if (card.classList.contains('hc-back')) {
+        goTo(i);
+      }
+    });
+  });
+
+  // Auto-rotate every 4 seconds
+  let autoTimer = setInterval(() => {
+    goTo((activeIdx + 1) % cards.length);
+  }, 4000);
+
+  // Pause auto on hover
+  carousel.addEventListener('mouseenter', () => clearInterval(autoTimer));
+  carousel.addEventListener('mouseleave', () => {
+    autoTimer = setInterval(() => {
+      goTo((activeIdx + 1) % cards.length);
+    }, 4000);
+  });
+}
+
+// ── Hero Card Carousel ──────────────────────────
+function initHeroCarousel() {
+  var carousel = document.getElementById('hero-carousel');
+  if (!carousel) return;
+  var cards = Array.from(carousel.querySelectorAll('.hcard'));
+  if (cards.length < 2) return;
+
+  // Dot indicators
+  var dotsWrap = document.createElement('div');
+  dotsWrap.className = 'hc-dots';
+  cards.forEach(function(_, i){
+    var d = document.createElement('div');
+    d.className = 'hc-dot' + (i===0?' on':'');
+    dotsWrap.appendChild(d);
+  });
+  carousel.appendChild(dotsWrap);
+
+  var activeIdx = 0;
+
+  function goTo(next) {
+    if (next === activeIdx) return;
+    cards.forEach(function(card, i){
+      card.classList.remove('hc-active','hc-back','hc-hidden');
+      var rel = ((i - next) + cards.length) % cards.length;
+      if      (rel === 0) card.classList.add('hc-active');
+      else if (rel === 1) card.classList.add('hc-back');
+      else                card.classList.add('hc-hidden');
+    });
+    activeIdx = next;
+    dotsWrap.querySelectorAll('.hc-dot').forEach(function(d,i){
+      d.classList.toggle('on', i === activeIdx);
+    });
+  }
+
+  // Click back or hidden card to bring to front
+  cards.forEach(function(card, i){
+    card.addEventListener('click', function(){
+      if (card.classList.contains('hc-back') ||
+          card.classList.contains('hc-hidden')) {
+        goTo(i);
+      }
+    });
+  });
+
+  // Auto-rotate every 4s, pause on hover
+  var timer = setInterval(function(){ goTo((activeIdx+1) % cards.length); }, 4000);
+  carousel.addEventListener('mouseenter', function(){ clearInterval(timer); });
+  carousel.addEventListener('mouseleave', function(){
+    timer = setInterval(function(){ goTo((activeIdx+1) % cards.length); }, 4000);
   });
 }
