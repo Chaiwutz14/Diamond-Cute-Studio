@@ -34,69 +34,91 @@ function initParticles() {
   const ctx = canvas.getContext('2d');
 
   function resize() {
-    canvas.width  = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    canvas.width  = canvas.offsetWidth  || window.innerWidth;
+    canvas.height = canvas.offsetHeight || window.innerHeight;
   }
   resize();
   window.addEventListener('resize', resize, { passive: true });
 
-  const particles = [];
-  const COUNT = 55;
+  // Re-init particles when theme changes (MutationObserver on html[data-theme])
+  const observer = new MutationObserver(() => { buildParticles(); });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-  for (let i = 0; i < COUNT; i++) {
-    particles.push({
-      x:  Math.random() * canvas.width,
-      y:  Math.random() * canvas.height,
-      r:  Math.random() * 1.5 + 0.5,
-      dx: (Math.random() - 0.5) * 0.35,
-      dy: (Math.random() - 0.5) * 0.35,
-      alpha: Math.random() * 0.5 + 0.15,
-      color: Math.random() > 0.65 ? '#FCD34D' : '#38BDF8'
-    });
+  let particles = [];
+
+  function getAccentRgb() {
+    // Read accent from computed CSS variable
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue('--particle-col').trim() || '#0EA5E9';
+    const hex = raw.replace('#','');
+    if (hex.length === 6) {
+      return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+    }
+    return [14,165,233];
   }
 
+  function buildParticles() {
+    const COUNT = 48;
+    particles = [];
+    for (let i = 0; i < COUNT; i++) {
+      const useGold = Math.random() > 0.72;
+      particles.push({
+        x:  Math.random() * canvas.width,
+        y:  Math.random() * canvas.height,
+        r:  Math.random() * 1.4 + 0.5,
+        dx: (Math.random() - 0.5) * 0.32,
+        dy: (Math.random() - 0.5) * 0.32,
+        alpha: Math.random() * 0.45 + 0.12,
+        useGold,
+      });
+    }
+  }
+  buildParticles();
+
+  let raf;
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const [ar, ag, ab] = getAccentRgb();
 
-    // Draw connection lines
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist < 110) {
+        const ddx = particles[i].x - particles[j].x;
+        const ddy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(ddx*ddx + ddy*ddy);
+        if (dist < 108) {
           ctx.beginPath();
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(14,165,233,${0.07 * (1 - dist/110)})`;
-          ctx.lineWidth = 0.8;
+          ctx.strokeStyle = `rgba(${ar},${ag},${ab},${0.07 * (1 - dist/108)})`;
+          ctx.lineWidth = 0.7;
           ctx.stroke();
         }
       }
     }
 
-    // Draw dots
     particles.forEach(p => {
-      p.x += p.dx;
-      p.y += p.dy;
+      p.x += p.dx; p.y += p.dy;
       if (p.x < 0 || p.x > canvas.width)  p.dx *= -1;
       if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
 
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = p.color.replace(')', `,${p.alpha})`).replace('rgb', 'rgba');
-      if (p.color.startsWith('#')) {
-        const hex = p.color.slice(1);
-        const r = parseInt(hex.slice(0,2),16);
-        const g = parseInt(hex.slice(2,4),16);
-        const b = parseInt(hex.slice(4,6),16);
-        ctx.fillStyle = `rgba(${r},${g},${b},${p.alpha})`;
+      if (p.useGold) {
+        ctx.fillStyle = `rgba(245,158,11,${p.alpha})`;
+      } else {
+        ctx.fillStyle = `rgba(${ar},${ag},${ab},${p.alpha})`;
       }
       ctx.fill();
     });
 
-    requestAnimationFrame(draw);
+    raf = requestAnimationFrame(draw);
   }
+
+  // Stop animation when tab hidden (perf)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { cancelAnimationFrame(raf); }
+    else { draw(); }
+  });
 
   draw();
 }

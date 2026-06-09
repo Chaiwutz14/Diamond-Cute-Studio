@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-theme="sky">
 <head>
+  <script src="js/theme-init.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>รายละเอียดสินค้า — Diamond Cute Studio 💎</title>
+  <link rel="stylesheet" href="css/themes.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/home.css">
@@ -128,9 +130,9 @@
       </div>
 
       <!-- Subtotal -->
-      <div style="padding:0.6rem 0.9rem;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-md);margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between">
-        <span style="font-family:var(--font-display);font-size:0.85rem;color:var(--text-muted)">รวม</span>
-        <span style="font-family:var(--font-display);font-weight:800;font-size:1.2rem;color:var(--sky-light)" id="subtotal-display">—</span>
+      <div class="subtotal-row">
+        <span class="subtotal-label">รวม</span>
+        <span class="subtotal-value" id="subtotal-display">—</span>
       </div>
 
       <!-- Action Buttons -->
@@ -182,5 +184,7 @@
 <script src="js/utils.js"></script>
 <script src="js/navbar.js"></script>
 <script src="js/product.js"></script>
+<script src="js/theme-switcher.js"></script>
+<script src="js/admin-access.js"></script>
 </body>
 </html>

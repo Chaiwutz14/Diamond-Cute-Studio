@@ -1,0 +1,356 @@
+/* ═══════════════════════════════════════════════
+   Diamond Cute Studio 💎 — Theme System
+   6 themes × CSS custom properties
+═══════════════════════════════════════════════ */
+
+/* ────────────────────────────────
+   THEME 1: Sky Fresh (Default Light)
+   สดใส ฟ้าขาว อบอุ่น — ง่ายต่อสายตา
+──────────────────────────────── */
+[data-theme="sky"], :root {
+  --bg:           #F0F7FF;
+  --bg-mid:       #E1EFFD;
+  --bg-card:      #FFFFFF;
+  --bg-card2:     #F8FBFF;
+  --nav-bg:       rgba(240,247,255,0.92);
+  --nav-border:   rgba(14,165,233,0.15);
+  --text-1:       #0C2D4E;
+  --text-2:       #3B6186;
+  --text-3:       #7BA3C4;
+  --accent:       #0EA5E9;
+  --accent-light: #38BDF8;
+  --accent-dark:  #0369A1;
+  --gold:         #F59E0B;
+  --gold-light:   #FCD34D;
+  --rose:         #FB7185;
+  --emerald:      #10B981;
+  --emerald-light:#34D399;
+  --border:       rgba(14,165,233,0.18);
+  --border-hover: rgba(14,165,233,0.45);
+  --glass:        rgba(14,165,233,0.06);
+  --glass-hover:  rgba(14,165,233,0.12);
+  --shadow:       0 4px 20px rgba(14,165,233,0.12);
+  --shadow-card:  0 2px 16px rgba(12,45,78,0.08);
+  --shadow-hover: 0 8px 32px rgba(14,165,233,0.20);
+  --hero-grad1:   rgba(14,165,233,0.12);
+  --hero-grad2:   rgba(245,158,11,0.08);
+  --hero-grad3:   rgba(16,185,129,0.05);
+  --particle-col: #0EA5E9;
+}
+
+/* ────────────────────────────────
+   THEME 2: Sakura Pink
+   ชมพูหวาน อบอุ่น ญี่ปุ่น
+──────────────────────────────── */
+[data-theme="sakura"] {
+  --bg:           #FFF5F7;
+  --bg-mid:       #FFE8EE;
+  --bg-card:      #FFFFFF;
+  --bg-card2:     #FFF8FA;
+  --nav-bg:       rgba(255,245,247,0.92);
+  --nav-border:   rgba(236,72,153,0.15);
+  --text-1:       #4A1428;
+  --text-2:       #8B3A5A;
+  --text-3:       #C78DA0;
+  --accent:       #EC4899;
+  --accent-light: #F472B6;
+  --accent-dark:  #BE185D;
+  --gold:         #F59E0B;
+  --gold-light:   #FCD34D;
+  --rose:         #FB7185;
+  --emerald:      #10B981;
+  --emerald-light:#34D399;
+  --border:       rgba(236,72,153,0.18);
+  --border-hover: rgba(236,72,153,0.45);
+  --glass:        rgba(236,72,153,0.06);
+  --glass-hover:  rgba(236,72,153,0.12);
+  --shadow:       0 4px 20px rgba(236,72,153,0.12);
+  --shadow-card:  0 2px 16px rgba(74,20,40,0.08);
+  --shadow-hover: 0 8px 32px rgba(236,72,153,0.20);
+  --hero-grad1:   rgba(236,72,153,0.10);
+  --hero-grad2:   rgba(251,207,232,0.40);
+  --hero-grad3:   rgba(245,158,11,0.06);
+  --particle-col: #EC4899;
+}
+
+/* ────────────────────────────────
+   THEME 3: Forest Mint
+   เขียวสด ธรรมชาติ สบายตา
+──────────────────────────────── */
+[data-theme="mint"] {
+  --bg:           #F0FDF8;
+  --bg-mid:       #DCFCE7;
+  --bg-card:      #FFFFFF;
+  --bg-card2:     #F7FFFE;
+  --nav-bg:       rgba(240,253,248,0.92);
+  --nav-border:   rgba(16,185,129,0.15);
+  --text-1:       #0A2E1F;
+  --text-2:       #236B4A;
+  --text-3:       #6BBF97;
+  --accent:       #10B981;
+  --accent-light: #34D399;
+  --accent-dark:  #065F46;
+  --gold:         #F59E0B;
+  --gold-light:   #FCD34D;
+  --rose:         #FB7185;
+  --emerald:      #10B981;
+  --emerald-light:#34D399;
+  --border:       rgba(16,185,129,0.18);
+  --border-hover: rgba(16,185,129,0.45);
+  --glass:        rgba(16,185,129,0.06);
+  --glass-hover:  rgba(16,185,129,0.12);
+  --shadow:       0 4px 20px rgba(16,185,129,0.12);
+  --shadow-card:  0 2px 16px rgba(10,46,31,0.08);
+  --shadow-hover: 0 8px 32px rgba(16,185,129,0.20);
+  --hero-grad1:   rgba(16,185,129,0.10);
+  --hero-grad2:   rgba(52,211,153,0.15);
+  --hero-grad3:   rgba(245,158,11,0.05);
+  --particle-col: #10B981;
+}
+
+/* ────────────────────────────────
+   THEME 4: Sunset Peach
+   ส้มอบอุ่น ครีม หรูหรา
+──────────────────────────────── */
+[data-theme="peach"] {
+  --bg:           #FFF8F3;
+  --bg-mid:       #FFEDE0;
+  --bg-card:      #FFFFFF;
+  --bg-card2:     #FFFBF8;
+  --nav-bg:       rgba(255,248,243,0.92);
+  --nav-border:   rgba(234,88,12,0.15);
+  --text-1:       #3B1506;
+  --text-2:       #9A3412;
+  --text-3:       #CD8A6E;
+  --accent:       #F97316;
+  --accent-light: #FB923C;
+  --accent-dark:  #C2410C;
+  --gold:         #EAB308;
+  --gold-light:   #FDE047;
+  --rose:         #FB7185;
+  --emerald:      #10B981;
+  --emerald-light:#34D399;
+  --border:       rgba(249,115,22,0.18);
+  --border-hover: rgba(249,115,22,0.45);
+  --glass:        rgba(249,115,22,0.06);
+  --glass-hover:  rgba(249,115,22,0.12);
+  --shadow:       0 4px 20px rgba(249,115,22,0.12);
+  --shadow-card:  0 2px 16px rgba(59,21,6,0.08);
+  --shadow-hover: 0 8px 32px rgba(249,115,22,0.20);
+  --hero-grad1:   rgba(249,115,22,0.10);
+  --hero-grad2:   rgba(251,191,36,0.15);
+  --hero-grad3:   rgba(239,68,68,0.05);
+  --particle-col: #F97316;
+}
+
+/* ────────────────────────────────
+   THEME 5: Lavender Dream
+   ม่วงอ่อน ฝัน หวาน
+──────────────────────────────── */
+[data-theme="lavender"] {
+  --bg:           #F8F5FF;
+  --bg-mid:       #EDE9FE;
+  --bg-card:      #FFFFFF;
+  --bg-card2:     #FAFAFF;
+  --nav-bg:       rgba(248,245,255,0.92);
+  --nav-border:   rgba(139,92,246,0.15);
+  --text-1:       #1E0A40;
+  --text-2:       #5B3E8F;
+  --text-3:       #A78FD4;
+  --accent:       #8B5CF6;
+  --accent-light: #A78BFA;
+  --accent-dark:  #6D28D9;
+  --gold:         #F59E0B;
+  --gold-light:   #FCD34D;
+  --rose:         #FB7185;
+  --emerald:      #10B981;
+  --emerald-light:#34D399;
+  --border:       rgba(139,92,246,0.18);
+  --border-hover: rgba(139,92,246,0.45);
+  --glass:        rgba(139,92,246,0.06);
+  --glass-hover:  rgba(139,92,246,0.12);
+  --shadow:       0 4px 20px rgba(139,92,246,0.12);
+  --shadow-card:  0 2px 16px rgba(30,10,64,0.08);
+  --shadow-hover: 0 8px 32px rgba(139,92,246,0.20);
+  --hero-grad1:   rgba(139,92,246,0.10);
+  --hero-grad2:   rgba(167,139,250,0.20);
+  --hero-grad3:   rgba(236,72,153,0.05);
+  --particle-col: #8B5CF6;
+}
+
+/* ────────────────────────────────
+   THEME 6: Midnight Pro (Dark)
+   มืดสบายตา (ไม่แสบ) — สำหรับคนชอบ dark
+──────────────────────────────── */
+[data-theme="midnight"] {
+  --bg:           #111827;
+  --bg-mid:       #1F2937;
+  --bg-card:      #1F2937;
+  --bg-card2:     #374151;
+  --nav-bg:       rgba(17,24,39,0.96);
+  --nav-border:   rgba(99,202,255,0.12);
+  --text-1:       #F9FAFB;
+  --text-2:       #D1D5DB;
+  --text-3:       #6B7280;
+  --accent:       #38BDF8;
+  --accent-light: #7DD3FC;
+  --accent-dark:  #0EA5E9;
+  --gold:         #FCD34D;
+  --gold-light:   #FDE68A;
+  --rose:         #FDA4AF;
+  --emerald:      #6EE7B7;
+  --emerald-light:#A7F3D0;
+  --border:       rgba(99,202,255,0.12);
+  --border-hover: rgba(56,189,248,0.35);
+  --glass:        rgba(56,189,248,0.05);
+  --glass-hover:  rgba(56,189,248,0.10);
+  --shadow:       0 4px 20px rgba(0,0,0,0.4);
+  --shadow-card:  0 2px 16px rgba(0,0,0,0.3);
+  --shadow-hover: 0 8px 32px rgba(56,189,248,0.15);
+  --hero-grad1:   rgba(56,189,248,0.12);
+  --hero-grad2:   rgba(252,211,77,0.06);
+  --hero-grad3:   rgba(110,231,183,0.04);
+  --particle-col: #38BDF8;
+}
+
+/* ════════════════════════════════
+   THEME SWITCHER WIDGET
+════════════════════════════════ */
+.theme-switcher {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 5rem;
+  z-index: 890;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.theme-toggle-btn {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-1);
+}
+.theme-toggle-btn:hover {
+  transform: scale(1.1);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-hover);
+}
+
+.theme-panel {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 1rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  display: none;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 180px;
+  animation: fadeInUp 0.2s ease both;
+}
+.theme-panel.open { display: flex; }
+
+.theme-panel-title {
+  font-family: var(--font-display);
+  font-size: 0.75rem; font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 0.3rem;
+}
+
+.theme-option {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px; cursor: pointer;
+  transition: all 0.15s;
+  border: 1.5px solid transparent;
+  font-family: var(--font-display); font-size: 0.84rem;
+  color: var(--text-2);
+}
+.theme-option:hover {
+  background: var(--glass-hover);
+  border-color: var(--border);
+}
+.theme-option.active {
+  background: var(--glass);
+  border-color: var(--accent);
+  color: var(--text-1);
+}
+
+.theme-swatch {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+/* ════════════════════════════════
+   NAVBAR-EMBEDDED THEME SWITCHER
+════════════════════════════════ */
+.nav-theme-wrap {
+  position: relative;
+}
+
+/* reuse nav-icon-btn styles, just a marker class */
+.ts-btn { font-size: 1rem; }
+
+.ts-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + .6rem);
+  right: 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: .75rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,.14);
+  min-width: 192px;
+  z-index: 1000;
+  animation: fadeInUp .18s ease both;
+}
+.ts-panel.open { display: flex; flex-direction: column; gap: .3rem; }
+
+.ts-title {
+  font-family: var(--font-display);
+  font-size: .72rem; font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase; letter-spacing: .8px;
+  margin-bottom: .35rem; padding: 0 .35rem;
+}
+
+.ts-option {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .45rem .6rem;
+  border-radius: 10px; cursor: pointer;
+  border: 1.5px solid transparent;
+  font-family: var(--font-display); font-size: .84rem;
+  color: var(--text-2); background: transparent;
+  transition: all .15s; width: 100%; text-align: left;
+}
+.ts-option:hover  { background: var(--glass-hover); border-color: var(--border); }
+.ts-option.active { background: var(--glass); border-color: var(--accent); color: var(--text-1); }
+
+.ts-swatch {
+  width: 20px; height: 20px; border-radius: 50%;
+  flex-shrink: 0; border: 2px solid rgba(0,0,0,.08);
+}
+
+/* hide old fixed-position switcher if it exists */
+.theme-switcher { display: none !important; }
+
+/* ════════════════════════════════
+   MOBILE — ts-panel full-width
+════════════════════════════════ */
+@media (max-width: 600px) {
+  .ts-panel {
+    right: -3rem;
+    min-width: 170px;
+  }
+}
