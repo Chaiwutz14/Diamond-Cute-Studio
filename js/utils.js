@@ -94,7 +94,7 @@ async function uploadToImgBB(file) {
 }
 
 // ─── Cloudflare Worker LINE Notify ───
-const CF_WORKER_URL = "https://YOUR_WORKER.workers.dev"; // TODO: replace
+const CF_WORKER_URL = "https://dmc-studio-notify.peeza1482546.workers.dev"; // TODO: replace
 
 async function sendLineNotify(payload) {
   try {

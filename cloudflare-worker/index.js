@@ -198,7 +198,7 @@ function buildOrderCard(data) {
             action: {
               type: 'uri',
               label: '⚙️ จัดการออเดอร์',
-              uri: 'https://YOUR_GITHUB_PAGES_URL/admin.html'
+              uri: 'https://https://chaiwutz14.github.io/Diamond-Cute-Studio/admin.html'
             },
             flex: 1
           },
@@ -209,7 +209,7 @@ function buildOrderCard(data) {
             action: {
               type: 'uri',
               label: '📋 ดูรายละเอียด',
-              uri: 'https://YOUR_GITHUB_PAGES_URL/admin.html#orders'
+              uri: 'https://chaiwutz14.github.io/Diamond-Cute-Studio/admin.html#orders'
             },
             flex: 1
           }
