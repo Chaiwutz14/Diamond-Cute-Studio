@@ -10,7 +10,7 @@
 // Run in console: DMC.pbkdf2Hash('your_password', 'dmc_salt_2025') to generate hash
 // Then paste the result here
 const ADMIN_HASH = "b454dc28df89029f894c5046920aec23d2bcceb2db61e1b2a354709c069f6ffc";
-const ADMIN_SALT = "dmc_diamond_studio_salt_v1";
+const ADMIN_SALT = "dmc_salt_2025";
 
 let db = null;
 
