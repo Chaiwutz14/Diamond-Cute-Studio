@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login — Diamond Cute Studio 💎</title>
+  <meta name="robots" content="noindex, nofollow">
+
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+</head>
+<body>
+
+<div class="admin-login-page" id="admin-login-page">
+  <div class="login-card">
+
+    <div class="login-logo">
+      <div class="login-logo-icon">💎</div>
+      <h2>Admin Login</h2>
+      <p>Diamond Cute Studio — เฉพาะผู้ดูแลระบบ</p>
+    </div>
+
+    <!-- Attempt Dots -->
+    <div class="login-attempts">
+      <span>ความพยายาม:</span>
+      <div class="attempt-dots">
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+      </div>
+    </div>
+
+    <!-- Error box -->
+    <div class="login-error" id="login-error"></div>
+
+    <!-- Locked box -->
+    <div class="login-locked" id="login-locked"></div>
+
+    <!-- Form -->
+    <div id="login-form">
+      <div class="form-group">
+        <label class="form-label">รหัสผ่าน Admin</label>
+        <input class="form-input" type="password" id="login-password" 
+               placeholder="••••••••" autocomplete="current-password" autofocus>
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" id="login-btn" style="margin-top:0.5rem">
+        🔓 เข้าสู่ระบบ
+      </button>
+    </div>
+
+    <div style="text-align:center;margin-top:1.25rem">
+      <a href="index.html" style="font-size:0.8rem;color:var(--text-muted);font-family:var(--font-display)">
+        ← กลับหน้าร้าน
+      </a>
+    </div>
+
+    <div style="text-align:center;margin-top:0.75rem;font-size:0.74rem;color:var(--text-muted);font-family:var(--font-display)">
+      🛡️ ระบบจะล็อคหลังพิมพ์ผิด 5 ครั้ง
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast-container"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Products: public read, no public write ───
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false; // admin only via Firebase Console or Admin SDK
+    }
+
+    // ─── Orders: public create (submit order), no public read/update ───
+    match /orders/{orderId} {
+      allow create: if
+        request.resource.data.keys().hasAll(['orderId','customerName','customerPhone','address','items','total','status','createdAt']) &&
+        request.resource.data.customerName is string &&
+        request.resource.data.customerName.size() > 0 &&
+        request.resource.data.customerPhone is string &&
+        request.resource.data.total is number &&
+        request.resource.data.total >= 0 &&
+        request.resource.data.status == 'pending';
+
+      allow read, update, delete: if false; // admin only
+    }
+
+    // ─── Categories: public read ───
+    match /categories/{catId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ─── Settings: private ───
+    match /settings/{docId} {
+      allow read, write: if false;
+    }
+  }
+}

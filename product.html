@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายละเอียดสินค้า — Diamond Cute Studio 💎</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/product.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+</head>
+<body>
+
+<div id="navbar-mount"></div>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-header-inner">
+    <nav class="breadcrumb" id="product-breadcrumb">
+      <a href="index.html">หน้าแรก</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="catalog.html">สินค้า</a>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current" id="breadcrumb-name">กำลังโหลด...</span>
+    </nav>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div id="product-loading" style="text-align:center;padding:4rem;color:var(--text-muted)">
+  <span class="spinner" style="display:block;margin:0 auto 0.75rem"></span>
+  กำลังโหลดสินค้า...
+</div>
+
+<!-- Product Detail (hidden until loaded) -->
+<div class="detail-wrapper" id="product-detail" style="display:none">
+  <div class="detail-layout">
+
+    <!-- Gallery -->
+    <div class="detail-gallery">
+      <div class="gallery-main" id="gallery-main">
+        <div class="gallery-main-overlay"></div>
+        <div class="gallery-badge" id="gallery-badge"></div>
+        <span id="gallery-emoji" style="font-size:5.5rem;position:relative;z-index:1">📦</span>
+      </div>
+      <div class="gallery-thumbs" id="gallery-thumbs"></div>
+    </div>
+
+    <!-- Info -->
+    <div class="detail-info">
+      <h1 class="detail-title" id="product-title">—</h1>
+
+      <div class="detail-meta">
+        <div class="detail-rating">
+          <span class="stars-display" id="stars-display">★★★★★</span>
+          <span class="rating-score" id="rating-score">4.9</span>
+        </div>
+        <span id="review-count" style="color:var(--text-muted)">— รีวิว</span>
+        <span>·</span>
+        <span id="order-count" style="color:var(--text-muted)">— ออเดอร์</span>
+      </div>
+
+      <!-- Price -->
+      <div class="detail-price-block">
+        <div class="price-row">
+          <div class="price-main" id="price-main">—</div>
+          <div class="price-unit" id="price-unit"></div>
+          <div class="price-old" id="price-old" style="display:none"></div>
+        </div>
+        <div class="price-tiers" id="price-tiers"></div>
+      </div>
+
+      <!-- Size Options -->
+      <div class="options-group" id="size-group" style="display:none">
+        <div class="options-label">📐 ขนาด: <strong id="size-selected">—</strong></div>
+        <div class="options-chips" id="size-chips"></div>
+      </div>
+
+      <!-- Material Options -->
+      <div class="options-group" id="material-group" style="display:none">
+        <div class="options-label">🗒️ วัสดุ/การเคลือบ: <strong id="material-selected">—</strong></div>
+        <div class="options-chips" id="material-chips"></div>
+      </div>
+
+      <!-- Preview Tool -->
+      <div class="preview-tool" id="preview-tool" style="display:none">
+        <div class="preview-tool-header">
+          <div class="preview-tool-title">🎨 ลองดูตัวอย่างก่อนสั่ง</div>
+          <button class="btn btn-ghost btn-sm" id="clear-preview-btn" style="display:none">ล้าง</button>
+        </div>
+
+        <div class="preview-result" id="preview-result">
+          <img id="preview-img" src="" alt="Preview">
+        </div>
+
+        <div class="upload-zone" id="upload-zone">
+          <div class="upload-icon">📤</div>
+          <div class="upload-text">
+            <span>คลิกหรือลากรูปมาวาง</span> เพื่อดูตัวอย่าง<br>
+            <small style="font-size:0.72rem;color:var(--text-muted)">JPG, PNG ขนาดไม่เกิน 5MB</small>
+          </div>
+          <input type="file" id="preview-upload" accept="image/*" style="display:none">
+        </div>
+
+        <div class="options-group" style="margin-bottom:0">
+          <div class="options-label">🖼️ Template</div>
+          <div class="template-scroll" id="template-scroll">
+            <div class="template-chip active" data-tpl="classic"><span class="template-chip-icon">📸</span><span class="template-chip-name">Classic</span></div>
+            <div class="template-chip" data-tpl="minimal"><span class="template-chip-icon">🌸</span><span class="template-chip-name">Minimal</span></div>
+            <div class="template-chip" data-tpl="dark"><span class="template-chip-icon">🌙</span><span class="template-chip-name">Dark</span></div>
+            <div class="template-chip" data-tpl="warm"><span class="template-chip-icon">☀️</span><span class="template-chip-name">Warm</span></div>
+            <div class="template-chip" data-tpl="cool"><span class="template-chip-icon">❄️</span><span class="template-chip-name">Cool</span></div>
+            <div class="template-chip" data-tpl="cute"><span class="template-chip-icon">🎀</span><span class="template-chip-name">Cute</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quantity -->
+      <div class="options-group">
+        <div class="options-label">🔢 จำนวน: <strong id="qty-display">1</strong> <span id="qty-unit" style="font-weight:400;color:var(--text-muted)">ชิ้น</span></div>
+        <div class="qty-wrap">
+          <button class="qty-btn" id="qty-minus">−</button>
+          <span class="qty-val" id="qty-val">1</span>
+          <button class="qty-btn" id="qty-plus">+</button>
+          <span class="qty-hint" id="qty-hint"></span>
+        </div>
+      </div>
+
+      <!-- Subtotal -->
+      <div style="padding:0.6rem 0.9rem;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--r-md);margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-family:var(--font-display);font-size:0.85rem;color:var(--text-muted)">รวม</span>
+        <span style="font-family:var(--font-display);font-weight:800;font-size:1.2rem;color:var(--sky-light)" id="subtotal-display">—</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="detail-actions">
+        <button class="btn btn-secondary btn-lg btn-to-cart" id="add-to-cart-btn" style="flex:1">
+          🛒 ใส่ตะกร้า
+        </button>
+        <a href="cart.html" class="btn btn-primary btn-lg btn-to-order" id="order-now-btn" style="flex:1">
+          ⚡ สั่งเลย
+        </a>
+      </div>
+
+      <!-- LINE contact -->
+      <div class="line-contact">
+        💬 มีคำถามเพิ่มเติม?
+        <a href="https://line.me/R/ti/p/YOUR_LINE_OA" target="_blank" rel="noopener">
+          ติดต่อผ่าน LINE ได้เลย →
+        </a>
+      </div>
+
+      <!-- Description -->
+      <div id="product-desc-section" style="margin-top:1.5rem;display:none">
+        <div style="font-family:var(--font-display);font-weight:600;font-size:0.9rem;margin-bottom:0.6rem;color:var(--text-secondary)">📋 รายละเอียดสินค้า</div>
+        <div id="product-desc-text" style="font-size:0.88rem;color:var(--text-muted);line-height:1.75"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  <div style="margin-top:3rem">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">สินค้า<span class="text-sky">ที่เกี่ยวข้อง</span></h2>
+      </div>
+    </div>
+    <div class="product-grid" id="related-products"></div>
+  </div>
+</div>
+
+<!-- Error State -->
+<div id="product-error" style="display:none;text-align:center;padding:4rem 1.5rem;color:var(--text-muted)">
+  <div style="font-size:3rem;margin-bottom:1rem">😕</div>
+  <h2 style="font-size:1.2rem;margin-bottom:0.5rem">ไม่พบสินค้านี้</h2>
+  <p style="margin-bottom:1.5rem">อาจถูกลบหรือ URL ไม่ถูกต้อง</p>
+  <a href="catalog.html" class="btn btn-primary btn-lg">← กลับดูสินค้าทั้งหมด</a>
+</div>
+
+<div id="toast-container"></div>
+<script src="js/utils.js"></script>
+<script src="js/navbar.js"></script>
+<script src="js/product.js"></script>
+</body>
+</html>

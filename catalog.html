@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="สินค้าทั้งหมด — Diamond Cute Studio 💎 โพลารอยด์ นามบัตร บัตรแขวนคอ ป้ายร้านค้า QR Code">
+  <title>สินค้าทั้งหมด — Diamond Cute Studio 💎</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/product.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+</head>
+<body>
+
+<div id="navbar-mount"></div>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-header-inner">
+    <nav class="breadcrumb">
+      <a href="index.html">หน้าแรก</a>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">สินค้าทั้งหมด</span>
+    </nav>
+    <h1 style="font-size:1.6rem;font-weight:800">🛍️ สินค้าทั้งหมด</h1>
+  </div>
+</div>
+
+<!-- Catalog Layout -->
+<div class="catalog-wrapper">
+
+  <!-- Filter Sidebar -->
+  <aside class="filter-sidebar">
+
+    <div class="filter-panel">
+      <div class="filter-panel-title">📂 หมวดหมู่</div>
+      <div class="filter-list" id="cat-filter-list">
+        <div class="filter-item active" data-cat="">
+          ทั้งหมด <span class="filter-item-count" id="count-all">—</span>
+        </div>
+        <div class="filter-item" data-cat="polaroid">
+          📸 โพลารอยด์ <span class="filter-item-count">—</span>
+        </div>
+        <div class="filter-item" data-cat="lanyard">
+          🪪 บัตรแขวนคอ <span class="filter-item-count">—</span>
+        </div>
+        <div class="filter-item" data-cat="business-card">
+          💼 นามบัตร <span class="filter-item-count">—</span>
+        </div>
+        <div class="filter-item" data-cat="shop-sign">
+          🏪 ป้ายร้านค้า <span class="filter-item-count">—</span>
+        </div>
+        <div class="filter-item" data-cat="qrcode">
+          📱 QR Code <span class="filter-item-count">—</span>
+        </div>
+        <div class="filter-item" data-cat="doll-tag">
+          🧸 ป้ายตุ๊กตา <span class="filter-item-count">—</span>
+        </div>
+        <div class="filter-item" data-cat="student-card">
+          🎓 บัตรนักเรียน <span class="filter-item-count">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-panel">
+      <div class="filter-panel-title">💰 ช่วงราคา (฿)</div>
+      <div class="price-inputs">
+        <input class="price-input form-input" type="number" id="price-min" placeholder="ต่ำสุด" min="0">
+        <span class="price-sep">—</span>
+        <input class="price-input form-input" type="number" id="price-max" placeholder="สูงสุด" min="0">
+      </div>
+    </div>
+
+    <div class="filter-panel">
+      <div class="filter-panel-title">⚡ ประเภท</div>
+      <div class="filter-checkbox-list">
+        <label class="filter-checkbox">
+          <input type="checkbox" id="filter-new"> ✨ สินค้าใหม่
+        </label>
+        <label class="filter-checkbox">
+          <input type="checkbox" id="filter-hot"> 🔥 ขายดี
+        </label>
+        <label class="filter-checkbox">
+          <input type="checkbox" id="filter-sale"> 💰 มีโปรโมชั่น
+        </label>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-block btn-md" id="apply-filter-btn" style="border-radius:var(--r-lg)">
+      🔍 กรองสินค้า
+    </button>
+    <button class="btn btn-ghost btn-block btn-md" id="clear-filter-btn" style="margin-top:0.5rem;border-radius:var(--r-lg)">
+      ✕ ล้างตัวกรอง
+    </button>
+  </aside>
+
+  <!-- Main -->
+  <main class="catalog-main">
+
+    <!-- Search + Sort toolbar -->
+    <div class="catalog-toolbar">
+      <div class="search-bar">
+        <span class="search-bar-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="ค้นหาสินค้า เช่น โพลารอยด์, นามบัตร...">
+      </div>
+      <div class="catalog-controls">
+        <span class="result-count">พบ <strong id="result-count">—</strong> รายการ</span>
+        <select class="form-input form-select" id="sort-select" style="width:auto;padding:0.45rem 2.2rem 0.45rem 0.75rem">
+          <option value="featured">ยอดนิยม</option>
+          <option value="price-asc">ราคา ต่ำ→สูง</option>
+          <option value="price-desc">ราคา สูง→ต่ำ</option>
+          <option value="newest">ใหม่ล่าสุด</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active filters -->
+    <div class="active-filters" id="active-filters" style="display:none"></div>
+
+    <!-- Product Grid -->
+    <div class="product-grid" id="catalog-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">
+        <span class="spinner" style="display:block;margin:0 auto 0.75rem"></span>
+        กำลังโหลดสินค้า...
+      </div>
+    </div>
+
+    <!-- Load More -->
+    <div style="text-align:center;margin-top:2rem">
+      <button class="btn btn-ghost btn-lg" id="load-more-btn" style="display:none;border-radius:var(--r-lg)">
+        โหลดเพิ่ม
+      </button>
+    </div>
+  </main>
+</div>
+
+<div id="toast-container"></div>
+<script src="js/utils.js"></script>
+<script src="js/navbar.js"></script>
+<script src="js/catalog.js"></script>
+</body>
+</html>

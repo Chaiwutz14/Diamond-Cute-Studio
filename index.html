@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Diamond Cute Studio 💎 บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ ป้ายร้านค้า QR Code คุณภาพระดับมืออาชีพ ส่งทั่วไทย">
+  <meta name="theme-color" content="#0EA5E9">
+  <meta property="og:title" content="Diamond Cute Studio 💎">
+  <meta property="og:description" content="บริการพิมพ์ภาพและสิ่งพิมพ์คุณภาพสูง ส่งทั่วประเทศ">
+  <title>Diamond Cute Studio 💎 — หน้าแรก</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/home.css">
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+</head>
+<body>
+
+  <!-- Navbar mount point -->
+  <div id="navbar-mount"></div>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <canvas id="hero-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-eyebrow anim-fade-up">
+          <span class="eyebrow-dot"></span>
+          งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ
+        </div>
+
+        <h1 class="hero-title anim-fade-up anim-delay-1">
+          ทำให้ทุกภาพ<br>
+          <span class="line-accent">กลายเป็นของที่ระลึก</span><br>
+          ที่สวยงามที่สุด
+        </h1>
+
+        <p class="hero-desc anim-fade-up anim-delay-2">
+          บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน<br>
+          ป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย
+        </p>
+
+        <div class="hero-cta anim-fade-up anim-delay-3">
+          <a href="catalog.html" class="btn btn-primary btn-xl">
+            🛍️ ดูสินค้าทั้งหมด
+          </a>
+          <a href="gallery.html" class="btn btn-secondary btn-xl">
+            📸 ดูตัวอย่างงาน
+          </a>
+        </div>
+
+        <div class="hero-trust anim-fade-up anim-delay-4">
+          <div class="trust-item">
+            <span class="trust-icon">📦</span>
+            <span><span class="trust-val">500+</span> ออเดอร์</span>
+          </div>
+          <div class="trust-sep"></div>
+          <div class="trust-item">
+            <span class="trust-icon">⭐</span>
+            <span><span class="trust-val">4.9/5</span> รีวิว</span>
+          </div>
+          <div class="trust-sep"></div>
+          <div class="trust-item">
+            <span class="trust-icon">🚀</span>
+            <span><span class="trust-val">1-3</span> วันทำการ</span>
+          </div>
+          <div class="trust-sep"></div>
+          <div class="trust-item">
+            <span class="trust-icon">🛡️</span>
+            <span><span class="trust-val">รับประกัน</span> คุณภาพ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Visual Cards -->
+      <div class="hero-visual">
+        <div class="hero-cards">
+          <div class="hcard hcard-lg" style="height:280px">
+            <div class="hcard-inner">
+              <span class="hcard-emoji">📸</span>
+              <div class="hcard-label">โพลารอยด์</div>
+              <div class="hcard-sub">3×4 · 4×6 · Square</div>
+              <div class="hcard-dots">
+                <div class="hcard-dot on"></div>
+                <div class="hcard-dot on"></div>
+                <div class="hcard-dot"></div>
+              </div>
+            </div>
+          </div>
+          <div class="hcard hcard-sm" style="height:200px">
+            <div class="hcard-inner">
+              <span class="hcard-emoji">🪪</span>
+              <div class="hcard-label">บัตรแขวนคอ</div>
+              <div class="hcard-sub">PVC · ทนทาน</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-float-badge">
+          <span class="float-badge-icon">✅</span>
+          <div class="float-badge-text">
+            <strong>ออเดอร์ล่าสุด เสร็จแล้ว</strong>
+            <span>เมื่อ 2 ชั่วโมงที่แล้ว</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CATEGORIES ═══ -->
+  <section class="section categories">
+    <div class="section-inner">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">หมวดหมู่ <span class="text-sky">สินค้า</span></h2>
+          <p class="section-sub">เลือกประเภทที่ต้องการ มีครบทุกอย่าง</p>
+        </div>
+        <a href="catalog.html" class="see-all-link">ดูทั้งหมด →</a>
+      </div>
+
+      <div class="cat-grid" id="categories-grid">
+        <a href="catalog.html?cat=polaroid" class="cat-card">
+          <span class="cat-icon">📸</span>
+          <div class="cat-name">รูปโพลารอยด์</div>
+          <div class="cat-count">12 รายการ</div>
+        </a>
+        <a href="catalog.html?cat=lanyard" class="cat-card">
+          <span class="cat-icon">🪪</span>
+          <div class="cat-name">บัตรแขวนคอ</div>
+          <div class="cat-count">8 รายการ</div>
+        </a>
+        <a href="catalog.html?cat=business-card" class="cat-card">
+          <span class="cat-icon">💼</span>
+          <div class="cat-name">นามบัตร</div>
+          <div class="cat-count">15 รายการ</div>
+        </a>
+        <a href="catalog.html?cat=shop-sign" class="cat-card">
+          <span class="cat-icon">🏪</span>
+          <div class="cat-name">ป้ายร้านค้า</div>
+          <div class="cat-count">10 รายการ</div>
+        </a>
+        <a href="catalog.html?cat=qrcode" class="cat-card">
+          <span class="cat-icon">📱</span>
+          <div class="cat-name">QR Code</div>
+          <div class="cat-count">6 รายการ</div>
+        </a>
+        <a href="catalog.html?cat=doll-tag" class="cat-card">
+          <span class="cat-icon">🧸</span>
+          <div class="cat-name">ป้ายตุ๊กตา</div>
+          <div class="cat-count">7 รายการ</div>
+        </a>
+        <a href="catalog.html?cat=student-card" class="cat-card">
+          <span class="cat-icon">🎓</span>
+          <div class="cat-name">บัตรนักเรียน</div>
+          <div class="cat-count">5 รายการ</div>
+        </a>
+        <a href="catalog.html" class="cat-card">
+          <span class="cat-icon">✨</span>
+          <div class="cat-name">อื่นๆ</div>
+          <div class="cat-count">20+ รายการ</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FEATURED PRODUCTS ═══ -->
+  <section class="section" style="padding-top:0">
+    <div class="section-inner">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">สินค้า<span class="text-sky">แนะนำ</span></h2>
+          <p class="section-sub">คัดมาเฉพาะที่ลูกค้าชื่นชอบ</p>
+        </div>
+        <a href="catalog.html" class="see-all-link">ดูทั้งหมด →</a>
+      </div>
+
+      <div class="product-grid" id="featured-products">
+        <!-- Populated by home.js -->
+        <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">
+          <span class="spinner" style="display:block;margin:0 auto 0.75rem"></span>
+          กำลังโหลดสินค้า...
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PROMO BANNER ═══ -->
+  <div class="promo-section">
+    <div class="promo-banner">
+      <div class="promo-inner">
+        <div>
+          <div class="promo-tag">🎁 โปรโมชั่นพิเศษ</div>
+          <h3>ออเดอร์แรก ลด 15%</h3>
+          <p>สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย</p>
+        </div>
+        <a href="catalog.html" class="btn btn-primary btn-lg">สั่งเลย →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FEATURES ═══ -->
+  <section class="section" style="padding-top:0">
+    <div class="section-inner">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">ทำไมต้อง <span class="text-sky">Diamond Cute Studio?</span></h2>
+        </div>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <div class="feature-title">คุณภาพพรีเมียม</div>
+          <div class="feature-desc">วัสดุคุณภาพสูง สีสดใส ทนทาน ไม่ซีดจาง มาตรฐานระดับมืออาชีพ</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">ผลิตรวดเร็ว</div>
+          <div class="feature-desc">ส่วนใหญ่เสร็จใน 1-3 วันทำการ มีบริการด่วนสำหรับงานเร่ง</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🚚</div>
+          <div class="feature-title">ส่งทั่วประเทศ</div>
+          <div class="feature-desc">จัดส่งผ่าน Kerry, Flash, ไปรษณีย์ไทย ติดตามพัสดุได้ตลอด</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <div class="feature-title">บริการใส่ใจ</div>
+          <div class="feature-desc">ปรึกษาฟรีผ่าน LINE ตอบเร็ว แก้ไขงานได้จนพอใจ</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="footer">
+    <div class="footer-main">
+      <div class="footer-brand">
+        <span class="logo-text">💎 Diamond Cute Studio</span>
+        <p>บริการพิมพ์ภาพและสิ่งพิมพ์คุณภาพ<br>รับออเดอร์ทุกวัน ส่งทั่วประเทศไทย</p>
+        <div class="footer-socials">
+          <a href="#" class="social-btn" title="LINE OA">💬</a>
+          <a href="#" class="social-btn" title="Facebook">📘</a>
+          <a href="#" class="social-btn" title="Instagram">📸</a>
+          <a href="#" class="social-btn" title="TikTok">🎵</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>สินค้า</h4>
+        <a href="catalog.html?cat=polaroid">📸 รูปโพลารอยด์</a>
+        <a href="catalog.html?cat=lanyard">🪪 บัตรแขวนคอ</a>
+        <a href="catalog.html?cat=business-card">💼 นามบัตร</a>
+        <a href="catalog.html?cat=shop-sign">🏪 ป้ายร้านค้า</a>
+        <a href="catalog.html?cat=qrcode">📱 QR Code</a>
+        <a href="catalog.html?cat=doll-tag">🧸 ป้ายตุ๊กตา</a>
+      </div>
+      <div class="footer-col">
+        <h4>ข้อมูล</h4>
+        <a href="about.html">📋 วิธีสั่งซื้อ</a>
+        <a href="gallery.html">🖼️ ตัวอย่างงาน</a>
+        <a href="contact.html">💬 ติดต่อเรา</a>
+        <a href="#">🔒 นโยบายความเป็นส่วนตัว</a>
+        <a href="#">📜 เงื่อนไขการใช้บริการ</a>
+      </div>
+      <div class="footer-col">
+        <h4>ติดต่อเรา</h4>
+        <a href="https://line.me" target="_blank" rel="noopener">💬 LINE OA</a>
+        <a href="https://facebook.com" target="_blank" rel="noopener">📘 Facebook</a>
+        <a href="https://instagram.com" target="_blank" rel="noopener">📸 Instagram</a>
+        <a href="mailto:shop@diamondcutestudio.com">📧 อีเมล</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Diamond Cute Studio 💎 — All rights reserved.</span>
+      <span>Designed with ❤️ · Powered by Firebase + Cloudflare</span>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/navbar.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>
