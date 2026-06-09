@@ -56,7 +56,7 @@
 
           <div class="nav-actions">
             <!-- theme switcher injected here by theme-switcher.js -->
-            <a href="https://line.me/R/ti/p/YOUR_LINE_OA"
+            <a href="https://line.me/R/ti/p/@913huiwn"
                target="_blank" rel="noopener"
                class="btn btn-line btn-sm hide-mobile">💬 LINE</a>
             <a href="cart.html" class="nav-icon-btn" aria-label="ตะกร้าสินค้า" title="ตะกร้า">

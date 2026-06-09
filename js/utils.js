@@ -6,12 +6,12 @@
 // ─── Firebase Config ───
 // TODO: Replace with your actual Firebase project config
 const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey:            "AIzaSyB7bssyVp57OOX2Q0PDcmjdL259VuEOP-0",
+  authDomain:        "diamond-cute-studio.firebaseapp.com",
+  projectId:         "diamond-cute-studio",
+  storageBucket:     "diamond-cute-studio.firebasestorage.app",
+  messagingSenderId: "896135008460",
+  appId:             "1:896135008460:web:be9bb385f3aca1533f3269"
 };
 
 // ─── Firebase Ready Promise ───
@@ -72,7 +72,7 @@ function getFirebaseReady() {
 function getDb() { return _db; }
 
 // ─── ImgBB Upload ───
-const IMGBB_API_KEY = "YOUR_IMGBB_API_KEY"; // TODO: replace
+const IMGBB_API_KEY = "df00a7ad6294a89bc99d7c6f900e7393"; // TODO: replace
 
 async function uploadToImgBB(file) {
   const formData = new FormData();
