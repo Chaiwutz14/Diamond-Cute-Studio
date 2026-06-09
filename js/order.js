@@ -80,11 +80,10 @@ function renderSummary() {
 
   if (!rowsEl) return;
 
-  const subtotal  = DMC.getCartTotal();
-  const shipping  = selectedPayment === 'cod' ? 80 : 50;
-  const discount  = couponDiscount;
-  const cod       = selectedPayment === 'cod' ? 30 : 0;
-  const grandTotal = Math.max(0, subtotal + shipping + cod - discount);
+  const subtotal   = DMC.getCartTotal();
+  const shipping   = selectedPayment === 'cod' ? 80 : 50;
+  const discount   = couponDiscount;
+  const grandTotal = Math.max(0, subtotal + shipping - discount);
 
   rowsEl.innerHTML = cart.map(item => `
     <div class="summary-row">
@@ -96,11 +95,15 @@ function renderSummary() {
       <span class="label">ค่าจัดส่ง</span>
       <span class="value">${DMC.formatPrice(shipping)}</span>
     </div>
-    ${cod > 0 ? `
+    ${selectedPayment === 'cod' ? `
     <div class="summary-row">
-      <span class="label">ค่าธรรมเนียม COD</span>
-      <span class="value extra">+${DMC.formatPrice(cod)}</span>
-    </div>` : ''}
+      <span class="label">ค่าจัดส่ง COD</span>
+      <span class="value">฿80 <span style="font-size:.72rem;color:var(--text-3)">(รวมค่า COD)</span></span>
+    </div>` : `
+    <div class="summary-row">
+      <span class="label">ค่าจัดส่ง</span>
+      <span class="value">${DMC.formatPrice(shipping)}</span>
+    </div>`}
     ${discount > 0 ? `
     <div class="summary-row">
       <span class="label">ส่วนลด</span>
@@ -372,6 +375,9 @@ async function submitOrder() {
 
     // Show success
     showSuccess(orderId);
+
+    // Note: ระบบแจ้งเตือนลูกค้าทาง LINE ต้องทำผ่านหน้า Admin
+    // (ส่ง LINE Push ถึงลูกค้าได้เมื่อมี User ID ของลูกค้า)
 
   } catch (err) {
     console.error('Order submit error:', err);

@@ -411,3 +411,57 @@
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .order-detail-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Admin UX Improvements (ข้อ 10) ── */
+
+/* Logout button style */
+#logout-btn, #logout-btn-2 {
+  background: rgba(251,113,133,0.1) !important;
+  border-color: var(--rose) !important;
+  color: var(--rose) !important;
+}
+#logout-btn:hover, #logout-btn-2:hover {
+  background: rgba(251,113,133,0.2) !important;
+}
+
+/* Admin navbar branding */
+.admin-navbar-brand {
+  display: flex; align-items: center; gap: .6rem;
+}
+.admin-navbar-brand .logo-text {
+  font-family: var(--font-display); font-weight: 800; font-size: 1rem;
+  background: linear-gradient(135deg, var(--accent), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+/* Better mobile admin */
+@media (max-width: 900px) {
+  .admin-sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-card);
+  }
+  .admin-sidebar.open { transform: translateX(0); }
+  .admin-main { margin-left: 0 !important; }
+  .kpi-grid   { grid-template-columns: repeat(2,1fr); }
+  .admin-grid { grid-template-columns: 1fr; }
+  .settings-grid { grid-template-columns: 1fr; }
+
+  /* Overlay when sidebar open */
+  .sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 699;
+    background: rgba(0,0,0,.4);
+  }
+  .sidebar-overlay.visible { display: block; }
+}
+
+@media (max-width: 600px) {
+  .admin-main  { padding: 1rem; }
+  .kpi-grid    { grid-template-columns: repeat(2,1fr); gap: .6rem; }
+  .kpi-card    { padding: 1rem; }
+  .kpi-value   { font-size: 1.3rem; }
+  .admin-topbar{ flex-wrap: wrap; }
+  .admin-topbar-actions { width: 100%; }
+  .data-table  { font-size: .78rem; }
+  .data-table th, .data-table td { padding: .5rem .4rem; }
+}

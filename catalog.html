@@ -5,6 +5,10 @@
   <link rel="stylesheet" href="css/themes.css">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="สินค้าทั้งหมด — Diamond Cute Studio 💎">
+  <meta property="og:description" content="Diamond Cute Studio 💎 — สินค้าพิมพ์ภาพครบวงจร โพลารอยด์ นามบัตร บัตรแขวนคอ ป้ายร้านค้า QR Code">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
   <meta name="description" content="สินค้าทั้งหมด — Diamond Cute Studio 💎 โพลารอยด์ นามบัตร บัตรแขวนคอ ป้ายร้านค้า QR Code">
   <title>สินค้าทั้งหมด — Diamond Cute Studio 💎</title>
   <link rel="stylesheet" href="css/main.css">
@@ -31,6 +35,20 @@
 
 <!-- Catalog Layout -->
 <div class="catalog-wrapper">
+
+  <!-- Mobile Category Dropdown (มือถือ) -->
+  <div class="filter-mobile-dropdown">
+    <select class="filter-mobile-select" id="mobile-cat-select">
+      <option value="">📂 ทุกหมวดหมู่</option>
+      <option value="polaroid">📸 โพลารอยด์</option>
+      <option value="lanyard">🪪 บัตรแขวนคอ</option>
+      <option value="business-card">💼 นามบัตร</option>
+      <option value="shop-sign">🏪 ป้ายร้านค้า</option>
+      <option value="qrcode">📱 QR Code</option>
+      <option value="doll-tag">🧸 ป้ายตุ๊กตา</option>
+      <option value="student-card">🎓 บัตรนักเรียน</option>
+    </select>
+  </div>
 
   <!-- Filter Sidebar -->
   <aside class="filter-sidebar">
@@ -137,10 +155,12 @@
   </main>
 </div>
 
+<div id="footer-mount"></div>
 <div id="toast-container"></div>
 <script src="js/utils.js"></script>
 <script src="js/navbar.js"></script>
 <script src="js/catalog.js"></script>
+<script src="js/footer.js"></script>
 <script src="js/theme-switcher.js"></script>
 <script src="js/admin-access.js"></script>
 </body>

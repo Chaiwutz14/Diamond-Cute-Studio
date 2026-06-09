@@ -14,10 +14,11 @@
 </head>
 <body>
 
+<a class="skip-link" href="#main-content">ข้ามไปเนื้อหาหลัก</a>
 <div id="navbar-mount"></div>
 
 <!-- HERO -->
-<section class="hero">
+<section class="hero" id="main-content" aria-label="หน้าแรก">
   <div class="hero-bg"></div>
   <canvas id="hero-canvas"></canvas>
   <div class="hero-inner">
@@ -152,51 +153,12 @@
   </div>
 </section>
 
-<!-- FOOTER -->
-<footer class="footer">
-  <div class="footer-main">
-    <div class="footer-brand">
-      <span class="logo-text">💎 Diamond Cute Studio</span>
-      <p>บริการพิมพ์ภาพและสิ่งพิมพ์คุณภาพ<br>รับออเดอร์ทุกวัน ส่งทั่วประเทศไทย</p>
-      <div class="footer-socials">
-        <a href="#" class="social-btn" title="LINE OA">💬</a>
-        <a href="#" class="social-btn" title="Facebook">📘</a>
-        <a href="#" class="social-btn" title="Instagram">📸</a>
-        <a href="#" class="social-btn" title="TikTok">🎵</a>
-      </div>
-    </div>
-    <div class="footer-col">
-      <h4>สินค้า</h4>
-      <a href="catalog.html?cat=polaroid">📸 รูปโพลารอยด์</a>
-      <a href="catalog.html?cat=lanyard">🪪 บัตรแขวนคอ</a>
-      <a href="catalog.html?cat=business-card">💼 นามบัตร</a>
-      <a href="catalog.html?cat=shop-sign">🏪 ป้ายร้านค้า</a>
-      <a href="catalog.html?cat=qrcode">📱 QR Code</a>
-    </div>
-    <div class="footer-col">
-      <h4>ข้อมูล</h4>
-      <a href="about.html">📋 วิธีสั่งซื้อ</a>
-      <a href="gallery.html">🖼️ ตัวอย่างงาน</a>
-      <a href="contact.html">💬 ติดต่อเรา</a>
-      <a href="#">🔒 นโยบายความเป็นส่วนตัว</a>
-    </div>
-    <div class="footer-col">
-      <h4>ติดต่อเรา</h4>
-      <a href="#">💬 LINE OA</a>
-      <a href="#">📘 Facebook</a>
-      <a href="#">📸 Instagram</a>
-      <a href="#">📧 อีเมล</a>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <span>© 2025 Diamond Cute Studio 💎</span>
-    <span>Powered by Firebase + Cloudflare</span>
-  </div>
-</footer>
 
+<div id="footer-mount"></div>
 <div id="toast-container"></div>
 <script src="js/utils.js"></script>
 <script src="js/navbar.js"></script>
+<script src="js/footer.js"></script>
 <script src="js/theme-switcher.js"></script>
 <script src="js/admin-access.js"></script>
 <script src="js/home.js"></script>

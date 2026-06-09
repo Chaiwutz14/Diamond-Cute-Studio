@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="sky">
+<head>
+  <meta charset="UTF-8">
+    <meta property="og:title" content="ตัวอย่างงาน — Diamond Cute Studio 💎">
+  <meta property="og:description" content="Diamond Cute Studio 💎 — ตัวอย่างผลงานจริงจากลูกค้า โพลารอยด์ นามบัตร บัตรแขวนคอ">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
+  <meta name="description" content="Diamond Cute Studio 💎 — ตัวอย่างผลงานจริงจากลูกค้า โพลารอยด์ นามบัตร บัตรแขวนคอ">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตัวอย่างงาน — Diamond Cute Studio 💎</title>
+  <script src="js/theme-init.js"></script>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+  <style>
+    .gallery-wrapper { max-width: 1200px; margin: 0 auto; padding: calc(var(--nav-h) + 2rem) 1.5rem 4rem; }
+    .page-hero { text-align: center; margin-bottom: 2.5rem; }
+    .page-hero h1 { font-size: clamp(1.8rem,4vw,2.5rem); font-weight: 800; margin-bottom: .6rem; }
+    .page-hero p  { color: var(--text-2); }
+
+    /* Category tabs */
+    .gallery-tabs {
+      display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .gallery-tab {
+      padding: .42rem 1.1rem; border-radius: var(--r-pill);
+      border: 1.5px solid var(--border);
+      font-family: var(--font-display); font-size: .84rem;
+      cursor: pointer; transition: all .15s;
+      background: transparent; color: var(--text-2);
+    }
+    .gallery-tab:hover  { border-color: var(--accent); color: var(--accent); }
+    .gallery-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* Masonry grid */
+    .gallery-grid {
+      columns: 4; column-gap: 1rem;
+    }
+    .gallery-item {
+      break-inside: avoid; margin-bottom: 1rem;
+      border-radius: var(--r-xl); overflow: hidden;
+      border: 1.5px solid var(--border);
+      background: var(--bg-card);
+      cursor: pointer; transition: all .25s;
+      position: relative;
+    }
+    .gallery-item:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
+
+    .gallery-img {
+      width: 100%; display: block;
+      background: var(--bg-mid);
+      aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3.5rem;
+    }
+    .gallery-img.tall  { aspect-ratio: 3/4; }
+    .gallery-img.wide  { aspect-ratio: 4/3; }
+    .gallery-img img   { width: 100%; height: 100%; object-fit: cover; }
+
+    .gallery-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.6), transparent 50%);
+      opacity: 0; transition: opacity .25s;
+      display: flex; align-items: flex-end; padding: .75rem;
+    }
+    .gallery-item:hover .gallery-overlay { opacity: 1; }
+    .gallery-overlay-text { color: #fff; font-family: var(--font-display); font-size: .82rem; font-weight: 600; }
+
+    .gallery-caption { padding: .65rem .85rem; }
+    .gallery-cat  { font-size: .7rem; color: var(--accent); font-family: var(--font-display); font-weight: 600; text-transform: uppercase; margin-bottom: .2rem; }
+    .gallery-name { font-family: var(--font-display); font-weight: 600; font-size: .88rem; color: var(--text-1); }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,.92); backdrop-filter: blur(8px);
+      display: none; align-items: center; justify-content: center;
+      padding: 1.5rem;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox-img  { max-width: 90vw; max-height: 85vh; border-radius: var(--r-xl); object-fit: contain; }
+    .lightbox-close {
+      position: absolute; top: 1.25rem; right: 1.25rem;
+      width: 42px; height: 42px; border-radius: 50%;
+      background: rgba(255,255,255,.12); border: none; color: #fff;
+      font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .lightbox-close:hover { background: rgba(255,255,255,.25); }
+    .lightbox-emoji { font-size: 8rem; }
+
+    .empty-gallery {
+      text-align: center; padding: 4rem 1.5rem; color: var(--text-3);
+      grid-column: 1/-1;
+    }
+    .empty-gallery h3 { font-size: 1.1rem; margin-bottom: .5rem; color: var(--text-2); }
+
+    @media(max-width:900px){ .gallery-grid{ columns: 3; } }
+    @media(max-width:640px){ .gallery-grid{ columns: 2; } }
+    @media(max-width:400px){ .gallery-grid{ columns: 1; } }
+  </style>
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<div class="gallery-wrapper">
+  <div class="page-hero anim-fade-up">
+    <div style="font-size:3rem;margin-bottom:.75rem">🖼️</div>
+    <h1>ตัวอย่างงาน</h1>
+    <p>ผลงานจริงจากลูกค้า คุณภาพที่คุณมั่นใจได้</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="gallery-tabs" id="gallery-tabs">
+    <button class="gallery-tab active" data-cat="all">ทั้งหมด</button>
+    <button class="gallery-tab" data-cat="polaroid">📸 โพลารอยด์</button>
+    <button class="gallery-tab" data-cat="lanyard">🪪 บัตรแขวนคอ</button>
+    <button class="gallery-tab" data-cat="business-card">💼 นามบัตร</button>
+    <button class="gallery-tab" data-cat="shop-sign">🏪 ป้ายร้านค้า</button>
+    <button class="gallery-tab" data-cat="qrcode">📱 QR Code</button>
+    <button class="gallery-tab" data-cat="doll-tag">🧸 ป้ายตุ๊กตา</button>
+  </div>
+
+  <!-- Gallery Grid -->
+  <div class="gallery-grid" id="gallery-grid">
+    <!-- Populated by JS from Firestore or placeholder -->
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightbox-close">✕</button>
+  <div id="lightbox-content"></div>
+</div>
+
+<div id="footer-mount"></div>
+<div id="toast-container"></div>
+<script src="js/utils.js"></script>
+<script src="js/navbar.js"></script>
+<script src="js/footer.js"></script>
+<script src="js/theme-switcher.js"></script>
+<script src="js/admin-access.js"></script>
+<script>
+'use strict';
+
+// Placeholder gallery items (replace with Firestore when you add real photos)
+var GALLERY_ITEMS = [
+  { cat:'polaroid',      name:'โพลารอยด์ขอบขาว',     emoji:'📸', size:'tall'  },
+  { cat:'polaroid',      name:'โพลารอยด์มินิมอล',    emoji:'🖼️', size:''      },
+  { cat:'lanyard',       name:'บัตรนักเรียน',          emoji:'🪪', size:''      },
+  { cat:'business-card', name:'นามบัตรเคลือบมัน',     emoji:'💼', size:'wide'  },
+  { cat:'shop-sign',     name:'ป้ายชื่อร้าน',          emoji:'🏪', size:'tall'  },
+  { cat:'polaroid',      name:'โพลารอยด์ Square',      emoji:'📷', size:''      },
+  { cat:'qrcode',        name:'ป้าย QR PromptPay',     emoji:'📱', size:''      },
+  { cat:'doll-tag',      name:'ป้ายตุ๊กตาหัวดุ๊กดิ๊ก', emoji:'🧸', size:''      },
+  { cat:'lanyard',       name:'บัตรพนักงาน',           emoji:'🪪', size:'tall'  },
+  { cat:'business-card', name:'นามบัตรด้าน Matte',    emoji:'🗒️', size:''      },
+  { cat:'polaroid',      name:'โพลารอยด์ธีมฤดูร้อน',  emoji:'☀️', size:''      },
+  { cat:'shop-sign',     name:'ป้ายเมนูอะคริลิก',     emoji:'📋', size:'wide'  },
+];
+
+var CAT_LABELS = { polaroid:'โพลารอยด์', lanyard:'บัตรแขวนคอ', 'business-card':'นามบัตร', 'shop-sign':'ป้ายร้านค้า', qrcode:'QR Code', 'doll-tag':'ป้ายตุ๊กตา' };
+
+function renderGallery(cat) {
+  var grid = document.getElementById('gallery-grid');
+  var items = cat === 'all' ? GALLERY_ITEMS : GALLERY_ITEMS.filter(function(i){ return i.cat === cat; });
+
+  if (items.length === 0) {
+    grid.innerHTML = '<div class="empty-gallery"><div style="font-size:2.5rem;margin-bottom:.75rem">🔍</div><h3>ยังไม่มีตัวอย่างงานในหมวดนี้</h3><p>ติดต่อเราผ่าน LINE เพื่อดูตัวอย่างเพิ่มเติม</p></div>';
+    return;
+  }
+
+  grid.innerHTML = items.map(function(item, i){
+    return '<div class="gallery-item" data-idx="'+i+'" data-cat="'+item.cat+'">'
+      + '<div class="gallery-img '+(item.size||'')+'">'
+      + (item.image ? '<img src="'+item.image+'" alt="'+item.name+'" loading="lazy">' : item.emoji)
+      + '</div>'
+      + '<div class="gallery-overlay"><div class="gallery-overlay-text">'+item.name+'</div></div>'
+      + '<div class="gallery-caption">'
+      + '<div class="gallery-cat">'+(CAT_LABELS[item.cat]||item.cat)+'</div>'
+      + '<div class="gallery-name">'+item.name+'</div>'
+      + '</div></div>';
+  }).join('');
+
+  // Lightbox click
+  grid.querySelectorAll('.gallery-item').forEach(function(el){
+    el.addEventListener('click', function(){
+      var idx  = parseInt(el.dataset.idx);
+      var item = items[idx];
+      var lb = document.getElementById('lightbox');
+      var lbc = document.getElementById('lightbox-content');
+      if (item.image) {
+        lbc.innerHTML = '<img class="lightbox-img" src="'+item.image+'" alt="'+item.name+'">';
+      } else {
+        lbc.innerHTML = '<div class="lightbox-emoji">'+item.emoji+'</div>';
+      }
+      lb.classList.add('open');
+    });
+  });
+}
+
+// Tabs
+document.querySelectorAll('.gallery-tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    document.querySelectorAll('.gallery-tab').forEach(function(t){ t.classList.remove('active'); });
+    tab.classList.add('active');
+    renderGallery(tab.dataset.cat);
+  });
+});
+
+// Lightbox close
+document.getElementById('lightbox-close').addEventListener('click', function(){
+  document.getElementById('lightbox').classList.remove('open');
+});
+document.getElementById('lightbox').addEventListener('click', function(e){
+  if (e.target === this) this.classList.remove('open');
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') document.getElementById('lightbox').classList.remove('open');
+});
+
+// Try load from Firestore
+document.addEventListener('DOMContentLoaded', async function(){
+  try {
+    var db = await DMC.getFirebaseReady();
+    var snap = await db.collection('gallery').where('active','==',true).limit(50).get();
+    if (!snap.empty) {
+      GALLERY_ITEMS = [];
+      snap.forEach(function(doc){ GALLERY_ITEMS.push(Object.assign({id:doc.id}, doc.data())); });
+    }
+  } catch(e) { /* use placeholder */ }
+  renderGallery('all');
+});
+</script>
+</body>
+</html>

@@ -99,6 +99,19 @@ function bindEvents() {
   // Apply / Clear filters
   document.getElementById('apply-filter-btn')?.addEventListener('click', applyFiltersAndRender);
   document.getElementById('clear-filter-btn')?.addEventListener('click', clearFilters);
+
+  // Mobile dropdown sync
+  var mobileSelect = document.getElementById('mobile-cat-select');
+  if (mobileSelect) {
+    if (currentCat) mobileSelect.value = currentCat;
+    mobileSelect.addEventListener('change', function(){
+      currentCat = mobileSelect.value;
+      document.querySelectorAll('.filter-item[data-cat]').forEach(function(el){
+        el.classList.toggle('active', el.dataset.cat === currentCat);
+      });
+      applyFiltersAndRender();
+    });
+  }
 }
 
 // ─── Apply Filters ───
@@ -179,7 +192,7 @@ function buildCard(p) {
   return `
     <a href="product.html?id=${p.id}" class="product-card" data-id="${p.id}">
       <div class="product-img-wrap">
-        ${p.image ? `<img src="${p.image}" alt="${DMC.escapeHtml(p.name)}" loading="lazy">` : `<span>${p.emoji||'📦'}</span>`}
+        ${p.image ? `<img src="${p.image}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">` : `<span>${p.emoji||'📦'}</span>`}
         <div class="product-img-overlay"></div>
         ${badges.length ? `<div class="product-badges">${badges.join('')}</div>` : ''}
         <button class="product-wish" data-id="${p.id}" aria-label="บันทึก" title="บันทึก">♡</button>

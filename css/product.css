@@ -320,3 +320,64 @@
   .detail-actions { flex-direction: column; }
   .gallery-main { font-size: 4rem; }
 }
+
+/* ── Mobile Category Dropdown (ข้อ 5) ── */
+.filter-mobile-dropdown {
+  display: none;
+  margin-bottom: 1rem;
+}
+
+.filter-mobile-select {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--r-lg);
+  padding: .75rem 1rem;
+  font-family: var(--font-display); font-size: .95rem;
+  color: var(--accent); font-weight: 600;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 12 12'%3E%3Cpath fill='%230EA5E9' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+
+@media (max-width: 900px) {
+  .filter-mobile-dropdown { display: block; }
+  .filter-sidebar { display: none; }
+  .catalog-wrapper { grid-template-columns: 1fr; }
+}
+
+/* ── Product Detail Mobile Fix (ข้อ 6) ── */
+@media (max-width: 768px) {
+  .detail-wrapper { padding: 0 .85rem 3rem; }
+  .detail-layout  { padding-top: 1.25rem; gap: 1.25rem; }
+
+  .gallery-main   { aspect-ratio: 4/3; font-size: 4rem; border-radius: var(--r-xl); }
+
+  .detail-info    { padding: 1.1rem; border-radius: var(--r-xl); }
+  .detail-title   { font-size: 1.3rem; }
+  .price-main     { font-size: 1.65rem; }
+
+  .price-tiers    { gap: .3rem; }
+  .price-tier     { font-size: .7rem; padding: .16rem .5rem; }
+
+  .options-chips  { gap: .3rem; }
+  .option-chip    { padding: .32rem .75rem; font-size: .8rem; }
+
+  .detail-actions { flex-direction: column; }
+  .detail-actions .btn { width: 100%; justify-content: center; }
+
+  .gallery-thumbs { gap: .4rem; }
+  .gallery-thumb  { width: 54px; height: 54px; }
+
+  .preview-tool   { padding: .9rem; }
+  .template-chip  { min-width: 55px; padding: .45rem .35rem; }
+  .template-chip-icon { font-size: 1.1rem; }
+}
+
+@media (max-width: 400px) {
+  .detail-title { font-size: 1.15rem; }
+  .price-main   { font-size: 1.45rem; }
+}

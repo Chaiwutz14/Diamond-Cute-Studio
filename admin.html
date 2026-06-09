@@ -4,6 +4,7 @@
   <script src="js/theme-init.js"></script>
   <link rel="stylesheet" href="css/themes.css">
   <meta charset="UTF-8">
+  <meta name="description" content="Diamond Cute Studio — Admin Dashboard">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard — Diamond Cute Studio 💎</title>
   <meta name="robots" content="noindex, nofollow">
@@ -30,6 +31,8 @@
 </nav>
 
 <div id="admin-dashboard" class="admin-shell">
+  <!-- Mobile sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
   <!-- Sidebar -->
   <aside class="admin-sidebar" id="admin-sidebar">
@@ -57,6 +60,16 @@
         </div>
       </div>
 
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">คอนเทนต์</div>
+        <div class="sidebar-item" data-section="gallery">
+          <span class="sidebar-item-icon">🖼️</span> ตัวอย่างงาน
+        </div>
+        <div class="sidebar-item" data-section="contacts">
+          <span class="sidebar-item-icon">📬</span> กล่องข้อความ
+          <span class="sidebar-badge" id="contacts-badge" style="display:none">!</span>
+        </div>
+      </div>
       <div class="sidebar-section">
         <div class="sidebar-section-label">ระบบ</div>
         <div class="sidebar-item" data-section="settings">
@@ -110,10 +123,37 @@
       window.location.href = 'admin-login.html';
     }
   });
-  // Mobile sidebar toggle visibility
-  if (window.innerWidth <= 900) {
-    document.getElementById('sidebar-toggle').style.display = '';
+  // Mobile sidebar toggle
+  var sidebarToggle = document.getElementById('sidebar-toggle');
+  var sidebar       = document.getElementById('admin-sidebar');
+  var overlay       = document.getElementById('sidebar-overlay');
+
+  function showToggle() {
+    if (window.innerWidth <= 900) sidebarToggle.style.display = '';
+    else sidebarToggle.style.display = 'none';
   }
+  showToggle();
+  window.addEventListener('resize', showToggle);
+
+  sidebarToggle.addEventListener('click', function(){
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('visible');
+  });
+
+  overlay.addEventListener('click', function(){
+    sidebar.classList.remove('open');
+    overlay.classList.remove('visible');
+  });
+
+  // Close sidebar when menu item clicked on mobile
+  document.querySelectorAll('.sidebar-item[data-section]').forEach(function(item){
+    item.addEventListener('click', function(){
+      if (window.innerWidth <= 900) {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+      }
+    });
+  });
 </script>
 </body>
 </html>

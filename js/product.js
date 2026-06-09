@@ -122,10 +122,12 @@ function renderProduct() {
     document.getElementById('product-desc-text').textContent = product.fullDesc;
   }
 
-  // Preview Tool
+  // Preview Tool (Canvas)
   if (product.hasPreview) {
     document.getElementById('preview-tool').style.display = '';
-    initPreviewTool();
+    if (typeof window.initPreviewTool === 'function') {
+      setTimeout(() => window.initPreviewTool({ containerId:'preview-tool-container', size:{w:270,h:378} }), 50);
+    }
   }
 
   // Quantity
@@ -173,68 +175,13 @@ function updateSubtotal() {
   document.getElementById('subtotal-display').textContent = DMC.formatPrice(total);
 }
 
-// ─── Preview Tool ───
+// ─── Preview Tool (Canvas Version) ───
 function initPreviewTool() {
-  const zone     = document.getElementById('upload-zone');
-  const fileInput = document.getElementById('preview-upload');
-  const result   = document.getElementById('preview-result');
-  const imgEl    = document.getElementById('preview-img');
-  const clearBtn = document.getElementById('clear-preview-btn');
-
-  zone?.addEventListener('click', () => fileInput?.click());
-  zone?.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('active'); });
-  zone?.addEventListener('dragleave', () => zone.classList.remove('active'));
-  zone?.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('active');
-    const file = e.dataTransfer.files[0];
-    if (file?.type.startsWith('image/')) loadPreview(file);
-  });
-
-  fileInput?.addEventListener('change', () => {
-    const file = fileInput.files[0];
-    if (file) loadPreview(file);
-  });
-
-  clearBtn?.addEventListener('click', () => {
-    result.classList.remove('visible');
-    clearBtn.style.display = 'none';
-    zone.style.display = '';
-    imgEl.src = '';
-    fileInput.value = '';
-  });
-
-  // Template chips
-  document.querySelectorAll('.template-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.template-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      if (imgEl.src) applyTemplateFilter(chip.dataset.tpl);
-    });
-  });
-
-  function loadPreview(file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      imgEl.src = e.target.result;
-      result.classList.add('visible');
-      clearBtn.style.display = '';
-      zone.style.display = 'none';
-      const activeTpl = document.querySelector('.template-chip.active')?.dataset.tpl || 'classic';
-      applyTemplateFilter(activeTpl);
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function applyTemplateFilter(tpl) {
-    const filters = {
-      classic: 'none',
-      minimal: 'saturate(0.7) brightness(1.05)',
-      dark:    'brightness(0.75) contrast(1.2)',
-      warm:    'sepia(0.3) saturate(1.3) brightness(1.05)',
-      cool:    'hue-rotate(20deg) saturate(1.1)',
-      cute:    'saturate(1.4) brightness(1.08) contrast(0.95)',
-    };
-    imgEl.style.filter = filters[tpl] || 'none';
+  if (typeof initPreviewTool_canvas === 'undefined') {
+    // Use canvas-preview.js
+    if (typeof window.initPreviewTool === 'function') {
+      window.initPreviewTool({ containerId: 'preview-tool-container', size:{w:280,h:390} });
+    }
   }
 }
 

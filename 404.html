@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="sky">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="ไม่พบหน้าที่ต้องการ — Diamond Cute Studio 💎">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>ไม่พบหน้า — Diamond Cute Studio 💎</title>
+  <script src="js/theme-init.js"></script>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+  <style>
+    .not-found {
+      min-height: 100svh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 2rem;
+      background: var(--bg);
+      flex-direction: column; gap: 1rem;
+    }
+    .nf-code {
+      font-size: clamp(5rem, 15vw, 9rem);
+      font-family: var(--font-display);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--accent), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+    .nf-emoji { font-size: 3rem; }
+    .nf-title { font-size: 1.5rem; font-weight: 700; color: var(--text-1); }
+    .nf-desc  { color: var(--text-2); font-size: 1rem; max-width: 360px; line-height: 1.6; }
+    .nf-btns  { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; margin-top: .5rem; }
+  </style>
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<div class="not-found">
+  <div class="nf-emoji">😕</div>
+  <div class="nf-code">404</div>
+  <div class="nf-title">ไม่พบหน้าที่คุณต้องการ</div>
+  <p class="nf-desc">หน้าที่คุณเปิดอาจถูกลบ ย้าย หรือ URL ไม่ถูกต้อง</p>
+  <div class="nf-btns">
+    <a href="index.html"   class="btn btn-primary btn-lg">🏠 กลับหน้าแรก</a>
+    <a href="catalog.html" class="btn btn-secondary btn-lg">🛍️ ดูสินค้า</a>
+    <a href="contact.html" class="btn btn-ghost btn-lg">💬 ติดต่อเรา</a>
+  </div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/navbar.js"></script>
+<script src="js/theme-switcher.js"></script>
+</body>
+</html>

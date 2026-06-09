@@ -4,6 +4,11 @@
   <script src="js/theme-init.js"></script>
   <link rel="stylesheet" href="css/themes.css">
   <meta charset="UTF-8">
+    <meta property="og:title" content="รายละเอียดสินค้า — Diamond Cute Studio 💎">
+  <meta property="og:description" content="Diamond Cute Studio 💎 — สินค้าพิมพ์ภาพคุณภาพสูง โพลารอยด์ นามบัตร บัตรแขวนคอ">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
+  <meta name="description" content="Diamond Cute Studio 💎 — สินค้าพิมพ์ภาพคุณภาพสูง โพลารอยด์ นามบัตร บัตรแขวนคอ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>รายละเอียดสินค้า — Diamond Cute Studio 💎</title>
   <link rel="stylesheet" href="css/main.css">
@@ -85,37 +90,12 @@
         <div class="options-chips" id="material-chips"></div>
       </div>
 
-      <!-- Preview Tool -->
+      <!-- Canvas Preview Tool -->
       <div class="preview-tool" id="preview-tool" style="display:none">
         <div class="preview-tool-header">
           <div class="preview-tool-title">🎨 ลองดูตัวอย่างก่อนสั่ง</div>
-          <button class="btn btn-ghost btn-sm" id="clear-preview-btn" style="display:none">ล้าง</button>
         </div>
-
-        <div class="preview-result" id="preview-result">
-          <img id="preview-img" src="" alt="Preview">
-        </div>
-
-        <div class="upload-zone" id="upload-zone">
-          <div class="upload-icon">📤</div>
-          <div class="upload-text">
-            <span>คลิกหรือลากรูปมาวาง</span> เพื่อดูตัวอย่าง<br>
-            <small style="font-size:0.72rem;color:var(--text-muted)">JPG, PNG ขนาดไม่เกิน 5MB</small>
-          </div>
-          <input type="file" id="preview-upload" accept="image/*" style="display:none">
-        </div>
-
-        <div class="options-group" style="margin-bottom:0">
-          <div class="options-label">🖼️ Template</div>
-          <div class="template-scroll" id="template-scroll">
-            <div class="template-chip active" data-tpl="classic"><span class="template-chip-icon">📸</span><span class="template-chip-name">Classic</span></div>
-            <div class="template-chip" data-tpl="minimal"><span class="template-chip-icon">🌸</span><span class="template-chip-name">Minimal</span></div>
-            <div class="template-chip" data-tpl="dark"><span class="template-chip-icon">🌙</span><span class="template-chip-name">Dark</span></div>
-            <div class="template-chip" data-tpl="warm"><span class="template-chip-icon">☀️</span><span class="template-chip-name">Warm</span></div>
-            <div class="template-chip" data-tpl="cool"><span class="template-chip-icon">❄️</span><span class="template-chip-name">Cool</span></div>
-            <div class="template-chip" data-tpl="cute"><span class="template-chip-icon">🎀</span><span class="template-chip-name">Cute</span></div>
-          </div>
-        </div>
+        <div id="preview-tool-container"></div>
       </div>
 
       <!-- Quantity -->
@@ -180,10 +160,13 @@
   <a href="catalog.html" class="btn btn-primary btn-lg">← กลับดูสินค้าทั้งหมด</a>
 </div>
 
+<div id="footer-mount"></div>
 <div id="toast-container"></div>
 <script src="js/utils.js"></script>
 <script src="js/navbar.js"></script>
+<script src="js/canvas-preview.js"></script>
 <script src="js/product.js"></script>
+<script src="js/footer.js"></script>
 <script src="js/theme-switcher.js"></script>
 <script src="js/admin-access.js"></script>
 </body>

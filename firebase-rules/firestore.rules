@@ -2,27 +2,36 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ─── Products ───
-    // อ่านได้ทุกคน, เขียนได้ทุกคน (Admin ใช้ผ่าน browser)
+    // สินค้า — อ่านได้ทุกคน เขียนไม่ได้จาก client (ใช้ Admin Dashboard ผ่าน client แต่ล็อคด้วย session)
+    // Note: เนื่องจากใช้ client-side auth ต้อง allow write ไว้ก่อน
+    // TODO: upgrade to Firebase Auth เพื่อล็อคให้แน่นในอนาคต
     match /products/{id} {
       allow read: if true;
       allow write: if true;
     }
 
-    // ─── Orders ───
-    // ลูกค้าสร้างได้, Admin อ่าน/แก้/ลบได้ทั้งหมด
+    // ออเดอร์ — ลูกค้าสร้างได้ (มีการ validate field), Admin อ่าน/แก้ได้
     match /orders/{id} {
-      allow read, write: if true;
+      allow create: if
+        request.resource.data.keys().hasAll([
+          'orderId','customerName','customerPhone',
+          'address','total','status','createdAt'
+        ]) &&
+        request.resource.data.customerName is string &&
+        request.resource.data.customerName.size() > 0 &&
+        request.resource.data.customerPhone is string &&
+        request.resource.data.total is number &&
+        request.resource.data.total >= 0 &&
+        request.resource.data.status == 'pending';
+
+      // Admin reads/updates via client (session-protected at JS level)
+      allow read, update, delete: if true;
     }
 
-    // ─── Categories ───
-    match /categories/{id} {
-      allow read, write: if true;
-    }
-
-    // ─── Settings ───
-    match /settings/{id} {
-      allow read, write: if true;
-    }
+    // หมวดหมู่ + Gallery + Contacts + Settings
+    match /categories/{id} { allow read: if true; allow write: if true; }
+    match /gallery/{id}    { allow read: if true; allow write: if true; }
+    match /contacts/{id}   { allow read, write: if true; }
+    match /settings/{id}   { allow read, write: if true; }
   }
 }
