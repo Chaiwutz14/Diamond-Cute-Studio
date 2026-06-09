@@ -325,7 +325,7 @@ async function loadKPIs() {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const [allOrders, todayOrders, monthOrders] = await Promise.all([
-      db.collection('orders').where('status', '!=', 'cancelled').get(),
+      db.collection('orders').get(),
       db.collection('orders').where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(todayStart)).get(),
       db.collection('orders').where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(monthStart)).get()
     ]);
@@ -334,6 +334,7 @@ async function loadKPIs() {
 
     allOrders.forEach(d => {
       const o = d.data();
+      if (o.status === 'cancelled') return; // skip cancelled
       if (o.status === 'pending' || o.status === 'processing') pending++;
       if (o.status === 'done') done++;
     });
@@ -365,7 +366,6 @@ async function loadRecentOrdersTable() {
 
   try {
     const snap = await db.collection('orders')
-      .orderBy('createdAt', 'desc')
       .limit(8)
       .get();
 
@@ -552,7 +552,7 @@ async function loadOrdersTable() {
   const statusFilter = document.getElementById('order-filter-status')?.value;
 
   try {
-    let query = db.collection('orders').orderBy('createdAt', 'desc').limit(50);
+    let query = db.collection('orders').limit(50);
     if (statusFilter) query = query.where('status', '==', statusFilter);
 
     const snap = await query.get();
@@ -722,7 +722,14 @@ async function loadProductsTable() {
       const p = { id: doc.id, ...doc.data() };
       rows.push(`
         <tr>
-          <td><div class="product-thumb-cell">${p.emoji || '📦'}</div></td>
+          <td>
+        <div class="product-thumb-cell">
+          ${p.image
+            ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-md)">`
+            : (p.emoji || '📦')
+          }
+        </div>
+      </td>
           <td style="max-width:180px"><strong style="font-family:var(--font-display)">${DMC.escapeHtml(p.name)}</strong></td>
           <td>${DMC.escapeHtml(p.category || '—')}</td>
           <td class="price-cell">${DMC.formatPrice(p.price)}<span style="color:var(--text-muted);font-size:0.75rem">/${p.unit||'ชิ้น'}</span></td>
@@ -874,6 +881,51 @@ window.openProductModal = async function(productId) {
   `;
 
   overlay.classList.add('open');
+
+  // Image file upload handler
+  setTimeout(() => {
+    const fileInput = document.getElementById('p-img-file');
+    const preview   = document.getElementById('p-img-preview');
+    const urlInput  = document.getElementById('p-image');
+
+    fileInput?.addEventListener('change', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      // Show local preview immediately
+      const reader = new FileReader();
+      reader.onload = e => {
+        preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
+      };
+      reader.readAsDataURL(file);
+
+      // Upload to ImgBB
+      try {
+        const btn = document.querySelector('#p-img-file + button') ||
+                    preview.parentElement?.querySelector('button');
+        urlInput.placeholder = '⏳ กำลังอัปโหลด...';
+        urlInput.disabled = true;
+
+        const result = await DMC.uploadToImgBB(file);
+        urlInput.value = result.url;
+        urlInput.disabled = false;
+        urlInput.placeholder = 'URL รูปภาพ';
+        DMC.toast('อัปโหลดรูปสำเร็จ ✅', 'success');
+      } catch (e) {
+        urlInput.disabled = false;
+        urlInput.placeholder = 'อัปโหลดไม่สำเร็จ ลองใหม่';
+        DMC.toast('อัปโหลดรูปไม่สำเร็จ: ' + e.message, 'error');
+      }
+    });
+
+    // URL input preview
+    urlInput?.addEventListener('input', DMC.debounce(() => {
+      const url = urlInput.value.trim();
+      if (url.startsWith('http')) {
+        preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='❌'">`;
+      }
+    }, 600));
+  }, 100);
 };
 
 window.saveProduct = async function(productId) {
@@ -886,6 +938,7 @@ window.saveProduct = async function(productId) {
     shortDesc:  document.getElementById('p-shortdesc')?.value.trim(),
     fullDesc:   document.getElementById('p-desc')?.value.trim(),
     emoji:      document.getElementById('p-emoji')?.value.trim() || '📦',
+    image:      document.getElementById('p-image')?.value.trim() || '',
     active:     document.getElementById('p-active')?.checked,
     isNew:      document.getElementById('p-new')?.checked,
     isHot:      document.getElementById('p-hot')?.checked,

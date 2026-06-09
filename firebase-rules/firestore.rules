@@ -2,35 +2,27 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ─── Products: public read, no public write ───
-    match /products/{productId} {
+    // ─── Products ───
+    // อ่านได้ทุกคน, เขียนได้ทุกคน (Admin ใช้ผ่าน browser)
+    match /products/{id} {
       allow read: if true;
-      allow write: if false; // admin only via Firebase Console or Admin SDK
+      allow write: if true;
     }
 
-    // ─── Orders: public create (submit order), no public read/update ───
-    match /orders/{orderId} {
-      allow create: if
-        request.resource.data.keys().hasAll(['orderId','customerName','customerPhone','address','items','total','status','createdAt']) &&
-        request.resource.data.customerName is string &&
-        request.resource.data.customerName.size() > 0 &&
-        request.resource.data.customerPhone is string &&
-        request.resource.data.total is number &&
-        request.resource.data.total >= 0 &&
-        request.resource.data.status == 'pending';
-
-      allow read, update, delete: if false; // admin only
+    // ─── Orders ───
+    // ลูกค้าสร้างได้, Admin อ่าน/แก้/ลบได้ทั้งหมด
+    match /orders/{id} {
+      allow read, write: if true;
     }
 
-    // ─── Categories: public read ───
-    match /categories/{catId} {
-      allow read: if true;
-      allow write: if false;
+    // ─── Categories ───
+    match /categories/{id} {
+      allow read, write: if true;
     }
 
-    // ─── Settings: private ───
-    match /settings/{docId} {
-      allow read, write: if false;
+    // ─── Settings ───
+    match /settings/{id} {
+      allow read, write: if true;
     }
   }
 }
