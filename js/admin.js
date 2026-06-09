@@ -97,7 +97,7 @@ function initLoginPage() {
     const password = passInput.value.trim();
     if (!password) return;
 
-    const submitBtn = document.getElementById('login-submit');
+    const submitBtn = document.getElementById('login-btn');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px"></span>';
 
