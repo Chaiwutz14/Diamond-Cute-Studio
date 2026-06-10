@@ -415,12 +415,7 @@ window.openOrderModal = async function(orderId) {
       <!-- ไฟล์รูปภาพ -->
       ${o.fileUrls?.length?`<div style="margin-bottom:1rem">
   <div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);margin-bottom:.5rem">ไฟล์รูปภาพ (${o.fileUrls.length} ไฟล์) <span style="font-size:.7rem;color:var(--accent)">(คลิกเพื่อขยาย)</span></div>
-  <div style="display:flex;flex-wrap:wrap;gap:.5rem">
-    ${o.fileUrls.map(url=>`<img src="${url}"
-      style="height:70px;border-radius:var(--r-md);border:1.5px solid var(--border);cursor:zoom-in;object-fit:cover"
-      onclick="openImageLightbox('${url}')"
-      title="คลิกเพื่อดูเต็มหน้าจอ">`).join('')}
-  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:.5rem" id="file-urls-wrap-${o.id}"></div>
 </div>`:''}
 
       <!-- อัพเดทสถานะ -->
@@ -437,6 +432,26 @@ window.openOrderModal = async function(orderId) {
         <button class="btn btn-primary btn-md" style="flex:1" onclick="updateOrderStatus('${o.id}')">💾 บันทึก</button>
         <button class="btn btn-ghost btn-md" onclick="closeModal()">ปิด</button>
       </div>`;
+
+  // Wire image clicks after DOM is set (avoid onclick in template strings)
+  setTimeout(() => {
+    // Slip image click
+    const slipImg = document.getElementById('slip-img-${o.id}');
+    if (slipImg) slipImg.addEventListener('click', () => openImageLightbox(slipImg.src));
+
+    // File URLs
+    const fileWrap = document.getElementById('file-urls-wrap-${o.id}');
+    if (fileWrap && o.fileUrls?.length) {
+      o.fileUrls.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.cssText = 'height:70px;border-radius:var(--r-md);border:1.5px solid var(--border);cursor:zoom-in;object-fit:cover';
+        img.title = 'คลิกเพื่อดูเต็มหน้าจอ';
+        img.addEventListener('click', () => openImageLightbox(url));
+        fileWrap.appendChild(img);
+      });
+    }
+  }, 50);
   } catch(e) { body.innerHTML = '<p style="color:var(--rose)">เกิดข้อผิดพลาด: '+e.message+'</p>'; }
 };
 
@@ -452,16 +467,25 @@ window.updateOrderStatus = async function(id) {
 
 
 window.openImageLightbox = function(url) {
-  // Create full-screen lightbox
-  let lb = document.getElementById('img-lightbox');
+  var lb = document.getElementById('img-lightbox');
   if (!lb) {
     lb = document.createElement('div');
     lb.id = 'img-lightbox';
     lb.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;backdrop-filter:blur(4px)';
-    lb.innerHTML = '<img id="img-lb-img" style="max-width:95vw;max-height:92vh;border-radius:12px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.5)">'
-      + '<button style="position:absolute;top:1rem;right:1rem;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="document.getElementById('img-lightbox').style.display='none'">✕</button>';
-    lb.addEventListener('click', function(e){ if(e.target===lb) lb.style.display='none'; });
-    document.addEventListener('keydown', function(e){ if(e.key==='Escape') lb.style.display='none'; });
+
+    var img = document.createElement('img');
+    img.id = 'img-lb-img';
+    img.style.cssText = 'max-width:95vw;max-height:92vh;border-radius:12px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.5)';
+
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = 'position:absolute;top:1rem;right:1rem;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center';
+    closeBtn.addEventListener('click', function(){ lb.style.display = 'none'; });
+
+    lb.appendChild(img);
+    lb.appendChild(closeBtn);
+    lb.addEventListener('click', function(e){ if (e.target === lb) lb.style.display = 'none'; });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') lb.style.display = 'none'; });
     document.body.appendChild(lb);
   }
   document.getElementById('img-lb-img').src = url;
