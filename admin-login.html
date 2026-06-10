@@ -70,5 +70,18 @@
 
 <script src="js/utils.js"></script>
 <script src="js/admin.js"></script>
+<script>
+(function(){
+  var btn   = document.getElementById('toggle-pass');
+  var input = document.getElementById('login-password');
+  var shown = false;
+  btn?.addEventListener('click', function(){
+    shown = !shown;
+    input.type = shown ? 'text' : 'password';
+    btn.textContent = shown ? '🙈' : '👁️';
+    input.focus();
+  });
+})();
+</script>
 </body>
 </html>

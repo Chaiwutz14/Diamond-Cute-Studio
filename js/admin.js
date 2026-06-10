@@ -90,7 +90,37 @@ function initDashboard() {
 }
 
 function doLogout() {
-  if (confirm('ออกจากระบบ?')) { DMC.clearSession(); window.location.href = 'admin-login.html'; }
+  // Custom logout modal แทน browser confirm()
+  var existing = document.getElementById('logout-modal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'logout-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)';
+  modal.innerHTML = [
+    '<div style="background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-2xl);padding:2rem;max-width:340px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.3);text-align:center">',
+      '<div style="font-size:2.5rem;margin-bottom:.75rem">👋</div>',
+      '<div style="font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:var(--text-1);margin-bottom:.4rem">ออกจากระบบ?</div>',
+      '<div style="font-size:.87rem;color:var(--text-2);margin-bottom:1.5rem">Session จะถูกลบออก ต้องล็อกอินใหม่</div>',
+      '<div style="display:flex;gap:.75rem;justify-content:center">',
+        '<button id="logout-confirm" style="flex:1;padding:.7rem 1.25rem;background:var(--rose);border:none;border-radius:var(--r-lg);color:#fff;font-family:var(--font-display);font-weight:600;font-size:.9rem;cursor:pointer">ออกจากระบบ</button>',
+        '<button id="logout-cancel"  style="flex:1;padding:.7rem 1.25rem;background:var(--bg-mid);border:1.5px solid var(--border);border-radius:var(--r-lg);color:var(--text-2);font-family:var(--font-display);font-weight:600;font-size:.9rem;cursor:pointer">ยกเลิก</button>',
+      '</div>',
+    '</div>'
+  ].join('');
+
+  document.body.appendChild(modal);
+
+  document.getElementById('logout-confirm').addEventListener('click', function(){
+    modal.remove();
+    DMC.clearSession();
+    window.location.href = 'admin-login.html';
+  });
+  document.getElementById('logout-cancel').addEventListener('click', function(){ modal.remove(); });
+  modal.addEventListener('click', function(e){ if (e.target === modal) modal.remove(); });
+  document.addEventListener('keydown', function handler(e){
+    if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', handler); }
+  });
 }
 
 function initSidebarNav() {
@@ -677,6 +707,13 @@ window.openProductModal = async function(productId) {
       <input class="form-input" id="p-tiers" value="${(product.priceTiers||[]).join(', ')}" placeholder="50+ ใบ ลด 10%, 100+ ใบ ลด 20%">
     </div>
 
+    <!-- Template Preview สำหรับ Canvas -->
+    <div class="form-group">
+      <label class="form-label">🎨 Template Preview <span style="font-weight:400;color:var(--text-3)">ชื่อ template ที่ลูกค้าเลือกได้ตอน preview (คั่นด้วย ,)</span></label>
+      <input class="form-input" id="p-templates" value="${(product.templates||[]).join(', ')}" placeholder="Classic, Minimal, Dark, Warm, Cool, Cute">
+      <div style="font-size:.74rem;color:var(--text-3);margin-top:.3rem">💡 ถ้าว่างไว้ ลูกค้าจะเห็น template ทั้งหมด 6 แบบ | ถ้าใส่ชื่อ จะแสดงเฉพาะที่กำหนด</div>
+    </div>
+
     <!-- คำอธิบาย -->
     <div class="form-group">
       <label class="form-label">คำอธิบายสั้น <span style="font-weight:400;color:var(--text-3)">(แสดงในการ์ดสินค้า)</span></label>
@@ -773,6 +810,7 @@ window.saveProduct = async function(productId) {
     sizes:      splitComma('p-sizes'),
     materials:  splitComma('p-materials'),
     priceTiers: splitComma('p-tiers'),
+    templates:  splitComma('p-templates'),
     shortDesc:  document.getElementById('p-shortdesc')?.value.trim(),
     fullDesc:   document.getElementById('p-desc')?.value.trim(),
     emoji:      document.getElementById('p-emoji')?.value.trim()||'📦',

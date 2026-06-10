@@ -262,9 +262,14 @@ window.initPreviewTool = function(options = {}) {
   // Init canvas
   const api = CanvasPreview.init('preview-canvas', { size:SIZE });
 
-  // Build template chips
+  // Build template chips (filter by product's allowed templates)
   const row = document.getElementById('template-chips-row');
-  CanvasPreview.TEMPLATES.forEach((t, i) => {
+  const templatesToShow = allowedTemplates
+    ? CanvasPreview.TEMPLATES.filter(t => allowedTemplates.includes(t.id) || allowedTemplates.includes(t.name.toLowerCase()))
+    : CanvasPreview.TEMPLATES;
+  if (templatesToShow.length === 0) templatesToShow.push(...CanvasPreview.TEMPLATES); // fallback all
+
+  templatesToShow.forEach((t, i) => {
     const chip = document.createElement('div');
     chip.className = 'template-chip' + (i===0?' active':'');
     chip.dataset.tpl = t.id;

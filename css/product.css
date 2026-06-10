@@ -381,3 +381,58 @@
   .detail-title { font-size: 1.15rem; }
   .price-main   { font-size: 1.45rem; }
 }
+
+/* ══════════════════════════════════════════════
+   MOBILE BOTTOM SHEET (ข้อ 1)
+══════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  /* Sort dropdown — native select สวยขึ้น */
+  .sort-select-wrap {
+    position: relative;
+  }
+  .sort-select-wrap select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--bg-card);
+    border: 1.5px solid var(--accent);
+    border-radius: var(--r-lg);
+    padding: .55rem 2.2rem .55rem .9rem;
+    font-family: var(--font-display);
+    font-size: .88rem;
+    color: var(--accent);
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 130px;
+  }
+  .sort-select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: .7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    pointer-events: none;
+    font-size: .75rem;
+  }
+
+  /* Mobile cat dropdown full-width */
+  .filter-mobile-select {
+    font-size: .95rem;
+    padding: .7rem 2.5rem .7rem 1rem;
+  }
+
+  /* ซ่อน filter sidebar บนมือถือ (แสดงแค่ dropdown) */
+  .filter-sidebar { display: none !important; }
+  .catalog-wrapper { grid-template-columns: 1fr !important; }
+
+  /* Product grid 2 col on mobile */
+  .product-grid { grid-template-columns: repeat(2, 1fr) !important; gap: .65rem !important; }
+
+  /* Toolbar compact */
+  .catalog-toolbar { gap: .5rem; }
+  .search-bar { min-width: 0; }
+}
+
+@media (max-width: 400px) {
+  .product-grid { grid-template-columns: 1fr !important; }
+}

@@ -58,12 +58,39 @@ function renderProduct() {
   const fullStars = Math.floor(rating);
   document.getElementById('stars-display').textContent = '★'.repeat(fullStars) + (rating % 1 >= 0.5 ? '½' : '') + '☆'.repeat(5 - Math.ceil(rating));
 
-  // Gallery
-  document.getElementById('gallery-emoji').textContent = product.emoji || '📦';
+  // Gallery — แสดงรูปจริงถ้ามี
+  const galleryMain  = document.getElementById('gallery-main');
+  const galleryEmoji = document.getElementById('gallery-emoji');
+  if (product.image) {
+    // มีรูปจริง — แสดงเป็น img
+    if (galleryEmoji) galleryEmoji.style.display = 'none';
+    // ลบ img เก่าถ้ามี
+    const oldImg = galleryMain?.querySelector('img.product-main-img');
+    if (oldImg) oldImg.remove();
+    const img = document.createElement('img');
+    img.src   = product.image;
+    img.alt   = product.name;
+    img.className = 'product-main-img';
+    img.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:var(--r-xl);position:relative;z-index:1';
+    galleryMain?.appendChild(img);
+  } else {
+    // ไม่มีรูป — แสดง emoji
+    if (galleryEmoji) galleryEmoji.textContent = product.emoji || '📦';
+  }
+
   const badgeEl = document.getElementById('gallery-badge');
   if (product.isNew)  badgeEl.innerHTML = '<span class="badge badge-new">✨ ใหม่</span>';
   if (product.isHot)  badgeEl.innerHTML = '<span class="badge badge-hot">🔥 ขายดี</span>';
   if (product.isSale) badgeEl.innerHTML = '<span class="badge badge-sale">💰 ลด</span>';
+
+  // Thumbnails — ถ้ามีรูปเพิ่มใน thumb row
+  const thumbRow = document.getElementById('gallery-thumbs');
+  if (thumbRow && product.image) {
+    thumbRow.innerHTML = `
+      <div class="gallery-thumb active">
+        <img src="${product.image}" alt="${DMC.escapeHtml(product.name)}" style="width:100%;height:100%;object-fit:contain">
+      </div>`;
+  }
 
   // Price
   document.getElementById('price-main').textContent = DMC.formatPrice(product.price);
@@ -122,15 +149,23 @@ function renderProduct() {
     document.getElementById('product-desc-text').textContent = product.fullDesc;
   }
 
-  // Preview Tool (Canvas) — แสดงเสมอสำหรับสินค้าที่มีรูปภาพ
+  // Preview Tool (Canvas) — แสดงเสมอ
   const previewToolEl = document.getElementById('preview-tool');
   if (previewToolEl) {
     previewToolEl.style.display = '';
     if (typeof window.initPreviewTool === 'function') {
-      // ปรับขนาด Canvas ตามประเภทสินค้า
-      const isCard = (product.category||'').includes('บัตร') || (product.category||'').includes('lanyard');
-      const size   = isCard ? {w:250,h:390} : {w:280,h:280}; // portrait สำหรับบัตร, square สำหรับโพลารอยด์
-      setTimeout(() => window.initPreviewTool({ containerId:'preview-tool-container', size }), 50);
+      const isCard  = (product.category||'').includes('บัตร') || (product.category||'').includes('lanyard');
+      const isSquare = (product.category||'').toLowerCase().includes('qr');
+      const size = isCard   ? {w:250,h:390}
+                 : isSquare ? {w:280,h:280}
+                 :            {w:280,h:390};
+      // ส่ง templates จาก product (ถ้ากำหนดไว้)
+      const templates = product.templates || [];
+      setTimeout(() => window.initPreviewTool({
+        containerId: 'preview-tool-container',
+        size,
+        templates
+      }), 50);
     }
   }
 
