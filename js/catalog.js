@@ -124,8 +124,11 @@ function applyFiltersAndRender() {
   const filterSale = document.getElementById('filter-sale')?.checked;
 
   filteredProducts = allProducts.filter(p => {
-    if (currentCat && p.category !== currentCat) return false;
-    if (search && !p.name.toLowerCase().includes(search) && !(p.shortDesc||'').toLowerCase().includes(search)) return false;
+    // ถ้ามีการค้นหา ให้ข้ามการกรองหมวดหมู่ (ค้นหาข้ามหมวดหมู่)
+    if (currentCat && !search && p.category !== currentCat) return false;
+    if (search && !p.name.toLowerCase().includes(search)
+               && !(p.shortDesc||'').toLowerCase().includes(search)
+               && !(p.category||'').toLowerCase().includes(search)) return false;
     if (p.price < priceMin || p.price > priceMax) return false;
     if (filterNew  && !p.isNew)  return false;
     if (filterHot  && !p.isHot)  return false;
@@ -236,6 +239,17 @@ function bindCardEvents(container) {
 function updateResultCount() {
   const el = document.getElementById('result-count');
   if (el) el.textContent = filteredProducts.length;
+  // Show cross-category hint when searching with category active
+  const search = document.getElementById('search-input')?.value.trim();
+  const hintEl = document.getElementById('search-cat-hint');
+  if (hintEl) {
+    if (search && currentCat) {
+      hintEl.style.display = '';
+      hintEl.textContent = '🔍 ค้นหาจากทุกหมวดหมู่เนื่องจากมีคำค้นหา';
+    } else {
+      hintEl.style.display = 'none';
+    }
+  }
 }
 
 // ─── Active Filter Tags ───

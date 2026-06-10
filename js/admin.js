@@ -413,7 +413,15 @@ window.openOrderModal = async function(orderId) {
       ${o.slipUrl?`<div style="margin-bottom:1rem"><div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);margin-bottom:.5rem">สลิปโอนเงิน</div><img src="${o.slipUrl}" style="max-height:180px;border-radius:var(--r-md);border:1px solid var(--border)"></div>`:''}
 
       <!-- ไฟล์รูปภาพ -->
-      ${o.fileUrls?.length?`<div style="margin-bottom:1rem"><div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);margin-bottom:.5rem">ไฟล์รูปภาพ (${o.fileUrls.length} ไฟล์)</div><div style="display:flex;flex-wrap:wrap;gap:.5rem">${o.fileUrls.map(url=>`<img src="${url}" style="height:70px;border-radius:var(--r-md);border:1px solid var(--border);cursor:pointer" onclick="window.open('${url}','_blank')">`).join('')}</div></div>`:''}
+      ${o.fileUrls?.length?`<div style="margin-bottom:1rem">
+  <div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);margin-bottom:.5rem">ไฟล์รูปภาพ (${o.fileUrls.length} ไฟล์) <span style="font-size:.7rem;color:var(--accent)">(คลิกเพื่อขยาย)</span></div>
+  <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+    ${o.fileUrls.map(url=>`<img src="${url}"
+      style="height:70px;border-radius:var(--r-md);border:1.5px solid var(--border);cursor:zoom-in;object-fit:cover"
+      onclick="openImageLightbox('${url}')"
+      title="คลิกเพื่อดูเต็มหน้าจอ">`).join('')}
+  </div>
+</div>`:''}
 
       <!-- อัพเดทสถานะ -->
       <div class="form-group">
@@ -440,6 +448,24 @@ window.updateOrderStatus = async function(id) {
     DMC.toast('อัพเดทสำเร็จ ✅', 'success');
     closeModal(); loadOrdersTable(); loadKPIs();
   } catch(e) { DMC.toast('อัพเดทไม่สำเร็จ', 'error'); }
+};
+
+
+window.openImageLightbox = function(url) {
+  // Create full-screen lightbox
+  let lb = document.getElementById('img-lightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'img-lightbox';
+    lb.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;backdrop-filter:blur(4px)';
+    lb.innerHTML = '<img id="img-lb-img" style="max-width:95vw;max-height:92vh;border-radius:12px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.5)">'
+      + '<button style="position:absolute;top:1rem;right:1rem;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="document.getElementById('img-lightbox').style.display='none'">✕</button>';
+    lb.addEventListener('click', function(e){ if(e.target===lb) lb.style.display='none'; });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') lb.style.display='none'; });
+    document.body.appendChild(lb);
+  }
+  document.getElementById('img-lb-img').src = url;
+  lb.style.display = 'flex';
 };
 
 window.closeModal = function() { document.getElementById('modal-overlay')?.classList.remove('open'); };
@@ -862,7 +888,8 @@ window.saveGalleryItem = async function() {
     active: true,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
-  if (!data.image) { DMC.toast('กรุณาอัปโหลดรูปก่อน','error'); return; }
+  if (!data.image && !data.name) { DMC.toast('กรุณากรอกชื่อผลงานและรูปภาพ','error'); return; }
+  if (!data.image) { DMC.toast('กรุณาอัปโหลดรูปภาพก่อน','error'); return; }
   try {
     await db.collection('gallery').add(data);
     DMC.toast('เพิ่มรูปสำเร็จ ✅','success');
@@ -870,7 +897,10 @@ window.saveGalleryItem = async function() {
     document.getElementById('g-name').value = '';
     document.getElementById('g-image').value = '';
     await loadGalleryItems();
-  } catch(e) { DMC.toast('บันทึกไม่สำเร็จ','error'); }
+  } catch(e) {
+    console.error('Gallery save error:', e);
+    DMC.toast('บันทึกไม่สำเร็จ: ' + (e.message||'unknown error'), 'error');
+  }
 };
 
 window.deleteGalleryItem = async function(id) {

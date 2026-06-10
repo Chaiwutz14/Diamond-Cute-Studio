@@ -221,6 +221,9 @@ window.initPreviewTool = function(options = {}) {
 
   containerEl.innerHTML = `
     <div class="preview-tool-inner">
+      <div style="background:rgba(14,165,233,.07);border:1px solid var(--border);border-radius:var(--r-md);padding:.6rem .85rem;margin-bottom:.85rem;font-size:.82rem;color:var(--text-2);line-height:1.6">
+        💡 <strong>วิธีใช้:</strong> อัปโหลดรูปของคุณ → เลือก Template → ดูว่าจะออกมาหน้าตาอย่างไร → กด 💾 ดาวน์โหลด preview ได้เลย
+      </div>
 
       <!-- Canvas area -->
       <div style="position:relative;text-align:center;margin-bottom:.9rem">
@@ -229,14 +232,14 @@ window.initPreviewTool = function(options = {}) {
           title="คลิกเพื่ออัปโหลดรูป">
         </canvas>
         <div id="preview-upload-hint" style="margin-top:.5rem;font-size:.78rem;color:var(--text-3);font-family:var(--font-display)">
-          คลิกที่รูป หรือกดปุ่มด้านล่างเพื่ออัปโหลด
+          📌 อัปโหลดรูปของคุณเพื่อดูว่าจะออกมาหน้าตาอย่างไร
         </div>
       </div>
 
       <!-- Upload button -->
       <div style="display:flex;gap:.5rem;margin-bottom:.9rem">
         <label class="btn btn-secondary btn-md" style="flex:1;border-radius:var(--r-lg);cursor:pointer;justify-content:center">
-          📤 อัปโหลดรูปของคุณ
+          📤 เลือกรูปจากเครื่อง
           <input type="file" id="preview-file-input" accept="image/*" style="display:none">
         </label>
         <button class="btn btn-ghost btn-md" id="preview-download-btn" style="border-radius:var(--r-lg)" title="ดาวน์โหลด Preview" disabled>

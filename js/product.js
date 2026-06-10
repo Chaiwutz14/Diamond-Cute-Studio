@@ -122,11 +122,15 @@ function renderProduct() {
     document.getElementById('product-desc-text').textContent = product.fullDesc;
   }
 
-  // Preview Tool (Canvas)
-  if (product.hasPreview) {
-    document.getElementById('preview-tool').style.display = '';
+  // Preview Tool (Canvas) — แสดงเสมอสำหรับสินค้าที่มีรูปภาพ
+  const previewToolEl = document.getElementById('preview-tool');
+  if (previewToolEl) {
+    previewToolEl.style.display = '';
     if (typeof window.initPreviewTool === 'function') {
-      setTimeout(() => window.initPreviewTool({ containerId:'preview-tool-container', size:{w:270,h:378} }), 50);
+      // ปรับขนาด Canvas ตามประเภทสินค้า
+      const isCard = (product.category||'').includes('บัตร') || (product.category||'').includes('lanyard');
+      const size   = isCard ? {w:250,h:390} : {w:280,h:280}; // portrait สำหรับบัตร, square สำหรับโพลารอยด์
+      setTimeout(() => window.initPreviewTool({ containerId:'preview-tool-container', size }), 50);
     }
   }
 
