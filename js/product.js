@@ -1,294 +1,497 @@
 /* ═══════════════════════════════════════════════
-   Diamond Cute Studio 💎 — Product Detail JS
-   js/product.js
+   Diamond Cute Studio 💎 — Product Detail V12
+   js/product.js (เขียนใหม่ทั้งไฟล์)
+
+   - Multi-image gallery + thumbnails (แบบ Shopee)
+   - วิดีโอ YouTube/TikTok ฝังใน gallery
+   - กดเลือกขนาด/วัสดุ → รูปสลับตาม label ที่ผูกไว้
+   - รีวิวสินค้า (แสดง approved + ฟอร์มส่งรีวิวผ่านตัวกรอง)
+   - Canvas Preview แสดงเฉพาะสินค้าที่ร้านเปิด hasPreview
 ═══════════════════════════════════════════════ */
 'use strict';
 
-const PLACEHOLDER_DETAIL = {
-  p1: { id:'p1', name:'รูปโพลารอยด์ 3×4 นิ้ว', shortDesc:'กระดาษ Fuji Crystal Archive สีสดใส ทนทาน', fullDesc:'พิมพ์ด้วยเครื่องพิมพ์ระดับมืออาชีพ บนกระดาษ Fuji Crystal Archive คมชัด สีสดใส ทนทาน ไม่ซีดจาง รับประกันคุณภาพทุกใบ', price:29, unit:'ใบ', emoji:'📸', category:'polaroid', isHot:true, rating:4.9, reviewCount:128, orderCount:500, sizes:['3×4 นิ้ว','4×6 นิ้ว','2×3 นิ้ว (มินิ)','Square 3×3'], materials:['มันเงา (Glossy)','ด้าน (Matte)','Luster'], hasPreview:true, priceTiers:['50+ ใบ ลด 10%','100+ ใบ ลด 20%','200+ ใบ ลด 30%'], minQty:1 },
-  p4: { id:'p4', name:'บัตรแขวนคอนักเรียน', shortDesc:'PVC อย่างดี พร้อมซองใส+สายคล้อง', fullDesc:'บัตร PVC ความหนา 0.76mm พิมพ์ 4 สีเต็มใบ ทั้ง 2 ด้าน พร้อมซองใส PVC กันน้ำ และสายคล้องคอ 1 เส้น ปรับแต่ง layout ได้ตามต้องการ', price:59, unit:'ใบ', emoji:'🪪', category:'lanyard', isNew:true, rating:4.8, reviewCount:65, orderCount:200, sizes:['CR80 (มาตรฐาน)','ขนาดเล็ก'], materials:['PVC','PVC ลามิเนต'], hasPreview:true, priceTiers:['10+ ใบ ลด 5%','50+ ใบ ลด 15%'], minQty:1 },
-};
-
+let db = null;
 let product = null;
+let productId = null;
 let qty = 1;
 let selectedSize = '';
 let selectedMaterial = '';
+let galleryItems = [];   // [{type:'image', url, label} | {type:'video', embedUrl}]
+let activeGalleryIndex = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const id = new URLSearchParams(location.search).get('id');
-  if (!id) { showError(); return; }
+  if (typeof Loading !== 'undefined') Loading.progressStart();
+
+  const params = new URLSearchParams(location.search);
+  productId = params.get('id');
+  if (!productId) { showNotFound(); return; }
+
+  // Skeleton ระหว่างโหลด
+  const loadingEl = document.getElementById('product-loading');
+  if (loadingEl && typeof Loading !== 'undefined') {
+    loadingEl.innerHTML = Loading.Skeleton.productDetail();
+  }
 
   try {
-    const db = await DMC.getFirebaseReady();
-    const doc = await db.collection('products').doc(id).get();
-    if (!doc.exists) throw new Error('not found');
+    db = await DMC.getFirebaseReady();
+    const doc = await db.collection('products').doc(productId).get();
+    if (!doc.exists) { showNotFound(); return; }
     product = { id: doc.id, ...doc.data() };
-  } catch {
-    product = PLACEHOLDER_DETAIL[id] || null;
+    renderProduct();
+    loadRelated();
+    initReviews();
+  } catch (e) {
+    console.error('Product load error:', e);
+    showNotFound();
   }
-
-  if (!product) { showError(); return; }
-
-  renderProduct();
-  loadRelated();
 });
 
-function showError() {
-  document.getElementById('product-loading').style.display = 'none';
+function showNotFound() {
   if (typeof Loading !== 'undefined') Loading.progressDone();
-  document.getElementById('product-error').style.display = 'block';
+  const l = document.getElementById('product-loading');
+  if (l) l.style.display = 'none';
+  const err = document.getElementById('product-error');
+  if (err) err.style.display = '';
 }
 
+// ══════════════════════════════════════════════
+//  RENDER PRODUCT
+// ══════════════════════════════════════════════
 function renderProduct() {
   document.getElementById('product-loading').style.display = 'none';
-  document.getElementById('product-detail').style.display = 'block';
+  document.getElementById('product-detail').style.display  = '';
+  if (typeof Loading !== 'undefined') Loading.progressDone();
 
-  document.title = `${product.name} — Diamond Cute Studio 💎`;
+  document.title = product.name + ' — Diamond Cute Studio 💎';
+  setText('breadcrumb-name', product.name);
+  setText('product-title', product.name);
 
-  // Breadcrumb
-  document.getElementById('breadcrumb-name').textContent = product.name;
-
-  // Title, meta
-  document.getElementById('product-title').textContent = product.name;
-  document.getElementById('rating-score').textContent = product.rating || 4.9;
-  document.getElementById('review-count').textContent = `${product.reviewCount || 0} รีวิว`;
-  document.getElementById('order-count').textContent  = `สั่งซื้อแล้ว ${product.orderCount || 0}+ ครั้ง`;
-
-  // Stars
-  const rating = parseFloat(product.rating) || 4.9;
-  const fullStars = Math.floor(rating);
-  document.getElementById('stars-display').textContent = '★'.repeat(fullStars) + (rating % 1 >= 0.5 ? '½' : '') + '☆'.repeat(5 - Math.ceil(rating));
-
-  // Gallery — แสดงรูปจริงถ้ามี
-  const galleryMain  = document.getElementById('gallery-main');
-  const galleryEmoji = document.getElementById('gallery-emoji');
-  if (product.image) {
-    // มีรูปจริง — แสดงเป็น img
-    if (galleryEmoji) galleryEmoji.style.display = 'none';
-    // ลบ img เก่าถ้ามี
-    const oldImg = galleryMain?.querySelector('img.product-main-img');
-    if (oldImg) oldImg.remove();
-    const img = document.createElement('img');
-    img.src   = product.image;
-    img.alt   = product.name;
-    img.className = 'product-main-img';
-    img.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:var(--r-xl);position:relative;z-index:1';
-    galleryMain?.appendChild(img);
-    // Blur-up effect on load
-    if (typeof Loading !== 'undefined') Loading.blurUpImage(img);
-  } else {
-    // ไม่มีรูป — แสดง emoji
-    if (galleryEmoji) galleryEmoji.textContent = product.emoji || '📦';
+  // ── ราคา ──
+  setText('price-main', DMC.formatPrice(product.price));
+  setText('price-unit', '/' + (product.unit || 'ชิ้น'));
+  if (product.oldPrice && product.oldPrice > product.price) {
+    const oldEl = document.getElementById('price-old');
+    oldEl.textContent = DMC.formatPrice(product.oldPrice);
+    oldEl.style.display = '';
   }
 
+  // ── ส่วนลดปริมาณ ──
+  const tiersEl = document.getElementById('price-tiers');
+  if (tiersEl && product.priceTiers?.length) {
+    tiersEl.innerHTML = product.priceTiers.map(t =>
+      `<span class="price-tier-chip">🎁 ${DMC.escapeHtml(t)}</span>`).join('');
+  }
+
+  // ── ยอดสั่งซื้อ ──
+  setText('order-count', `สั่งซื้อแล้ว ${product.orderCount || 0}+ ครั้ง`);
+
+  // ── Badge ──
   const badgeEl = document.getElementById('gallery-badge');
-  if (product.isNew)  badgeEl.innerHTML = '<span class="badge badge-new">✨ ใหม่</span>';
-  if (product.isHot)  badgeEl.innerHTML = '<span class="badge badge-hot">🔥 ขายดี</span>';
-  if (product.isSale) badgeEl.innerHTML = '<span class="badge badge-sale">💰 ลด</span>';
-
-  // Thumbnails — ถ้ามีรูปเพิ่มใน thumb row
-  const thumbRow = document.getElementById('gallery-thumbs');
-  if (thumbRow && product.image) {
-    thumbRow.innerHTML = `
-      <div class="gallery-thumb active">
-        <img src="${product.image}" alt="${DMC.escapeHtml(product.name)}" style="width:100%;height:100%;object-fit:contain">
-      </div>`;
+  if (badgeEl) {
+    if (product.isNew)       badgeEl.innerHTML = '<span class="badge badge-new">✨ ใหม่</span>';
+    else if (product.isHot)  badgeEl.innerHTML = '<span class="badge badge-hot">🔥 ขายดี</span>';
+    else if (product.isSale) badgeEl.innerHTML = '<span class="badge badge-sale">💰 ลด</span>';
   }
 
-  // Price
-  document.getElementById('price-main').textContent = DMC.formatPrice(product.price);
-  document.getElementById('price-unit').textContent = `/${product.unit || 'ชิ้น'}`;
-  if (product.oldPrice) {
-    document.getElementById('price-old').textContent = DMC.formatPrice(product.oldPrice);
-    document.getElementById('price-old').style.display = '';
-  }
-  if (product.priceTiers?.length) {
-    document.getElementById('price-tiers').innerHTML =
-      product.priceTiers.map(t => `<span class="price-tier">🎁 ${DMC.escapeHtml(t)}</span>`).join('');
-  }
+  // ── Gallery (multi-image + video) ──
+  buildGalleryItems();
+  renderGallery();
 
-  // Size options
-  if (product.sizes?.length) {
-    selectedSize = product.sizes[0];
-    const g = document.getElementById('size-group');
-    g.style.display = '';
-    document.getElementById('size-selected').textContent = selectedSize;
-    document.getElementById('size-chips').innerHTML = product.sizes.map((s, i) =>
-      `<button class="option-chip ${i===0?'active':''}" data-val="${DMC.escapeHtml(s)}">${DMC.escapeHtml(s)}</button>`
-    ).join('');
-    g.querySelectorAll('.option-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        g.querySelectorAll('.option-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        selectedSize = chip.dataset.val;
-        document.getElementById('size-selected').textContent = selectedSize;
-        updateSubtotal();
-      });
-    });
-  }
+  // ── ตัวเลือกขนาด/วัสดุ ──
+  renderOptionChips('size', product.sizes || []);
+  renderOptionChips('material', product.materials || []);
 
-  // Material options
-  if (product.materials?.length) {
-    selectedMaterial = product.materials[0];
-    const g = document.getElementById('material-group');
-    g.style.display = '';
-    document.getElementById('material-selected').textContent = selectedMaterial;
-    document.getElementById('material-chips').innerHTML = product.materials.map((m, i) =>
-      `<button class="option-chip ${i===0?'active':''}" data-val="${DMC.escapeHtml(m)}">${DMC.escapeHtml(m)}</button>`
-    ).join('');
-    g.querySelectorAll('.option-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        g.querySelectorAll('.option-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        selectedMaterial = chip.dataset.val;
-        document.getElementById('material-selected').textContent = selectedMaterial;
-      });
-    });
-  }
-
-  // Description
+  // ── คำอธิบาย ──
   if (product.fullDesc) {
     document.getElementById('product-desc-section').style.display = '';
     document.getElementById('product-desc-text').textContent = product.fullDesc;
   }
 
-  // Preview Tool (Canvas) — แสดงเสมอ
+  // ── จำนวน ──
+  qty = Math.max(1, product.minQty || 1);
+  setText('qty-unit', product.unit || 'ชิ้น');
+  if (product.minQty > 1) setText('qty-hint', `ขั้นต่ำ ${product.minQty} ${product.unit || 'ชิ้น'}`);
+  updateQtyUI();
+  document.getElementById('qty-minus')?.addEventListener('click', () => {
+    const min = Math.max(1, product.minQty || 1);
+    if (qty > min) { qty--; updateQtyUI(); }
+  });
+  document.getElementById('qty-plus')?.addEventListener('click', () => {
+    if (qty < 9999) { qty++; updateQtyUI(); }
+  });
+
+  // ── ปุ่ม ──
+  document.getElementById('add-to-cart-btn')?.addEventListener('click', () => addToCart(false));
+  document.getElementById('order-now-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    addToCart(true);
+  });
+
+  // ── Canvas Preview — เฉพาะสินค้าที่ร้านเปิดใช้ ──
   const previewToolEl = document.getElementById('preview-tool');
   if (previewToolEl) {
-    previewToolEl.style.display = '';
-    if (typeof window.initPreviewTool === 'function') {
-      const isCard  = (product.category||'').includes('บัตร') || (product.category||'').includes('lanyard');
-      const isSquare = (product.category||'').toLowerCase().includes('qr');
-      const size = isCard   ? {w:250,h:390}
-                 : isSquare ? {w:280,h:280}
-                 :            {w:280,h:390};
-      // ส่ง templates จาก product (ถ้ากำหนดไว้)
-      const templates = product.templates || [];
-      setTimeout(() => window.initPreviewTool({
-        containerId: 'preview-tool-container',
-        size,
-        templates
-      }), 50);
-    }
-  }
-
-  // Quantity
-  qty = product.minQty || 1;
-  document.getElementById('qty-val').textContent = qty;
-  document.getElementById('qty-display').textContent = qty;
-  document.getElementById('qty-unit').textContent = product.unit || 'ชิ้น';
-  if (product.minQty > 1) document.getElementById('qty-hint').textContent = `ขั้นต่ำ ${product.minQty} ${product.unit||'ชิ้น'}`;
-
-  document.getElementById('qty-minus').addEventListener('click', () => {
-    if (qty > (product.minQty || 1)) qty--;
-    document.getElementById('qty-val').textContent = qty;
-    document.getElementById('qty-display').textContent = qty;
-    updateSubtotal();
-  });
-  document.getElementById('qty-plus').addEventListener('click', () => {
-    qty++;
-    document.getElementById('qty-val').textContent = qty;
-    document.getElementById('qty-display').textContent = qty;
-    updateSubtotal();
-  });
-
-  updateSubtotal();
-
-  // Add to cart
-  document.getElementById('add-to-cart-btn').addEventListener('click', () => {
-    const opts = [selectedSize, selectedMaterial].filter(Boolean).join(' · ');
-    DMC.addToCart({ id:product.id, name:product.name, price:product.price, unit:product.unit||'ชิ้น', emoji:product.emoji||'📦', options:opts, qty });
-    const btn = document.getElementById('add-to-cart-btn');
-    btn.textContent = '✓ เพิ่มแล้ว';
-    setTimeout(() => btn.textContent = '🛒 ใส่ตะกร้า', 1500);
-  });
-
-  // Order now — store to cart then go
-  document.getElementById('order-now-btn').addEventListener('click', e => {
-    e.preventDefault();
-    const opts = [selectedSize, selectedMaterial].filter(Boolean).join(' · ');
-    DMC.addToCart({ id:product.id, name:product.name, price:product.price, unit:product.unit||'ชิ้น', emoji:product.emoji||'📦', options:opts, qty });
-    window.location.href = 'cart.html';
-  });
-}
-
-function updateSubtotal() {
-  const total = product.price * qty;
-  document.getElementById('subtotal-display').textContent = DMC.formatPrice(total);
-}
-
-// ─── Preview Tool (Canvas Version) ───
-function initPreviewTool() {
-  if (typeof initPreviewTool_canvas === 'undefined') {
-    // Use canvas-preview.js
-    if (typeof window.initPreviewTool === 'function') {
-      window.initPreviewTool({ containerId: 'preview-tool-container', size:{w:280,h:390} });
+    if (product.hasPreview) {
+      previewToolEl.style.display = '';
+      const isCard   = (product.category || '').includes('บัตร');
+      const isSquare = (product.category || '').toLowerCase().includes('qr');
+      const size = isCard ? { w: 250, h: 390 } : isSquare ? { w: 280, h: 280 } : { w: 280, h: 390 };
+      // ดึงลิงก์ LINE จาก CMS ให้ชิป "เพิ่มเติม"
+      const initPreview = (lineUrl) => {
+        if (typeof window.initPreviewTool === 'function') {
+          window.initPreviewTool({
+            containerId: 'preview-tool-container',
+            size,
+            templates: product.templates || [],
+            lineUrl: lineUrl || '#',
+          });
+        }
+      };
+      if (typeof CMS !== 'undefined') {
+        CMS.get().then(content => initPreview(content.contact?.line)).catch(() => initPreview('#'));
+      } else {
+        initPreview('#');
+      }
+    } else {
+      previewToolEl.style.display = 'none';
     }
   }
 }
 
-// ─── Related Products ───
-async function loadRelated() {
-  const container = document.getElementById('related-products');
-  if (!container || !product) return;
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
 
-  let related = [];
+// ══════════════════════════════════════════════
+//  GALLERY — Multi-image + Video (สไตล์ Shopee)
+// ══════════════════════════════════════════════
+function buildGalleryItems() {
+  galleryItems = [];
 
-  try {
-    const db = await DMC.getFirebaseReady();
-    const snap = await db.collection('products')
-      .where('category', '==', product.category)
-      .where('active', '==', true)
-      .limit(5)
-      .get();
-    snap.forEach(doc => {
-      if (doc.id !== product.id) related.push({ id:doc.id, ...doc.data() });
-    });
-  } catch {
-    // placeholder fallback
-    const CATALOG_PLACEHOLDER = [
-      { id:'p1', name:'รูปโพลารอยด์ 3×4 นิ้ว', shortDesc:'กระดาษพรีเมียม คุณภาพสูง', price:29, unit:'ใบ', emoji:'📸', isHot:true },
-      { id:'p2', name:'รูปโพลารอยด์ 4×6 นิ้ว', shortDesc:'ขนาดใหญ่ เหมาะตกแต่ง',   price:39, unit:'ใบ', emoji:'🖼️' },
-      { id:'p3', name:'โพลารอยด์ Square 3×3',  shortDesc:'ทรงสี่เหลี่ยม มินิมอล',   price:35, unit:'ใบ', emoji:'📷' },
-    ];
-    related = CATALOG_PLACEHOLDER.filter(p => p.id !== product.id).slice(0, 4);
-  }
+  // รูปจาก images[] (V12) — fallback ไป image เดี่ยว (สินค้าเก่า)
+  const imgs = Array.isArray(product.images) && product.images.length
+    ? product.images
+    : (product.image ? [{ url: product.image, label: '' }] : []);
 
-  if (related.length === 0) {
-    container.closest('div').style.display = 'none';
+  imgs.forEach(im => {
+    const url = typeof im === 'string' ? im : im.url;
+    if (url) galleryItems.push({ type: 'image', url, label: ((im && im.label) || '').trim() });
+  });
+
+  // วิดีโอ (YouTube/TikTok ลิงก์)
+  const embed = toVideoEmbed(product.videoUrl);
+  if (embed) galleryItems.push({ type: 'video', embedUrl: embed });
+
+  // เริ่มที่รูปปก
+  const cover = Number(product.coverIndex);
+  activeGalleryIndex = (!isNaN(cover) && cover >= 0 && cover < galleryItems.length) ? cover : 0;
+}
+
+// แปลงลิงก์ YouTube / TikTok → embed URL (คืน '' ถ้าไม่รองรับ)
+function toVideoEmbed(url) {
+  if (!url) return '';
+  const u = String(url).trim();
+  // YouTube: watch?v= | youtu.be/ | shorts/
+  let m = u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,15})/);
+  if (m) return 'https://www.youtube.com/embed/' + m[1];
+  // TikTok: /video/{id}
+  m = u.match(/tiktok\.com\/.*\/video\/(\d{8,25})/);
+  if (m) return 'https://www.tiktok.com/embed/v2/' + m[1];
+  return '';
+}
+
+function renderGallery() {
+  const mainEl   = document.getElementById('gallery-main');
+  const thumbsEl = document.getElementById('gallery-thumbs');
+  const emojiEl  = document.getElementById('gallery-emoji');
+  if (!mainEl) return;
+
+  // เคลียร์ media เดิม (เก็บ badge + emoji ไว้)
+  mainEl.querySelectorAll('.gallery-media').forEach(el => el.remove());
+
+  if (!galleryItems.length) {
+    if (emojiEl) { emojiEl.style.display = ''; emojiEl.textContent = product.emoji || '📦'; }
+    if (thumbsEl) thumbsEl.innerHTML = '';
     return;
   }
+  if (emojiEl) emojiEl.style.display = 'none';
 
-  container.innerHTML = related.slice(0, 4).map(p => {
-    const badges = [p.isNew&&'<span class="badge badge-new">✨ ใหม่</span>', p.isHot&&'<span class="badge badge-hot">🔥 ขายดี</span>'].filter(Boolean).join('');
-    return `
-      <a href="product.html?id=${p.id}" class="product-card">
-        <div class="product-img-wrap">
-          ${p.image ? `<img src="${p.image}" alt="${DMC.escapeHtml(p.name)}" loading="lazy">` : `<span>${p.emoji||'📦'}</span>`}
-          <div class="product-img-overlay"></div>
-          ${badges ? `<div class="product-badges">${badges}</div>` : ''}
-        </div>
-        <div class="product-info">
-          <div class="product-name">${DMC.escapeHtml(p.name)}</div>
-          <div class="product-desc">${DMC.escapeHtml(p.shortDesc||'')}</div>
-          <div class="product-footer">
-            <div class="product-price">${DMC.formatPrice(p.price)}<span class="unit">/${p.unit||'ชิ้น'}</span></div>
-            <button class="btn-add-cart" data-id="${p.id}" aria-label="ใส่ตะกร้า">+</button>
-          </div>
-        </div>
-      </a>
-    `;
-  }).join('');
+  const item = galleryItems[Math.min(activeGalleryIndex, galleryItems.length - 1)];
 
-  // Bind cart buttons
-  container.querySelectorAll('.btn-add-cart').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.preventDefault(); e.stopPropagation();
-      const p = related.find(x => x.id === btn.dataset.id);
-      if (!p) return;
-      DMC.addToCart({ id:p.id, name:p.name, price:p.price, unit:p.unit||'ชิ้น', emoji:p.emoji||'📦', qty:1 });
-      btn.textContent = '✓';
-      setTimeout(() => btn.textContent = '+', 1200);
+  if (item.type === 'image') {
+    const img = document.createElement('img');
+    img.src = item.url;
+    img.alt = product.name + (item.label ? ' — ' + item.label : '');
+    img.className = 'gallery-media';
+    img.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:var(--r-xl);position:relative;z-index:1;cursor:zoom-in';
+    img.addEventListener('click', () => openProductLightbox(item.url));
+    mainEl.appendChild(img);
+    if (typeof Loading !== 'undefined') Loading.blurUpImage(img);
+  } else {
+    const wrap = document.createElement('div');
+    wrap.className = 'gallery-media gallery-video-wrap';
+    const iframe = document.createElement('iframe');
+    iframe.src = item.embedUrl;
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+    iframe.setAttribute('loading', 'lazy');
+    iframe.title = 'วิดีโอสินค้า ' + product.name;
+    wrap.appendChild(iframe);
+    mainEl.appendChild(wrap);
+  }
+
+  // Thumbnails
+  if (thumbsEl) {
+    thumbsEl.innerHTML = '';
+    if (galleryItems.length > 1) {
+      galleryItems.forEach((g, i) => {
+        const t = document.createElement('div');
+        t.className = 'gallery-thumb' + (i === activeGalleryIndex ? ' active' : '');
+        if (g.type === 'image') {
+          const im = document.createElement('img');
+          im.src = g.url;
+          im.alt = g.label || ('รูปที่ ' + (i + 1));
+          im.loading = 'lazy';
+          im.style.cssText = 'width:100%;height:100%;object-fit:contain;padding:2px';
+          t.appendChild(im);
+          if (g.label) t.title = g.label;
+        } else {
+          t.innerHTML = '<span class="gallery-thumb-video">▶</span>';
+          t.title = 'วิดีโอ';
+        }
+        t.addEventListener('click', () => { activeGalleryIndex = i; renderGallery(); });
+        thumbsEl.appendChild(t);
+      });
+    }
+  }
+}
+
+// Lightbox ดูรูปเต็มจอ (createElement — ห้ามใช้ onclick ใน template string)
+function openProductLightbox(url) {
+  let lb = document.getElementById('product-lightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'product-lightbox';
+    lb.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;backdrop-filter:blur(4px)';
+    const img = document.createElement('img');
+    img.id = 'product-lightbox-img';
+    img.style.cssText = 'max-width:95vw;max-height:92vh;border-radius:12px;object-fit:contain';
+    const close = document.createElement('button');
+    close.textContent = '✕';
+    close.style.cssText = 'position:absolute;top:1rem;right:1rem;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.3rem;cursor:pointer';
+    close.addEventListener('click', () => { lb.style.display = 'none'; });
+    lb.appendChild(img); lb.appendChild(close);
+    lb.addEventListener('click', e => { if (e.target === lb) lb.style.display = 'none'; });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') lb.style.display = 'none'; });
+    document.body.appendChild(lb);
+  }
+  document.getElementById('product-lightbox-img').src = url;
+  lb.style.display = 'flex';
+}
+
+// ══════════════════════════════════════════════
+//  OPTION CHIPS (ขนาด/วัสดุ) + สลับรูปตาม label
+// ══════════════════════════════════════════════
+function renderOptionChips(kind, options) {
+  const group = document.getElementById(kind + '-group');
+  const chips = document.getElementById(kind + '-chips');
+  if (!group || !chips || !options.length) return;
+
+  group.style.display = '';
+  chips.innerHTML = '';
+
+  options.forEach((opt, i) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'option-chip' + (i === 0 ? ' active' : '');
+    chip.textContent = opt;
+    chip.addEventListener('click', () => {
+      chips.querySelectorAll('.option-chip').forEach(x => x.classList.remove('active'));
+      chip.classList.add('active');
+      if (kind === 'size') selectedSize = opt; else selectedMaterial = opt;
+      setText(kind + '-selected', opt);
+      switchImageByLabel(opt);
     });
+    chips.appendChild(chip);
   });
+
+  // ค่าเริ่มต้น = ตัวแรก
+  if (kind === 'size') selectedSize = options[0]; else selectedMaterial = options[0];
+  setText(kind + '-selected', options[0]);
+}
+
+// ลูกค้ากดเลือกแบบ → ถ้ามีรูปที่ label ตรงกัน สลับรูปให้ทันที
+function switchImageByLabel(label) {
+  if (!label) return;
+  const want = String(label).trim().toLowerCase();
+  const idx = galleryItems.findIndex(g =>
+    g.type === 'image' && g.label && g.label.toLowerCase() === want);
+  if (idx >= 0 && idx !== activeGalleryIndex) {
+    activeGalleryIndex = idx;
+    renderGallery();
+  }
+}
+
+// ══════════════════════════════════════════════
+//  QTY + CART
+// ══════════════════════════════════════════════
+function updateQtyUI() {
+  setText('qty-val', qty);
+  setText('qty-display', qty);
+  setText('subtotal-display', DMC.formatPrice((product.price || 0) * qty));
+}
+
+function addToCart(goToCart) {
+  const options = [selectedSize, selectedMaterial].filter(Boolean).join(' · ');
+  DMC.addToCart({
+    id: product.id,
+    name: product.name,
+    price: product.price || 0,
+    qty,
+    unit: product.unit || 'ชิ้น',
+    options,
+    emoji: product.emoji || '📦',
+    image: (galleryItems.find(g => g.type === 'image') || {}).url || product.image || '',
+  });
+  DMC.toast(`เพิ่ม "${product.name}" ลงตะกร้าแล้ว 🛒`, 'success');
+  if (goToCart) setTimeout(() => { window.location.href = 'cart.html'; }, 350);
+}
+
+// ══════════════════════════════════════════════
+//  RELATED PRODUCTS
+// ══════════════════════════════════════════════
+async function loadRelated() {
+  const grid = document.getElementById('related-products');
+  if (!grid || !db) return;
+  try {
+    const snap = await db.collection('products')
+      .where('active', '==', true)
+      .limit(20)
+      .get();
+    const items = [];
+    snap.forEach(doc => {
+      if (doc.id === productId) return;
+      items.push({ id: doc.id, ...doc.data() });
+    });
+    // สินค้าหมวดเดียวกันก่อน
+    items.sort((a, b) =>
+      (b.category === product.category ? 1 : 0) - (a.category === product.category ? 1 : 0));
+    const top = items.slice(0, 4);
+    if (!top.length) { grid.parentElement.style.display = 'none'; return; }
+
+    grid.innerHTML = top.map(p => {
+      const cover = coverImageOf(p);
+      return `
+      <a class="product-card" href="product.html?id=${p.id}">
+        <div class="product-img-wrap">
+          ${cover ? `<img src="${cover}" alt="${DMC.escapeHtml(p.name)}" loading="lazy">` : `<span>${p.emoji || '📦'}</span>`}
+        </div>
+        <div class="product-card-body">
+          <div class="product-card-name">${DMC.escapeHtml(p.name)}</div>
+          <div class="product-card-price">${DMC.formatPrice(p.price)}<span class="product-card-unit">/${p.unit || 'ชิ้น'}</span></div>
+        </div>
+      </a>`;
+    }).join('');
+    if (typeof Loading !== 'undefined') Loading.animateCards('#related-products .product-card', 50);
+  } catch (e) { /* related ไม่สำคัญ — เงียบไว้ */ }
+}
+
+// รูปปกของสินค้า (รองรับทั้ง images[] + coverIndex และ image เดี่ยว)
+function coverImageOf(p) {
+  if (Array.isArray(p.images) && p.images.length) {
+    const ci = Number(p.coverIndex);
+    const item = (!isNaN(ci) && p.images[ci]) ? p.images[ci] : p.images[0];
+    return typeof item === 'string' ? item : (item.url || '');
+  }
+  return p.image || '';
+}
+
+// ══════════════════════════════════════════════
+//  REVIEWS
+// ══════════════════════════════════════════════
+let rvRating = 0;
+
+async function initReviews() {
+  if (typeof Reviews === 'undefined') return;
+
+  // ── ดาวแบบกดเลือก ──
+  const starWrap = document.getElementById('rv-star-input');
+  if (starWrap) {
+    for (let i = 1; i <= 5; i++) {
+      const s = document.createElement('button');
+      s.type = 'button';
+      s.className = 'rv-star-btn';
+      s.textContent = '★';
+      s.setAttribute('aria-label', i + ' ดาว');
+      s.addEventListener('click', () => {
+        rvRating = i;
+        starWrap.querySelectorAll('.rv-star-btn').forEach((b, j) => b.classList.toggle('on', j < i));
+      });
+      starWrap.appendChild(s);
+    }
+  }
+
+  // ── นับตัวอักษร ──
+  const txtEl = document.getElementById('rv-text');
+  txtEl?.addEventListener('input', () => setText('rv-char', txtEl.value.length));
+
+  // ── ส่งรีวิว ──
+  document.getElementById('rv-submit-btn')?.addEventListener('click', submitReview);
+
+  // ── โหลดรีวิวที่อนุมัติแล้ว ──
+  await loadApprovedReviews();
+}
+
+async function loadApprovedReviews() {
+  const listEl = document.getElementById('rv-list');
+  const sumEl  = document.getElementById('rv-summary');
+  if (!listEl) return;
+
+  const reviews = await Reviews.fetchApproved(db, productId, 30);
+
+  // อัปเดต rating ด้านบน
+  if (reviews.length) {
+    const avg = Reviews.avgRating(reviews);
+    setText('rating-score', avg.toFixed(1));
+    setText('review-count', reviews.length + ' รีวิว');
+    if (sumEl) sumEl.innerHTML = Reviews.starsHtml(avg) +
+      ` <strong>${avg.toFixed(1)}</strong> <span style="color:var(--text-3)">(${reviews.length} รีวิว)</span>`;
+    listEl.innerHTML = reviews.map(r => Reviews.cardHtml({ ...r, _hideProduct: true })).join('');
+    if (typeof Loading !== 'undefined') Loading.staggerItems('#rv-list .rv-card', 60);
+  } else {
+    setText('review-count', 'ยังไม่มีรีวิว');
+    if (sumEl) sumEl.innerHTML = '<span style="color:var(--text-3);font-size:.88rem">เป็นคนแรกที่รีวิวสินค้านี้ ⭐</span>';
+    listEl.innerHTML = '';
+  }
+}
+
+async function submitReview() {
+  const btn = document.getElementById('rv-submit-btn');
+  const res = { name: document.getElementById('rv-name')?.value,
+                text: document.getElementById('rv-text')?.value,
+                honeypot: document.getElementById('rv-website')?.value };
+
+  if (typeof Loading !== 'undefined') Loading.buttonLoad(btn);
+  try {
+    const out = await Reviews.submit(db, {
+      productId,
+      productName: product.name,
+      name: res.name,
+      rating: rvRating,
+      text: res.text,
+      honeypot: res.honeypot,
+    });
+    if (out.ok) {
+      DMC.toast('ส่งรีวิวแล้ว 🙏 จะแสดงหลังร้านอนุมัติครับ', 'success', 4500);
+      document.getElementById('rv-name').value = '';
+      document.getElementById('rv-text').value = '';
+      setText('rv-char', '0');
+      rvRating = 0;
+      document.querySelectorAll('#rv-star-input .rv-star-btn').forEach(b => b.classList.remove('on'));
+    } else {
+      DMC.toast('❌ ' + out.reason, 'error', 4000);
+    }
+  } finally {
+    if (typeof Loading !== 'undefined') Loading.buttonDone(btn);
+  }
 }

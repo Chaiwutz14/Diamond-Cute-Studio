@@ -26,7 +26,8 @@ function getFirebaseReady() {
       // Load Firebase SDK dynamically
       const scripts = [
         'https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js',
-        'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js'
+        'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js',
+        'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js'
       ];
 
       let loaded = 0;
@@ -43,13 +44,10 @@ function getFirebaseReady() {
               }
               _db = firebase.firestore();
 
-              // Enable offline persistence
-              _db.enablePersistence({ synchronizeTabs: true })
-                .catch(err => {
-                  if (err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
-                    console.warn('Persistence error:', err);
-                  }
-                });
+              // Cache settings (แทน enablePersistence ที่ deprecated)
+              try {
+                _db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
+              } catch(e) { /* settings ต้องเรียกก่อน operation แรก */ }
 
               console.log('✅ Firebase ready');
               resolve(_db);
@@ -355,9 +353,44 @@ function escapeHtml(str) {
 }
 
 // ─── Export ───
+
+// ─── Phone Helpers (สำหรับ Order History + OTP) ───
+function normalizePhone(phone) {
+  // คืนเฉพาะตัวเลข เช่น "080-998 7611" → "0809987611"
+  return String(phone || '').replace(/\D/g, '');
+}
+
+function toIntlPhone(phone) {
+  // แปลงเบอร์ไทยเป็น E.164 สำหรับ Firebase Auth: 0809987611 → +66809987611
+  const d = normalizePhone(phone);
+  if (d.startsWith('66')) return '+' + d;
+  if (d.startsWith('0'))  return '+66' + d.slice(1);
+  return '+' + d;
+}
+
+// ─── My Orders (localStorage — ดูประวัติเครื่องเดิมได้ทันที) ───
+const MY_ORDERS_KEY = 'dmc_my_orders';
+
+function saveMyOrder(docId, orderId) {
+  try {
+    const list = JSON.parse(localStorage.getItem(MY_ORDERS_KEY) || '[]');
+    list.unshift({ docId, orderId, at: Date.now() });
+    localStorage.setItem(MY_ORDERS_KEY, JSON.stringify(list.slice(0, 30)));
+  } catch (e) { /* localStorage เต็มหรือปิดอยู่ — ข้าม */ }
+}
+
+function getMyOrders() {
+  try { return JSON.parse(localStorage.getItem(MY_ORDERS_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+
 window.DMC = {
   // Firebase
   getFirebaseReady,
+  normalizePhone,
+  toIntlPhone,
+  saveMyOrder,
+  getMyOrders,
   getDb,
   // Image
   uploadToImgBB,

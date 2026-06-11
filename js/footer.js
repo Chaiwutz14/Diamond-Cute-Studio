@@ -14,9 +14,17 @@
     email:     'mailto:YOUR_EMAIL@gmail.com',
   };
 
-  function render() {
+  function render(cms) {
     var mount = document.getElementById('footer-mount');
     if (!mount) return;
+    // ใช้ลิงก์จาก CMS (หลังบ้านแก้ได้) — fallback เป็นค่าในไฟล์
+    if (cms) {
+      if (cms.line)      LINKS.line      = cms.line;
+      if (cms.facebook)  LINKS.facebook  = cms.facebook;
+      if (cms.instagram) LINKS.instagram = cms.instagram;
+      if (cms.tiktok)    LINKS.tiktok    = cms.tiktok;
+      if (cms.email)     LINKS.email     = cms.email.indexOf('mailto:') === 0 ? cms.email : 'mailto:' + cms.email;
+    }
 
     mount.innerHTML = `
       <footer class="footer">
@@ -45,6 +53,7 @@
           <div class="footer-col">
             <h4>ข้อมูล</h4>
             <a href="about.html">📋 วิธีสั่งซื้อ</a>
+            <a href="orders.html">📦 ติดตามออเดอร์</a>
             <a href="gallery.html">🖼️ ตัวอย่างงาน</a>
             <a href="contact.html">💬 ติดต่อเรา</a>
             <a href="about.html#faq">❓ คำถามที่พบบ่อย</a>
@@ -62,16 +71,25 @@
         </div>
 
         <div class="footer-bottom">
-          <span>© 2025 Diamond Cute Studio 💎 — All rights reserved.</span>
+          <span>© 2026 Diamond Cute Studio 💎 — All rights reserved.</span>
           <span>Powered by Firebase + Cloudflare</span>
         </div>
       </footer>
     `;
   }
 
+  function boot() {
+    // โหลด CMS ก่อนถ้ามี — แก้ลิงก์จากหลังบ้านได้
+    if (typeof CMS !== 'undefined') {
+      CMS.get().then(function(content){ render(content.contact || null); })
+               .catch(function(){ render(null); });
+    } else {
+      render(null);
+    }
+  }
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', render);
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    render();
+    boot();
   }
 })();

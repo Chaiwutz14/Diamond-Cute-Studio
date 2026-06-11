@@ -83,15 +83,15 @@
     <!-- Left: Channels + Hours -->
     <div>
       <div class="channel-list">
-        <a href="https://line.me/R/ti/p/YOUR_LINE_OA" target="_blank" rel="noopener" class="channel-card">
+        <a href="https://line.me/R/ti/p/YOUR_LINE_OA" target="_blank" rel="noopener" class="channel-card" id="ch-line">
           <div class="channel-icon line">💬</div>
           <div class="channel-info">
             <div class="channel-name">LINE Official Account</div>
-            <div class="channel-handle">ช่องทางหลัก ตอบเร็วที่สุด <span class="online-dot"></span></div>
+            <div class="channel-handle"><span id="ch-line-label">ช่องทางหลัก ตอบเร็วที่สุด</span> <span class="online-dot"></span></div>
           </div>
           <span class="channel-arrow">→</span>
         </a>
-        <a href="https://facebook.com/YOUR_PAGE" target="_blank" rel="noopener" class="channel-card">
+        <a href="https://facebook.com/YOUR_PAGE" target="_blank" rel="noopener" class="channel-card" id="ch-fb">
           <div class="channel-icon fb">📘</div>
           <div class="channel-info">
             <div class="channel-name">Facebook</div>
@@ -99,7 +99,7 @@
           </div>
           <span class="channel-arrow">→</span>
         </a>
-        <a href="https://instagram.com/YOUR_ACCOUNT" target="_blank" rel="noopener" class="channel-card">
+        <a href="https://instagram.com/YOUR_ACCOUNT" target="_blank" rel="noopener" class="channel-card" id="ch-ig">
           <div class="channel-icon ig">📸</div>
           <div class="channel-info">
             <div class="channel-name">Instagram</div>
@@ -107,7 +107,7 @@
           </div>
           <span class="channel-arrow">→</span>
         </a>
-        <a href="https://tiktok.com/@YOUR_ACCOUNT" target="_blank" rel="noopener" class="channel-card">
+        <a href="https://tiktok.com/@YOUR_ACCOUNT" target="_blank" rel="noopener" class="channel-card" id="ch-tt">
           <div class="channel-icon tt">🎵</div>
           <div class="channel-info">
             <div class="channel-name">TikTok</div>
@@ -115,11 +115,11 @@
           </div>
           <span class="channel-arrow">→</span>
         </a>
-        <a href="mailto:YOUR_EMAIL@gmail.com" class="channel-card">
+        <a href="mailto:YOUR_EMAIL@gmail.com" class="channel-card" id="ch-mail">
           <div class="channel-icon mail">📧</div>
           <div class="channel-info">
             <div class="channel-name">อีเมล</div>
-            <div class="channel-handle">YOUR_EMAIL@gmail.com</div>
+            <div class="channel-handle" id="ch-mail-label">YOUR_EMAIL@gmail.com</div>
           </div>
           <span class="channel-arrow">→</span>
         </a>
@@ -176,6 +176,7 @@
 <div id="toast-container"></div>
 <script src="js/loading.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/cms.js"></script>
 <script src="js/navbar.js"></script>
 <script src="js/footer.js"></script>
 <script src="js/theme-switcher.js"></script>
@@ -224,6 +225,32 @@ document.getElementById('cf-submit').addEventListener('click', async function(){
     else { btn.disabled = false; btn.innerHTML = '💬 ส่งข้อความ'; }
   }
 });
+</script>
+<script>
+// ── ช่องทางติดต่อจากหลังบ้าน (CMS) ──
+(function(){
+  if (typeof CMS === 'undefined') return;
+  CMS.get().then(function(c){
+    var ct = c.contact || {};
+    function setHref(id, url){ var el = document.getElementById(id); if (el && url) el.href = url; }
+    setHref('ch-line', ct.line);
+    setHref('ch-fb',   ct.facebook);
+    setHref('ch-ig',   ct.instagram);
+    setHref('ch-tt',   ct.tiktok);
+    if (ct.email) {
+      var m = document.getElementById('ch-mail');
+      if (m) m.href = ct.email.indexOf('mailto:') === 0 ? ct.email : 'mailto:' + ct.email;
+      var ml = document.getElementById('ch-mail-label');
+      if (ml) ml.textContent = ct.email.replace('mailto:','');
+    }
+    if (ct.lineLabel) {
+      var ll = document.getElementById('ch-line-label');
+      if (ll) ll.textContent = ct.lineLabel + ' · ตอบเร็วที่สุด';
+    }
+    var hrs = document.getElementById('contact-hours');
+    if (hrs && ct.hours) hrs.textContent = ct.hours;
+  }).catch(function(){});
+})();
 </script>
 </body>
 </html>

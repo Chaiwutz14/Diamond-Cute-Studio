@@ -5,7 +5,19 @@
 
 'use strict';
 
+// ── รูปปกของสินค้า (V12: รองรับหลายรูป + coverIndex) ──
+function homeCoverOf(p) {
+  if (Array.isArray(p.images) && p.images.length) {
+    const i = (typeof p.coverIndex === 'number' && p.images[p.coverIndex]) ? p.coverIndex : 0;
+    return p.images[i].url || p.images[i] || '';
+  }
+  return p.image || '';
+}
+
+
 document.addEventListener('DOMContentLoaded', async () => {
+  applyCMSContent();   // เนื้อหาจากหลังบ้าน (hero/promo/stats)
+  loadHomeReviews();   // รีวิวจริงจากลูกค้า
 
   // ─── Hero Particle Canvas ───
   initParticles();
@@ -200,8 +212,8 @@ function buildProductCard(p) {
   return `
     <a href="product.html?id=${p.id}" class="product-card" data-id="${p.id}">
       <div class="product-img-wrap">
-        ${p.image
-          ? `<img src="${p.image}" alt="${DMC.escapeHtml(p.name)}" loading="lazy">`
+        ${homeCoverOf(p)
+          ? `<img src="${homeCoverOf(p)}" alt="${DMC.escapeHtml(p.name)}" loading="lazy">`
           : `<span>${p.emoji || '📦'}</span>`
         }
         <div class="product-img-overlay"></div>
@@ -295,70 +307,6 @@ function initScrollAnimations() {
   });
 }
 
-// ─── Hero Card Carousel ───────────────────────
-function initHeroCarousel() {
-  const carousel = document.getElementById('hero-carousel');
-  if (!carousel) return;
-
-  const cards = Array.from(carousel.querySelectorAll('.hcard'));
-  if (cards.length < 2) return;
-
-  // Build dot indicators
-  const dotsWrap = document.createElement('div');
-  dotsWrap.className = 'hc-dots';
-  cards.forEach((_, i) => {
-    const d = document.createElement('div');
-    d.className = 'hc-dot' + (i === 0 ? ' on' : '');
-    dotsWrap.appendChild(d);
-  });
-  carousel.appendChild(dotsWrap);
-
-  let activeIdx = 0;
-
-  function goTo(nextIdx) {
-    if (nextIdx === activeIdx) return;
-    const dots = dotsWrap.querySelectorAll('.hc-dot');
-
-    // Remove all state classes
-    cards.forEach(c => c.classList.remove('hc-active','hc-back','hc-hidden','hc-exiting'));
-
-    // Assign new states: active → front, next in line → back, rest → hidden
-    cards.forEach((card, i) => {
-      const rel = ((i - nextIdx) + cards.length) % cards.length;
-      if (rel === 0)               card.classList.add('hc-active');
-      else if (rel === 1)          card.classList.add('hc-back');
-      else                         card.classList.add('hc-hidden');
-    });
-
-    activeIdx = nextIdx;
-
-    // Update dots
-    dots.forEach((d, i) => d.classList.toggle('on', i === activeIdx));
-  }
-
-  // Click on back card → bring it to front
-  cards.forEach((card, i) => {
-    card.addEventListener('click', () => {
-      if (card.classList.contains('hc-back')) {
-        goTo(i);
-      }
-    });
-  });
-
-  // Auto-rotate every 4 seconds
-  let autoTimer = setInterval(() => {
-    goTo((activeIdx + 1) % cards.length);
-  }, 4000);
-
-  // Pause auto on hover
-  carousel.addEventListener('mouseenter', () => clearInterval(autoTimer));
-  carousel.addEventListener('mouseleave', () => {
-    autoTimer = setInterval(() => {
-      goTo((activeIdx + 1) % cards.length);
-    }, 4000);
-  });
-}
-
 // ── Hero Card Carousel ──────────────────────────
 function initHeroCarousel() {
   var carousel = document.getElementById('hero-carousel');
@@ -409,4 +357,61 @@ function initHeroCarousel() {
   carousel.addEventListener('mouseleave', function(){
     timer = setInterval(function(){ goTo((activeIdx+1) % cards.length); }, 4000);
   });
+}
+
+
+// ─── CMS: เนื้อหาหน้าแรกจากหลังบ้าน ───────────
+async function applyCMSContent() {
+  if (typeof CMS === 'undefined') return;
+  try {
+    const c = await CMS.get();
+    const set = (id, text) => { const el = document.getElementById(id); if (el && text) el.textContent = text; };
+
+    set('hero-badge-text', c.hero.badge);
+    set('hero-t1', c.hero.title1);
+    set('hero-t2', c.hero.title2);
+    set('hero-t3', c.hero.title3);
+    const desc = document.getElementById('hero-desc-text');
+    if (desc && c.hero.desc) desc.innerHTML = DMC.escapeHtml(c.hero.desc).replace(/\n/g, '<br>');
+
+    set('stat-orders', c.stats.orders);
+    set('stat-rating', c.stats.rating);
+    set('stat-days',   c.stats.days);
+
+    const promoWrap = document.getElementById('promo-section-el');
+    if (promoWrap) {
+      if (c.promo.active === false) {
+        promoWrap.style.display = 'none';
+      } else {
+        set('promo-tag-el',   c.promo.tag);
+        set('promo-title-el', c.promo.title);
+        set('promo-desc-el',  c.promo.desc);
+        set('promo-btn-el',   c.promo.btnText);
+      }
+    }
+  } catch (e) { /* ใช้ข้อความเดิมในไฟล์ */ }
+}
+
+// ─── รีวิวจริงบนหน้าแรก ───────────────────────
+async function loadHomeReviews() {
+  const wrap = document.getElementById('home-reviews');
+  if (!wrap || typeof Reviews === 'undefined') return;
+  try {
+    const db   = await DMC.getFirebaseReady();
+    const list = await Reviews.fetchApproved(db, null, 6);
+    const section = document.getElementById('home-reviews-section');
+    if (!list.length) { if (section) section.style.display = 'none'; return; }
+
+    const avg = Reviews.avgRating(list);
+    const sum = document.getElementById('home-rv-summary');
+    if (sum) sum.innerHTML = Reviews.starsHtml(avg) +
+      '<span class="rv-avg-num">' + avg.toFixed(1) + '</span>' +
+      '<span class="rv-avg-count">จาก ' + list.length + ' รีวิว</span>';
+
+    wrap.innerHTML = list.map(r => Reviews.cardHtml(r)).join('');
+    if (typeof Loading !== 'undefined') Loading.staggerItems('#home-reviews .rv-card', 70);
+  } catch (e) {
+    const section = document.getElementById('home-reviews-section');
+    if (section) section.style.display = 'none';
+  }
 }

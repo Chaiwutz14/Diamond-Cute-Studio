@@ -1,6 +1,11 @@
 /* ═══════════════════════════════════════════════
-   Diamond Cute Studio 💎 — Admin JS  V6
-   Full featured: Orders · Products · Settings · Canvas Templates
+   Diamond Cute Studio 💎 — Admin JS V12 (Full Rewrite)
+
+   Sections: Overview · Orders(+Tracking) · Products(+Multi-image/Video/Templates)
+             · Gallery · Contacts · Reviews · Site Content(CMS) · Templates · Settings
+   กฎความปลอดภัยโค้ด:
+   - ห้ามใส่ onclick ที่มี URL/ชื่อ ใน template string (ใช้ data-attr + delegation)
+   - onclick ใช้ได้เฉพาะ doc id (ตัวอักษร/ตัวเลขล้วน)
 ═══════════════════════════════════════════════ */
 'use strict';
 
@@ -8,6 +13,33 @@ const ADMIN_HASH = "b454dc28df89029f894c5046920aec23d2bcceb2db61e1b2a354709c069f
 const ADMIN_SALT = "dmc_diamond_studio_salt_v1";
 
 let db = null;
+
+// สถานะออเดอร์ V12 (เพิ่ม shipping)
+const ORDER_STATUSES = [
+  { key:'pending',    label:'📥 รับออเดอร์',  short:'📥 รับแล้ว' },
+  { key:'processing', label:'🛠️ จัดเตรียม',   short:'🛠️ เตรียม' },
+  { key:'shipping',   label:'🚚 กำลังส่ง',    short:'🚚 ส่ง' },
+  { key:'done',       label:'🎉 ส่งสำเร็จ',   short:'🎉 สำเร็จ' },
+  { key:'cancelled',  label:'❌ ยกเลิก',      short:'❌ ยกเลิก' },
+];
+
+const CARRIER_OPTIONS = [
+  { key:'',         name:'— เลือกขนส่ง —' },
+  { key:'kerry',    name:'Kerry Express' },
+  { key:'flash',    name:'Flash Express' },
+  { key:'jt',       name:'J&T Express' },
+  { key:'thaipost', name:'ไปรษณีย์ไทย' },
+];
+
+// Built-in canvas templates (ให้เลือกผูกกับสินค้า)
+const BUILTIN_TEMPLATES = [
+  { id:'classic', name:'Classic', emoji:'📸' },
+  { id:'minimal', name:'Minimal', emoji:'🌸' },
+  { id:'dark',    name:'Dark',    emoji:'🌙' },
+  { id:'warm',    name:'Warm',    emoji:'☀️' },
+  { id:'cool',    name:'Cool',    emoji:'❄️' },
+  { id:'cute',    name:'Cute',    emoji:'🎀' },
+];
 
 document.addEventListener('DOMContentLoaded', async () => {
   const isLogin     = document.getElementById('admin-login-page');
@@ -49,11 +81,10 @@ function initLoginPage() {
     if (!password) return;
     const btn = document.getElementById('login-btn');
     if (typeof Loading !== 'undefined') { Loading.buttonLoad(btn); Loading.progressStart(); }
-    else { btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle"></span>'; }
+    else btn.disabled = true;
     try {
-      const hash    = await DMC.pbkdf2Hash(password, ADMIN_SALT);
-      const correct = hash === ADMIN_HASH;
-      if (correct) {
+      const hash = await DMC.pbkdf2Hash(password, ADMIN_SALT);
+      if (hash === ADMIN_HASH) {
         DMC.clearRateLimit(); DMC.createSession();
         if (typeof Loading !== 'undefined') Loading.progressDone();
         DMC.toast('เข้าสู่ระบบสำเร็จ 🎉', 'success');
@@ -69,11 +100,12 @@ function initLoginPage() {
           setTimeout(() => { errorBox.classList.remove('visible'); passInput.classList.remove('error'); }, 2500);
         }
         if (typeof Loading !== 'undefined') { Loading.buttonDone(btn); Loading.progressDone(); }
-        else { btn.disabled = false; btn.innerHTML = '🔓 เข้าสู่ระบบ'; }
+        else btn.disabled = false;
       }
     } catch(e) {
       DMC.toast('เกิดข้อผิดพลาด', 'error');
-      btn.disabled = false; btn.innerHTML = '🔓 เข้าสู่ระบบ';
+      if (typeof Loading !== 'undefined') { Loading.buttonDone(btn); Loading.progressDone(); }
+      else btn.disabled = false;
     }
   }
   document.getElementById('login-btn')?.addEventListener('click', handleLogin);
@@ -92,7 +124,6 @@ function initDashboard() {
 }
 
 function doLogout() {
-  // Custom logout modal แทน browser confirm()
   var existing = document.getElementById('logout-modal');
   if (existing) existing.remove();
 
@@ -110,19 +141,12 @@ function doLogout() {
       '</div>',
     '</div>'
   ].join('');
-
   document.body.appendChild(modal);
-
   document.getElementById('logout-confirm').addEventListener('click', function(){
-    modal.remove();
-    DMC.clearSession();
-    window.location.href = 'admin-login.html';
+    modal.remove(); DMC.clearSession(); window.location.href = 'admin-login.html';
   });
   document.getElementById('logout-cancel').addEventListener('click', function(){ modal.remove(); });
   modal.addEventListener('click', function(e){ if (e.target === modal) modal.remove(); });
-  document.addEventListener('keydown', function handler(e){
-    if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', handler); }
-  });
 }
 
 function initSidebarNav() {
@@ -142,9 +166,15 @@ function loadSection(name) {
   const active = document.querySelector(`.sidebar-item[data-section="${name}"]`);
   if (active) { document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active')); active.classList.add('active'); }
   if (typeof Loading !== 'undefined') Loading.progressStart();
-  const map = { overview:loadOverview, orders:loadOrders, products:loadProducts, gallery:loadGallery, contacts:loadContacts, settings:loadSettings };
+  const map = {
+    overview:loadOverview, orders:loadOrders, products:loadProducts,
+    gallery:loadGallery, contacts:loadContacts, reviews:loadReviewsAdmin,
+    content:loadContentCMS, templates:loadTemplatesAdmin, settings:loadSettings
+  };
   const fn = map[name] || loadOverview;
   Promise.resolve(fn(content)).then(() => {
+    if (typeof Loading !== 'undefined') Loading.progressDone();
+  }).catch(() => {
     if (typeof Loading !== 'undefined') Loading.progressDone();
   });
 }
@@ -161,12 +191,12 @@ async function loadOverview(container) {
       </div>
       <div class="admin-topbar-actions">
         <button class="btn btn-line btn-md" id="test-notify-btn">🔔 ทดสอบ LINE</button>
-        <button class="btn btn-primary btn-md" onclick="loadSection('products')">+ เพิ่มสินค้า</button>
+        <button class="btn btn-primary btn-md" id="goto-add-product">+ เพิ่มสินค้า</button>
       </div>
     </div>
 
     <div class="kpi-grid" id="kpi-grid">
-      ${typeof Skeleton !== 'undefined' ? Skeleton.adminKPIs() : ''}
+      ${typeof Loading !== 'undefined' ? Loading.Skeleton.adminKPIs() : ''}
     </div>
 
     <div class="admin-grid">
@@ -179,22 +209,19 @@ async function loadOverview(container) {
         <div class="admin-box">
           <div class="admin-box-header">
             <div class="admin-box-title">📦 ออเดอร์ล่าสุด</div>
-            <span class="admin-box-action" onclick="loadSection('orders')">ดูทั้งหมด →</span>
+            <span class="admin-box-action" id="goto-orders">ดูทั้งหมด →</span>
           </div>
-          <div id="recent-orders-table"><div style="text-align:center;padding:1.5rem"><span class="spinner" style="display:block;margin:0 auto"></span></div></div>
+          <div id="recent-orders-table">${typeof Loading !== 'undefined' ? Loading.Skeleton.tableRows(4) : ''}</div>
         </div>
       </div>
       <div>
         <div class="admin-box">
-          <div class="admin-box-header"><div class="admin-box-title">🏆 สินค้าขายดี</div></div>
-          <div id="top-products-list"><div style="color:var(--text-3);text-align:center;padding:1rem;font-size:.85rem">กำลังโหลด...</div></div>
+          <div class="admin-box-header"><div class="admin-box-title">⭐ รีวิวรออนุมัติ</div></div>
+          <div id="pending-reviews-mini"><div style="color:var(--text-3);text-align:center;padding:.5rem;font-size:.85rem">กำลังโหลด...</div></div>
         </div>
         <div class="admin-box">
           <div class="admin-box-header"><div class="admin-box-title">💬 LINE Notify</div></div>
           <div style="font-size:.84rem;color:var(--text-2);margin-bottom:.75rem">ระบบแจ้งเตือนออเดอร์ใหม่ผ่าน LINE</div>
-          <div style="display:flex;align-items:center;gap:.5rem;padding:.55rem .8rem;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:var(--r-md);margin-bottom:.75rem">
-            <span style="color:var(--emerald)">●</span><span style="font-family:var(--font-display);font-size:.84rem;color:var(--emerald)">เชื่อมต่อแล้ว</span>
-          </div>
           <button class="btn btn-secondary btn-block btn-md" id="test-notify-2">🔔 ทดสอบส่งแจ้งเตือน</button>
         </div>
         <div class="admin-box">
@@ -203,30 +230,38 @@ async function loadOverview(container) {
             <div class="security-row ok">✅ PBKDF2-SHA256 (100k iterations)</div>
             <div class="security-row ok">✅ Session Token (8 ชม.)</div>
             <div class="security-row ok">✅ Rate Limit 5 ครั้ง/15 นาที</div>
-            <div class="security-row ok">✅ Cloudflare WAF</div>
+            <div class="security-row ok">✅ รีวิวต้องอนุมัติก่อนแสดง</div>
             <div class="security-row ok">✅ HTTPS Only</div>
           </div>
         </div>
       </div>
     </div>`;
 
+  document.getElementById('goto-add-product')?.addEventListener('click', () => { loadSection('products'); setTimeout(() => openProductModal(null), 250); });
+  document.getElementById('goto-orders')?.addEventListener('click', () => loadSection('orders'));
   ['test-notify-btn','test-notify-2'].forEach(id => {
-    document.getElementById(id)?.addEventListener('click', async () => {
+    document.getElementById(id)?.addEventListener('click', async (e) => {
+      const b = e.currentTarget;
+      if (typeof Loading !== 'undefined') Loading.buttonLoad(b);
       const ok = await DMC.sendLineNotify({ orderId:'TEST', customerName:'ทดสอบ', customerPhone:'000', itemsSummary:'ทดสอบระบบแจ้งเตือน', total:0, paymentMethod:'test' });
+      if (typeof Loading !== 'undefined') Loading.buttonDone(b);
       DMC.toast(ok ? '✅ ส่ง LINE สำเร็จ!' : '❌ ส่งไม่สำเร็จ ตรวจสอบ config', ok ? 'success' : 'error');
     });
   });
 
-  await Promise.all([loadKPIs(), loadRecentOrdersTable(), loadTopProducts(), renderSalesChart()]);
+  await Promise.all([loadKPIs(), loadRecentOrdersTable(), loadPendingReviewsMini(), renderSalesChart()]);
 }
 
-// ── KPIs ──
 async function loadKPIs() {
-  // Replace skeleton with real KPI cards
   const kpiGrid = document.getElementById('kpi-grid');
   if (kpiGrid) {
-    kpiGrid.innerHTML = [['blue','⏳','รอดำเนินการ','kpi-pending'],['gold','💰','ยอดขายเดือนนี้','kpi-revenue'],['green','✅','งานเสร็จแล้ว','kpi-done'],['rose','📦','ออเดอร์วันนี้','kpi-today']].map(([cls,icon,label,id])=>
-      `<div class="kpi-card kpi-${cls}"><div class="kpi-icon">${icon}</div><div class="kpi-label">${label}</div><div class="kpi-value" id="${id}"><span class="spinner"></span></div></div>`
+    kpiGrid.innerHTML = [
+      ['blue','⏳','กำลังดำเนินการ','kpi-pending'],
+      ['gold','💰','ยอดขายเดือนนี้','kpi-revenue'],
+      ['green','🎉','ส่งสำเร็จ','kpi-done'],
+      ['rose','📦','ออเดอร์วันนี้','kpi-today']
+    ].map(([cls,icon,label,id]) =>
+      `<div class="kpi-card kpi-${cls}"><div class="kpi-icon">${icon}</div><div class="kpi-label">${label}</div><div class="kpi-value" id="${id}">${typeof Loading!=='undefined'?Loading.pulseDotHTML:'…'}</div></div>`
     ).join('');
   }
   try {
@@ -238,71 +273,64 @@ async function loadKPIs() {
       db.collection('orders').where('createdAt','>=',firebase.firestore.Timestamp.fromDate(todayStart)).get(),
       db.collection('orders').where('createdAt','>=',firebase.firestore.Timestamp.fromDate(monthStart)).get(),
     ]);
-    let pending=0, done=0, revenue=0;
+    let active=0, done=0, revenue=0;
     all.forEach(d => {
       const o = d.data();
       if (o.status==='cancelled') return;
-      if (o.status==='pending'||o.status==='processing') pending++;
+      if (['pending','processing','shipping'].includes(o.status)) active++;
       if (o.status==='done') done++;
     });
     month.forEach(d => { const o=d.data(); if (o.status!=='cancelled') revenue += o.total||0; });
-    setText('kpi-pending', pending);
-    setText('kpi-revenue', DMC.formatPrice(revenue));
-    setText('kpi-done', done);
-    setText('kpi-today', today.size);
-    setText('greeting-sub', pending>0 ? `มี ${pending} ออเดอร์รอดำเนินการ 🔔` : 'ทุกออเดอร์เรียบร้อยดี 🎉');
-  } catch(e) { ['pending','revenue','done','today'].forEach(k=>setText(`kpi-${k}`,'—')); }
+    setAdminText('kpi-pending', active);
+    setAdminText('kpi-revenue', DMC.formatPrice(revenue));
+    setAdminText('kpi-done', done);
+    setAdminText('kpi-today', today.size);
+    setAdminText('greeting-sub', active>0 ? `มี ${active} ออเดอร์กำลังดำเนินการ 🔔` : 'ทุกออเดอร์เรียบร้อยดี 🎉');
+  } catch(e) { ['pending','revenue','done','today'].forEach(k=>setAdminText(`kpi-${k}`,'—')); }
 }
 
-// ── Recent Orders Table ──
 async function loadRecentOrdersTable() {
   const el = document.getElementById('recent-orders-table');
   if (!el) return;
   try {
     const snap = await db.collection('orders').limit(8).get();
     if (snap.empty) { el.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--text-3)">ยังไม่มีออเดอร์</div>'; return; }
-    const rows = [];
-    snap.forEach(doc => {
-      const o = { id:doc.id, ...doc.data() };
-      rows.push(`<tr>
-        <td><span class="order-id-cell">#${o.orderId||o.id.slice(-6).toUpperCase()}</span></td>
-        <td>${DMC.escapeHtml(o.customerName||'—')}</td>
-        <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${DMC.escapeHtml(o.itemsSummary||'—')}</td>
-        <td class="price-cell">${DMC.formatPrice(o.total||0)}</td>
-        <td><span class="status status-${o.status||'new'}">${statusLabel(o.status)}</span></td>
-        <td><button class="table-action-btn" onclick="openOrderModal('${doc.id}')">ดู</button></td>
-      </tr>`);
-    });
-    el.innerHTML = `<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>ออเดอร์</th><th>ลูกค้า</th><th>รายการ</th><th>ราคา</th><th>สถานะ</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+    const docs = [];
+    snap.forEach(doc => docs.push({id:doc.id, ...doc.data()}));
+    docs.sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    const rows = docs.map(o => `<tr>
+      <td><span class="order-id-cell">#${o.orderId||o.id.slice(-6).toUpperCase()}</span></td>
+      <td>${DMC.escapeHtml(o.customerName||'—')}</td>
+      <td class="price-cell">${DMC.formatPrice(o.total||0)}</td>
+      <td><span class="status status-${o.status||'pending'}">${statusShort(o.status)}</span></td>
+      <td><button class="table-action-btn" onclick="openOrderModal('${o.id}')">ดู</button></td>
+    </tr>`);
+    el.innerHTML = `<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>ออเดอร์</th><th>ลูกค้า</th><th>ราคา</th><th>สถานะ</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
   } catch(e) { el.innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ</div>'; }
 }
 
-// ── Top Products ──
-async function loadTopProducts() {
-  const el = document.getElementById('top-products-list');
+async function loadPendingReviewsMini() {
+  const el = document.getElementById('pending-reviews-mini');
   if (!el) return;
   try {
-    const snap = await db.collection('products').limit(5).get();
-    if (snap.empty) { el.innerHTML = '<div style="color:var(--text-3);font-size:.83rem;text-align:center">ยังไม่มีสินค้า</div>'; return; }
-    const ranks = ['gold-rank','silver-rank','bronze-rank','',''];
-    let html = ''; let i = 0;
+    const snap = await db.collection('reviews').where('status','==','pending').limit(5).get();
+    if (snap.empty) { el.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:.5rem;font-size:.85rem">ไม่มีรีวิวรออนุมัติ ✅</div>'; return; }
+    let html = '';
     snap.forEach(doc => {
-      const p = doc.data();
-      html += `<div class="top-product-item">
-        <div class="tp-rank ${ranks[i]||''}">${i+1}</div>
-        <div class="tp-icon">${p.image?`<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">`:(p.emoji||'📦')}</div>
-        <div class="tp-info"><div class="tp-name">${DMC.escapeHtml(p.name)}</div><div class="tp-count">${p.orderCount||0} ออเดอร์</div></div>
-        <div class="tp-val">${DMC.formatPrice((p.price||0)*(p.orderCount||0))}</div>
+      const r = doc.data();
+      html += `<div style="padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.83rem">
+        <strong>${DMC.escapeHtml(r.name||'—')}</strong> · ${'★'.repeat(r.rating||0)}
+        <div style="color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${DMC.escapeHtml((r.text||'').slice(0,60))}</div>
       </div>`;
-      i++;
     });
+    html += `<button class="btn btn-secondary btn-sm btn-block" style="margin-top:.6rem;border-radius:var(--r-md)" id="goto-reviews-btn">จัดการรีวิว →</button>`;
     el.innerHTML = html;
-  } catch(e) { el.innerHTML = ''; }
+    document.getElementById('goto-reviews-btn')?.addEventListener('click', () => loadSection('reviews'));
+  } catch(e) { el.innerHTML = '<div style="color:var(--text-3);font-size:.83rem;text-align:center">—</div>'; }
 }
 
-// ── Sales Chart ──
 async function renderSalesChart() {
-  const chartEl = document.getElementById('sales-chart');
+  const chartEl  = document.getElementById('sales-chart');
   const labelsEl = document.getElementById('chart-labels');
   if (!chartEl||!labelsEl) return;
   try {
@@ -330,24 +358,21 @@ async function renderSalesChart() {
 }
 
 // ══════════════════════════════════════════════
-//  ORDERS
+//  ORDERS (+ Tracking)
 // ══════════════════════════════════════════════
 async function loadOrders(container) {
   container.innerHTML = `
     <div class="admin-topbar">
-      <div class="admin-greeting"><h2>📦 ออเดอร์ทั้งหมด</h2><p>จัดการและอัพเดทสถานะออเดอร์</p></div>
+      <div class="admin-greeting"><h2>📦 ออเดอร์ทั้งหมด</h2><p>จัดการสถานะ เลขพัสดุ และรายละเอียดออเดอร์</p></div>
       <div class="admin-topbar-actions">
         <select class="form-input form-select" id="order-filter" style="width:auto;padding:.45rem 2rem .45rem .75rem">
           <option value="">ทุกสถานะ</option>
-          <option value="pending">⏳ รอดำเนินการ</option>
-          <option value="processing">🔄 กำลังทำ</option>
-          <option value="done">✅ เสร็จสิ้น</option>
-          <option value="cancelled">❌ ยกเลิก</option>
+          ${ORDER_STATUSES.map(s=>`<option value="${s.key}">${s.label}</option>`).join('')}
         </select>
       </div>
     </div>
     <div class="admin-box">
-      <div id="orders-table-wrap"><div style="text-align:center;padding:2rem"><span class="spinner" style="display:block;margin:0 auto"></span></div></div>
+      <div id="orders-table-wrap">${typeof Loading !== 'undefined' ? Loading.Skeleton.tableRows(5) : ''}</div>
     </div>`;
   document.getElementById('order-filter')?.addEventListener('change', loadOrdersTable);
   await loadOrdersTable();
@@ -357,15 +382,13 @@ async function loadOrdersTable() {
   const el     = document.getElementById('orders-table-wrap');
   const filter = document.getElementById('order-filter')?.value;
   if (!el) return;
-  // Show skeleton
-  if (typeof Skeleton !== 'undefined') el.innerHTML = Skeleton.ordersTable(5);
+  if (typeof Loading !== 'undefined') el.innerHTML = Loading.Skeleton.tableRows(5);
   try {
-    let q = db.collection('orders').limit(100);
+    let q = db.collection('orders').limit(150);
     if (filter) q = q.where('status','==',filter);
     const snap = await q.get();
     if (snap.empty) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-3)">ไม่พบออเดอร์</div>'; return; }
 
-    // Sort by createdAt desc in JS
     const docs = [];
     snap.forEach(doc => docs.push({id:doc.id,...doc.data()}));
     docs.sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
@@ -373,15 +396,12 @@ async function loadOrdersTable() {
     const rows = docs.map(o => `<tr>
       <td><span class="order-id-cell">#${o.orderId||o.id.slice(-6).toUpperCase()}</span></td>
       <td><div style="font-weight:600">${DMC.escapeHtml(o.customerName||'—')}</div><div style="font-size:.75rem;color:var(--text-3)">${DMC.escapeHtml(o.customerPhone||'')}</div></td>
-      <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.83rem">${DMC.escapeHtml(o.itemsSummary||'—')}</td>
+      <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.83rem">${DMC.escapeHtml(o.itemsSummary||'—')}</td>
       <td class="price-cell">${DMC.formatPrice(o.total||0)}</td>
-      <td>${DMC.escapeHtml(o.paymentMethod==='promptpay'?'📱 QR':'🚚 COD')}</td>
+      <td style="font-size:.78rem">${o.trackingNo ? '🚚 ' + DMC.escapeHtml(o.trackingNo) : '<span style="color:var(--text-3)">—</span>'}</td>
       <td>
         <select class="form-input form-select" style="padding:.28rem .5rem;font-size:.78rem;width:auto" onchange="quickUpdateStatus('${o.id}',this.value)">
-          <option value="pending"    ${o.status==='pending'?'selected':''}>⏳ รอ</option>
-          <option value="processing" ${o.status==='processing'?'selected':''}>🔄 ทำ</option>
-          <option value="done"       ${o.status==='done'?'selected':''}>✅ เสร็จ</option>
-          <option value="cancelled"  ${o.status==='cancelled'?'selected':''}>❌ ยกเลิก</option>
+          ${ORDER_STATUSES.map(s=>`<option value="${s.key}" ${o.status===s.key?'selected':''}>${s.short}</option>`).join('')}
         </select>
       </td>
       <td style="font-size:.78rem;color:var(--text-3)">${o.createdAt?DMC.formatDate(o.createdAt,true):'—'}</td>
@@ -390,16 +410,19 @@ async function loadOrdersTable() {
 
     el.innerHTML = `<div style="overflow-x:auto">
       <table class="data-table">
-        <thead><tr><th>ออเดอร์</th><th>ลูกค้า</th><th>รายการ</th><th>ราคา</th><th>ชำระ</th><th>สถานะ</th><th>วันที่</th><th></th></tr></thead>
+        <thead><tr><th>ออเดอร์</th><th>ลูกค้า</th><th>รายการ</th><th>ราคา</th><th>เลขพัสดุ</th><th>สถานะ</th><th>วันที่</th><th></th></tr></thead>
         <tbody>${rows.join('')}</tbody>
       </table></div>`;
-  } catch(e) { el.innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ: '+e.message+'</div>'; }
+  } catch(e) { el.innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ: '+DMC.escapeHtml(e.message)+'</div>'; }
 }
 
 window.quickUpdateStatus = async function(id, status) {
   try {
     await db.collection('orders').doc(id).update({ status, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
     DMC.toast('อัพเดทสถานะแล้ว ✅', 'success');
+    if (status === 'shipping') {
+      DMC.toast('💡 อย่าลืมใส่เลขพัสดุ — กด 📋 ดู เพื่อเพิ่ม', 'info', 4000);
+    }
     loadKPIs();
   } catch(e) { DMC.toast('อัพเดทไม่สำเร็จ', 'error'); }
 };
@@ -415,9 +438,10 @@ window.openOrderModal = async function(orderId) {
     const doc = await db.collection('orders').doc(orderId).get();
     if (!doc.exists) { body.innerHTML = '<p>ไม่พบออเดอร์</p>'; return; }
     const o = {id:doc.id,...doc.data()};
+
     const items = (o.items||[]).map(item => `
       <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.87rem">
-        <div><div style="font-weight:600">${DMC.escapeHtml(item.name||'—')}</div><div style="color:var(--text-3);font-size:.78rem">${DMC.escapeHtml(item.options||'')} × ${item.qty||1} ${item.unit||'ชิ้น'}</div></div>
+        <div><div style="font-weight:600">${DMC.escapeHtml(item.name||'—')}</div><div style="color:var(--text-3);font-size:.78rem">${DMC.escapeHtml(item.options||'')} × ${item.qty||1} ${DMC.escapeHtml(item.unit||'ชิ้น')}</div></div>
         <div style="font-family:var(--font-display);font-weight:700;color:var(--accent)">${DMC.formatPrice((item.price||0)*(item.qty||1))}</div>
       </div>`).join('');
 
@@ -427,20 +451,18 @@ window.openOrderModal = async function(orderId) {
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
 
-      <!-- ข้อมูลลูกค้า -->
       <div style="background:var(--bg-mid);border-radius:var(--r-lg);padding:1rem;margin-bottom:1rem">
         <div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.6rem">ข้อมูลลูกค้า</div>
         <div class="order-detail-grid">
           <div class="detail-field"><div class="detail-field-label">ชื่อ</div><div class="detail-field-value">${DMC.escapeHtml(o.customerName||'—')}</div></div>
           <div class="detail-field"><div class="detail-field-label">โทร</div><div class="detail-field-value">${DMC.escapeHtml(o.customerPhone||'—')}</div></div>
           <div class="detail-field" style="grid-column:1/-1"><div class="detail-field-label">ที่อยู่</div><div class="detail-field-value">${DMC.escapeHtml(o.address||'—')}</div></div>
-          <div class="detail-field"><div class="detail-field-label">ขนส่ง</div><div class="detail-field-value">${DMC.escapeHtml(o.shippingMethod||'—')}</div></div>
+          <div class="detail-field"><div class="detail-field-label">ขนส่งที่เลือก</div><div class="detail-field-value">${DMC.escapeHtml(o.shippingMethod||'—')}</div></div>
           <div class="detail-field"><div class="detail-field-label">ชำระ</div><div class="detail-field-value">${o.paymentMethod==='promptpay'?'📱 PromptPay':'🚚 COD'}</div></div>
         </div>
         ${o.note?`<div style="margin-top:.6rem;padding:.5rem .75rem;background:rgba(245,158,11,.08);border-radius:var(--r-md);font-size:.82rem;color:var(--text-2)">💬 ${DMC.escapeHtml(o.note)}</div>`:''}
       </div>
 
-      <!-- รายการสินค้า -->
       <div style="margin-bottom:1rem">
         <div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.6rem">รายการสินค้า</div>
         ${items || `<div style="font-size:.87rem;color:var(--text-3)">${DMC.escapeHtml(o.itemsSummary||'—')}</div>`}
@@ -449,79 +471,93 @@ window.openOrderModal = async function(orderId) {
         </div>
       </div>
 
-      <!-- สลิป -->
-      ${o.slipUrl?`<div style="margin-bottom:1rem"><div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);margin-bottom:.5rem">สลิปโอนเงิน</div><img src="${o.slipUrl}" style="max-height:180px;border-radius:var(--r-md);border:1px solid var(--border)"></div>`:''}
+      ${o.slipUrl?`<div style="margin-bottom:1rem">
+        <div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);margin-bottom:.5rem">สลิปโอนเงิน <span style="font-size:.7rem;color:var(--accent)">(คลิกเพื่อขยาย)</span></div>
+        <img src="${o.slipUrl}" id="slip-img-${o.id}" style="max-height:180px;border-radius:var(--r-md);border:1.5px solid var(--border);cursor:zoom-in" title="คลิกเพื่อดูเต็มหน้าจอ">
+      </div>`:''}
 
-      <!-- ไฟล์รูปภาพ -->
       ${o.fileUrls?.length?`<div style="margin-bottom:1rem">
-  <div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);margin-bottom:.5rem">ไฟล์รูปภาพ (${o.fileUrls.length} ไฟล์) <span style="font-size:.7rem;color:var(--accent)">(คลิกเพื่อขยาย)</span></div>
-  <div style="display:flex;flex-wrap:wrap;gap:.5rem" id="file-urls-wrap-${o.id}"></div>
-</div>`:''}
+        <div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);margin-bottom:.5rem">ไฟล์รูปภาพ (${o.fileUrls.length} ไฟล์) <span style="font-size:.7rem;color:var(--accent)">(คลิกเพื่อขยาย)</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem" id="file-urls-wrap-${o.id}"></div>
+      </div>`:''}
 
-      <!-- อัพเดทสถานะ -->
-      <div class="form-group">
-        <label class="form-label">อัพเดทสถานะ</label>
-        <select class="form-input form-select" id="modal-status-select">
-          <option value="pending"    ${o.status==='pending'?'selected':''}>⏳ รอดำเนินการ</option>
-          <option value="processing" ${o.status==='processing'?'selected':''}>🔄 กำลังทำ</option>
-          <option value="done"       ${o.status==='done'?'selected':''}>✅ เสร็จสิ้น</option>
-          <option value="cancelled"  ${o.status==='cancelled'?'selected':''}>❌ ยกเลิก</option>
-        </select>
+      <!-- สถานะ + Tracking -->
+      <div style="background:var(--bg-mid);border-radius:var(--r-lg);padding:1rem;margin-bottom:1rem">
+        <div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.6rem">อัปเดตสถานะ + เลขพัสดุ</div>
+        <div class="form-group">
+          <label class="form-label">สถานะออเดอร์</label>
+          <select class="form-input form-select" id="modal-status-select">
+            ${ORDER_STATUSES.map(s=>`<option value="${s.key}" ${o.status===s.key?'selected':''}>${s.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">ขนส่ง</label>
+            <select class="form-input form-select" id="modal-carrier-select">
+              ${CARRIER_OPTIONS.map(c=>`<option value="${c.key}" ${o.carrier===c.key?'selected':''}>${c.name}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">เลขพัสดุ</label>
+            <input class="form-input" id="modal-tracking-input" value="${DMC.escapeHtml(o.trackingNo||'')}" placeholder="เช่น KEX12345678">
+          </div>
+        </div>
+        <div style="font-size:.74rem;color:var(--text-3);margin-top:.4rem">💡 เมื่อใส่เลขพัสดุ ลูกค้าจะเห็นในหน้า "ติดตามออเดอร์" พร้อมลิงก์ตรวจสอบกับขนส่ง</div>
       </div>
-      <div style="display:flex;gap:.75rem;margin-top:.75rem">
+
+      <div style="display:flex;gap:.75rem">
         <button class="btn btn-primary btn-md" style="flex:1" onclick="updateOrderStatus('${o.id}')">💾 บันทึก</button>
         <button class="btn btn-ghost btn-md" onclick="closeModal()">ปิด</button>
       </div>`;
 
-  // Wire image clicks after DOM is set (avoid onclick in template strings)
-  setTimeout(() => {
-    // Slip image click
-    const slipImg = document.getElementById('slip-img-${o.id}');
-    if (slipImg) slipImg.addEventListener('click', () => openImageLightbox(slipImg.src));
-
-    // File URLs
-    const fileWrap = document.getElementById('file-urls-wrap-${o.id}');
-    if (fileWrap && o.fileUrls?.length) {
-      o.fileUrls.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        img.style.cssText = 'height:70px;border-radius:var(--r-md);border:1.5px solid var(--border);cursor:zoom-in;object-fit:cover';
-        img.title = 'คลิกเพื่อดูเต็มหน้าจอ';
-        img.addEventListener('click', () => openImageLightbox(url));
-        fileWrap.appendChild(img);
-      });
-    }
-  }, 50);
-  } catch(e) { body.innerHTML = '<p style="color:var(--rose)">เกิดข้อผิดพลาด: '+e.message+'</p>'; }
+    // Wire image clicks (createElement — ปลอดภัยจาก quote ใน URL)
+    setTimeout(() => {
+      const slipImg = document.getElementById('slip-img-' + o.id);
+      if (slipImg) slipImg.addEventListener('click', () => openImageLightbox(slipImg.src));
+      const fileWrap = document.getElementById('file-urls-wrap-' + o.id);
+      if (fileWrap && o.fileUrls && o.fileUrls.length) {
+        o.fileUrls.forEach(url => {
+          const img = document.createElement('img');
+          img.src = url;
+          img.style.cssText = 'height:70px;border-radius:var(--r-md);border:1.5px solid var(--border);cursor:zoom-in;object-fit:cover';
+          img.title = 'คลิกเพื่อดูเต็มหน้าจอ';
+          img.addEventListener('click', () => openImageLightbox(url));
+          fileWrap.appendChild(img);
+        });
+      }
+    }, 50);
+  } catch(e) { body.innerHTML = '<p style="color:var(--rose)">เกิดข้อผิดพลาด: '+DMC.escapeHtml(e.message)+'</p>'; }
 };
 
 window.updateOrderStatus = async function(id) {
-  const s = document.getElementById('modal-status-select')?.value;
+  const s        = document.getElementById('modal-status-select')?.value;
+  const carrier  = document.getElementById('modal-carrier-select')?.value || '';
+  const tracking = document.getElementById('modal-tracking-input')?.value.trim() || '';
   if (!s) return;
   try {
-    await db.collection('orders').doc(id).update({ status:s, updatedAt:firebase.firestore.FieldValue.serverTimestamp() });
-    DMC.toast('อัพเดทสำเร็จ ✅', 'success');
+    await db.collection('orders').doc(id).update({
+      status: s, carrier, trackingNo: tracking,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    DMC.toast('บันทึกสำเร็จ ✅', 'success');
     closeModal(); loadOrdersTable(); loadKPIs();
-  } catch(e) { DMC.toast('อัพเดทไม่สำเร็จ', 'error'); }
+  } catch(e) { DMC.toast('บันทึกไม่สำเร็จ', 'error'); }
 };
 
-
+// ── Lightbox (createElement pattern) ──
 window.openImageLightbox = function(url) {
   var lb = document.getElementById('img-lightbox');
   if (!lb) {
     lb = document.createElement('div');
     lb.id = 'img-lightbox';
-    lb.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;backdrop-filter:blur(4px)';
-
+    lb.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;backdrop-filter:blur(4px)';
     var img = document.createElement('img');
     img.id = 'img-lb-img';
     img.style.cssText = 'max-width:95vw;max-height:92vh;border-radius:12px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.5)';
-
     var closeBtn = document.createElement('button');
     closeBtn.textContent = '✕';
     closeBtn.style.cssText = 'position:absolute;top:1rem;right:1rem;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center';
     closeBtn.addEventListener('click', function(){ lb.style.display = 'none'; });
-
     lb.appendChild(img);
     lb.appendChild(closeBtn);
     lb.addEventListener('click', function(e){ if (e.target === lb) lb.style.display = 'none'; });
@@ -534,31 +570,45 @@ window.openImageLightbox = function(url) {
 
 window.closeModal = function() { document.getElementById('modal-overlay')?.classList.remove('open'); };
 
+function statusShort(s) {
+  const found = ORDER_STATUSES.find(x => x.key === s);
+  return found ? found.short : '📥 รับแล้ว';
+}
+function setAdminText(id, text) { const el=document.getElementById(id); if(el) el.textContent=text; }
+
 // ══════════════════════════════════════════════
-//  PRODUCTS
+//  PRODUCTS (Multi-image + Video + Templates)
 // ══════════════════════════════════════════════
 async function loadProducts(container) {
   container.innerHTML = `
     <div class="admin-topbar">
-      <div class="admin-greeting"><h2>🛍️ จัดการสินค้า</h2><p>เพิ่ม แก้ไข และจัดการสินค้า</p></div>
+      <div class="admin-greeting"><h2>🛍️ จัดการสินค้า</h2><p>เพิ่ม แก้ไข รูปหลายรูป วิดีโอ และเทมเพลต</p></div>
       <div class="admin-topbar-actions">
         <input class="form-input" id="product-search" placeholder="🔍 ค้นหาสินค้า..." style="width:200px">
         <button class="btn btn-primary btn-md" id="add-product-btn">+ เพิ่มสินค้าใหม่</button>
       </div>
     </div>
     <div class="admin-box">
-      <div id="products-table-wrap"><div style="text-align:center;padding:2rem"><span class="spinner" style="display:block;margin:0 auto"></span></div></div>
+      <div id="products-table-wrap">${typeof Loading !== 'undefined' ? Loading.Skeleton.tableRows(4) : ''}</div>
     </div>`;
   document.getElementById('add-product-btn')?.addEventListener('click', () => openProductModal(null));
   document.getElementById('product-search')?.addEventListener('input', DMC.debounce(loadProductsTable, 300));
   await loadProductsTable();
 }
 
+function adminCoverOf(p) {
+  if (Array.isArray(p.images) && p.images.length) {
+    const ci = Number(p.coverIndex);
+    const item = (!isNaN(ci) && p.images[ci]) ? p.images[ci] : p.images[0];
+    return typeof item === 'string' ? item : (item.url || '');
+  }
+  return p.image || '';
+}
+
 async function loadProductsTable() {
   const el     = document.getElementById('products-table-wrap');
   const search = document.getElementById('product-search')?.value.toLowerCase().trim() || '';
   if (!el) return;
-  if (typeof Skeleton !== 'undefined') el.innerHTML = `<div style="display:flex;flex-direction:column;gap:.65rem;padding:.5rem 0">${Skeleton.ordersTable(4)}</div>`;
   try {
     const snap = await db.collection('products').get();
     if (snap.empty) {
@@ -567,23 +617,27 @@ async function loadProductsTable() {
     }
     let products = [];
     snap.forEach(doc => products.push({id:doc.id,...doc.data()}));
-    if (search) products = products.filter(p => p.name?.toLowerCase().includes(search) || p.category?.toLowerCase().includes(search));
+    if (search) products = products.filter(p => (p.name||'').toLowerCase().includes(search) || (p.category||'').toLowerCase().includes(search));
     products.sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
 
-    const rows = products.map(p => `<tr>
+    const rows = products.map(p => {
+      const cover = adminCoverOf(p);
+      const imgCount = Array.isArray(p.images) ? p.images.length : (p.image ? 1 : 0);
+      return `<tr>
       <td>
-        <div style="width:46px;height:46px;border-radius:var(--r-md);background:var(--bg-mid);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:1.3rem">
-          ${p.image?`<img src="${p.image}" style="width:100%;height:100%;object-fit:cover">`:(p.emoji||'📦')}
+        <div style="width:46px;height:46px;border-radius:var(--r-md);background:var(--bg-mid);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:1.3rem;position:relative">
+          ${cover?`<img src="${cover}" style="width:100%;height:100%;object-fit:contain;padding:2px">`:(p.emoji||'📦')}
+          ${imgCount>1?`<span style="position:absolute;bottom:0;right:0;background:var(--accent);color:#fff;font-size:.55rem;padding:0 .25rem;border-radius:4px 0 0 0">${imgCount}</span>`:''}
         </div>
       </td>
-      <td><div style="font-family:var(--font-display);font-weight:600">${DMC.escapeHtml(p.name)}</div><div style="font-size:.75rem;color:var(--text-3)">${DMC.escapeHtml(p.category||'—')}</div></td>
-      <td class="price-cell">${DMC.formatPrice(p.price)}<span style="color:var(--text-3);font-size:.75rem">/${p.unit||'ชิ้น'}</span></td>
-      <td style="font-size:.8rem;color:var(--text-3)">${p.orderCount||0} ออเดอร์</td>
+      <td><div style="font-family:var(--font-display);font-weight:600">${DMC.escapeHtml(p.name)}</div><div style="font-size:.75rem;color:var(--text-3)">${DMC.escapeHtml(p.category||'—')}${p.videoUrl?' · 🎬':''}${p.hasPreview?' · 🎨':''}</div></td>
+      <td class="price-cell">${DMC.formatPrice(p.price)}<span style="color:var(--text-3);font-size:.75rem">/${DMC.escapeHtml(p.unit||'ชิ้น')}</span></td>
       <td>
         <div style="display:flex;gap:.3rem;flex-wrap:wrap">
-          ${p.isNew?'<span class="badge badge-new" style="font-size:.65rem">✨ใหม่</span>':''}
-          ${p.isHot?'<span class="badge badge-hot" style="font-size:.65rem">🔥ดี</span>':''}
-          ${p.isSale?'<span class="badge badge-sale" style="font-size:.65rem">💰ลด</span>':''}
+          ${p.isNew?'<span class="badge badge-new" style="font-size:.65rem">✨</span>':''}
+          ${p.isHot?'<span class="badge badge-hot" style="font-size:.65rem">🔥</span>':''}
+          ${p.isSale?'<span class="badge badge-sale" style="font-size:.65rem">💰</span>':''}
+          ${p.featured?'<span class="badge badge-accent" style="font-size:.65rem">⭐</span>':''}
         </div>
       </td>
       <td>
@@ -595,17 +649,22 @@ async function loadProductsTable() {
       <td>
         <div style="display:flex;gap:.35rem">
           <button class="table-action-btn" onclick="openProductModal('${p.id}')">✏️ แก้ไข</button>
-          <button class="table-action-btn" style="color:var(--rose);border-color:var(--rose)" onclick="deleteProduct('${p.id}','${DMC.escapeHtml(p.name).replace(/'/g,"\\'")}')">🗑️</button>
+          <button class="table-action-btn btn-del-product" style="color:var(--rose);border-color:var(--rose)" data-id="${p.id}" data-name="${DMC.escapeHtml(p.name)}">🗑️</button>
         </div>
       </td>
-    </tr>`);
+    </tr>`;}).join('');
 
     el.innerHTML = `<div style="overflow-x:auto">
       <table class="data-table">
-        <thead><tr><th>รูป</th><th>สินค้า</th><th>ราคา</th><th>ยอดขาย</th><th>แท็ก</th><th>แสดง</th><th>จัดการ</th></tr></thead>
-        <tbody>${rows.join('')}</tbody>
+        <thead><tr><th>รูป</th><th>สินค้า</th><th>ราคา</th><th>แท็ก</th><th>แสดง</th><th>จัดการ</th></tr></thead>
+        <tbody>${rows}</tbody>
       </table></div>`;
-  } catch(e) { el.innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ: '+e.message+'</div>'; }
+
+    // ปุ่มลบ — ใช้ data-attr กัน quote ในชื่อสินค้า
+    el.querySelectorAll('.btn-del-product').forEach(btn => {
+      btn.addEventListener('click', () => deleteProduct(btn.dataset.id, btn.dataset.name));
+    });
+  } catch(e) { el.innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ: '+DMC.escapeHtml(e.message)+'</div>'; }
 }
 
 window.toggleProduct = async function(id, active) {
@@ -613,28 +672,56 @@ window.toggleProduct = async function(id, active) {
   catch(e) { DMC.toast('บันทึกไม่สำเร็จ','error'); }
 };
 
-window.deleteProduct = async function(id, name) {
-  if (!confirm(`ลบสินค้า "${name}"?\nไม่สามารถย้อนกลับได้`)) return;
-  try { await db.collection('products').doc(id).delete(); DMC.toast(`ลบ "${name}" แล้ว`,'success'); loadProductsTable(); }
-  catch(e) { DMC.toast('ลบไม่สำเร็จ','error'); }
-};
+function deleteProduct(id, name) {
+  if (!confirm('ลบสินค้า "' + name + '"?\nไม่สามารถย้อนกลับได้')) return;
+  db.collection('products').doc(id).delete()
+    .then(() => { DMC.toast('ลบสินค้าแล้ว','success'); loadProductsTable(); })
+    .catch(() => DMC.toast('ลบไม่สำเร็จ','error'));
+}
 
-// ── Product Modal (Add/Edit) — FULL FIELDS ──
+// ── Product Modal state ──
+let _modalImages = [];     // [{url, label}]
+let _modalCoverIndex = 0;
+let _customTplCache = null;
+
+async function fetchCustomTemplatesOnce() {
+  if (_customTplCache) return _customTplCache;
+  try {
+    const snap = await db.collection('templates').get();
+    const list = [];
+    snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+    _customTplCache = list;
+  } catch(e) { _customTplCache = []; }
+  return _customTplCache;
+}
+
 window.openProductModal = async function(productId) {
   const overlay = document.getElementById('modal-overlay');
   const body    = document.getElementById('modal-body');
   if (!overlay||!body) return;
 
-  let product = { name:'', category:'โพลารอยด์', price:'', unit:'ใบ', shortDesc:'', fullDesc:'', emoji:'📦', image:'', active:true, isNew:false, isHot:false, isSale:false, minQty:1, sizes:[], materials:[], priceTiers:[], hasPreview:false, orderCount:0 };
+  let product = { name:'', category:'โพลารอยด์', price:'', unit:'ใบ', shortDesc:'', fullDesc:'',
+                  emoji:'📦', images:[], coverIndex:0, videoUrl:'', active:true, isNew:false, isHot:false,
+                  isSale:false, featured:false, minQty:1, sizes:[], materials:[], priceTiers:[],
+                  templates:[], hasPreview:false, orderCount:0 };
+
+  body.innerHTML = '<div style="text-align:center;padding:2rem"><span class="spinner" style="display:block;margin:0 auto"></span></div>';
+  overlay.classList.add('open');
 
   if (productId) {
-    body.innerHTML = '<div style="text-align:center;padding:2rem"><span class="spinner" style="display:block;margin:0 auto"></span></div>';
-    overlay.classList.add('open');
     const doc = await db.collection('products').doc(productId).get();
-    if (doc.exists) product = {id:doc.id,...doc.data()};
+    if (doc.exists) product = Object.assign(product, {id:doc.id}, doc.data());
   }
 
+  // เตรียม state รูป (รองรับสินค้าเก่าที่มี image เดี่ยว)
+  _modalImages = Array.isArray(product.images) && product.images.length
+    ? product.images.map(im => typeof im === 'string' ? {url:im, label:''} : {url:im.url||'', label:im.label||''})
+    : (product.image ? [{url:product.image, label:''}] : []);
+  _modalCoverIndex = Math.min(Number(product.coverIndex)||0, Math.max(_modalImages.length-1, 0));
+
+  const customTpls = await fetchCustomTemplatesOnce();
   const categories = ['โพลารอยด์','บัตรแขวนคอ','นามบัตร','ป้ายร้านค้า','QR Code','ป้ายตุ๊กตา','บัตรนักเรียน','อื่นๆ'];
+  const selectedTpls = (product.templates||[]).map(t=>String(t).toLowerCase());
 
   body.innerHTML = `
     <div class="modal-header">
@@ -642,20 +729,19 @@ window.openProductModal = async function(productId) {
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
 
-    <!-- รูปสินค้า -->
+    <!-- รูปสินค้า (หลายรูป) -->
     <div class="form-group">
-      <label class="form-label">🖼️ รูปสินค้า</label>
-      <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
-        <div id="p-img-preview" style="width:80px;height:80px;border-radius:var(--r-lg);background:var(--bg-mid);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;flex-shrink:0">
-          ${product.image?`<img src="${product.image}" style="width:100%;height:100%;object-fit:cover">`:(product.emoji||'📦')}
-        </div>
-        <div style="flex:1">
-          <input type="file" id="p-img-file" accept="image/*" style="display:none">
-          <button class="btn btn-ghost btn-sm" id="p-upload-btn" style="border-radius:var(--r-md);margin-bottom:.35rem">📤 อัปโหลดรูป</button>
-          <div id="p-upload-status" style="font-size:.73rem;color:var(--text-3)">JPG, PNG ไม่เกิน 5MB</div>
-          <input class="form-input" id="p-image" value="${DMC.escapeHtml(product.image||'')}" placeholder="หรือวาง URL รูปภาพ" style="font-size:.8rem;margin-top:.35rem">
-        </div>
-      </div>
+      <label class="form-label">🖼️ รูปสินค้า <span style="font-weight:400;color:var(--text-3)">— เพิ่มได้หลายรูป เลือกปก ⭐ และใส่ชื่อแบบเพื่อให้รูปสลับตามตัวเลือก</span></label>
+      <div id="p-images-list"></div>
+      <button type="button" class="btn btn-ghost btn-sm" id="p-add-image-btn" style="border-radius:var(--r-md);margin-top:.4rem">+ เพิ่มรูป</button>
+      <input type="file" id="p-img-file-hidden" accept="image/*" style="display:none">
+      <div style="font-size:.73rem;color:var(--text-3);margin-top:.35rem">💡 ใส่ "ชื่อแบบ" ให้ตรงกับตัวเลือกขนาด/วัสดุ เช่น "2x3 นิ้ว" — ลูกค้ากดตัวเลือกนั้นแล้วรูปจะสลับให้เอง</div>
+    </div>
+
+    <!-- วิดีโอ -->
+    <div class="form-group">
+      <label class="form-label">🎬 วิดีโอสินค้า <span style="font-weight:400;color:var(--text-3)">(ลิงก์ YouTube หรือ TikTok — ไม่บังคับ)</span></label>
+      <input class="form-input" id="p-video" value="${DMC.escapeHtml(product.videoUrl||'')}" placeholder="https://youtu.be/... หรือ https://www.tiktok.com/@shop/video/...">
     </div>
 
     <!-- ชื่อ + Emoji -->
@@ -666,11 +752,10 @@ window.openProductModal = async function(productId) {
       </div>
       <div class="form-group" style="margin:0">
         <label class="form-label">Emoji (ถ้าไม่มีรูป)</label>
-        <input class="form-input" id="p-emoji" value="${product.emoji||'📦'}" placeholder="📦">
+        <input class="form-input" id="p-emoji" value="${DMC.escapeHtml(product.emoji||'📦')}" placeholder="📦">
       </div>
     </div>
 
-    <!-- หมวดหมู่ + หน่วย -->
     <div class="form-row" style="margin-bottom:1rem">
       <div class="form-group" style="margin:0">
         <label class="form-label">หมวดหมู่ *</label>
@@ -684,7 +769,6 @@ window.openProductModal = async function(productId) {
       </div>
     </div>
 
-    <!-- ราคา + ราคาเดิม + ขั้นต่ำ -->
     <div class="form-row-3" style="margin-bottom:1rem">
       <div class="form-group" style="margin:0">
         <label class="form-label">ราคา (฿) *</label>
@@ -700,32 +784,46 @@ window.openProductModal = async function(productId) {
       </div>
     </div>
 
-    <!-- ตัวเลือกขนาด -->
     <div class="form-group">
-      <label class="form-label">📐 ตัวเลือกขนาด <span style="font-weight:400;color:var(--text-3)">(คั่นด้วย , เช่น 3×4 นิ้ว, 4×6 นิ้ว)</span></label>
-      <input class="form-input" id="p-sizes" value="${(product.sizes||[]).join(', ')}" placeholder="3×4 นิ้ว, 4×6 นิ้ว, Square 3×3">
+      <label class="form-label">📐 ตัวเลือกขนาด <span style="font-weight:400;color:var(--text-3)">(คั่นด้วย , เช่น 2x3 นิ้ว, 3x4 นิ้ว)</span></label>
+      <input class="form-input" id="p-sizes" value="${DMC.escapeHtml((product.sizes||[]).join(', '))}" placeholder="2x3 นิ้ว, 3x4 นิ้ว, 4x6 นิ้ว">
     </div>
 
-    <!-- วัสดุ/เคลือบ -->
     <div class="form-group">
       <label class="form-label">🗒️ วัสดุ/การเคลือบ <span style="font-weight:400;color:var(--text-3)">(คั่นด้วย ,)</span></label>
-      <input class="form-input" id="p-materials" value="${(product.materials||[]).join(', ')}" placeholder="มันเงา (Glossy), ด้าน (Matte), Luster">
+      <input class="form-input" id="p-materials" value="${DMC.escapeHtml((product.materials||[]).join(', '))}" placeholder="มันเงา (Glossy), ด้าน (Matte)">
     </div>
 
-    <!-- ส่วนลดปริมาณ -->
     <div class="form-group">
-      <label class="form-label">🎁 ส่วนลดตามปริมาณ <span style="font-weight:400;color:var(--text-3)">(คั่นด้วย , เช่น 50+ ใบ ลด 10%)</span></label>
-      <input class="form-input" id="p-tiers" value="${(product.priceTiers||[]).join(', ')}" placeholder="50+ ใบ ลด 10%, 100+ ใบ ลด 20%">
+      <label class="form-label">🎁 ส่วนลดตามปริมาณ <span style="font-weight:400;color:var(--text-3)">(คั่นด้วย ,)</span></label>
+      <input class="form-input" id="p-tiers" value="${DMC.escapeHtml((product.priceTiers||[]).join(', '))}" placeholder="50+ ใบ ลด 10%, 100+ ใบ ลด 20%">
     </div>
 
-    <!-- Template Preview สำหรับ Canvas -->
-    <div class="form-group">
-      <label class="form-label">🎨 Template Preview <span style="font-weight:400;color:var(--text-3)">ชื่อ template ที่ลูกค้าเลือกได้ตอน preview (คั่นด้วย ,)</span></label>
-      <input class="form-input" id="p-templates" value="${(product.templates||[]).join(', ')}" placeholder="Classic, Minimal, Dark, Warm, Cool, Cute">
-      <div style="font-size:.74rem;color:var(--text-3);margin-top:.3rem">💡 ถ้าว่างไว้ ลูกค้าจะเห็น template ทั้งหมด 6 แบบ | ถ้าใส่ชื่อ จะแสดงเฉพาะที่กำหนด</div>
+    <!-- Canvas Preview + Templates -->
+    <div class="form-group" style="background:var(--bg-mid);border-radius:var(--r-lg);padding:1rem">
+      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:.92rem;margin-bottom:.4rem">
+        <input type="checkbox" id="p-preview" ${product.hasPreview?'checked':''} style="accent-color:var(--accent);width:17px;height:17px">
+        🎨 เปิดให้ลูกค้าลองดูตัวอย่าง (Canvas Preview)
+      </label>
+      <div style="font-size:.76rem;color:var(--text-3);margin-bottom:.65rem">เปิดแล้วลูกค้าจะอัปโหลดรูปตัวเองเพื่อดูตัวอย่างกับเทมเพลตได้ในหน้าสินค้านี้</div>
+      <div id="p-templates-wrap" style="display:${product.hasPreview?'':'none'}">
+        <div style="font-size:.8rem;font-family:var(--font-display);font-weight:600;margin-bottom:.4rem">เลือกแบบที่ให้ลูกค้าใช้ <span style="font-weight:400;color:var(--text-3)">(ไม่เลือกเลย = แสดงแบบมาตรฐานทั้ง 6)</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+          ${BUILTIN_TEMPLATES.map(t=>`
+            <label class="tpl-check-chip">
+              <input type="checkbox" class="p-tpl-check" value="${t.id}" ${selectedTpls.includes(t.id)?'checked':''}>
+              <span>${t.emoji} ${t.name}</span>
+            </label>`).join('')}
+          ${customTpls.map(t=>`
+            <label class="tpl-check-chip tpl-custom">
+              <input type="checkbox" class="p-tpl-check" value="${t.id}" ${selectedTpls.includes(t.id.toLowerCase())?'checked':''}>
+              <span>🖼️ ${DMC.escapeHtml(t.name||'Custom')}</span>
+            </label>`).join('')}
+        </div>
+        ${customTpls.length===0?'<div style="font-size:.74rem;color:var(--text-3);margin-top:.4rem">💡 อัปโหลดกรอบของร้านเองได้ที่เมนู "เทมเพลต"</div>':''}
+      </div>
     </div>
 
-    <!-- คำอธิบาย -->
     <div class="form-group">
       <label class="form-label">คำอธิบายสั้น <span style="font-weight:400;color:var(--text-3)">(แสดงในการ์ดสินค้า)</span></label>
       <input class="form-input" id="p-shortdesc" value="${DMC.escapeHtml(product.shortDesc||'')}" placeholder="คำอธิบายสั้นๆ">
@@ -735,22 +833,18 @@ window.openProductModal = async function(productId) {
       <textarea class="form-input form-textarea" id="p-desc">${DMC.escapeHtml(product.fullDesc||'')}</textarea>
     </div>
 
-    <!-- Checkbox options -->
     <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem">
       <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem">
-        <input type="checkbox" id="p-active"   ${product.active?'checked':''} style="accent-color:var(--accent)"> แสดงสินค้า
+        <input type="checkbox" id="p-active" ${product.active?'checked':''} style="accent-color:var(--accent)"> แสดงสินค้า
       </label>
       <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem">
-        <input type="checkbox" id="p-preview"  ${product.hasPreview?'checked':''} style="accent-color:var(--accent)"> 🎨 มี Preview Tool
+        <input type="checkbox" id="p-new" ${product.isNew?'checked':''} style="accent-color:var(--emerald)"> ✨ ใหม่
       </label>
       <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem">
-        <input type="checkbox" id="p-new"      ${product.isNew?'checked':''} style="accent-color:var(--emerald)"> ✨ ใหม่
+        <input type="checkbox" id="p-hot" ${product.isHot?'checked':''} style="accent-color:var(--rose)"> 🔥 ขายดี
       </label>
       <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem">
-        <input type="checkbox" id="p-hot"      ${product.isHot?'checked':''} style="accent-color:var(--rose)"> 🔥 ขายดี
-      </label>
-      <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem">
-        <input type="checkbox" id="p-sale"     ${product.isSale?'checked':''} style="accent-color:var(--gold)"> 💰 ลด
+        <input type="checkbox" id="p-sale" ${product.isSale?'checked':''} style="accent-color:var(--gold)"> 💰 ลด
       </label>
       <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem">
         <input type="checkbox" id="p-featured" ${product.featured?'checked':''} style="accent-color:var(--gold)"> ⭐ แนะนำ
@@ -758,93 +852,140 @@ window.openProductModal = async function(productId) {
     </div>
 
     <div style="display:flex;gap:.75rem">
-      <button class="btn btn-primary btn-md" style="flex:1" onclick="saveProduct('${productId||''}')">
-        💾 ${productId?'บันทึกการแก้ไข':'เพิ่มสินค้า'}
-      </button>
+      <button class="btn btn-primary btn-md" id="p-save-btn" style="flex:1">💾 ${productId?'บันทึกการแก้ไข':'เพิ่มสินค้า'}</button>
       <button class="btn btn-ghost btn-md" onclick="closeModal()">ยกเลิก</button>
     </div>`;
 
-  overlay.classList.add('open');
+  renderModalImages();
 
-  // Image upload handler
-  setTimeout(() => {
-    const fileInput = document.getElementById('p-img-file');
-    const preview   = document.getElementById('p-img-preview');
-    const urlInput  = document.getElementById('p-image');
-    const uploadBtn = document.getElementById('p-upload-btn');
-    const statusEl  = document.getElementById('p-upload-status');
+  // toggle templates section
+  document.getElementById('p-preview')?.addEventListener('change', e => {
+    document.getElementById('p-templates-wrap').style.display = e.target.checked ? '' : 'none';
+  });
+  document.getElementById('p-add-image-btn')?.addEventListener('click', () => {
+    _modalImages.push({url:'', label:''});
+    renderModalImages();
+  });
+  document.getElementById('p-save-btn')?.addEventListener('click', () => saveProduct(productId||''));
+};
 
-    uploadBtn?.addEventListener('click', () => fileInput?.click());
+// ── รายการรูปใน modal (delegation — ไม่มี onclick ใน template) ──
+function renderModalImages() {
+  const wrap = document.getElementById('p-images-list');
+  if (!wrap) return;
+  if (_modalImages.length === 0) _modalImages.push({url:'', label:''});
+  if (_modalCoverIndex >= _modalImages.length) _modalCoverIndex = 0;
 
-    fileInput?.addEventListener('change', async () => {
-      const file = fileInput.files[0];
-      if (!file) return;
-      // Local preview
-      const reader = new FileReader();
-      reader.onload = e => { preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`; };
-      reader.readAsDataURL(file);
-      // Upload
-      try {
-        statusEl.textContent = '⏳ กำลังอัปโหลด...';
-        statusEl.style.color = 'var(--accent)';
-        urlInput.disabled = true;
-        const res = await DMC.uploadToImgBB(file);
-        urlInput.value = res.url;
-        urlInput.disabled = false;
-        statusEl.textContent = '✅ อัปโหลดสำเร็จ';
-        statusEl.style.color = 'var(--emerald)';
-        DMC.toast('อัปโหลดรูปสำเร็จ ✅', 'success');
-      } catch(e) {
-        urlInput.disabled = false;
-        statusEl.textContent = '❌ อัปโหลดไม่สำเร็จ';
-        statusEl.style.color = 'var(--rose)';
-        DMC.toast('อัปโหลดไม่สำเร็จ: '+e.message, 'error');
+  wrap.innerHTML = _modalImages.map((im, i) => `
+    <div class="p-img-row" data-idx="${i}">
+      <div class="p-img-thumb">${im.url?`<img src="${DMC.escapeHtml(im.url)}" style="width:100%;height:100%;object-fit:contain">`:'🖼️'}</div>
+      <div class="p-img-fields">
+        <input class="form-input p-img-url" data-idx="${i}" value="${DMC.escapeHtml(im.url)}" placeholder="URL รูปภาพ (หรือกด 📤 อัปโหลด)" style="font-size:.78rem">
+        <input class="form-input p-img-label" data-idx="${i}" value="${DMC.escapeHtml(im.label)}" placeholder="ชื่อแบบ (เช่น 2x3 นิ้ว) — ไม่บังคับ" style="font-size:.78rem">
+      </div>
+      <div class="p-img-actions">
+        <button type="button" class="p-img-btn" data-action="upload" data-idx="${i}" title="อัปโหลดรูป">📤</button>
+        <button type="button" class="p-img-btn ${i===_modalCoverIndex?'cover-on':''}" data-action="cover" data-idx="${i}" title="ตั้งเป็นรูปปก">⭐</button>
+        <button type="button" class="p-img-btn" data-action="remove" data-idx="${i}" title="ลบรูปนี้">🗑️</button>
+      </div>
+    </div>`).join('');
+
+  // input sync
+  wrap.querySelectorAll('.p-img-url').forEach(inp => {
+    inp.addEventListener('input', () => {
+      _modalImages[Number(inp.dataset.idx)].url = inp.value.trim();
+    });
+    inp.addEventListener('change', () => renderModalImages());
+  });
+  wrap.querySelectorAll('.p-img-label').forEach(inp => {
+    inp.addEventListener('input', () => {
+      _modalImages[Number(inp.dataset.idx)].label = inp.value;
+    });
+  });
+
+  // buttons
+  wrap.querySelectorAll('.p-img-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const idx = Number(btn.dataset.idx);
+      const action = btn.dataset.action;
+      if (action === 'cover') {
+        _modalCoverIndex = idx;
+        renderModalImages();
+      } else if (action === 'remove') {
+        _modalImages.splice(idx, 1);
+        if (_modalCoverIndex >= _modalImages.length) _modalCoverIndex = 0;
+        renderModalImages();
+      } else if (action === 'upload') {
+        const fileInput = document.getElementById('p-img-file-hidden');
+        fileInput.onchange = async () => {
+          const file = fileInput.files[0];
+          fileInput.value = '';
+          if (!file) return;
+          btn.textContent = '⏳';
+          try {
+            const res = await DMC.uploadToImgBB(file);
+            _modalImages[idx].url = res.url;
+            DMC.toast('อัปโหลดรูปสำเร็จ ✅', 'success');
+          } catch(e) {
+            DMC.toast('อัปโหลดไม่สำเร็จ: ' + e.message, 'error');
+          }
+          renderModalImages();
+        };
+        fileInput.click();
       }
     });
-
-    urlInput?.addEventListener('input', DMC.debounce(() => {
-      const url = urlInput.value.trim();
-      if (url.startsWith('http')) preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='❌'">`;
-    }, 600));
-  }, 100);
-};
+  });
+}
 
 window.saveProduct = async function(productId) {
   const splitComma = id => (document.getElementById(id)?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const oldPriceRaw = document.getElementById('p-oldprice')?.value;
+
+  // เก็บเฉพาะรูปที่มี URL
+  const images = _modalImages.filter(im => im.url).map(im => ({url:im.url, label:(im.label||'').trim()}));
+  let coverIndex = _modalCoverIndex;
+  if (coverIndex >= images.length) coverIndex = 0;
+
+  const tplChecks = Array.from(document.querySelectorAll('.p-tpl-check:checked')).map(c => c.value);
+
   const data = {
     name:       document.getElementById('p-name')?.value.trim(),
     category:   document.getElementById('p-category')?.value,
     price:      parseFloat(document.getElementById('p-price')?.value)||0,
-    oldPrice:   document.getElementById('p-oldprice')?.value ? parseFloat(document.getElementById('p-oldprice').value) || null : null,
+    oldPrice:   oldPriceRaw ? (parseFloat(oldPriceRaw)||null) : null,
     minQty:     parseInt(document.getElementById('p-minqty')?.value)||1,
     unit:       document.getElementById('p-unit')?.value.trim()||'ชิ้น',
     sizes:      splitComma('p-sizes'),
     materials:  splitComma('p-materials'),
     priceTiers: splitComma('p-tiers'),
-    templates:  splitComma('p-templates'),
+    templates:  tplChecks,
     shortDesc:  document.getElementById('p-shortdesc')?.value.trim(),
     fullDesc:   document.getElementById('p-desc')?.value.trim(),
     emoji:      document.getElementById('p-emoji')?.value.trim()||'📦',
-    image:      document.getElementById('p-image')?.value.trim()||'',
-    active:     document.getElementById('p-active')?.checked,
-    hasPreview: document.getElementById('p-preview')?.checked,
-    isNew:      document.getElementById('p-new')?.checked,
-    isHot:      document.getElementById('p-hot')?.checked,
-    isSale:     document.getElementById('p-sale')?.checked,
-    featured:   document.getElementById('p-featured')?.checked,
+    images,
+    coverIndex,
+    image:      images.length ? (images[coverIndex]||images[0]).url : '',  // backward compat
+    videoUrl:   document.getElementById('p-video')?.value.trim()||'',
+    active:     !!document.getElementById('p-active')?.checked,
+    hasPreview: !!document.getElementById('p-preview')?.checked,
+    isNew:      !!document.getElementById('p-new')?.checked,
+    isHot:      !!document.getElementById('p-hot')?.checked,
+    isSale:     !!document.getElementById('p-sale')?.checked,
+    featured:   !!document.getElementById('p-featured')?.checked,
     updatedAt:  firebase.firestore.FieldValue.serverTimestamp(),
   };
   if (!data.name)  { DMC.toast('กรุณากรอกชื่อสินค้า','error'); return; }
   if (!data.price) { DMC.toast('กรุณากรอกราคา','error'); return; }
-  const saveBtn = document.querySelector('.modal-body .btn-primary');
+
+  const saveBtn = document.getElementById('p-save-btn');
   if (typeof Loading !== 'undefined') Loading.buttonLoad(saveBtn);
   try {
     if (productId) {
       await db.collection('products').doc(productId).update(data);
       DMC.toast('แก้ไขสินค้าสำเร็จ ✅','success');
     } else {
-      data.createdAt   = firebase.firestore.FieldValue.serverTimestamp();
-      data.orderCount  = 0;
+      data.createdAt  = firebase.firestore.FieldValue.serverTimestamp();
+      data.orderCount = 0;
       await db.collection('products').add(data);
       DMC.toast('เพิ่มสินค้าใหม่สำเร็จ 🎉','success');
     }
@@ -855,7 +996,6 @@ window.saveProduct = async function(productId) {
     DMC.toast('บันทึกไม่สำเร็จ: '+e.message,'error');
   }
 };
-
 
 // ══════════════════════════════════════════════
 //  GALLERY MANAGEMENT
@@ -868,13 +1008,7 @@ async function loadGallery(container) {
         <button class="btn btn-primary btn-md" id="add-gallery-btn">+ เพิ่มรูปตัวอย่าง</button>
       </div>
     </div>
-    <div class="admin-box">
-      <div id="gallery-grid-admin" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem">
-        <div style="text-align:center;padding:2rem;grid-column:1/-1"><span class="spinner" style="display:block;margin:0 auto"></span></div>
-      </div>
-    </div>
-    <!-- Add Gallery Modal -->
-    <div id="gallery-add-form" style="display:none" class="admin-box">
+    <div class="admin-box" id="gallery-add-form" style="display:none">
       <div class="admin-box-header"><div class="admin-box-title">➕ เพิ่มรูปตัวอย่าง</div></div>
       <div class="form-row">
         <div class="form-group" style="margin:0">
@@ -890,6 +1024,7 @@ async function loadGallery(container) {
             <option value="shop-sign">ป้ายร้านค้า</option>
             <option value="qrcode">QR Code</option>
             <option value="doll-tag">ป้ายตุ๊กตา</option>
+            <option value="student-card">บัตรนักเรียน</option>
           </select>
         </div>
       </div>
@@ -903,8 +1038,13 @@ async function loadGallery(container) {
         <input class="form-input" id="g-image" placeholder="หรือวาง URL รูปภาพ" style="margin-top:.5rem">
       </div>
       <div style="display:flex;gap:.75rem">
-        <button class="btn btn-primary btn-md" onclick="saveGalleryItem()">💾 บันทึก</button>
-        <button class="btn btn-ghost btn-md" onclick="document.getElementById('gallery-add-form').style.display='none'">ยกเลิก</button>
+        <button class="btn btn-primary btn-md" id="g-save-btn">💾 บันทึก</button>
+        <button class="btn btn-ghost btn-md" id="g-cancel-btn">ยกเลิก</button>
+      </div>
+    </div>
+    <div class="admin-box">
+      <div id="gallery-grid-admin" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem">
+        <div style="text-align:center;padding:2rem;grid-column:1/-1"><span class="spinner" style="display:block;margin:0 auto"></span></div>
       </div>
     </div>`;
 
@@ -912,6 +1052,10 @@ async function loadGallery(container) {
     const form = document.getElementById('gallery-add-form');
     form.style.display = form.style.display === 'none' ? '' : 'none';
   });
+  document.getElementById('g-cancel-btn')?.addEventListener('click', () => {
+    document.getElementById('gallery-add-form').style.display = 'none';
+  });
+  document.getElementById('g-save-btn')?.addEventListener('click', saveGalleryItem);
 
   const fileInput = document.getElementById('g-img-file');
   const statusEl  = document.getElementById('g-upload-status');
@@ -921,12 +1065,13 @@ async function loadGallery(container) {
     if (!file) return;
     try {
       statusEl.textContent = '⏳ กำลังอัปโหลด...';
+      statusEl.style.color = 'var(--accent)';
       const res = await DMC.uploadToImgBB(file);
       document.getElementById('g-image').value = res.url;
       statusEl.textContent = '✅ อัปโหลดแล้ว';
       statusEl.style.color = 'var(--emerald)';
     } catch(e) {
-      statusEl.textContent = '❌ ไม่สำเร็จ';
+      statusEl.textContent = '❌ ไม่สำเร็จ: ' + e.message;
       statusEl.style.color = 'var(--rose)';
     }
   });
@@ -943,23 +1088,25 @@ async function loadGalleryItems() {
       grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-3)">ยังไม่มีรูปตัวอย่าง</div>';
       return;
     }
-    let html = '';
-    snap.forEach(doc => {
-      const g = {id:doc.id,...doc.data()};
-      html += `<div style="position:relative;border-radius:var(--r-lg);overflow:hidden;border:1.5px solid var(--border);background:var(--bg-mid)">
-        ${g.image ? `<img src="${g.image}" style="width:100%;aspect-ratio:1;object-fit:cover">` : `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:2rem">${g.emoji||'📸'}</div>`}
+    const docs = [];
+    snap.forEach(doc => docs.push({id:doc.id,...doc.data()}));
+    docs.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    grid.innerHTML = docs.map(g => `
+      <div style="position:relative;border-radius:var(--r-lg);overflow:hidden;border:1.5px solid var(--border);background:var(--bg-mid)">
+        ${g.image ? `<img src="${g.image}" style="width:100%;aspect-ratio:1;object-fit:cover" loading="lazy">` : `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:2rem">📸</div>`}
         <div style="padding:.5rem .6rem">
           <div style="font-family:var(--font-display);font-size:.8rem;font-weight:600">${DMC.escapeHtml(g.name||'—')}</div>
           <div style="font-size:.7rem;color:var(--text-3)">${DMC.escapeHtml(g.cat||'')}</div>
         </div>
-        <button onclick="deleteGalleryItem('${doc.id}')" style="position:absolute;top:.4rem;right:.4rem;background:rgba(251,113,133,.85);border:none;border-radius:50%;width:24px;height:24px;color:#fff;font-size:.65rem;cursor:pointer">✕</button>
-      </div>`;
+        <button class="g-del-btn" data-id="${g.id}" style="position:absolute;top:.4rem;right:.4rem;background:rgba(251,113,133,.9);border:none;border-radius:50%;width:24px;height:24px;color:#fff;font-size:.65rem;cursor:pointer">✕</button>
+      </div>`).join('');
+    grid.querySelectorAll('.g-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => deleteGalleryItem(btn.dataset.id));
     });
-    grid.innerHTML = html;
-  } catch(e) { grid.innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ</div>'; }
+  } catch(e) { grid.innerHTML = '<div style="grid-column:1/-1;color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ: '+DMC.escapeHtml(e.message)+'</div>'; }
 }
 
-window.saveGalleryItem = async function() {
+async function saveGalleryItem() {
   const data = {
     name:  document.getElementById('g-name')?.value.trim(),
     cat:   document.getElementById('g-cat')?.value,
@@ -967,9 +1114,9 @@ window.saveGalleryItem = async function() {
     active: true,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
-  if (!data.image && !data.name) { DMC.toast('กรุณากรอกชื่อผลงานและรูปภาพ','error'); return; }
+  if (!data.name)  { DMC.toast('กรุณากรอกชื่อผลงาน','error'); return; }
   if (!data.image) { DMC.toast('กรุณาอัปโหลดรูปภาพก่อน','error'); return; }
-  const gBtn = document.querySelector('#gallery-add-form .btn-primary');
+  const gBtn = document.getElementById('g-save-btn');
   if (typeof Loading !== 'undefined') Loading.buttonLoad(gBtn);
   try {
     await db.collection('gallery').add(data);
@@ -978,18 +1125,21 @@ window.saveGalleryItem = async function() {
     document.getElementById('gallery-add-form').style.display = 'none';
     document.getElementById('g-name').value = '';
     document.getElementById('g-image').value = '';
+    document.getElementById('g-upload-status').textContent = '';
     await loadGalleryItems();
   } catch(e) {
+    if (typeof Loading !== 'undefined') Loading.buttonDone(gBtn);
     console.error('Gallery save error:', e);
     DMC.toast('บันทึกไม่สำเร็จ: ' + (e.message||'unknown error'), 'error');
   }
-};
+}
 
-window.deleteGalleryItem = async function(id) {
+function deleteGalleryItem(id) {
   if (!confirm('ลบรูปนี้?')) return;
-  try { await db.collection('gallery').doc(id).delete(); DMC.toast('ลบแล้ว','success'); loadGalleryItems(); }
-  catch(e) { DMC.toast('ลบไม่สำเร็จ','error'); }
-};
+  db.collection('gallery').doc(id).delete()
+    .then(() => { DMC.toast('ลบแล้ว','success'); loadGalleryItems(); })
+    .catch(() => DMC.toast('ลบไม่สำเร็จ','error'));
+}
 
 // ══════════════════════════════════════════════
 //  CONTACTS INBOX
@@ -1000,7 +1150,7 @@ async function loadContacts(container) {
       <div class="admin-greeting"><h2>📬 กล่องข้อความ</h2><p>ข้อความจากลูกค้าที่ส่งผ่านหน้าติดต่อเรา</p></div>
     </div>
     <div class="admin-box">
-      <div id="contacts-list"><div style="text-align:center;padding:2rem"><span class="spinner" style="display:block;margin:0 auto"></span></div></div>
+      <div id="contacts-list">${typeof Loading !== 'undefined' ? Loading.Skeleton.tableRows(3) : ''}</div>
     </div>`;
 
   try {
@@ -1012,7 +1162,7 @@ async function loadContacts(container) {
     snap.forEach(doc => docs.push({id:doc.id,...doc.data()}));
     docs.sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
 
-    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:.75rem">` +
+    el.innerHTML = '<div style="display:flex;flex-direction:column;gap:.75rem">' +
       docs.map(m => `
         <div style="background:var(--bg-mid);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:1rem">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
@@ -1025,142 +1175,582 @@ async function loadContacts(container) {
           <div style="font-size:.82rem;color:var(--text-3);margin-bottom:.4rem">📞 ${DMC.escapeHtml(m.contact||'ไม่ระบุ')}</div>
           <div style="font-size:.87rem;color:var(--text-1);line-height:1.6">${DMC.escapeHtml(m.message||'—')}</div>
           <div style="display:flex;gap:.5rem;margin-top:.6rem">
-            ${m.contact?`<a href="https://line.me/R/ti/p/${m.contact.replace('@','')}" target="_blank" rel="noopener" class="btn btn-line btn-sm" style="border-radius:var(--r-md)">💬 ตอบ LINE</a>`:''}
-            <button class="table-action-btn" style="color:var(--rose);border-color:var(--rose)" onclick="deleteContact('${m.id}')">🗑️ ลบ</button>
+            <button class="table-action-btn c-del-btn" style="color:var(--rose);border-color:var(--rose)" data-id="${m.id}">🗑️ ลบ</button>
           </div>
         </div>`).join('') + '</div>';
+
+    el.querySelectorAll('.c-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!confirm('ลบข้อความนี้?')) return;
+        db.collection('contacts').doc(btn.dataset.id).delete()
+          .then(() => { DMC.toast('ลบแล้ว','success'); loadContacts(document.getElementById('admin-content')); })
+          .catch(() => DMC.toast('ลบไม่สำเร็จ','error'));
+      });
+    });
   } catch(e) {
-    document.getElementById('contacts-list').innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ: '+e.message+'</div>';
+    document.getElementById('contacts-list').innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ: '+DMC.escapeHtml(e.message)+'</div>';
   }
 }
 
-window.deleteContact = async function(id) {
-  if (!confirm('ลบข้อความนี้?')) return;
-  try { await db.collection('contacts').doc(id).delete(); DMC.toast('ลบแล้ว','success'); loadContacts(document.getElementById('admin-content')); }
-  catch(e) { DMC.toast('ลบไม่สำเร็จ','error'); }
-};
+// ══════════════════════════════════════════════
+//  REVIEWS MANAGEMENT (อนุมัติ/ปฏิเสธ + เพิ่มรีวิวร้าน)
+// ══════════════════════════════════════════════
+async function loadReviewsAdmin(container) {
+  container.innerHTML = `
+    <div class="admin-topbar">
+      <div class="admin-greeting"><h2>⭐ จัดการรีวิว</h2><p>อนุมัติรีวิวลูกค้า และเพิ่มรีวิวจากร้าน</p></div>
+      <div class="admin-topbar-actions">
+        <button class="btn btn-primary btn-md" id="add-review-btn">+ เพิ่มรีวิวจากร้าน</button>
+      </div>
+    </div>
+
+    <!-- ฟอร์มเพิ่มรีวิวจากร้าน -->
+    <div class="admin-box" id="admin-review-form" style="display:none">
+      <div class="admin-box-header"><div class="admin-box-title">🏪 เพิ่มรีวิวจากร้าน</div></div>
+      <div class="form-row" style="margin-bottom:1rem">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">ชื่อลูกค้า (แสดงผล)</label>
+          <input class="form-input" id="ar-name" maxlength="40" placeholder="เช่น คุณฝน จ.พัทลุง">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">คะแนน</label>
+          <select class="form-input form-select" id="ar-rating">
+            <option value="5">★★★★★ (5)</option>
+            <option value="4">★★★★ (4)</option>
+            <option value="3">★★★ (3)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">สินค้า (ไม่บังคับ)</label>
+        <select class="form-input form-select" id="ar-product"><option value="">— ไม่ระบุ —</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ข้อความรีวิว</label>
+        <textarea class="form-input form-textarea" id="ar-text" maxlength="500" placeholder="งานสวยมาก ส่งไว แพ็คดี..."></textarea>
+      </div>
+      <div style="display:flex;gap:.75rem">
+        <button class="btn btn-primary btn-md" id="ar-save-btn">💾 บันทึกรีวิว</button>
+        <button class="btn btn-ghost btn-md" id="ar-cancel-btn">ยกเลิก</button>
+      </div>
+    </div>
+
+    <!-- รออนุมัติ -->
+    <div class="admin-box">
+      <div class="admin-box-header">
+        <div class="admin-box-title">⏳ รออนุมัติ <span class="badge badge-hot" id="rv-pending-count" style="font-size:.7rem"></span></div>
+      </div>
+      <div id="rv-pending-list"><div style="text-align:center;padding:1.5rem"><span class="spinner" style="display:block;margin:0 auto"></span></div></div>
+    </div>
+
+    <!-- อนุมัติแล้ว -->
+    <div class="admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">✅ แสดงบนเว็บแล้ว</div></div>
+      <div id="rv-approved-list"><div style="text-align:center;padding:1.5rem"><span class="spinner" style="display:block;margin:0 auto"></span></div></div>
+    </div>`;
+
+  // toggle ฟอร์ม
+  const form = document.getElementById('admin-review-form');
+  document.getElementById('add-review-btn')?.addEventListener('click', () => {
+    form.style.display = form.style.display === 'none' ? '' : 'none';
+  });
+  document.getElementById('ar-cancel-btn')?.addEventListener('click', () => { form.style.display = 'none'; });
+
+  // เติมรายชื่อสินค้าใน dropdown
+  try {
+    const snap = await db.collection('products').get();
+    const sel = document.getElementById('ar-product');
+    snap.forEach(doc => {
+      const opt = document.createElement('option');
+      opt.value = doc.id;
+      opt.textContent = doc.data().name || doc.id;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+
+  // บันทึกรีวิวร้าน (อนุมัติทันที)
+  document.getElementById('ar-save-btn')?.addEventListener('click', async () => {
+    const name   = document.getElementById('ar-name')?.value.trim();
+    const rating = parseInt(document.getElementById('ar-rating')?.value) || 5;
+    const text   = document.getElementById('ar-text')?.value.trim();
+    const prodEl = document.getElementById('ar-product');
+    const productId   = prodEl?.value || '';
+    const productName = productId ? (prodEl.options[prodEl.selectedIndex]?.textContent || '') : '';
+    if (!name || !text) { DMC.toast('กรอกชื่อและข้อความรีวิว', 'error'); return; }
+    const btn = document.getElementById('ar-save-btn');
+    if (typeof Loading !== 'undefined') Loading.buttonLoad(btn);
+    try {
+      await db.collection('reviews').add({
+        name, rating, text, productId, productName,
+        status: 'approved', source: 'admin',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      DMC.toast('เพิ่มรีวิวแล้ว ✅', 'success');
+      form.style.display = 'none';
+      document.getElementById('ar-name').value = '';
+      document.getElementById('ar-text').value = '';
+      await refreshReviewLists();
+    } catch(e) {
+      DMC.toast('บันทึกไม่สำเร็จ: ' + e.message, 'error');
+    } finally {
+      if (typeof Loading !== 'undefined') Loading.buttonDone(btn);
+    }
+  });
+
+  await refreshReviewLists();
+}
+
+async function refreshReviewLists() {
+  const pendEl = document.getElementById('rv-pending-list');
+  const apprEl = document.getElementById('rv-approved-list');
+  if (!pendEl || !apprEl) return;
+  try {
+    const snap = await db.collection('reviews').limit(200).get();
+    const pending = [], approved = [];
+    snap.forEach(doc => {
+      const r = { id: doc.id, ...doc.data() };
+      (r.status === 'approved' ? approved : pending).push(r);
+    });
+    const byTime = (a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0);
+    pending.sort(byTime); approved.sort(byTime);
+
+    const countEl = document.getElementById('rv-pending-count');
+    if (countEl) countEl.textContent = pending.length ? pending.length + ' รายการ' : '';
+
+    pendEl.innerHTML = pending.length
+      ? pending.map(r => adminReviewCard(r, true)).join('')
+      : '<div style="text-align:center;padding:1.25rem;color:var(--text-3)">ไม่มีรีวิวรออนุมัติ 🎉</div>';
+    apprEl.innerHTML = approved.length
+      ? approved.map(r => adminReviewCard(r, false)).join('')
+      : '<div style="text-align:center;padding:1.25rem;color:var(--text-3)">ยังไม่มีรีวิวที่แสดง</div>';
+
+    // wire ปุ่ม (ไม่ใช้ onclick ใน template — กัน SyntaxError จาก quotes)
+    [pendEl, apprEl].forEach(el => {
+      el.querySelectorAll('[data-rv-approve]').forEach(btn => btn.addEventListener('click', () => setReviewStatus(btn.dataset.rvApprove, 'approved')));
+      el.querySelectorAll('[data-rv-reject]').forEach(btn  => btn.addEventListener('click', () => setReviewStatus(btn.dataset.rvReject, 'rejected')));
+      el.querySelectorAll('[data-rv-del]').forEach(btn => btn.addEventListener('click', () => {
+        if (!confirm('ลบรีวิวนี้ถาวร?')) return;
+        db.collection('reviews').doc(btn.dataset.rvDel).delete()
+          .then(() => { DMC.toast('ลบแล้ว','success'); refreshReviewLists(); })
+          .catch(() => DMC.toast('ลบไม่สำเร็จ','error'));
+      }));
+    });
+  } catch(e) {
+    pendEl.innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ: ' + DMC.escapeHtml(e.message) + '</div>';
+    apprEl.innerHTML = '';
+  }
+}
+
+function adminReviewCard(r, isPending) {
+  const date  = r.createdAt?.toDate ? DMC.formatDate(r.createdAt, true) : '—';
+  const stars = '★'.repeat(Math.round(r.rating||0)) + '☆'.repeat(5 - Math.round(r.rating||0));
+  const src   = r.source === 'admin' ? '<span class="badge badge-accent" style="font-size:.65rem">🏪 ร้าน</span>' : '<span class="badge badge-new" style="font-size:.65rem">👤 ลูกค้า</span>';
+  return `
+    <div style="background:var(--bg-mid);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:.9rem 1rem;margin-bottom:.65rem">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;flex-wrap:wrap">
+        <div>
+          <strong style="font-family:var(--font-display)">${DMC.escapeHtml(r.name||'—')}</strong> ${src}
+          <span style="color:var(--gold);font-size:.85rem;margin-left:.35rem">${stars}</span>
+          ${r.productName ? '<div style="font-size:.74rem;color:var(--text-3);margin-top:.15rem">📦 ' + DMC.escapeHtml(r.productName) + '</div>' : ''}
+        </div>
+        <span style="font-size:.72rem;color:var(--text-3)">${date}</span>
+      </div>
+      <div style="font-size:.86rem;color:var(--text-2);margin:.5rem 0;line-height:1.6">${DMC.escapeHtml(r.text||'')}</div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+        ${isPending ? `<button class="table-action-btn" style="color:var(--emerald);border-color:var(--emerald)" data-rv-approve="${r.id}">✅ อนุมัติ</button>` : ''}
+        ${isPending ? `<button class="table-action-btn" data-rv-reject="${r.id}">🚫 ปฏิเสธ</button>` : ''}
+        <button class="table-action-btn" style="color:var(--rose);border-color:var(--rose)" data-rv-del="${r.id}">🗑️ ลบ</button>
+      </div>
+    </div>`;
+}
+
+async function setReviewStatus(id, status) {
+  try {
+    await db.collection('reviews').doc(id).update({ status, moderatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    DMC.toast(status === 'approved' ? 'อนุมัติแล้ว ✅' : 'ปฏิเสธแล้ว', 'success');
+    refreshReviewLists();
+  } catch(e) { DMC.toast('อัพเดทไม่สำเร็จ', 'error'); }
+}
 
 // ══════════════════════════════════════════════
-//  SETTINGS
+//  SITE CONTENT CMS (แก้หน้าบ้านจากหลังบ้าน)
+// ══════════════════════════════════════════════
+async function loadContentCMS(container) {
+  container.innerHTML = `
+    <div class="admin-topbar">
+      <div class="admin-greeting"><h2>📝 เนื้อหาเว็บไซต์</h2><p>แก้ไขข้อความหน้าบ้านทั้งหมด — บันทึกแล้วมีผลทันที</p></div>
+      <div class="admin-topbar-actions">
+        <button class="btn btn-primary btn-md" id="cms-save-btn">💾 บันทึกทั้งหมด</button>
+      </div>
+    </div>
+    <div class="settings-grid" id="cms-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:2rem"><span class="spinner" style="display:block;margin:0 auto"></span></div>
+    </div>`;
+
+  let content;
+  try {
+    if (typeof CMS !== 'undefined') CMS.clearCache();
+    content = await CMS.get();
+  } catch(e) {
+    document.getElementById('cms-grid').innerHTML = '<div style="grid-column:1/-1;color:var(--rose)">โหลดเนื้อหาไม่สำเร็จ</div>';
+    return;
+  }
+
+  const v = (s) => DMC.escapeHtml(s || '');
+  document.getElementById('cms-grid').innerHTML = `
+    <!-- Hero -->
+    <div class="admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">🏠 หน้าแรก — Hero</div></div>
+      <div class="form-group"><label class="form-label">ป้ายเล็กด้านบน</label><input class="form-input" id="cms-hero-badge" value="${v(content.hero.badge)}"></div>
+      <div class="form-group"><label class="form-label">หัวข้อบรรทัด 1</label><input class="form-input" id="cms-hero-t1" value="${v(content.hero.title1)}"></div>
+      <div class="form-group"><label class="form-label">หัวข้อบรรทัด 2 (ไฮไลต์)</label><input class="form-input" id="cms-hero-t2" value="${v(content.hero.title2)}"></div>
+      <div class="form-group"><label class="form-label">หัวข้อบรรทัด 3</label><input class="form-input" id="cms-hero-t3" value="${v(content.hero.title3)}"></div>
+      <div class="form-group"><label class="form-label">คำอธิบายใต้หัวข้อ</label><textarea class="form-input form-textarea" id="cms-hero-desc">${v(content.hero.desc)}</textarea></div>
+    </div>
+
+    <!-- ตัวเลขความเชื่อมั่น + โปรโมชั่น -->
+    <div class="admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">📊 ตัวเลขความเชื่อมั่น</div></div>
+      <div class="form-row" style="margin-bottom:1rem">
+        <div class="form-group" style="margin:0"><label class="form-label">จำนวนออเดอร์ เช่น 500+</label><input class="form-input" id="cms-stat-orders" value="${v(content.stats.orders)}"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">คะแนนรีวิว เช่น 4.9/5</label><input class="form-input" id="cms-stat-rating" value="${v(content.stats.rating)}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">เวลาผลิต (วัน) เช่น 1-3</label><input class="form-input" id="cms-stat-days" value="${v(content.stats.days)}"></div>
+      <div class="admin-box-header" style="margin-top:1.25rem"><div class="admin-box-title">🎁 แบนเนอร์โปรโมชั่น</div></div>
+      <label style="display:flex;align-items:center;gap:.45rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem;margin-bottom:.85rem">
+        <input type="checkbox" id="cms-promo-active" ${content.promo.active ? 'checked' : ''} style="accent-color:var(--accent)"> แสดงแบนเนอร์โปรโมชั่น
+      </label>
+      <div class="form-group"><label class="form-label">ป้ายกำกับ</label><input class="form-input" id="cms-promo-tag" value="${v(content.promo.tag)}"></div>
+      <div class="form-group"><label class="form-label">หัวข้อโปร</label><input class="form-input" id="cms-promo-title" value="${v(content.promo.title)}"></div>
+      <div class="form-group"><label class="form-label">รายละเอียด</label><input class="form-input" id="cms-promo-desc" value="${v(content.promo.desc)}"></div>
+      <div class="form-group"><label class="form-label">ข้อความปุ่ม</label><input class="form-input" id="cms-promo-btn" value="${v(content.promo.btnText)}"></div>
+    </div>
+
+    <!-- ช่องทางติดต่อ -->
+    <div class="admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">📞 ช่องทางติดต่อ (ใช้ทั้งเว็บ)</div></div>
+      <div class="form-group"><label class="form-label">LINE URL</label><input class="form-input" id="cms-ct-line" value="${v(content.contact.line)}" placeholder="https://line.me/R/ti/p/@xxx"></div>
+      <div class="form-group"><label class="form-label">ชื่อ LINE ID แสดงผล</label><input class="form-input" id="cms-ct-linelabel" value="${v(content.contact.lineLabel)}" placeholder="@yourshop"></div>
+      <div class="form-group"><label class="form-label">Facebook URL</label><input class="form-input" id="cms-ct-fb" value="${v(content.contact.facebook)}"></div>
+      <div class="form-group"><label class="form-label">Instagram URL</label><input class="form-input" id="cms-ct-ig" value="${v(content.contact.instagram)}"></div>
+      <div class="form-group"><label class="form-label">TikTok URL</label><input class="form-input" id="cms-ct-tiktok" value="${v(content.contact.tiktok)}"></div>
+      <div class="form-row" style="margin-bottom:0">
+        <div class="form-group" style="margin:0"><label class="form-label">อีเมล</label><input class="form-input" id="cms-ct-email" value="${v(content.contact.email)}"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">เบอร์โทรร้าน</label><input class="form-input" id="cms-ct-phone" value="${v(content.contact.phone)}"></div>
+      </div>
+      <div class="form-group" style="margin-top:1rem"><label class="form-label">เวลาทำการ</label><input class="form-input" id="cms-ct-hours" value="${v(content.contact.hours)}"></div>
+    </div>
+
+    <!-- PromptPay -->
+    <div class="admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">💳 PromptPay (เปลี่ยนบัญชีได้ที่นี่)</div></div>
+      <div class="form-group">
+        <label class="form-label">หมายเลขพร้อมเพย์ (เบอร์/เลขบัตร ปชช.)</label>
+        <input class="form-input" id="cms-pay-id" value="${v(content.payment.promptpayId)}" placeholder="0812345678" inputmode="numeric">
+        <div style="font-size:.74rem;color:var(--text-3);margin-top:.3rem">ระบบสร้าง QR พร้อมยอดเงินให้อัตโนมัติ</div>
+      </div>
+      <div class="form-group"><label class="form-label">ชื่อบัญชี (แสดงใต้ QR)</label><input class="form-input" id="cms-pay-name" value="${v(content.payment.promptpayName)}" placeholder="นายชัยวุฒิ ..."></div>
+      <div class="form-group">
+        <label class="form-label">หรืออัปโหลดรูป QR เอง (ถ้าใส่ จะใช้รูปนี้แทน)</label>
+        <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:.45rem">
+          <input type="file" id="cms-qr-file" accept="image/*" style="display:none">
+          <button class="btn btn-ghost btn-sm" id="cms-qr-upload-btn" style="border-radius:var(--r-md)">📤 อัปโหลดรูป QR</button>
+          <span id="cms-qr-status" style="font-size:.76rem;color:var(--text-3)"></span>
+        </div>
+        <input class="form-input" id="cms-pay-qrimg" value="${v(content.payment.qrImageUrl)}" placeholder="URL รูป QR (เว้นว่าง = ใช้ QR อัตโนมัติ)">
+      </div>
+      <div id="cms-qr-preview" style="text-align:center"></div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="admin-box" style="grid-column:1/-1">
+      <div class="admin-box-header">
+        <div class="admin-box-title">❓ คำถามที่พบบ่อย (หน้า "วิธีสั่งซื้อ")</div>
+        <span class="admin-box-action" id="cms-faq-add">+ เพิ่มคำถาม</span>
+      </div>
+      <div id="cms-faq-list"></div>
+    </div>`;
+
+  // ── FAQ editor ──
+  let faqData = Array.isArray(content.faq) ? content.faq.map(f => ({ q: f.q||'', a: f.a||'' })) : [];
+  function renderFaqList() {
+    const wrap = document.getElementById('cms-faq-list');
+    wrap.innerHTML = faqData.map((f, i) => `
+      <div style="background:var(--bg-mid);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:.85rem;margin-bottom:.65rem">
+        <div class="form-group" style="margin-bottom:.6rem">
+          <label class="form-label">คำถาม ${i+1}</label>
+          <input class="form-input cms-faq-q" data-i="${i}" value="${DMC.escapeHtml(f.q)}">
+        </div>
+        <div class="form-group" style="margin-bottom:.6rem">
+          <label class="form-label">คำตอบ</label>
+          <textarea class="form-input form-textarea cms-faq-a" data-i="${i}" style="min-height:70px">${DMC.escapeHtml(f.a)}</textarea>
+        </div>
+        <button class="table-action-btn cms-faq-del" data-i="${i}" style="color:var(--rose);border-color:var(--rose)">🗑️ ลบข้อนี้</button>
+      </div>`).join('') || '<div style="color:var(--text-3);text-align:center;padding:1rem;font-size:.85rem">ยังไม่มีคำถาม กด "+ เพิ่มคำถาม"</div>';
+
+    wrap.querySelectorAll('.cms-faq-q').forEach(el => el.addEventListener('input', () => { faqData[+el.dataset.i].q = el.value; }));
+    wrap.querySelectorAll('.cms-faq-a').forEach(el => el.addEventListener('input', () => { faqData[+el.dataset.i].a = el.value; }));
+    wrap.querySelectorAll('.cms-faq-del').forEach(el => el.addEventListener('click', () => { faqData.splice(+el.dataset.i, 1); renderFaqList(); }));
+  }
+  renderFaqList();
+  document.getElementById('cms-faq-add')?.addEventListener('click', () => { faqData.push({ q:'', a:'' }); renderFaqList(); });
+
+  // ── QR upload + live preview ──
+  const qrFile = document.getElementById('cms-qr-file');
+  document.getElementById('cms-qr-upload-btn')?.addEventListener('click', () => qrFile?.click());
+  qrFile?.addEventListener('change', async () => {
+    const f = qrFile.files[0];
+    if (!f) return;
+    const st = document.getElementById('cms-qr-status');
+    st.textContent = '⏳ กำลังอัปโหลด...';
+    try {
+      const res = await DMC.uploadToImgBB(f);
+      document.getElementById('cms-pay-qrimg').value = res.url;
+      st.textContent = '✅ อัปโหลดแล้ว';
+      updateQrPreview();
+    } catch(e) { st.textContent = '❌ อัปโหลดไม่สำเร็จ'; }
+  });
+  function updateQrPreview() {
+    const id  = document.getElementById('cms-pay-id')?.value.trim();
+    const img = document.getElementById('cms-pay-qrimg')?.value.trim();
+    const box = document.getElementById('cms-qr-preview');
+    const url = img || (id ? 'https://promptpay.io/' + id.replace(/\D/g,'') : '');
+    box.innerHTML = url ? '<img src="' + url + '" alt="QR" style="max-width:160px;border-radius:12px;border:1px solid var(--border);margin-top:.4rem">' : '';
+  }
+  document.getElementById('cms-pay-id')?.addEventListener('input', DMC.debounce(updateQrPreview, 500));
+  document.getElementById('cms-pay-qrimg')?.addEventListener('input', DMC.debounce(updateQrPreview, 500));
+  updateQrPreview();
+
+  // ── Save ──
+  document.getElementById('cms-save-btn')?.addEventListener('click', async () => {
+    const g = (id) => document.getElementById(id)?.value.trim() || '';
+    const data = {
+      hero: { badge: g('cms-hero-badge'), title1: g('cms-hero-t1'), title2: g('cms-hero-t2'), title3: g('cms-hero-t3'), desc: document.getElementById('cms-hero-desc')?.value.trim() || '' },
+      stats: { orders: g('cms-stat-orders'), rating: g('cms-stat-rating'), days: g('cms-stat-days') },
+      promo: { active: !!document.getElementById('cms-promo-active')?.checked, tag: g('cms-promo-tag'), title: g('cms-promo-title'), desc: g('cms-promo-desc'), btnText: g('cms-promo-btn'), btnLink: 'catalog.html' },
+      contact: { line: g('cms-ct-line'), lineLabel: g('cms-ct-linelabel'), facebook: g('cms-ct-fb'), instagram: g('cms-ct-ig'), tiktok: g('cms-ct-tiktok'), email: g('cms-ct-email'), phone: g('cms-ct-phone'), hours: g('cms-ct-hours') },
+      payment: { promptpayId: g('cms-pay-id'), promptpayName: g('cms-pay-name'), qrImageUrl: g('cms-pay-qrimg') },
+      faq: faqData.filter(f => f.q.trim() && f.a.trim()),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    const btn = document.getElementById('cms-save-btn');
+    if (typeof Loading !== 'undefined') Loading.buttonLoad(btn);
+    try {
+      await db.collection('siteContent').doc('main').set(data, { merge: true });
+      if (typeof CMS !== 'undefined') CMS.clearCache();
+      DMC.toast('บันทึกเนื้อหาแล้ว ✅ หน้าเว็บอัปเดตทันที', 'success', 3500);
+    } catch(e) {
+      DMC.toast('บันทึกไม่สำเร็จ: ' + e.message, 'error');
+    } finally {
+      if (typeof Loading !== 'undefined') Loading.buttonDone(btn);
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+//  TEMPLATES MANAGER (กรอบ PNG ที่ร้านอัปโหลดเอง)
+// ══════════════════════════════════════════════
+async function loadTemplatesAdmin(container) {
+  container.innerHTML = `
+    <div class="admin-topbar">
+      <div class="admin-greeting"><h2>🎨 เทมเพลตของร้าน</h2><p>อัปโหลดกรอบรูป PNG (พื้นหลังโปร่งใสตรงกลาง) ให้ลูกค้าลองใส่รูปดูตัวอย่าง</p></div>
+    </div>
+
+    <div class="admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">➕ เพิ่มเทมเพลตใหม่</div></div>
+      <div style="background:rgba(14,165,233,.06);border:1px solid var(--border);border-radius:var(--r-md);padding:.7rem .9rem;font-size:.8rem;color:var(--text-2);margin-bottom:1rem;line-height:1.7">
+        💡 <strong>ไฟล์ที่ใช้:</strong> PNG ที่ <strong>ตรงกลางโปร่งใส</strong> (รูปลูกค้าจะอยู่ข้างหลังกรอบ)<br>
+        แนะนำสัดส่วนแนวตั้ง เช่น 700×975px · สร้างได้จาก Canva → Export PNG พื้นหลังโปร่งใส
+      </div>
+      <div class="form-row" style="margin-bottom:1rem">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">ชื่อเทมเพลต</label>
+          <input class="form-input" id="tpl-name" maxlength="30" placeholder="เช่น กรอบดอกไม้, บัตรนักเรียนแบบ A">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">ไฟล์กรอบ PNG</label>
+          <div style="display:flex;gap:.6rem;align-items:center">
+            <input type="file" id="tpl-file" accept="image/png" style="display:none">
+            <button class="btn btn-ghost btn-sm" id="tpl-upload-btn" style="border-radius:var(--r-md)">📤 เลือกไฟล์ PNG</button>
+            <span id="tpl-upload-status" style="font-size:.76rem;color:var(--text-3)"></span>
+          </div>
+        </div>
+      </div>
+      <input class="form-input" id="tpl-url" placeholder="หรือวาง URL รูปกรอบ PNG" style="margin-bottom:1rem">
+      <div id="tpl-preview" style="margin-bottom:1rem"></div>
+      <button class="btn btn-primary btn-md" id="tpl-save-btn">💾 บันทึกเทมเพลต</button>
+    </div>
+
+    <div class="admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">🗂️ เทมเพลตทั้งหมด</div></div>
+      <div id="tpl-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem">
+        <div style="grid-column:1/-1;text-align:center;padding:1.5rem"><span class="spinner" style="display:block;margin:0 auto"></span></div>
+      </div>
+    </div>`;
+
+  const fileIn = document.getElementById('tpl-file');
+  document.getElementById('tpl-upload-btn')?.addEventListener('click', () => fileIn?.click());
+  fileIn?.addEventListener('change', async () => {
+    const f = fileIn.files[0];
+    if (!f) return;
+    if (f.type !== 'image/png') { DMC.toast('ต้องเป็นไฟล์ PNG เท่านั้น (เพื่อให้กลางโปร่งใส)', 'error'); return; }
+    const st = document.getElementById('tpl-upload-status');
+    st.textContent = '⏳ กำลังอัปโหลด...';
+    try {
+      const res = await DMC.uploadToImgBB(f);
+      document.getElementById('tpl-url').value = res.url;
+      st.textContent = '✅ อัปโหลดแล้ว';
+      document.getElementById('tpl-preview').innerHTML =
+        '<img src="' + res.url + '" alt="preview" style="max-height:140px;border-radius:var(--r-md);border:1px solid var(--border);background:repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/16px 16px">';
+    } catch(e) { st.textContent = '❌ อัปโหลดไม่สำเร็จ'; }
+  });
+
+  document.getElementById('tpl-save-btn')?.addEventListener('click', async () => {
+    const name = document.getElementById('tpl-name')?.value.trim();
+    const url  = document.getElementById('tpl-url')?.value.trim();
+    if (!name) { DMC.toast('กรอกชื่อเทมเพลต', 'error'); return; }
+    if (!url)  { DMC.toast('อัปโหลดไฟล์กรอบก่อน', 'error'); return; }
+    const btn = document.getElementById('tpl-save-btn');
+    if (typeof Loading !== 'undefined') Loading.buttonLoad(btn);
+    try {
+      await db.collection('templates').add({
+        name, frameUrl: url, active: true,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      DMC.toast('เพิ่มเทมเพลตแล้ว ✅', 'success');
+      document.getElementById('tpl-name').value = '';
+      document.getElementById('tpl-url').value = '';
+      document.getElementById('tpl-preview').innerHTML = '';
+      document.getElementById('tpl-upload-status').textContent = '';
+      await loadTplList();
+    } catch(e) {
+      DMC.toast('บันทึกไม่สำเร็จ: ' + e.message, 'error');
+    } finally {
+      if (typeof Loading !== 'undefined') Loading.buttonDone(btn);
+    }
+  });
+
+  await loadTplList();
+}
+
+async function loadTplList() {
+  const wrap = document.getElementById('tpl-list');
+  if (!wrap) return;
+  try {
+    const snap = await db.collection('templates').get();
+    if (snap.empty) {
+      wrap.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:1.5rem;color:var(--text-3)">ยังไม่มีเทมเพลตของร้าน — ลูกค้าจะเห็นเฉพาะ 6 แบบมาตรฐาน</div>';
+      return;
+    }
+    const items = [];
+    snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+    items.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+
+    wrap.innerHTML = items.map(t => `
+      <div style="border:1.5px solid var(--border);border-radius:var(--r-lg);overflow:hidden;background:var(--bg-mid)">
+        <div style="aspect-ratio:3/4;background:repeating-conic-gradient(#e8e8e8 0 25%,#fff 0 50%) 0 0/14px 14px;display:flex;align-items:center;justify-content:center;overflow:hidden">
+          <img src="${t.frameUrl}" alt="${DMC.escapeHtml(t.name)}" style="width:100%;height:100%;object-fit:contain" loading="lazy">
+        </div>
+        <div style="padding:.55rem .65rem">
+          <div style="font-family:var(--font-display);font-size:.8rem;font-weight:600;margin-bottom:.4rem">${DMC.escapeHtml(t.name||'—')}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:.4rem">
+            <label class="toggle-switch" title="เปิด/ปิดใช้งาน">
+              <input type="checkbox" class="tpl-toggle" data-id="${t.id}" ${t.active ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+            <button class="table-action-btn tpl-del" data-id="${t.id}" style="color:var(--rose);border-color:var(--rose)">🗑️</button>
+          </div>
+        </div>
+      </div>`).join('');
+
+    wrap.querySelectorAll('.tpl-toggle').forEach(el => el.addEventListener('change', () => {
+      db.collection('templates').doc(el.dataset.id).update({ active: el.checked })
+        .then(() => DMC.toast(el.checked ? 'เปิดใช้งานแล้ว' : 'ปิดใช้งานแล้ว', 'success'))
+        .catch(() => DMC.toast('บันทึกไม่สำเร็จ', 'error'));
+    }));
+    wrap.querySelectorAll('.tpl-del').forEach(el => el.addEventListener('click', () => {
+      if (!confirm('ลบเทมเพลตนี้?')) return;
+      db.collection('templates').doc(el.dataset.id).delete()
+        .then(() => { DMC.toast('ลบแล้ว', 'success'); loadTplList(); })
+        .catch(() => DMC.toast('ลบไม่สำเร็จ', 'error'));
+    }));
+  } catch(e) {
+    wrap.innerHTML = '<div style="grid-column:1/-1;color:var(--text-3);text-align:center;padding:1rem">โหลดไม่สำเร็จ: ' + DMC.escapeHtml(e.message) + '</div>';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  SETTINGS (รหัสผ่าน + LINE)
 // ══════════════════════════════════════════════
 async function loadSettings(container) {
   container.innerHTML = `
     <div class="admin-topbar">
-      <div class="admin-greeting"><h2>⚙️ ตั้งค่าระบบ</h2><p>จัดการการตั้งค่าต่างๆ ของร้าน</p></div>
+      <div class="admin-greeting"><h2>⚙️ ตั้งค่าระบบ</h2><p>รหัสผ่าน Admin และการแจ้งเตือน LINE</p></div>
     </div>
     <div class="settings-grid">
-
-      <!-- เปลี่ยนรหัสผ่าน -->
       <div class="admin-box">
         <div class="admin-box-header"><div class="admin-box-title">🔐 เปลี่ยนรหัสผ่าน Admin</div></div>
         <div class="form-group">
           <label class="form-label">รหัสผ่านใหม่</label>
-          <input class="form-input" type="password" id="new-pass" placeholder="••••••••">
+          <input class="form-input" type="password" id="new-pass" placeholder="••••••••" autocomplete="new-password">
         </div>
         <div class="form-group">
           <label class="form-label">ยืนยันรหัสผ่านใหม่</label>
-          <input class="form-input" type="password" id="confirm-pass" placeholder="••••••••">
+          <input class="form-input" type="password" id="confirm-pass" placeholder="••••••••" autocomplete="new-password">
         </div>
         <div id="new-hash-output" style="display:none;background:var(--bg-mid);border-radius:var(--r-md);padding:.75rem;margin-bottom:.75rem;word-break:break-all">
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:.3rem;font-family:var(--font-display)">Copy ไปใส่ใน admin.js → ADMIN_HASH:</div>
+          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:.3rem;font-family:var(--font-display)">นำไปแทนค่า ADMIN_HASH ใน js/admin.js แล้วอัปโหลดขึ้น GitHub:</div>
           <code id="hash-value" style="font-size:.72rem;color:var(--accent)"></code>
-          <button class="btn btn-ghost btn-sm" style="margin-top:.5rem;border-radius:var(--r-md)" onclick="copyHash()">📋 Copy</button>
+          <button class="btn btn-ghost btn-sm" id="copy-hash-btn" style="margin-top:.5rem;border-radius:var(--r-md)">📋 Copy</button>
         </div>
-        <button class="btn btn-primary btn-md" onclick="generatePasswordHash()">🔑 สร้าง Hash</button>
+        <button class="btn btn-primary btn-md" id="gen-hash-btn">🔑 สร้าง Hash</button>
       </div>
 
-      <!-- ข้อมูลร้าน -->
       <div class="admin-box">
-        <div class="admin-box-header"><div class="admin-box-title">🏪 ข้อมูลร้าน</div></div>
-        <div class="form-group"><label class="form-label">ชื่อร้าน</label><input class="form-input" id="s-shopname" placeholder="Diamond Cute Studio"></div>
-        <div class="form-group"><label class="form-label">LINE OA URL</label><input class="form-input" id="s-line" placeholder="https://line.me/R/ti/p/..."></div>
-        <div class="form-group"><label class="form-label">Facebook URL</label><input class="form-input" id="s-fb" placeholder="https://facebook.com/..."></div>
-        <div class="form-group"><label class="form-label">Instagram URL</label><input class="form-input" id="s-ig" placeholder="https://instagram.com/..."></div>
-        <div class="form-group"><label class="form-label">เบอร์โทร</label><input class="form-input" id="s-phone" placeholder="0xx-xxx-xxxx"></div>
-        <button class="btn btn-primary btn-md" onclick="saveShopSettings()">💾 บันทึกข้อมูลร้าน</button>
+        <div class="admin-box-header"><div class="admin-box-title">💬 LINE แจ้งเตือนออเดอร์</div></div>
+        <p style="font-size:.83rem;color:var(--text-2);margin-bottom:.75rem">ตั้งค่าใน Cloudflare Worker → Settings → Variables and Secrets</p>
+        <div style="background:var(--bg-mid);border-radius:var(--r-md);padding:1rem;font-size:.82rem;line-height:1.9">
+          <div><strong>LINE_TOKEN</strong> <span style="color:var(--text-3)">= Channel Access Token</span></div>
+          <div><strong>LINE_USER_ID</strong> <span style="color:var(--text-3)">= User ID (U...) คั่นด้วย , ถ้าหลายคน</span></div>
+        </div>
+        <button class="btn btn-secondary btn-md" id="test-line-btn" style="margin-top:.85rem">🔔 ทดสอบส่งแจ้งเตือน</button>
       </div>
 
-      <!-- ความปลอดภัย -->
       <div class="admin-box">
-        <div class="admin-box-header"><div class="admin-box-title">🛡️ ความปลอดภัย</div></div>
+        <div class="admin-box-header"><div class="admin-box-title">🛡️ ความปลอดภัยของระบบ</div></div>
         <div class="security-status">
           <div class="security-row ok">✅ PBKDF2-SHA256 (100,000 iterations)</div>
-          <div class="security-row ok">✅ Session Token + Expiry 8 ชั่วโมง</div>
-          <div class="security-row ok">✅ Rate Limit: 5 ครั้ง → ล็อค 15 นาที</div>
-          <div class="security-row ok">✅ Admin URL แยกจาก Public</div>
-          <div class="security-row ok">✅ Cloudflare CDN + Firewall</div>
-          <div class="security-row ok">✅ HTTPS Enforced</div>
+          <div class="security-row ok">✅ Session Token หมดอายุ 8 ชั่วโมง</div>
+          <div class="security-row ok">✅ ล็อคหลังพิมพ์ผิด 5 ครั้ง (15 นาที)</div>
+          <div class="security-row ok">✅ รีวิวลูกค้าต้องอนุมัติก่อนแสดง</div>
+          <div class="security-row ok">✅ ดูประวัติออเดอร์ต้องยืนยัน OTP</div>
+          <div class="security-row ok">✅ HTTPS ทุกหน้า</div>
         </div>
-      </div>
-
-      <!-- LINE Config -->
-      <div class="admin-box">
-        <div class="admin-box-header"><div class="admin-box-title">💬 LINE Messaging API</div></div>
-        <p style="font-size:.83rem;color:var(--text-2);margin-bottom:.75rem">ตั้งค่าใน Cloudflare Worker Dashboard → Settings → Variables and Secrets</p>
-        <div style="background:var(--bg-mid);border-radius:var(--r-md);padding:1rem;font-size:.82rem">
-          <div style="margin-bottom:.4rem"><strong>LINE_TOKEN</strong> <span style="color:var(--text-3)">= Channel Access Token</span></div>
-          <div><strong>LINE_USER_ID</strong> <span style="color:var(--text-3)">= User ID (U...) คั่น , ถ้าหลายคน</span></div>
-        </div>
-        <button class="btn btn-secondary btn-md" style="margin-top:.75rem" onclick="testLine()">🔔 ทดสอบส่งแจ้งเตือน</button>
       </div>
     </div>`;
 
-  // Load existing settings
-  try {
-    const doc = await db.collection('settings').doc('shop').get();
-    if (doc.exists) {
-      const s = doc.data();
-      if (s.name)  document.getElementById('s-shopname').value = s.name;
-      if (s.line)  document.getElementById('s-line').value     = s.line;
-      if (s.fb)    document.getElementById('s-fb').value       = s.fb;
-      if (s.ig)    document.getElementById('s-ig').value       = s.ig;
-      if (s.phone) document.getElementById('s-phone').value    = s.phone;
-    }
-  } catch(e) {}
+  document.getElementById('gen-hash-btn')?.addEventListener('click', async () => {
+    const p1 = document.getElementById('new-pass')?.value;
+    const p2 = document.getElementById('confirm-pass')?.value;
+    if (!p1)            { DMC.toast('กรอกรหัสผ่านก่อน', 'error'); return; }
+    if (p1 !== p2)      { DMC.toast('รหัสผ่านไม่ตรงกัน', 'error'); return; }
+    if (p1.length < 6)  { DMC.toast('รหัสผ่านอย่างน้อย 6 ตัวอักษร', 'error'); return; }
+    const hash = await DMC.pbkdf2Hash(p1, ADMIN_SALT);
+    document.getElementById('hash-value').textContent = hash;
+    document.getElementById('new-hash-output').style.display = 'block';
+    DMC.toast('สร้าง Hash สำเร็จ — Copy ไปแทนใน admin.js', 'success', 5000);
+  });
+
+  document.getElementById('copy-hash-btn')?.addEventListener('click', () => {
+    const hash = document.getElementById('hash-value')?.textContent;
+    if (!hash) return;
+    navigator.clipboard.writeText(hash)
+      .then(() => DMC.toast('Copy แล้ว ✅', 'success'))
+      .catch(() => DMC.toast('Copy ด้วยตนเองครับ', 'info'));
+  });
+
+  document.getElementById('test-line-btn')?.addEventListener('click', async () => {
+    const ok = await DMC.sendLineNotify({ orderId:'TEST', customerName:'ทดสอบระบบ', customerPhone:'-', itemsSummary:'ทดสอบการแจ้งเตือน', total:0, paymentMethod:'test' });
+    DMC.toast(ok ? '✅ ส่ง LINE สำเร็จ!' : '❌ ส่งไม่สำเร็จ ตรวจสอบ Worker', ok ? 'success' : 'error');
+  });
 }
-
-window.generatePasswordHash = async function() {
-  const p1 = document.getElementById('new-pass')?.value;
-  const p2 = document.getElementById('confirm-pass')?.value;
-  if (!p1)        { DMC.toast('กรอกรหัสผ่านก่อน','error'); return; }
-  if (p1 !== p2)  { DMC.toast('รหัสผ่านไม่ตรงกัน','error'); return; }
-  if (p1.length < 6) { DMC.toast('รหัสผ่านต้องมีอย่างน้อย 6 ตัว','error'); return; }
-  const hash = await DMC.pbkdf2Hash(p1, ADMIN_SALT);
-  document.getElementById('hash-value').textContent = hash;
-  document.getElementById('new-hash-output').style.display = 'block';
-  DMC.toast('สร้าง Hash สำเร็จ — Copy ไปใส่ใน admin.js', 'success', 5000);
-};
-
-window.copyHash = function() {
-  const hash = document.getElementById('hash-value')?.textContent;
-  if (!hash) return;
-  navigator.clipboard.writeText(hash).then(() => DMC.toast('Copy แล้ว ✅','success')).catch(()=>DMC.toast('Copy ด้วยตนเองครับ','info'));
-};
-
-window.saveShopSettings = async function() {
-  const data = {
-    name:  document.getElementById('s-shopname')?.value.trim(),
-    line:  document.getElementById('s-line')?.value.trim(),
-    fb:    document.getElementById('s-fb')?.value.trim(),
-    ig:    document.getElementById('s-ig')?.value.trim(),
-    phone: document.getElementById('s-phone')?.value.trim(),
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-  try {
-    await db.collection('settings').doc('shop').set(data, {merge:true});
-    DMC.toast('บันทึกข้อมูลร้านสำเร็จ ✅','success');
-  } catch(e) { DMC.toast('บันทึกไม่สำเร็จ','error'); }
-};
-
-window.testLine = async function() {
-  const ok = await DMC.sendLineNotify({ orderId:'TEST', customerName:'ทดสอบ', customerPhone:'000', itemsSummary:'ทดสอบระบบแจ้งเตือน', total:0, paymentMethod:'test' });
-  DMC.toast(ok?'✅ ส่ง LINE สำเร็จ!':'❌ ส่งไม่สำเร็จ ตรวจสอบ config', ok?'success':'error');
-};
-
-// ══════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════
-function statusLabel(s) {
-  return {pending:'⏳ รอดำเนินการ', processing:'🔄 กำลังทำ', done:'✅ เสร็จสิ้น', cancelled:'❌ ยกเลิก'}[s] || '🆕 ใหม่';
-}
-function setText(id, text) { const el=document.getElementById(id); if(el) el.textContent=text; }

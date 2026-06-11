@@ -12,6 +12,7 @@
     const links = [
       { href: 'index.html',   label: 'หน้าแรก',      icon: '🏠' },
       { href: 'catalog.html', label: 'สินค้าทั้งหมด', icon: '🛍️' },
+      { href: 'orders.html',  label: 'ติดตามออเดอร์', icon: '📦' },
       { href: 'about.html',   label: 'วิธีสั่งซื้อ',  icon: '📋' },
       { href: 'gallery.html', label: 'ตัวอย่างงาน',  icon: '🖼️' },
       { href: 'contact.html', label: 'ติดต่อเรา',    icon: '💬' },

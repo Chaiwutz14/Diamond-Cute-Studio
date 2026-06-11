@@ -27,14 +27,14 @@
     <div class="hero-content">
       <div class="hero-eyebrow anim-fade-up">
         <span class="eyebrow-dot"></span>
-        งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ
+        <span id="hero-badge-text">งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ</span>
       </div>
       <h1 class="hero-title anim-fade-up anim-delay-1">
-        ทำให้ทุกภาพ<br>
-        <span class="line-accent">กลายเป็นของที่ระลึก</span><br>
-        ที่สวยงามที่สุด
+        <span id="hero-t1">ทำให้ทุกภาพ</span><br>
+        <span class="line-accent" id="hero-t2">กลายเป็นของที่ระลึก</span><br>
+        <span id="hero-t3">ที่สวยงามที่สุด</span>
       </h1>
-      <p class="hero-desc anim-fade-up anim-delay-2">
+      <p class="hero-desc anim-fade-up anim-delay-2" id="hero-desc-text">
         บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน<br>
         ป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย
       </p>
@@ -43,11 +43,11 @@
         <a href="gallery.html" class="btn btn-secondary btn-xl">📸 ดูตัวอย่างงาน</a>
       </div>
       <div class="hero-trust anim-fade-up anim-delay-4">
-        <div class="trust-item"><span class="trust-icon">📦</span><span><span class="trust-val">500+</span> ออเดอร์</span></div>
+        <div class="trust-item"><span class="trust-icon">📦</span><span><span class="trust-val" id="stat-orders">500+</span> ออเดอร์</span></div>
         <div class="trust-sep"></div>
-        <div class="trust-item"><span class="trust-icon">⭐</span><span><span class="trust-val">4.9/5</span> รีวิว</span></div>
+        <div class="trust-item"><span class="trust-icon">⭐</span><span><span class="trust-val" id="stat-rating">4.9/5</span> รีวิว</span></div>
         <div class="trust-sep"></div>
-        <div class="trust-item"><span class="trust-icon">🚀</span><span><span class="trust-val">1-3</span> วันทำการ</span></div>
+        <div class="trust-item"><span class="trust-icon">🚀</span><span><span class="trust-val" id="stat-days">1-3</span> วันทำการ</span></div>
         <div class="trust-sep"></div>
         <div class="trust-item"><span class="trust-icon">🛡️</span><span><span class="trust-val">รับประกัน</span> คุณภาพ</span></div>
       </div>
@@ -125,15 +125,15 @@
 </section>
 
 <!-- PROMO BANNER -->
-<div class="promo-section">
+<div class="promo-section" id="promo-section-el">
   <div class="promo-banner">
     <div class="promo-inner">
       <div>
-        <div class="promo-tag">🎁 โปรโมชั่นพิเศษ</div>
-        <h3>ออเดอร์แรก ลด 15%</h3>
-        <p>สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย</p>
+        <div class="promo-tag" id="promo-tag-el">🎁 โปรโมชั่นพิเศษ</div>
+        <h3 id="promo-title-el">ออเดอร์แรก ลด 15%</h3>
+        <p id="promo-desc-el">สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย</p>
       </div>
-      <a href="catalog.html" class="btn btn-primary btn-lg" style="background:#fff;color:var(--accent-dark)">สั่งเลย →</a>
+      <a href="catalog.html" class="btn btn-primary btn-lg" style="background:#fff;color:var(--accent-dark)"><span id="promo-btn-el">สั่งเลย →</span></a>
     </div>
   </div>
 </div>
@@ -152,10 +152,26 @@
 </section>
 
 
+
+<!-- REVIEWS -->
+<section class="section home-reviews-section" id="home-reviews-section">
+  <div class="section-inner">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">เสียงจาก<span class="text-accent">ลูกค้าจริง</span> 💬</h2>
+        <div class="rv-avg" id="home-rv-summary"></div>
+      </div>
+    </div>
+    <div class="rv-grid" id="home-reviews"></div>
+  </div>
+</section>
+
 <div id="footer-mount"></div>
 <div id="toast-container"></div>
 <script src="js/loading.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/cms.js"></script>
+<script src="js/reviews.js"></script>
 <script src="js/navbar.js"></script>
 <script src="js/footer.js"></script>
 <script src="js/theme-switcher.js"></script>

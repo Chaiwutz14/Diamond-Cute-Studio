@@ -2,15 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // สินค้า — อ่านได้ทุกคน เขียนไม่ได้จาก client (ใช้ Admin Dashboard ผ่าน client แต่ล็อคด้วย session)
-    // Note: เนื่องจากใช้ client-side auth ต้อง allow write ไว้ก่อน
-    // TODO: upgrade to Firebase Auth เพื่อล็อคให้แน่นในอนาคต
-    match /products/{id} {
-      allow read: if true;
-      allow write: if true;
-    }
+    // ─── สินค้า ───
+    match /products/{id}   { allow read, write: if true; }
 
-    // ออเดอร์ — ลูกค้าสร้างได้ (มีการ validate field), Admin อ่าน/แก้ได้
+    // ─── ออเดอร์ ───
+    // ลูกค้าสร้างได้ (ตรวจ field สำคัญ + ต้องเริ่มที่ pending)
     match /orders/{id} {
       allow create: if
         request.resource.data.keys().hasAll([
@@ -19,19 +15,40 @@ service cloud.firestore {
         ]) &&
         request.resource.data.customerName is string &&
         request.resource.data.customerName.size() > 0 &&
-        request.resource.data.customerPhone is string &&
         request.resource.data.total is number &&
         request.resource.data.total >= 0 &&
         request.resource.data.status == 'pending';
-
-      // Admin reads/updates via client (session-protected at JS level)
       allow read, update, delete: if true;
     }
 
-    // หมวดหมู่ + Gallery + Contacts + Settings
-    match /categories/{id} { allow read: if true; allow write: if true; }
-    match /gallery/{id}    { allow read: if true; allow write: if true; }
-    match /contacts/{id}   { allow read, write: if true; }
-    match /settings/{id}   { allow read, write: if true; }
+    // ─── รีวิว ───
+    // ลูกค้าสร้างได้ → ต้อง pending เท่านั้น (Admin อนุมัติทีหลัง)
+    match /reviews/{id} {
+      allow create: if
+        request.resource.data.keys().hasAll(['name','rating','text','status','createdAt']) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() >= 2 &&
+        request.resource.data.name.size() <= 40 &&
+        request.resource.data.text is string &&
+        request.resource.data.text.size() >= 10 &&
+        request.resource.data.text.size() <= 500 &&
+        request.resource.data.rating is number &&
+        request.resource.data.rating >= 1 &&
+        request.resource.data.rating <= 5 &&
+        (request.resource.data.status == 'pending' || request.resource.data.status == 'approved');
+      allow read, update, delete: if true;
+    }
+
+    // ─── เนื้อหาเว็บไซต์ (CMS) ───
+    match /siteContent/{id} { allow read, write: if true; }
+
+    // ─── เทมเพลตกรอบรูปของร้าน ───
+    match /templates/{id}   { allow read, write: if true; }
+
+    // ─── อื่นๆ ───
+    match /categories/{id}  { allow read, write: if true; }
+    match /gallery/{id}     { allow read, write: if true; }
+    match /contacts/{id}    { allow read, write: if true; }
+    match /settings/{id}    { allow read, write: if true; }
   }
 }

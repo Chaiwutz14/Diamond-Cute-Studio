@@ -92,18 +92,9 @@ function renderSummary() {
     </div>
   `).join('') + `
     <div class="summary-row">
-      <span class="label">ค่าจัดส่ง</span>
+      <span class="label">${selectedPayment === 'cod' ? 'ค่าจัดส่ง COD (รวมค่าธรรมเนียม)' : 'ค่าจัดส่ง'}</span>
       <span class="value">${DMC.formatPrice(shipping)}</span>
     </div>
-    ${selectedPayment === 'cod' ? `
-    <div class="summary-row">
-      <span class="label">ค่าจัดส่ง COD</span>
-      <span class="value">฿80 <span style="font-size:.72rem;color:var(--text-3)">(รวมค่า COD)</span></span>
-    </div>` : `
-    <div class="summary-row">
-      <span class="label">ค่าจัดส่ง</span>
-      <span class="value">${DMC.formatPrice(shipping)}</span>
-    </div>`}
     ${discount > 0 ? `
     <div class="summary-row">
       <span class="label">ส่วนลด</span>
@@ -113,6 +104,29 @@ function renderSummary() {
 
   if (totalEl)  totalEl.textContent  = DMC.formatPrice(grandTotal);
   if (qrAmtEl)  qrAmtEl.textContent  = DMC.formatPrice(grandTotal);
+  updatePromptpayQR(grandTotal);
+}
+
+
+// ─── PromptPay QR จากการตั้งค่าหลังบ้าน (CMS) ───
+let _cmsPayment = null;
+async function updatePromptpayQR(amount) {
+  const wrap = document.getElementById('qr-img-wrap');
+  if (!wrap) return;
+  try {
+    if (!_cmsPayment && typeof CMS !== 'undefined') {
+      const content = await CMS.get();
+      _cmsPayment = content.payment || {};
+      const nameEl = document.getElementById('qr-account-name');
+      if (nameEl && _cmsPayment.promptpayName) nameEl.textContent = _cmsPayment.promptpayName;
+    }
+    const url = (typeof CMS !== 'undefined') ? CMS.promptpayQR(_cmsPayment || {}, amount) : '';
+    if (url) {
+      wrap.innerHTML = '<img src="' + url + '" alt="PromptPay QR" style="width:100%;max-width:220px;border-radius:12px" loading="lazy">';
+    } else {
+      wrap.innerHTML = '<div style="font-size:.82rem;color:var(--text-3);padding:1rem">⚠️ ร้านยังไม่ตั้งค่า PromptPay<br>กรุณาสอบถามทาง LINE</div>';
+    }
+  } catch (e) { /* แสดง placeholder เดิม */ }
 }
 
 // ─── Step Navigation ───
@@ -332,14 +346,14 @@ async function submitOrder() {
   const orderId = DMC.generateOrderId();
 
   const subtotal  = DMC.getCartTotal();
-  const shipping  = selectedPayment === 'cod' ? 80 : 50;
-  const cod       = selectedPayment === 'cod' ? 30 : 0;
-  const total     = Math.max(0, subtotal + shipping + cod - couponDiscount);
+  const shipping  = selectedPayment === 'cod' ? 80 : 50;   // COD ฿80 (รวมค่าธรรมเนียม) / โอน ฿50
+  const total     = Math.max(0, subtotal + shipping - couponDiscount);
 
   const orderData = {
     orderId,
     customerName:    document.getElementById('customer-name')?.value.trim(),
     customerPhone:   document.getElementById('customer-phone')?.value.trim(),
+    phoneSearch:     DMC.normalizePhone(document.getElementById('customer-phone')?.value),
     customerLine:    document.getElementById('customer-line')?.value.trim() || '',
     address:         document.getElementById('customer-address')?.value.trim(),
     shippingMethod:  document.getElementById('shipping-method')?.value || 'kerry',
@@ -359,12 +373,17 @@ async function submitOrder() {
 
   try {
     // Save to Firestore
+    let savedDocId = null;
     if (db) {
-      await db.collection('orders').add({
+      const docRef = await db.collection('orders').add({
         ...orderData,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
+      savedDocId = docRef.id;
     }
+
+    // บันทึกลงเครื่องนี้ — ลูกค้าดูประวัติได้ทันทีที่หน้า "ติดตามออเดอร์"
+    if (savedDocId) DMC.saveMyOrder(savedDocId, orderId);
 
     // LINE Notify
     // Send structured data to Worker (builds Flex Card)

@@ -150,6 +150,39 @@
       </div>
     </div>
     <div class="product-grid" id="related-products"></div>
+  </section>
+
+  <!-- ═══ รีวิวสินค้า ═══ -->
+  <section class="product-reviews-section" id="reviews-section">
+    <div class="rv-section-head">
+      <h2 class="rv-section-title">⭐ รีวิวจากลูกค้า</h2>
+      <div class="rv-summary" id="rv-summary"></div>
+    </div>
+    <div id="rv-list" class="rv-list"></div>
+
+    <!-- ฟอร์มรีวิว -->
+    <div class="rv-form-card" id="rv-form-card">
+      <div class="rv-form-title">✍️ เขียนรีวิวสินค้านี้</div>
+      <p class="rv-form-note">รีวิวจะแสดงหลังร้านตรวจสอบและอนุมัติ เพื่อความเหมาะสมของเนื้อหา</p>
+      <div class="form-row" style="margin-bottom:.85rem">
+        <div class="form-group" style="margin:0">
+          <label class="form-label" for="rv-name">ชื่อของคุณ</label>
+          <input class="form-input" id="rv-name" maxlength="40" placeholder="เช่น คุณมายด์">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">ให้คะแนน</label>
+          <div class="rv-star-input" id="rv-star-input" role="radiogroup" aria-label="ให้คะแนนดาว"></div>
+        </div>
+      </div>
+      <!-- honeypot: ซ่อนจากคนจริง bot จะกรอก -->
+      <input type="text" id="rv-website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;height:0;opacity:0" aria-hidden="true">
+      <div class="form-group">
+        <label class="form-label" for="rv-text">รีวิวของคุณ <span style="font-weight:400;color:var(--text-3)">(10–500 ตัวอักษร)</span></label>
+        <textarea class="form-input form-textarea" id="rv-text" maxlength="500" placeholder="เล่าประสบการณ์การสั่งซื้อ คุณภาพงาน การจัดส่ง..."></textarea>
+        <div class="rv-char-count"><span id="rv-char">0</span>/500</div>
+      </div>
+      <button class="btn btn-primary btn-md" id="rv-submit-btn">📨 ส่งรีวิว</button>
+    </div>
   </div>
 </div>
 
@@ -165,6 +198,8 @@
 <div id="toast-container"></div>
 <script src="js/loading.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/cms.js"></script>
+<script src="js/reviews.js"></script>
 <script src="js/navbar.js"></script>
 <script src="js/canvas-preview.js"></script>
 <script src="js/product.js"></script>

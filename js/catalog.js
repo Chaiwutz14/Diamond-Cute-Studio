@@ -4,6 +4,16 @@
 ═══════════════════════════════════════════════ */
 'use strict';
 
+// ── รูปปกของสินค้า (V12: รองรับหลายรูป + coverIndex) ──
+function catalogCoverOf(p) {
+  if (Array.isArray(p.images) && p.images.length) {
+    const i = (typeof p.coverIndex === 'number' && p.images[p.coverIndex]) ? p.coverIndex : 0;
+    return p.images[i].url || p.images[i] || '';
+  }
+  return p.image || '';
+}
+
+
 const PLACEHOLDER_PRODUCTS = [
   { id:'p1', name:'รูปโพลารอยด์ 3×4 นิ้ว',      shortDesc:'กระดาษ Fuji Crystal Archive สีสดใส ทนทาน', price:29,  unit:'ใบ',    emoji:'📸', category:'polaroid',      isHot:true  },
   { id:'p2', name:'รูปโพลารอยด์ 4×6 นิ้ว',      shortDesc:'ขนาดใหญ่ เหมาะตกแต่งห้อง คุณภาพสูง',    price:39,  unit:'ใบ',    emoji:'🖼️', category:'polaroid',      isNew:true  },
@@ -196,7 +206,7 @@ function buildCard(p) {
   return `
     <a href="product.html?id=${p.id}" class="product-card" data-id="${p.id}">
       <div class="product-img-wrap">
-        ${p.image ? `<img src="${p.image}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">` : `<span>${p.emoji||'📦'}</span>`}
+        ${catalogCoverOf(p) ? `<img src="${catalogCoverOf(p)}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">` : `<span>${p.emoji||'📦'}</span>`}
         <div class="product-img-overlay"></div>
         ${badges.length ? `<div class="product-badges">${badges.join('')}</div>` : ''}
         <button class="product-wish" data-id="${p.id}" aria-label="บันทึก" title="บันทึก">♡</button>
