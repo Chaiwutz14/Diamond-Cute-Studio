@@ -11,6 +11,7 @@
   <title>ติดต่อเรา — Diamond Cute Studio 💎</title>
   <script src="js/theme-init.js"></script>
   <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/loading.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/home.css">
@@ -173,6 +174,7 @@
 
 <div id="footer-mount"></div>
 <div id="toast-container"></div>
+<script src="js/loading.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/navbar.js"></script>
 <script src="js/footer.js"></script>
@@ -189,8 +191,8 @@ document.getElementById('cf-submit').addEventListener('click', async function(){
   if (!name || !msg) { DMC.toast('กรุณากรอกชื่อและข้อความ', 'error'); return; }
 
   var btn = document.getElementById('cf-submit');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:.4rem"></span> กำลังส่ง...';
+  if (typeof Loading !== 'undefined') Loading.buttonLoad(btn);
+  else { btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:.4rem"></span> กำลังส่ง...'; }
 
   try {
     // Save to Firestore
@@ -213,12 +215,13 @@ document.getElementById('cf-submit').addEventListener('click', async function(){
     result.style.display = 'block';
     result.style.color = 'var(--emerald)';
     result.innerHTML = '✅ ส่งข้อความสำเร็จแล้ว! เราจะติดต่อกลับเร็วๆ นี้';
-    btn.innerHTML = '✅ ส่งแล้ว';
+    if (typeof Loading !== 'undefined') { Loading.buttonDone(btn); btn.innerHTML = '✅ ส่งแล้ว'; btn.disabled = true; }
+    else btn.innerHTML = '✅ ส่งแล้ว';
 
   } catch(e) {
     DMC.toast('เกิดข้อผิดพลาด กรุณาติดต่อผ่าน LINE โดยตรง', 'error');
-    btn.disabled = false;
-    btn.innerHTML = '💬 ส่งข้อความ';
+    if (typeof Loading !== 'undefined') Loading.buttonDone(btn);
+    else { btn.disabled = false; btn.innerHTML = '💬 ส่งข้อความ'; }
   }
 });
 </script>

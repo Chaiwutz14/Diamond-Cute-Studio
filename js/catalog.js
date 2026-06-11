@@ -116,6 +116,7 @@ function bindEvents() {
 
 // ─── Apply Filters ───
 function applyFiltersAndRender() {
+  if (typeof Loading !== 'undefined') Loading.progressStart();
   const search   = document.getElementById('search-input')?.value.toLowerCase().trim() || '';
   const priceMin = parseFloat(document.getElementById('price-min')?.value) || 0;
   const priceMax = parseFloat(document.getElementById('price-max')?.value) || Infinity;

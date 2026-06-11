@@ -11,6 +11,7 @@
   <title>ตัวอย่างงาน — Diamond Cute Studio 💎</title>
   <script src="js/theme-init.js"></script>
   <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/loading.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/home.css">
@@ -126,9 +127,7 @@
   </div>
 
   <!-- Gallery Grid -->
-  <div class="gallery-grid" id="gallery-grid">
-    <!-- Populated by JS from Firestore or placeholder -->
-  </div>
+  <div class="gallery-grid" id="gallery-grid"></div>
 </div>
 
 <!-- Lightbox -->
@@ -139,6 +138,7 @@
 
 <div id="footer-mount"></div>
 <div id="toast-container"></div>
+<script src="js/loading.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/navbar.js"></script>
 <script src="js/footer.js"></script>
@@ -187,6 +187,9 @@ function renderGallery(cat) {
   }).join('');
 
   // Lightbox click
+  // Staggered fade-in
+  if (typeof Loading !== 'undefined') Loading.staggerItems('#gallery-grid .gallery-item', 55);
+
   grid.querySelectorAll('.gallery-item').forEach(function(el){
     el.addEventListener('click', function(){
       var idx  = parseInt(el.dataset.idx);
@@ -225,6 +228,9 @@ document.addEventListener('keydown', function(e){
 
 // Try load from Firestore
 document.addEventListener('DOMContentLoaded', async function(){
+  // Show skeleton immediately
+  var grid = document.getElementById('gallery-grid');
+  if (grid && typeof Skeleton !== 'undefined') grid.innerHTML = Skeleton.galleryGrid(9);
   try {
     var db = await DMC.getFirebaseReady();
     var snap = await db.collection('gallery').where('active','==',true).limit(50).get();

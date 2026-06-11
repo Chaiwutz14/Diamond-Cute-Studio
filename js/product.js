@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function showError() {
   document.getElementById('product-loading').style.display = 'none';
+  if (typeof Loading !== 'undefined') Loading.progressDone();
   document.getElementById('product-error').style.display = 'block';
 }
 
@@ -73,6 +74,8 @@ function renderProduct() {
     img.className = 'product-main-img';
     img.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:var(--r-xl);position:relative;z-index:1';
     galleryMain?.appendChild(img);
+    // Blur-up effect on load
+    if (typeof Loading !== 'undefined') Loading.blurUpImage(img);
   } else {
     // ไม่มีรูป — แสดง emoji
     if (galleryEmoji) galleryEmoji.textContent = product.emoji || '📦';

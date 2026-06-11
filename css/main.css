@@ -298,3 +298,105 @@ button:focus-visible, a:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ════════════════════════════════════════════
+   SKELETON LOADING SYSTEM
+════════════════════════════════════════════ */
+
+/* ── Core shimmer animation ── */
+@keyframes skeleton-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-mid)       25%,
+    var(--bg-card2)     50%,
+    var(--bg-mid)       75%
+  );
+  background-size: 600px 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  border-radius: var(--r-md);
+  display: block;
+}
+
+/* ── Product Card Skeleton ── */
+.skeleton-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+.skeleton-card-img {
+  aspect-ratio: 1/1;
+  width: 100%;
+}
+.skeleton-card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+.skeleton-line       { height: 14px; }
+.skeleton-line.sm    { height: 11px; width: 65%; }
+.skeleton-line.lg    { height: 20px; width: 50%; }
+.skeleton-line.full  { width: 100%; }
+.skeleton-line.w80   { width: 80%; }
+.skeleton-line.w60   { width: 60%; }
+.skeleton-line.w40   { width: 40%; }
+.skeleton-circle     { border-radius: 50%; }
+.skeleton-btn        { height: 36px; border-radius: var(--r-lg); }
+
+/* ── Hero Product Skeleton ── */
+.skeleton-hero {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-2xl);
+  padding: 1.75rem;
+}
+.skeleton-gallery-main {
+  aspect-ratio: 1/1;
+  width: 100%;
+  border-radius: var(--r-2xl);
+  margin-bottom: .75rem;
+}
+.skeleton-gallery-thumbs {
+  display: flex; gap: .55rem;
+}
+.skeleton-thumb {
+  width: 62px; height: 62px;
+  border-radius: var(--r-md);
+  flex-shrink: 0;
+}
+
+/* ── Category Card Skeleton ── */
+.skeleton-cat {
+  height: 80px;
+  border-radius: var(--r-xl);
+}
+
+/* ── Order Row Skeleton ── */
+.skeleton-order-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .85rem;
+  background: var(--bg-mid);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  margin-bottom: .65rem;
+}
+
+/* ── Admin KPI Skeleton ── */
+.skeleton-kpi {
+  height: 100px;
+  border-radius: var(--r-xl);
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background: var(--bg-mid); }
+}

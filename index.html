@@ -7,6 +7,7 @@
   <title>Diamond Cute Studio 💎 — หน้าแรก</title>
   <script src="js/theme-init.js"></script>
   <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/loading.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/home.css">
@@ -118,10 +119,7 @@
       <a href="catalog.html" class="see-all-link">ดูทั้งหมด →</a>
     </div>
     <div class="product-grid" id="featured-products">
-      <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-3)">
-        <span class="spinner" style="display:block;margin:0 auto .75rem"></span>
-        กำลังโหลดสินค้า...
-      </div>
+      <!-- Skeleton replaced by JS -->
     </div>
   </div>
 </section>
@@ -156,6 +154,7 @@
 
 <div id="footer-mount"></div>
 <div id="toast-container"></div>
+<script src="js/loading.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/navbar.js"></script>
 <script src="js/footer.js"></script>

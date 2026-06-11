@@ -48,13 +48,14 @@ function initLoginPage() {
     const password = passInput.value.trim();
     if (!password) return;
     const btn = document.getElementById('login-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle"></span>';
+    if (typeof Loading !== 'undefined') { Loading.buttonLoad(btn); Loading.progressStart(); }
+    else { btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle"></span>'; }
     try {
       const hash    = await DMC.pbkdf2Hash(password, ADMIN_SALT);
       const correct = hash === ADMIN_HASH;
       if (correct) {
         DMC.clearRateLimit(); DMC.createSession();
+        if (typeof Loading !== 'undefined') Loading.progressDone();
         DMC.toast('เข้าสู่ระบบสำเร็จ 🎉', 'success');
         setTimeout(() => window.location.href = 'admin.html', 600);
       } else {
@@ -67,7 +68,8 @@ function initLoginPage() {
           passInput.value = ''; passInput.classList.add('error'); passInput.focus();
           setTimeout(() => { errorBox.classList.remove('visible'); passInput.classList.remove('error'); }, 2500);
         }
-        btn.disabled = false; btn.innerHTML = '🔓 เข้าสู่ระบบ';
+        if (typeof Loading !== 'undefined') { Loading.buttonDone(btn); Loading.progressDone(); }
+        else { btn.disabled = false; btn.innerHTML = '🔓 เข้าสู่ระบบ'; }
       }
     } catch(e) {
       DMC.toast('เกิดข้อผิดพลาด', 'error');
@@ -135,12 +137,16 @@ function initSidebarNav() {
 }
 
 function loadSection(name) {
-  const content  = document.getElementById('admin-content');
+  const content = document.getElementById('admin-content');
   if (!content) return;
   const active = document.querySelector(`.sidebar-item[data-section="${name}"]`);
   if (active) { document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active')); active.classList.add('active'); }
+  if (typeof Loading !== 'undefined') Loading.progressStart();
   const map = { overview:loadOverview, orders:loadOrders, products:loadProducts, gallery:loadGallery, contacts:loadContacts, settings:loadSettings };
-  (map[name] || loadOverview)(content);
+  const fn = map[name] || loadOverview;
+  Promise.resolve(fn(content)).then(() => {
+    if (typeof Loading !== 'undefined') Loading.progressDone();
+  });
 }
 
 // ══════════════════════════════════════════════
@@ -159,13 +165,8 @@ async function loadOverview(container) {
       </div>
     </div>
 
-    <div class="kpi-grid">
-      ${[['blue','⏳','รอดำเนินการ','kpi-pending'],['gold','💰','ยอดขายเดือนนี้','kpi-revenue'],['green','✅','งานเสร็จแล้ว','kpi-done'],['rose','📦','ออเดอร์วันนี้','kpi-today']].map(([cls,icon,label,id])=>`
-        <div class="kpi-card kpi-${cls}">
-          <div class="kpi-icon">${icon}</div>
-          <div class="kpi-label">${label}</div>
-          <div class="kpi-value" id="${id}"><span class="spinner"></span></div>
-        </div>`).join('')}
+    <div class="kpi-grid" id="kpi-grid">
+      ${typeof Skeleton !== 'undefined' ? Skeleton.adminKPIs() : ''}
     </div>
 
     <div class="admin-grid">
@@ -221,6 +222,13 @@ async function loadOverview(container) {
 
 // ── KPIs ──
 async function loadKPIs() {
+  // Replace skeleton with real KPI cards
+  const kpiGrid = document.getElementById('kpi-grid');
+  if (kpiGrid) {
+    kpiGrid.innerHTML = [['blue','⏳','รอดำเนินการ','kpi-pending'],['gold','💰','ยอดขายเดือนนี้','kpi-revenue'],['green','✅','งานเสร็จแล้ว','kpi-done'],['rose','📦','ออเดอร์วันนี้','kpi-today']].map(([cls,icon,label,id])=>
+      `<div class="kpi-card kpi-${cls}"><div class="kpi-icon">${icon}</div><div class="kpi-label">${label}</div><div class="kpi-value" id="${id}"><span class="spinner"></span></div></div>`
+    ).join('');
+  }
   try {
     const now        = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -349,6 +357,8 @@ async function loadOrdersTable() {
   const el     = document.getElementById('orders-table-wrap');
   const filter = document.getElementById('order-filter')?.value;
   if (!el) return;
+  // Show skeleton
+  if (typeof Skeleton !== 'undefined') el.innerHTML = Skeleton.ordersTable(5);
   try {
     let q = db.collection('orders').limit(100);
     if (filter) q = q.where('status','==',filter);
@@ -548,6 +558,7 @@ async function loadProductsTable() {
   const el     = document.getElementById('products-table-wrap');
   const search = document.getElementById('product-search')?.value.toLowerCase().trim() || '';
   if (!el) return;
+  if (typeof Skeleton !== 'undefined') el.innerHTML = `<div style="display:flex;flex-direction:column;gap:.65rem;padding:.5rem 0">${Skeleton.ordersTable(4)}</div>`;
   try {
     const snap = await db.collection('products').get();
     if (snap.empty) {
@@ -825,6 +836,8 @@ window.saveProduct = async function(productId) {
   };
   if (!data.name)  { DMC.toast('กรุณากรอกชื่อสินค้า','error'); return; }
   if (!data.price) { DMC.toast('กรุณากรอกราคา','error'); return; }
+  const saveBtn = document.querySelector('.modal-body .btn-primary');
+  if (typeof Loading !== 'undefined') Loading.buttonLoad(saveBtn);
   try {
     if (productId) {
       await db.collection('products').doc(productId).update(data);
@@ -835,8 +848,12 @@ window.saveProduct = async function(productId) {
       await db.collection('products').add(data);
       DMC.toast('เพิ่มสินค้าใหม่สำเร็จ 🎉','success');
     }
+    if (typeof Loading !== 'undefined') Loading.buttonDone(saveBtn);
     closeModal(); loadProductsTable();
-  } catch(e) { DMC.toast('บันทึกไม่สำเร็จ: '+e.message,'error'); }
+  } catch(e) {
+    if (typeof Loading !== 'undefined') Loading.buttonDone(saveBtn);
+    DMC.toast('บันทึกไม่สำเร็จ: '+e.message,'error');
+  }
 };
 
 
@@ -952,8 +969,11 @@ window.saveGalleryItem = async function() {
   };
   if (!data.image && !data.name) { DMC.toast('กรุณากรอกชื่อผลงานและรูปภาพ','error'); return; }
   if (!data.image) { DMC.toast('กรุณาอัปโหลดรูปภาพก่อน','error'); return; }
+  const gBtn = document.querySelector('#gallery-add-form .btn-primary');
+  if (typeof Loading !== 'undefined') Loading.buttonLoad(gBtn);
   try {
     await db.collection('gallery').add(data);
+    if (typeof Loading !== 'undefined') Loading.buttonDone(gBtn);
     DMC.toast('เพิ่มรูปสำเร็จ ✅','success');
     document.getElementById('gallery-add-form').style.display = 'none';
     document.getElementById('g-name').value = '';
