@@ -73,6 +73,8 @@ function getDb() { return _db; }
 const IMGBB_API_KEY = "df00a7ad6294a89bc99d7c6f900e7393"; // TODO: replace
 
 async function uploadToImgBB(file) {
+  // บีบอัดอัตโนมัติ (ยกเว้น PNG เทมเพลตที่ส่ง compressImage มาก่อนแล้ว)
+  try { if (file && file.type && file.type.startsWith('image/') && file.type !== 'image/png') file = await compressImage(file); } catch(e) {}
   const formData = new FormData();
   formData.append('image', file);
 
@@ -301,6 +303,7 @@ function getCart() {
 }
 
 function saveCart(cart) {
+  try { window.dispatchEvent(new Event('dcs-cart-changed')); } catch(e) {}
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
   updateCartBadge();
 }
@@ -384,6 +387,90 @@ function getMyOrders() {
   catch (e) { return []; }
 }
 
+
+// ─── บีบอัดรูปก่อนอัปโหลด (เร็วขึ้น 3-10 เท่า) ───
+function compressImage(file, opts) {
+  opts = opts || {};
+  const maxDim  = opts.maxDim  || 1600;
+  const quality = opts.quality || 0.85;
+  return new Promise((resolve) => {
+    // PNG ที่ต้องคงพื้นโปร่งใส (เทมเพลต) — ไม่บีบ
+    if (!file || !file.type || !file.type.startsWith('image/') || file.type === 'image/gif') { resolve(file); return; }
+    if (opts.keepPng && file.type === 'image/png') { resolve(file); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width <= maxDim && height <= maxDim && file.size < 600 * 1024) { resolve(file); return; }
+        const scale = Math.min(1, maxDim / Math.max(width, height));
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(width * scale);
+        canvas.height = Math.round(height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= file.size) { resolve(file); return; }
+          resolve(new File([blob], (file.name || 'image').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }));
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─── ตัวดักรูปโหลดพลาดทั้งเว็บ — กัน "รูปแตก" ───
+function initImageFallback() {
+  function handle(img) {
+    if (img.dataset.fbDone) return;
+    img.dataset.fbDone = '1';
+    img.addEventListener('error', function() {
+      if (img.dataset.fbApplied) return;
+      img.dataset.fbApplied = '1';
+      const ph = img.getAttribute('data-emoji') || '🖼️';
+      const box = document.createElement('div');
+      box.className = 'img-fallback';
+      box.textContent = ph;
+      box.style.cssText = 'width:100%;height:100%;min-height:60px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,var(--bg-mid),var(--bg-card2,var(--bg-mid)));color:var(--text-3);border-radius:inherit';
+      if (img.parentElement) img.parentElement.replaceChild(box, img);
+    }, { once: true });
+  }
+  document.querySelectorAll('img').forEach(handle);
+  if (window.MutationObserver) {
+    new MutationObserver(function(muts) {
+      muts.forEach(function(m) {
+        m.addedNodes.forEach(function(n) {
+          if (n.tagName === 'IMG') handle(n);
+          else if (n.querySelectorAll) n.querySelectorAll('img').forEach(handle);
+        });
+      });
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+}
+
+// ─── แบนเนอร์แจ้งเตือนออฟไลน์ ───
+function initOfflineBanner() {
+  function show() {
+    if (document.getElementById('offline-banner')) return;
+    const b = document.createElement('div');
+    b.id = 'offline-banner';
+    b.innerHTML = '📡 อินเทอร์เน็ตขาดหาย — บางส่วนอาจไม่อัปเดต กำลังลองเชื่อมต่อใหม่...';
+    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9998;background:#1f2937;color:#fff;text-align:center;padding:.6rem 1rem;font-size:.85rem;font-family:var(--font-display,sans-serif)';
+    document.body.appendChild(b);
+  }
+  function hide() { const b = document.getElementById('offline-banner'); if (b) b.remove(); }
+  window.addEventListener('offline', show);
+  window.addEventListener('online', hide);
+  if (!navigator.onLine) show();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function(){ initImageFallback(); initOfflineBanner(); });
+} else { initImageFallback(); initOfflineBanner(); }
+
 window.DMC = {
   // Firebase
   getFirebaseReady,
@@ -394,6 +481,7 @@ window.DMC = {
   getDb,
   // Image
   uploadToImgBB,
+  compressImage,
   // Notify
   sendLineNotify,
   // Toast

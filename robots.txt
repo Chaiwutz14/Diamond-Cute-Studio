@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /admin-login.html
+
+Sitemap: https://chaiwutz14.github.io/Diamond-Cute-Studio/sitemap.xml

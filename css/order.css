@@ -281,3 +281,56 @@
   .track-step-dot { width: 32px; height: 32px; font-size: .85rem; }
   .track-step-label { font-size: .66rem; }
 }
+
+/* ══════════════════════════════════════════════
+   V13 — PromptPay QR Card (สไตล์ Thai QR Payment)
+══════════════════════════════════════════════ */
+.qr-pay-card { display: none; }
+.qr-pay-card.visible { display: block; }
+.qr-pay-card {
+  max-width: 320px; margin: .5rem auto 0; border-radius: var(--r-xl);
+  overflow: hidden; box-shadow: 0 8px 28px rgba(0,0,0,.12);
+  border: 1px solid var(--border); background: #fff;
+}
+.qr-pay-head {
+  background: linear-gradient(135deg, #003d7a, #0055a5);
+  padding: .85rem 1.1rem; display: flex; align-items: center; justify-content: space-between;
+}
+.qr-pay-logo { color: #fff; font-family: var(--font-display); font-weight: 800; font-size: .95rem; letter-spacing: .3px; }
+.qr-pay-promptpay {
+  color: #fff; font-size: .72rem; font-weight: 700; background: rgba(255,255,255,.18);
+  padding: .2rem .6rem; border-radius: var(--r-pill); font-family: var(--font-display);
+}
+.qr-pay-body {
+  padding: 1.5rem 1.25rem 1.25rem; text-align: center; position: relative; background: #fff;
+}
+.qr-pay-body::before, .qr-pay-body::after {
+  content: ''; position: absolute; top: -10px; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--bg, #f0f7ff);
+}
+.qr-pay-body::before { left: -10px; }
+.qr-pay-body::after  { right: -10px; }
+.qr-pay-card .qr-img-wrap {
+  width: 200px; height: 200px; margin: 0 auto 1rem; background: #fff;
+  border: 2px solid #eef2f7; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  padding: .5rem;
+}
+.qr-pay-card .qr-img-wrap img { width: 100%; height: 100%; object-fit: contain; }
+.qr-pay-amount-label { font-size: .76rem; color: #888; font-family: var(--font-display); margin-bottom: .15rem; }
+.qr-pay-card .amount {
+  font-family: var(--font-display); font-weight: 800; font-size: 1.9rem; color: #003d7a; line-height: 1.1;
+}
+.qr-pay-name { font-size: .84rem; color: #555; font-family: var(--font-display); margin-top: .35rem; }
+.qr-pay-foot {
+  border-top: 1px dashed #d8e0ea; padding: .85rem 1.1rem; display: flex;
+  align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap;
+  background: #fafbfd; font-size: .78rem; color: #667; font-family: var(--font-display);
+}
+.qr-save-btn {
+  background: #003d7a; color: #fff; border: none; border-radius: var(--r-pill);
+  padding: .45rem .9rem; font-family: var(--font-display); font-weight: 600; font-size: .78rem;
+  cursor: pointer; transition: opacity .15s;
+}
+.qr-save-btn:hover { opacity: .85; }
+/* บังคับ QR ให้อ่านง่ายแม้ในธีมมืด (เป็นการ์ดขาวเสมอ) */
+[data-theme] .qr-pay-card { background: #fff; }

@@ -189,17 +189,6 @@
 .feature-desc {font-size:.82rem;color:var(--text-2);line-height:1.65}
 
 /* ─── Footer ─── */
-.footer{background:var(--bg-mid);border-top:1px solid var(--border)}
-.footer-main{max-width:1200px;margin:0 auto;padding:3rem 1.5rem 2rem;display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:3rem}
-.footer-brand .logo-text{font-family:var(--font-display);font-weight:800;font-size:1.12rem;background:linear-gradient(135deg,var(--accent),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.55rem;display:block}
-.footer-brand p{font-size:.82rem;color:var(--text-2);line-height:1.7;max-width:240px;margin-bottom:1.05rem}
-.footer-socials{display:flex;gap:.5rem}
-.social-btn{width:35px;height:35px;border-radius:var(--r-md);background:var(--glass);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.93rem;transition:all var(--t-fast);color:var(--text-2)}
-.social-btn:hover{background:var(--glass-hover);border-color:var(--accent);color:var(--accent)}
-.footer-col h4{font-family:var(--font-display);font-weight:600;font-size:.86rem;color:var(--accent);margin-bottom:.88rem;text-transform:uppercase;letter-spacing:.7px}
-.footer-col a{display:flex;align-items:center;gap:.4rem;font-size:.83rem;color:var(--text-2);padding:.18rem 0;transition:color var(--t-fast);margin-bottom:.32rem}
-.footer-col a:hover{color:var(--accent)}
-.footer-bottom{max-width:1200px;margin:0 auto;padding:1.05rem 1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:.77rem;color:var(--text-3);gap:1rem;flex-wrap:wrap}
 
 /* ─── Responsive ─── */
 @media(max-width:1024px){
@@ -207,7 +196,6 @@
   .hero-visual{display:none}
   .hero-content{max-width:100%;text-align:center}
   .hero-cta,.hero-trust{justify-content:center}
-  .footer-main{grid-template-columns:1fr 1fr}
 }
 @media(max-width:768px){
   .hero{min-height:auto;padding-bottom:2rem}
@@ -215,13 +203,11 @@
   .cat-grid{grid-template-columns:repeat(4,1fr)}
   .promo-inner{flex-direction:column;text-align:center}
   .promo-inner::before{display:none}
-  .footer-main{grid-template-columns:1fr 1fr;gap:2rem}
 }
 @media(max-width:500px){
   .cat-grid{grid-template-columns:repeat(3,1fr);gap:.6rem}
   .product-grid{grid-template-columns:repeat(2,1fr);gap:.75rem}
   .cat-card{padding:.95rem .5rem}
-  .footer-main{grid-template-columns:1fr}
 }
 
 /* ════════════════════════════════

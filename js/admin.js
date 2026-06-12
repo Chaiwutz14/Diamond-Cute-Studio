@@ -733,7 +733,7 @@ window.openProductModal = async function(productId) {
     <div class="form-group">
       <label class="form-label">🖼️ รูปสินค้า <span style="font-weight:400;color:var(--text-3)">— เพิ่มได้หลายรูป เลือกปก ⭐ และใส่ชื่อแบบเพื่อให้รูปสลับตามตัวเลือก</span></label>
       <div id="p-images-list"></div>
-      <button type="button" class="btn btn-ghost btn-sm" id="p-add-image-btn" style="border-radius:var(--r-md);margin-top:.4rem">+ เพิ่มรูป</button>
+      <button type="button" id="p-add-image-btn" style="margin-top:.5rem">➕ เพิ่มรูปอีก</button>
       <input type="file" id="p-img-file-hidden" accept="image/*" style="display:none">
       <div style="font-size:.73rem;color:var(--text-3);margin-top:.35rem">💡 ใส่ "ชื่อแบบ" ให้ตรงกับตัวเลือกขนาด/วัสดุ เช่น "2x3 นิ้ว" — ลูกค้ากดตัวเลือกนั้นแล้วรูปจะสลับให้เอง</div>
     </div>
@@ -877,42 +877,42 @@ function renderModalImages() {
   if (_modalCoverIndex >= _modalImages.length) _modalCoverIndex = 0;
 
   wrap.innerHTML = _modalImages.map((im, i) => `
-    <div class="p-img-row" data-idx="${i}">
-      <div class="p-img-thumb">${im.url?`<img src="${DMC.escapeHtml(im.url)}" style="width:100%;height:100%;object-fit:contain">`:'🖼️'}</div>
-      <div class="p-img-fields">
-        <input class="form-input p-img-url" data-idx="${i}" value="${DMC.escapeHtml(im.url)}" placeholder="URL รูปภาพ (หรือกด 📤 อัปโหลด)" style="font-size:.78rem">
-        <input class="form-input p-img-label" data-idx="${i}" value="${DMC.escapeHtml(im.label)}" placeholder="ชื่อแบบ (เช่น 2x3 นิ้ว) — ไม่บังคับ" style="font-size:.78rem">
+    <div class="p-img-card ${i===_modalCoverIndex?'is-cover':''}" data-idx="${i}">
+      <div class="p-img-preview">
+        ${im.url
+          ? `<img src="${DMC.escapeHtml(im.url)}" alt="" onerror="this.style.display='none';this.parentElement.classList.add('empty')">`
+          : '<span class="p-img-ph">🖼️ ยังไม่มีรูป</span>'}
+        ${i===_modalCoverIndex ? '<span class="p-img-cover-tag">⭐ รูปปก</span>' : ''}
+        <span class="p-img-num">${i+1}</span>
       </div>
-      <div class="p-img-actions">
-        <button type="button" class="p-img-btn" data-action="upload" data-idx="${i}" title="อัปโหลดรูป">📤</button>
-        <button type="button" class="p-img-btn ${i===_modalCoverIndex?'cover-on':''}" data-action="cover" data-idx="${i}" title="ตั้งเป็นรูปปก">⭐</button>
-        <button type="button" class="p-img-btn" data-action="remove" data-idx="${i}" title="ลบรูปนี้">🗑️</button>
+      <div class="p-img-inputs">
+        <input class="form-input p-img-url" data-idx="${i}" value="${DMC.escapeHtml(im.url)}" placeholder="วาง URL รูป หรือกดปุ่มอัปโหลดด้านล่าง" style="font-size:.82rem">
+        <input class="form-input p-img-label" data-idx="${i}" value="${DMC.escapeHtml(im.label)}" placeholder="ชื่อแบบ เช่น 2x3 นิ้ว (ไม่บังคับ)" style="font-size:.82rem">
+      </div>
+      <div class="p-img-buttons">
+        <button type="button" class="p-img-action upload" data-action="upload" data-idx="${i}">📤 อัปโหลดรูป</button>
+        <button type="button" class="p-img-action cover ${i===_modalCoverIndex?'active':''}" data-action="cover" data-idx="${i}">${i===_modalCoverIndex?'⭐ เป็นรูปปกแล้ว':'☆ ตั้งเป็นรูปปก'}</button>
+        <button type="button" class="p-img-action remove" data-action="remove" data-idx="${i}">🗑️ ลบ</button>
       </div>
     </div>`).join('');
 
-  // input sync
   wrap.querySelectorAll('.p-img-url').forEach(inp => {
-    inp.addEventListener('input', () => {
-      _modalImages[Number(inp.dataset.idx)].url = inp.value.trim();
-    });
+    inp.addEventListener('input', () => { _modalImages[Number(inp.dataset.idx)].url = inp.value.trim(); });
     inp.addEventListener('change', () => renderModalImages());
   });
   wrap.querySelectorAll('.p-img-label').forEach(inp => {
-    inp.addEventListener('input', () => {
-      _modalImages[Number(inp.dataset.idx)].label = inp.value;
-    });
+    inp.addEventListener('input', () => { _modalImages[Number(inp.dataset.idx)].label = inp.value; });
   });
 
-  // buttons
-  wrap.querySelectorAll('.p-img-btn').forEach(btn => {
+  wrap.querySelectorAll('.p-img-action').forEach(btn => {
     btn.addEventListener('click', async () => {
       const idx = Number(btn.dataset.idx);
       const action = btn.dataset.action;
       if (action === 'cover') {
-        _modalCoverIndex = idx;
-        renderModalImages();
+        _modalCoverIndex = idx; renderModalImages();
       } else if (action === 'remove') {
-        _modalImages.splice(idx, 1);
+        if (_modalImages.length === 1) { _modalImages[0] = {url:'',label:''}; }
+        else { _modalImages.splice(idx, 1); }
         if (_modalCoverIndex >= _modalImages.length) _modalCoverIndex = 0;
         renderModalImages();
       } else if (action === 'upload') {
@@ -921,9 +921,12 @@ function renderModalImages() {
           const file = fileInput.files[0];
           fileInput.value = '';
           if (!file) return;
-          btn.textContent = '⏳';
+          const orig = btn.innerHTML;
+          btn.innerHTML = '⏳ กำลังอัปโหลด...';
+          btn.disabled = true;
           try {
-            const res = await DMC.uploadToImgBB(file);
+            const up = await DMC.compressImage(file);
+            const res = await DMC.uploadToImgBB(up);
             _modalImages[idx].url = res.url;
             DMC.toast('อัปโหลดรูปสำเร็จ ✅', 'success');
           } catch(e) {

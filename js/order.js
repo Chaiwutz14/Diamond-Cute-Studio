@@ -44,7 +44,7 @@ function renderCart() {
 
   list.innerHTML = cart.map(item => `
     <div class="cart-item" data-cart-id="${item.cartItemId}">
-      <div class="cart-item-thumb">${item.emoji || '📦'}</div>
+      <div class="cart-item-thumb">${item.image ? `<img src="${item.image}" alt="${DMC.escapeHtml(item.name||'')}" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${item.emoji||'📦'}'">` : (item.emoji || '📦')}</div>
       <div class="cart-item-body">
         <div class="cart-item-name">${DMC.escapeHtml(item.name)}</div>
         <div class="cart-item-spec">
@@ -121,10 +121,20 @@ async function updatePromptpayQR(amount) {
       if (nameEl && _cmsPayment.promptpayName) nameEl.textContent = _cmsPayment.promptpayName;
     }
     const url = (typeof CMS !== 'undefined') ? CMS.promptpayQR(_cmsPayment || {}, amount) : '';
+    const saveBtn = document.getElementById('qr-save-btn');
     if (url) {
-      wrap.innerHTML = '<img src="' + url + '" alt="PromptPay QR" style="width:100%;max-width:220px;border-radius:12px" loading="lazy">';
+      wrap.innerHTML = '<img src="' + url + '" alt="PromptPay QR" id="qr-pay-img" style="width:100%;max-width:220px;border-radius:10px" loading="lazy">';
+      if (saveBtn) {
+        saveBtn.style.display = '';
+        saveBtn.onclick = function() {
+          const a = document.createElement('a');
+          a.href = url; a.download = 'promptpay-qr.png'; a.target = '_blank';
+          document.body.appendChild(a); a.click(); a.remove();
+        };
+      }
     } else {
       wrap.innerHTML = '<div style="font-size:.82rem;color:var(--text-3);padding:1rem">⚠️ ร้านยังไม่ตั้งค่า PromptPay<br>กรุณาสอบถามทาง LINE</div>';
+      if (saveBtn) saveBtn.style.display = 'none';
     }
   } catch (e) { /* แสดง placeholder เดิม */ }
 }
@@ -393,7 +403,7 @@ async function submitOrder() {
     DMC.saveCart([]);
 
     // Show success
-    showSuccess(orderId);
+    showSuccess(orderId, total);
 
     // Note: ระบบแจ้งเตือนลูกค้าทาง LINE ต้องทำผ่านหน้า Admin
     // (ส่ง LINE Push ถึงลูกค้าได้เมื่อมี User ID ของลูกค้า)
@@ -406,9 +416,33 @@ async function submitOrder() {
   }
 }
 
-function showSuccess(orderId) {
+async function showSuccess(orderId, total) {
   document.getElementById('order-wrapper').style.display = 'none';
   document.getElementById('success-page').style.display  = '';
   document.getElementById('success-order-id').textContent = orderId;
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // ปุ่ม LINE — เปิดแชทร้านพร้อมข้อความร่างไว้ให้ลูกค้ากดส่ง
+  try {
+    const btn = document.getElementById('success-line-btn');
+    if (btn && typeof CMS !== 'undefined') {
+      const content = await CMS.get();
+      const ct = content.contact || {};
+      const amountTxt = (typeof total === 'number') ? (' ยอด ฿' + total.toLocaleString()) : '';
+      const msg = 'สวัสดีครับ แจ้งออเดอร์ #' + orderId + amountTxt + ' ขอส่งไฟล์รูป/สอบถามรายละเอียดเพิ่มเติมครับ 🙏';
+      // ดึง LINE ID (@xxx) จาก lineLabel หรือ line URL
+      let oaId = (ct.lineLabel || '').trim();
+      if (!oaId && ct.line) {
+        const m = ct.line.match(/@[\w.-]+/) || ct.line.match(/ti\/p\/([^/?]+)/);
+        if (m) oaId = m[0].indexOf('@') === 0 ? m[0] : '@' + m[1];
+      }
+      if (oaId) {
+        const at = oaId.indexOf('@') === 0 ? oaId : '@' + oaId;
+        // LINE OA deep link พร้อมข้อความร่าง (เปิดหน้าแชท OA)
+        btn.href = 'https://line.me/R/oaMessage/' + encodeURIComponent(at) + '/?' + encodeURIComponent(msg);
+      } else if (ct.line) {
+        btn.href = ct.line;  // fallback เปิดแชทปกติ
+      }
+    }
+  } catch(e) { /* ใช้ลิงก์เดิม */ }
 }

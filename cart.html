@@ -12,6 +12,11 @@
   <meta name="description" content="Diamond Cute Studio 💎 — ตะกร้าสินค้าและชำระเงิน">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ตะกร้าสินค้า & ชำระเงิน — Diamond Cute Studio 💎</title>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://i.ibb.co">
+  <link rel="dns-prefetch" href="https://promptpay.io">
+
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/order.css">
@@ -166,12 +171,21 @@
         </div>
 
         <!-- PromptPay QR Box -->
-        <div class="qr-payment-box visible" id="qr-box">
-          <div class="qr-img-wrap" id="qr-img-wrap">🔲</div>
-          <h4>สแกนจ่าย PromptPay</h4>
-          <div class="amount" id="qr-amount">฿0</div>
-          <div id="qr-account-name" style="font-size:.82rem;color:var(--text-2);font-family:var(--font-display)"></div>
-          <p>หลังโอนแล้ว กรุณาแนบสลิปด้านล่าง</p>
+        <div class="qr-pay-card visible" id="qr-box">
+          <div class="qr-pay-head">
+            <span class="qr-pay-logo">฿ Thai QR Payment</span>
+            <span class="qr-pay-promptpay">PromptPay</span>
+          </div>
+          <div class="qr-pay-body">
+            <div class="qr-img-wrap" id="qr-img-wrap"><span style="font-size:3rem;color:var(--text-3)">🔲</span></div>
+            <div class="qr-pay-amount-label">ยอดที่ต้องชำระ</div>
+            <div class="amount" id="qr-amount">฿0</div>
+            <div id="qr-account-name" class="qr-pay-name"></div>
+          </div>
+          <div class="qr-pay-foot">
+            <span>📱 สแกนด้วยแอปธนาคารใดก็ได้</span>
+            <button type="button" class="qr-save-btn" id="qr-save-btn">💾 บันทึกรูป QR</button>
+          </div>
         </div>
 
         <!-- Slip Upload -->
@@ -242,8 +256,7 @@
     <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap">
       <a href="orders.html" class="btn btn-primary btn-lg">📦 ติดตามออเดอร์</a>
           <a href="index.html" class="btn btn-ghost btn-lg">🏠 กลับหน้าแรก</a>
-      <a href="https://line.me/R/ti/p/@913huiwn" target="_blank" rel="noopener"
-         class="btn btn-line btn-lg">💬 ติดตามงาน LINE</a>
+      <a href="#" target="_blank" rel="noopener" id="success-line-btn" class="btn btn-line btn-lg">💬 แจ้งร้านทาง LINE</a>
     </div>
   </div>
 </div>
@@ -256,7 +269,9 @@
 <script src="js/navbar.js"></script>
 <script src="js/order.js"></script>
 <script src="js/footer.js"></script>
+<script src="js/bottom-nav.js"></script>
 <script src="js/theme-switcher.js"></script>
 <script src="js/admin-access.js"></script>
+<script src="js/sw-register.js"></script>
 </body>
 </html>
