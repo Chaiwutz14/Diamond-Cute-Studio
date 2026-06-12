@@ -134,5 +134,28 @@ window.CMS = (function(){
     if (el && text) el.textContent = text;
   }
 
-  return { get, clearCache, promptpayQR, setText, DEFAULTS };
+  // ─── สร้างลิงก์แชท LINE OA พร้อมข้อความทักทาย ───
+  // ใช้ทุกที่: navbar, FAB, footer, หน้าติดต่อ, ปุ่ม "เพิ่มเติม"
+  function lineChat(contact, message) {
+    contact = contact || {};
+    var msg = message || 'สวัสดีครับ สนใจสอบถาม/สั่งทำงานกับทางร้านครับ 🙏';
+    // หา LINE OA id (@xxx)
+    var oaId = (contact.lineLabel || '').trim();
+    if (!oaId && contact.line) {
+      var m = contact.line.match(/@[\w.\-]+/);
+      if (m) oaId = m[0];
+      else {
+        var m2 = contact.line.match(/ti\/p\/([^/?]+)/) || contact.line.match(/oaMessage\/([^/?]+)/);
+        if (m2) oaId = m2[1].indexOf('@') === 0 ? m2[1] : '@' + m2[1];
+      }
+    }
+    if (oaId) {
+      var at = oaId.indexOf('@') === 0 ? oaId : '@' + oaId;
+      return 'https://line.me/R/oaMessage/' + encodeURIComponent(at) + '/?' + encodeURIComponent(msg);
+    }
+    // ไม่มี OA id → เปิดแชทปกติ (fallback)
+    return contact.line || '#';
+  }
+
+  return { get, clearCache, promptpayQR, setText, lineChat, DEFAULTS };
 })();

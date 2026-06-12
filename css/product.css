@@ -478,3 +478,23 @@
   font-family: var(--font-display); text-align: center; padding: .12rem .15rem;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+
+/* ══════════════════════════════════════════════
+   V14 — Mobile Responsive Polish
+══════════════════════════════════════════════ */
+@media(max-width:640px){
+  /* Canvas preview: จัดกึ่งกลาง + ระยะหายใจ */
+  .preview-tool-inner { padding: 0; }
+  #preview-canvas { max-width: 100%; height: auto; }
+  .template-scroll { gap: .5rem; padding-bottom: .35rem; -webkit-overflow-scrolling: touch; }
+  .template-chip { min-width: 60px; }
+
+  /* Review form: ระยะห่าง + ดาวกดง่าย */
+  .rv-form-card { padding: 1.1rem; }
+  .rv-star-btn { font-size: 2rem; padding: 0 .15rem; }
+  .rv-grid { grid-template-columns: 1fr; }
+
+  /* Product gallery thumbs ไม่ล้น */
+  .gallery-thumbs { gap: .45rem; }
+  .gallery-thumb { width: 54px; height: 54px; }
+}

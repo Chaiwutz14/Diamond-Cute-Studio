@@ -12,6 +12,12 @@
   <meta name="description" content="Diamond Cute Studio 💎 — ตะกร้าสินค้าและชำระเงิน">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ตะกร้าสินค้า & ชำระเงิน — Diamond Cute Studio 💎</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#7c5cff">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="DMC Studio">
+
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://i.ibb.co">
@@ -68,7 +74,10 @@
 
       <!-- Upload files -->
       <div class="order-block" id="upload-block">
-        <div class="order-block-title">📤 อัพโหลดไฟล์รูปภาพ</div>
+        <div class="order-block-title">📤 อัพโหลดไฟล์รูปภาพ <span style="font-weight:400;font-size:.8rem;color:var(--text-muted)">(ไม่บังคับ)</span></div>
+        <div class="upload-line-hint" style="background:rgba(6,199,85,.08);border:1px solid rgba(6,199,85,.25);border-radius:var(--r-md);padding:.7rem .9rem;margin-bottom:.85rem;font-size:.83rem;line-height:1.65;color:var(--text-2)">
+          💬 <strong>สะดวกกว่า:</strong> อัปโหลดรูปที่นี่ <u>หรือส่งรูปทาง LINE หลังสั่งซื้อก็ได้</u> เหมาะกับไฟล์เยอะ/ไฟล์ใหญ่ ไม่ต้องรออัปโหลดนาน
+        </div>
         <div class="upload-zone upload-files-area" id="files-upload-zone">
           <div class="upload-icon">🖼️</div>
           <div class="upload-text">
@@ -121,7 +130,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">ขนส่งที่ต้องการ</label>
-            <select class="form-input form-select" id="shipping-method">
+            <select class="form-input form-select" id="shipping-method" data-custom data-title="วิธีจัดส่ง">
               <option value="kerry">Kerry Express</option>
               <option value="flash">Flash Express</option>
               <option value="jandt">J&T Express</option>
@@ -133,6 +142,7 @@
         <div class="form-group">
           <label class="form-label">หมายเหตุเพิ่มเติม</label>
           <textarea class="form-input form-textarea" id="customer-note" placeholder="เช่น ต้องการกล่องพิเศษ, ห่อของขวัญ, งานด่วน..."></textarea>
+          <div style="font-size:.76rem;color:var(--text-3);margin-top:.4rem;line-height:1.6">💡 ส่งภาพและรายละเอียดส่วนตัว (เช่น ข้อความบนการ์ด) ทาง LINE โดยตรงได้เช่นกัน หลังกดสั่งซื้อ</div>
         </div>
       </div>
 
@@ -265,6 +275,7 @@
 <div id="toast-container"></div>
 <script src="js/loading.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/custom-select.js"></script>
 <script src="js/cms.js"></script>
 <script src="js/navbar.js"></script>
 <script src="js/order.js"></script>
@@ -273,5 +284,6 @@
 <script src="js/theme-switcher.js"></script>
 <script src="js/admin-access.js"></script>
 <script src="js/sw-register.js"></script>
+<script src="js/pwa-install.js"></script>
 </body>
 </html>

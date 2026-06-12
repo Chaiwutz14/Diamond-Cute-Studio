@@ -12,6 +12,12 @@
   <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
   <meta name="description" content="สินค้าทั้งหมด — Diamond Cute Studio 💎 โพลารอยด์ นามบัตร บัตรแขวนคอ ป้ายร้านค้า QR Code">
   <title>สินค้าทั้งหมด — Diamond Cute Studio 💎</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#7c5cff">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="DMC Studio">
+
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://i.ibb.co">
@@ -44,7 +50,7 @@
 
   <!-- Mobile Category Dropdown (มือถือ) -->
   <div class="filter-mobile-dropdown">
-    <select class="filter-mobile-select" id="mobile-cat-select">
+    <select class="filter-mobile-select" id="mobile-cat-select" data-custom data-title="เลือกหมวดหมู่">
       <option value="">📂 ทุกหมวดหมู่</option>
       <option value="polaroid">📸 โพลารอยด์</option>
       <option value="lanyard">🪪 บัตรแขวนคอ</option>
@@ -132,7 +138,7 @@
       </div>
       <div class="catalog-controls">
         <span class="result-count">พบ <strong id="result-count">—</strong> รายการ</span>
-        <div class="sort-select-wrap"><select class="form-input form-select" id="sort-select" style="width:auto;padding:0.45rem 2.2rem 0.45rem 0.75rem">
+        <div class="sort-select-wrap"><select class="form-input form-select" id="sort-select" data-custom data-title="เรียงลำดับ" style="width:auto;padding:0.45rem 2.2rem 0.45rem 0.75rem">
           <option value="featured">ยอดนิยม</option>
           <option value="price-asc">ราคา ต่ำ→สูง</option>
           <option value="price-desc">ราคา สูง→ต่ำ</option>
@@ -165,6 +171,7 @@
 <div id="toast-container"></div>
 <script src="js/loading.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/custom-select.js"></script>
 <script src="js/cms.js"></script>
 <script src="js/navbar.js"></script>
 <script src="js/catalog.js"></script>
@@ -173,5 +180,6 @@
 <script src="js/theme-switcher.js"></script>
 <script src="js/admin-access.js"></script>
 <script src="js/sw-register.js"></script>
+<script src="js/pwa-install.js"></script>
 </body>
 </html>

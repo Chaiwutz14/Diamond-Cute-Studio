@@ -9,6 +9,12 @@
   <meta name="description" content="Diamond Cute Studio 💎 — ติดต่อเราผ่าน LINE Facebook Instagram หรือส่งข้อความโดยตรง">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ติดต่อเรา — Diamond Cute Studio 💎</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#7c5cff">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="DMC Studio">
+
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://i.ibb.co">
@@ -154,7 +160,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">หัวข้อ</label>
-        <select class="form-input form-select" id="cf-topic">
+        <select class="form-input form-select" id="cf-topic" data-custom data-title="หัวข้อ">
           <option>สอบถามสินค้า</option>
           <option>สอบถามราคา</option>
           <option>ติดตามออเดอร์</option>
@@ -181,6 +187,7 @@
 <div id="toast-container"></div>
 <script src="js/loading.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/custom-select.js"></script>
 <script src="js/cms.js"></script>
 <script src="js/navbar.js"></script>
 <script src="js/footer.js"></script>
@@ -239,7 +246,7 @@ document.getElementById('cf-submit').addEventListener('click', async function(){
   CMS.get().then(function(c){
     var ct = c.contact || {};
     function setHref(id, url){ var el = document.getElementById(id); if (el && url) el.href = url; }
-    setHref('ch-line', ct.line);
+    setHref('ch-line', CMS.lineChat ? CMS.lineChat(ct) : ct.line);
     setHref('ch-fb',   ct.facebook);
     setHref('ch-ig',   ct.instagram);
     setHref('ch-tt',   ct.tiktok);
@@ -259,5 +266,6 @@ document.getElementById('cf-submit').addEventListener('click', async function(){
 })();
 </script>
 <script src="js/sw-register.js"></script>
+<script src="js/pwa-install.js"></script>
 </body>
 </html>

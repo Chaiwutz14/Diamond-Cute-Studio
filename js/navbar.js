@@ -57,7 +57,7 @@
 
           <div class="nav-actions">
             <!-- theme switcher injected here by theme-switcher.js -->
-            <a href="https://line.me/R/ti/p/@913huiwn"
+            <a href="#" id="nav-line-btn"
                target="_blank" rel="noopener"
                class="btn btn-line btn-sm hide-mobile">💬 LINE</a>
             <a href="cart.html" class="nav-icon-btn" aria-label="ตะกร้าสินค้า" title="ตะกร้า">
@@ -76,7 +76,7 @@
       <div class="mobile-drawer" id="mobile-drawer" role="navigation" aria-label="เมนูมือถือ">
         <div class="drawer-links">${drawerLinks}</div>
         <div class="drawer-actions">
-          <a href="https://line.me/R/ti/p/YOUR_LINE_OA"
+          <a href="#" id="drawer-line-btn"
              target="_blank" rel="noopener"
              class="btn btn-line btn-md" style="flex:1">💬 ติดต่อ LINE</a>
           <a href="cart.html" class="btn btn-secondary btn-md" style="flex:1">🛒 ตะกร้า</a>
@@ -84,6 +84,18 @@
       </div>`;
 
     initBehavior();
+    applyLineLinks();
+  }
+
+  function applyLineLinks() {
+    if (typeof CMS === 'undefined') return;
+    CMS.get().then(function(c){
+      var href = CMS.lineChat ? CMS.lineChat(c.contact) : ((c.contact && c.contact.line) || '#');
+      var b1 = document.getElementById('nav-line-btn');
+      var b2 = document.getElementById('drawer-line-btn');
+      if (b1) b1.href = href;
+      if (b2) b2.href = href;
+    }).catch(function(){});
   }
 
   function getMountEl() {

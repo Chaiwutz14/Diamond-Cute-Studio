@@ -33,18 +33,18 @@
       // Bottom nav — แสดงเฉพาะจอ <= 760px
       + '#dcs-bottom-nav{display:none}'
       + '@media(max-width:760px){'
-      +   '#dcs-bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9000;'
+      +   '#dcs-bottom-nav{display:flex;box-sizing:border-box;position:fixed;left:0;right:0;bottom:0;z-index:9000;'
       +     'background:var(--bg-card);border-top:1px solid var(--border);'
       +     'box-shadow:0 -3px 16px rgba(0,0,0,.07);padding:.3rem .25rem calc(.3rem + env(safe-area-inset-bottom,0));'
       +     'backdrop-filter:saturate(180%) blur(8px)}'
-      +   '.dcs-bn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;'
-      +     'padding:.35rem .15rem;text-decoration:none;color:var(--text-3);position:relative;transition:color .15s}'
+      +   '.dcs-bn-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;'
+      +     'padding:.35rem .1rem;text-decoration:none;color:var(--text-3);position:relative;transition:color .15s;box-sizing:border-box}'
       +   '.dcs-bn-item .ic{font-size:1.25rem;line-height:1;transition:transform .15s}'
-      +   '.dcs-bn-item .lb{font-size:.66rem;font-family:var(--font-display,sans-serif);font-weight:600}'
+      +   '.dcs-bn-item .lb{font-size:.64rem;font-family:var(--font-display,sans-serif);font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
       +   '.dcs-bn-item.active{color:var(--accent)}'
       +   '.dcs-bn-item.active .ic{transform:translateY(-2px) scale(1.1)}'
       +   '.dcs-bn-item.active::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}'
-      +   '.dcs-bn-badge{position:absolute;top:.1rem;right:calc(50% - 20px);min-width:16px;height:16px;padding:0 4px;'
+      +   '.dcs-bn-badge{position:absolute;top:.1rem;left:calc(50% + 5px);min-width:16px;height:16px;padding:0 4px;'
       +     'background:var(--rose,#fb7185);color:#fff;border-radius:8px;font-size:.62rem;font-weight:800;'
       +     'display:flex;align-items:center;justify-content:center;font-family:var(--font-display,sans-serif)}'
       +   'body{padding-bottom:62px !important}'
@@ -119,7 +119,7 @@
     renderBottomNav();
     // Floating LINE — ใช้ลิงก์จาก CMS
     if (typeof CMS !== 'undefined') {
-      CMS.get().then(function(c){ renderFAB((c.contact && c.contact.line) || '#'); })
+      CMS.get().then(function(c){ renderFAB(CMS.lineChat ? CMS.lineChat(c.contact) : ((c.contact && c.contact.line) || '#')); })
                .catch(function(){ renderFAB('#'); });
     } else {
       renderFAB('#');

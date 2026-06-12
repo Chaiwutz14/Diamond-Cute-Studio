@@ -720,7 +720,10 @@ window.openProductModal = async function(productId) {
   _modalCoverIndex = Math.min(Number(product.coverIndex)||0, Math.max(_modalImages.length-1, 0));
 
   const customTpls = await fetchCustomTemplatesOnce();
-  const categories = ['โพลารอยด์','บัตรแขวนคอ','นามบัตร','ป้ายร้านค้า','QR Code','ป้ายตุ๊กตา','บัตรนักเรียน','อื่นๆ'];
+  const baseCats = ['โพลารอยด์','บัตรแขวนคอ','นามบัตร','ป้ายร้านค้า','QR Code','ป้ายตุ๊กตา','บัตรนักเรียน','อื่นๆ'];
+  const customCats = await fetchCustomCategoriesOnce();
+  const categories = baseCats.slice();
+  customCats.forEach(cc => { if (!categories.includes(cc.name)) categories.splice(categories.length-1, 0, cc.name); });
   const selectedTpls = (product.templates||[]).map(t=>String(t).toLowerCase());
 
   body.innerHTML = `
@@ -761,6 +764,7 @@ window.openProductModal = async function(productId) {
         <label class="form-label">หมวดหมู่ *</label>
         <select class="form-input form-select" id="p-category">
           ${categories.map(c=>`<option ${product.category===c?'selected':''}>${c}</option>`).join('')}
+          <option value="__add__">➕ เพิ่มหมวดหมู่ใหม่...</option>
         </select>
       </div>
       <div class="form-group" style="margin:0">
@@ -866,10 +870,49 @@ window.openProductModal = async function(productId) {
     _modalImages.push({url:'', label:''});
     renderModalImages();
   });
+  // เพิ่มหมวดหมู่ใหม่จาก dropdown
+  document.getElementById('p-category')?.addEventListener('change', function(){
+    if (this.value === '__add__') promptNewCategory(this);
+  });
   document.getElementById('p-save-btn')?.addEventListener('click', () => saveProduct(productId||''));
 };
 
 // ── รายการรูปใน modal (delegation — ไม่มี onclick ใน template) ──
+
+let _customCatsCache = null;
+async function fetchCustomCategoriesOnce() {
+  if (_customCatsCache) return _customCatsCache;
+  try {
+    const snap = await db.collection('categories').get();
+    const list = [];
+    snap.forEach(d => { const x = d.data(); list.push({ id: d.id, name: x.name||d.id, emoji: x.emoji||'', slug: x.slug||d.id }); });
+    _customCatsCache = list;
+    return list;
+  } catch(e) { return []; }
+}
+
+async function promptNewCategory(selectEl) {
+  const name = prompt('ชื่อหมวดหมู่ใหม่ (เช่น สติกเกอร์, ปฏิทิน):');
+  if (!name || !name.trim()) { selectEl.value = selectEl.options[0].value; return; }
+  const emoji = prompt('อิโมจิประจำหมวด (ไม่บังคับ เช่น 🏷️):', '🏷️') || '';
+  const clean = name.trim();
+  const slug = 'cat-' + Date.now().toString(36);
+  try {
+    await db.collection('categories').add({ name: clean, emoji: emoji.trim(), slug, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    _customCatsCache = null;  // refresh
+    DMC.toast('เพิ่มหมวด "'+clean+'" แล้ว ✅','success');
+    // เพิ่ม option ใหม่ก่อน __add__ แล้วเลือก
+    const addOpt = selectEl.querySelector('option[value="__add__"]');
+    const opt = document.createElement('option');
+    opt.textContent = clean; opt.value = clean;
+    selectEl.insertBefore(opt, addOpt);
+    selectEl.value = clean;
+  } catch(e) {
+    DMC.toast('เพิ่มไม่สำเร็จ: '+e.message,'error');
+    selectEl.value = selectEl.options[0].value;
+  }
+}
+
 function renderModalImages() {
   const wrap = document.getElementById('p-images-list');
   if (!wrap) return;

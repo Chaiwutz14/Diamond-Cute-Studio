@@ -9,7 +9,7 @@
    - ไม่แตะ Firebase / ImgBB / API (ให้ผ่านตรงเสมอ)
 ═══════════════════════════════════════════════ */
 
-const CACHE_VERSION = 'dcs-v13-1';
+const CACHE_VERSION = 'dcs-v14';
 const CACHE_NAME = 'dcs-cache-' + CACHE_VERSION;
 
 // ไฟล์หลักที่ pre-cache ตอนติดตั้ง (โหลดครั้งแรกเร็วขึ้น + ออฟไลน์ได้)
@@ -24,6 +24,9 @@ const PRECACHE = [
   './gallery.html',
   './contact.html',
   './404.html',
+  './manifest.webmanifest',
+  './assets/icon-192.png',
+  './assets/icon-512.png',
   './css/themes.css',
   './css/loading.css',
   './css/main.css',

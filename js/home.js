@@ -18,6 +18,9 @@ function homeCoverOf(p) {
 document.addEventListener('DOMContentLoaded', async () => {
   applyCMSContent();   // เนื้อหาจากหลังบ้าน (hero/promo/stats)
   loadHomeReviews();   // รีวิวจริงจากลูกค้า
+  randomizeLastOrder();// เวลาออเดอร์ล่าสุดสุ่มให้สมจริง
+  loadCategoryCounts();// นับจำนวนสินค้าจริงต่อหมวด
+  loadHeroShowcase();  // การ์ด Hero = ผลงานจริงล่าสุด
 
   // ─── Hero Particle Canvas ───
   initParticles();
@@ -414,4 +417,126 @@ async function loadHomeReviews() {
     const section = document.getElementById('home-reviews-section');
     if (section) section.style.display = 'none';
   }
+}
+
+// ─── ออเดอร์ล่าสุด: สุ่มเวลาให้สมจริง (ไม่ค้าง "2 ชม.") ───
+function randomizeLastOrder() {
+  const el = document.querySelector('.float-badge-text span');
+  if (!el) return;
+  // ถ่วงน้ำหนัก: ส่วนใหญ่ไม่กี่นาที-ชั่วโมง บางทีหลักวัน
+  const buckets = [
+    { w: 38, gen: () => 'เมื่อ ' + (rint(5, 59)) + ' นาทีที่แล้ว' },
+    { w: 40, gen: () => 'เมื่อ ' + (rint(1, 8)) + ' ชั่วโมงที่แล้ว' },
+    { w: 16, gen: () => 'เมื่อวานนี้' },
+    { w: 6,  gen: () => 'เมื่อ ' + (rint(2, 4)) + ' วันที่แล้ว' },
+  ];
+  let total = buckets.reduce((s, b) => s + b.w, 0);
+  let r = Math.random() * total;
+  for (const b of buckets) { if ((r -= b.w) <= 0) { el.textContent = b.gen(); return; } }
+  el.textContent = buckets[0].gen();
+}
+function rint(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+// ─── นับจำนวนสินค้าจริงต่อหมวด + รองรับหมวด custom ───
+async function loadCategoryCounts() {
+  const grid = document.getElementById('categories-grid');
+  if (!grid || typeof DMC === 'undefined') return;
+  try {
+    const db = await DMC.getFirebaseReady();
+
+    // map ชื่อหมวด → slug + emoji (ทั้ง built-in และ custom)
+    const BUILTIN = [
+      { slug:'polaroid',      name:'รูปโพลารอยด์', match:['โพลารอยด์','รูปโพลารอยด์','polaroid'], emoji:'📸' },
+      { slug:'lanyard',       name:'บัตรแขวนคอ',   match:['บัตรแขวนคอ','lanyard'],               emoji:'🪪' },
+      { slug:'business-card', name:'นามบัตร',       match:['นามบัตร','business-card'],            emoji:'💼' },
+      { slug:'shop-sign',     name:'ป้ายร้านค้า',   match:['ป้ายร้านค้า','shop-sign'],            emoji:'🏪' },
+      { slug:'qrcode',        name:'QR Code',       match:['qr code','qrcode','QR Code'],         emoji:'📱' },
+      { slug:'doll-tag',      name:'ป้ายตุ๊กตา',    match:['ป้ายตุ๊กตา','doll-tag'],              emoji:'🧸' },
+      { slug:'student-card',  name:'บัตรนักเรียน',  match:['บัตรนักเรียน','student-card'],         emoji:'🎓' },
+    ];
+
+    const snap = await db.collection('products').get();
+    const counts = {};
+    let total = 0;
+    snap.forEach(doc => {
+      const cat = (doc.data().category || '').toString().trim().toLowerCase();
+      counts[cat] = (counts[cat] || 0) + 1;
+      total++;
+    });
+    if (total === 0) return; // ไม่มีสินค้า → คงตัวเลขเดิม
+
+    function countFor(matches) {
+      return matches.reduce((s, m) => s + (counts[m.toLowerCase()] || 0), 0);
+    }
+
+    // โหลด custom categories เพิ่ม
+    let customCats = [];
+    try {
+      const cs = await db.collection('categories').get();
+      cs.forEach(d => { const x = d.data(); customCats.push({ slug:x.slug||d.id, name:x.name||d.id, emoji:x.emoji||'🏷️', match:[(x.name||'').toLowerCase()] }); });
+    } catch(e) {}
+
+    const allCats = BUILTIN.concat(customCats.filter(cc => !BUILTIN.some(b => b.name === cc.name)));
+
+    // สร้างการ์ดใหม่
+    let html = '';
+    let shownTotal = 0;
+    allCats.forEach(cat => {
+      const n = countFor(cat.match);
+      shownTotal += n;
+      const label = n > 0 ? (n + ' รายการ') : 'เร็วๆ นี้';
+      html += '<a href="catalog.html?cat=' + encodeURIComponent(cat.slug) + '" class="cat-card">'
+        + '<span class="cat-icon">' + cat.emoji + '</span>'
+        + '<div class="cat-name">' + DMC.escapeHtml(cat.name) + '</div>'
+        + '<div class="cat-count">' + label + '</div></a>';
+    });
+    // การ์ด "ทั้งหมด"
+    html += '<a href="catalog.html" class="cat-card"><span class="cat-icon">✨</span>'
+      + '<div class="cat-name">ทั้งหมด</div><div class="cat-count">' + total + ' รายการ</div></a>';
+
+    grid.innerHTML = html;
+  } catch (e) { /* คงตัวเลขเดิม */ }
+}
+
+// ─── Hero showcase: ใช้ผลงานจริงล่าสุด 2-4 ชิ้น ───
+async function loadHeroShowcase() {
+  if (typeof DMC === 'undefined') return;
+  try {
+    const db = await DMC.getFirebaseReady();
+    const snap = await db.collection('gallery').limit(20).get();
+    if (snap.empty) return;
+    const imgs = [];
+    snap.forEach(doc => {
+      const x = doc.data();
+      if (x.active === false) return;
+      const url = x.image || x.imageUrl || x.url;
+      if (url) imgs.push({ url, name: x.name || x.title || 'ผลงาน', cat: x.cat || x.category || '' });
+    });
+    if (imgs.length < 2) return; // ผลงานจริงน้อยไป → คงการ์ด default
+
+    // เรียงล่าสุด + เอา 2-4
+    const pick = imgs.slice(0, Math.min(4, imgs.length));
+    const stage = document.querySelector('.hero-visual') || document.querySelector('.hero-carousel');
+    if (!stage) return;
+
+    // สร้าง showcase ใหม่ (รูปจริงซ้อนหมุน)
+    stage.innerHTML = '<div class="hero-showcase" id="hero-showcase">'
+      + pick.map((p, i) => '<div class="hsc-card ' + (i === 0 ? 'on' : '') + '" data-i="' + i + '">'
+          + '<img src="' + p.url + '" alt="' + DMC.escapeHtml(p.name) + '" loading="eager" data-emoji="🖼️">'
+          + '<div class="hsc-cap">' + DMC.escapeHtml(p.name) + '</div></div>').join('')
+      + '<div class="hsc-dots">' + pick.map((p, i) => '<span class="hsc-dot ' + (i === 0 ? 'on' : '') + '"></span>').join('') + '</div>'
+      + '</div>';
+
+    let idx = 0;
+    setInterval(() => {
+      const cards = stage.querySelectorAll('.hsc-card');
+      const dots = stage.querySelectorAll('.hsc-dot');
+      if (!cards.length) return;
+      cards[idx].classList.remove('on');
+      dots[idx].classList.remove('on');
+      idx = (idx + 1) % cards.length;
+      cards[idx].classList.add('on');
+      dots[idx].classList.add('on');
+    }, 3000);
+  } catch (e) { /* คงการ์ด default */ }
 }

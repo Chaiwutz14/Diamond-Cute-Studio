@@ -327,3 +327,20 @@
   background:var(--border); transition:all .25s;
 }
 .hc-dot.on { background:var(--accent); width:16px; border-radius:3px; }
+
+/* ══════════════════════════════════════════════
+   V14 — Hero Showcase (รูปผลงานจริงหมุน)
+══════════════════════════════════════════════ */
+.hero-showcase{position:relative;width:100%;max-width:340px;aspect-ratio:4/5;margin:0 auto}
+.hsc-card{position:absolute;inset:0;border-radius:var(--r-2xl,20px);overflow:hidden;
+  box-shadow:0 18px 50px rgba(0,0,0,.18);opacity:0;transform:scale(.94) translateY(10px);
+  transition:opacity .6s ease,transform .6s ease;pointer-events:none}
+.hsc-card.on{opacity:1;transform:scale(1) translateY(0);pointer-events:auto}
+.hsc-card img{width:100%;height:100%;object-fit:cover;display:block}
+.hsc-cap{position:absolute;left:0;right:0;bottom:0;padding:1.5rem .9rem .8rem;
+  background:linear-gradient(to top,rgba(0,0,0,.7),transparent);color:#fff;
+  font-family:var(--font-display);font-weight:600;font-size:.92rem}
+.hsc-dots{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);display:flex;gap:6px}
+.hsc-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all .3s}
+.hsc-dot.on{background:var(--accent);width:18px;border-radius:4px}
+@media(max-width:1024px){.hero-showcase{display:none}}

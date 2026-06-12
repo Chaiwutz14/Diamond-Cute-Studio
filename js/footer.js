@@ -51,11 +51,17 @@
     document.head.appendChild(st);
   }
 
+  function lineHref() {
+    if (typeof CMS !== 'undefined' && CMS.lineChat) return CMS.lineChat(_contact);
+    return LINKS.line;
+  }
   function social(kind, cls, url, label) {
     return '<a href="' + url + '" target="_blank" rel="noopener" class="social-btn ' + cls + '" title="' + label + '" aria-label="' + label + '">' + IC[kind] + '</a>';
   }
 
+  var _contact = null;
   function render(cms) {
+    _contact = cms;
     var mount = document.getElementById('footer-mount');
     if (!mount) return;
     if (cms) {
@@ -74,11 +80,11 @@
       +       '<a href="index.html" class="logo-text">💎 Diamond Cute Studio</a>'
       +       '<p>บริการพิมพ์ภาพและสิ่งพิมพ์คุณภาพ<br>รับออเดอร์ทุกวัน ส่งทั่วประเทศไทย</p>'
       +       '<div class="footer-socials">'
-      +         social('line','line',LINKS.line,'LINE')
-      +         + social('facebook','fb',LINKS.facebook,'Facebook')
-      +         + social('instagram','ig',LINKS.instagram,'Instagram')
-      +         + social('tiktok','tt',LINKS.tiktok,'TikTok')
-      +         + social('email','mail',LINKS.email,'อีเมล')
+      +         social('line','line',lineHref(),'LINE')
+      +         social('facebook','fb',LINKS.facebook,'Facebook')
+      +         social('instagram','ig',LINKS.instagram,'Instagram')
+      +         social('tiktok','tt',LINKS.tiktok,'TikTok')
+      +         social('email','mail',LINKS.email,'อีเมล')
       +       '</div>'
       +     '</div>'
       +     '<div class="footer-col">'
@@ -97,7 +103,7 @@
       +     '</div>'
       +     '<div class="footer-col">'
       +       '<h4>ติดต่อเรา</h4>'
-      +       '<a href="' + LINKS.line + '" target="_blank" rel="noopener">💬 แชท LINE</a>'
+      +       '<a href="' + lineHref() + '" target="_blank" rel="noopener">💬 แชท LINE</a>'
       +       '<a href="about.html#faq">❓ คำถามที่พบบ่อย</a>'
       +       '<a href="about.html#policy">🔒 นโยบายความเป็นส่วนตัว</a>'
       +     '</div>'
