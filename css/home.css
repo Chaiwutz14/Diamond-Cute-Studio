@@ -344,3 +344,50 @@
 .hsc-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all .3s}
 .hsc-dot.on{background:var(--accent);width:18px;border-radius:4px}
 @media(max-width:1024px){.hero-showcase{display:none}}
+
+/* ══════════════════════════════════════════════
+   V16 — Hero CTA buttons (เท่ากัน คนละสี) + Mobile showcase
+══════════════════════════════════════════════ */
+.btn-hero-cta{
+  flex:1 1 0; min-width:0; justify-content:center;
+  padding:.95rem 1rem; font-size:1rem; font-weight:700;
+  border-radius:var(--r-xl,16px); white-space:nowrap;
+}
+/* ปุ่มรอง: สีชมพูอ่อน ขอบชมพู (ต่างจากปุ่มหลักม่วง แต่ขนาดเท่ากัน) */
+.btn-hero-secondary{
+  background:var(--rose-soft,#ffe9ef); color:var(--rose,#ec6e8c);
+  border:1.5px solid var(--rose,#ec6e8c);
+}
+.btn-hero-secondary:hover{ background:var(--rose,#ec6e8c); color:#fff; }
+@media(max-width:480px){
+  .btn-hero-cta{ font-size:.92rem; padding:.85rem .6rem; }
+}
+
+/* Mobile: แสดงการ์ดรูปผลงานจริง (Header แบบ 4) */
+@media(max-width:1024px){
+  .hero-mobile-showcase{
+    display:block; width:100%; max-width:420px; margin:0 auto 1.5rem;
+    position:relative; aspect-ratio:4/5; max-height:46vh;
+  }
+  .hero-mobile-showcase .hsc-card{
+    position:absolute; inset:0; border-radius:var(--r-2xl,20px); overflow:hidden;
+    box-shadow:0 16px 40px rgba(0,0,0,.16);
+    opacity:0; transform:scale(.94) translateY(10px);
+    transition:opacity .6s ease, transform .6s ease; pointer-events:none;
+  }
+  .hero-mobile-showcase .hsc-card.on{ opacity:1; transform:scale(1) translateY(0); pointer-events:auto; }
+  .hero-mobile-showcase .hsc-card img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .hero-mobile-showcase .hsc-cap{
+    position:absolute; left:0; right:0; bottom:0; padding:1.5rem .9rem .8rem;
+    background:linear-gradient(to top,rgba(0,0,0,.65),transparent); color:#fff;
+    font-family:var(--font-display); font-weight:600; font-size:.92rem;
+  }
+  .hero-mobile-showcase .hsc-dots{
+    position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); display:flex; gap:6px;
+  }
+  .hero-mobile-showcase .hsc-dot{ width:7px; height:7px; border-radius:50%; background:var(--border); transition:all .3s; }
+  .hero-mobile-showcase .hsc-dot.on{ background:var(--accent); width:18px; border-radius:4px; }
+}
+@media(min-width:1025px){ .hero-mobile-showcase{ display:none; } }
+
+@keyframes hscShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}

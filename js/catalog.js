@@ -78,6 +78,8 @@ async function loadFromFirebase() {
   } catch {
     allProducts = PLACEHOLDER_PRODUCTS;
   }
+  // โหลดหมวดหมู่ (รวม custom) ให้ DMCCat.matches เทียบ slug↔ชื่อไทยได้ครบ
+  try { if (window.DMCCat && DMCCat.loadAll) await DMCCat.loadAll(db); } catch(e) {}
   applyFiltersAndRender();
 }
 
@@ -136,7 +138,13 @@ function applyFiltersAndRender() {
 
   filteredProducts = allProducts.filter(p => {
     // ถ้ามีการค้นหา ให้ข้ามการกรองหมวดหมู่ (ค้นหาข้ามหมวดหมู่)
-    if (currentCat && !search && p.category !== currentCat) return false;
+    // ใช้ DMCCat.matches เทียบ slug↔ชื่อไทย (สินค้าเก็บ category เป็นชื่อไทย แต่ filter เป็น slug)
+    if (currentCat && !search) {
+      const ok = (window.DMCCat && DMCCat.matches)
+        ? DMCCat.matches(p.category, currentCat)
+        : (p.category === currentCat);
+      if (!ok) return false;
+    }
     if (search && !p.name.toLowerCase().includes(search)
                && !(p.shortDesc||'').toLowerCase().includes(search)
                && !(p.category||'').toLowerCase().includes(search)) return false;
@@ -170,9 +178,9 @@ function renderProducts() {
 
   if (filteredProducts.length === 0) {
     grid.innerHTML = `
-      <div style="grid-column:1/-1;text-align:center;padding:4rem;color:var(--text-muted)">
+      <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 1.5rem;color:var(--text-muted);width:100%">
         <div style="font-size:2.5rem;margin-bottom:0.75rem">🔍</div>
-        <p>ไม่พบสินค้าที่ตรงกับเงื่อนไข</p>
+        <p style="text-align:center;margin:0">ไม่พบสินค้าที่ตรงกับเงื่อนไข</p>
         <button class="btn btn-ghost btn-md" style="margin-top:1rem;border-radius:var(--r-lg)" onclick="clearFilters()">ล้างตัวกรอง</button>
       </div>
     `;

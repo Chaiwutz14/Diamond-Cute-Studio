@@ -524,3 +524,103 @@
   transition: background .15s; padding: 0; line-height: 1;
 }
 .pass-eye:hover { background: rgba(125,125,125,.14); }
+
+/* ══════════════════════════════════════════════════
+   V16 — Admin UI Polish (ยกเครื่องให้เข้าธีม + responsive)
+══════════════════════════════════════════════════ */
+
+/* Topbar: sticky + glass + ปุ่มสวยขึ้น */
+.admin-nav, .navbar.admin-navbar {
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: saturate(180%) blur(10px);
+}
+.badge-rose {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2, var(--accent)));
+  color: #fff; padding: .35rem .8rem; border-radius: var(--r-pill);
+  font-family: var(--font-display); font-weight: 700; letter-spacing: .3px;
+  box-shadow: 0 2px 8px rgba(124,92,255,.25);
+}
+
+/* Sidebar: เด่นขึ้น active state ชัด */
+.admin-sidebar { border-right: 1px solid var(--border); }
+.sidebar-section-label {
+  font-size: .68rem; text-transform: uppercase; letter-spacing: .8px;
+  color: var(--text-3); font-weight: 700; padding: 0 .5rem;
+  margin: 1.1rem 0 .4rem; font-family: var(--font-display);
+}
+.sidebar-item {
+  display: flex; align-items: center; gap: .7rem;
+  padding: .7rem .85rem; border-radius: var(--r-lg);
+  cursor: pointer; color: var(--text-2); font-family: var(--font-display);
+  font-weight: 600; font-size: .9rem; transition: all .15s; margin-bottom: 2px;
+  position: relative;
+}
+.sidebar-item:hover { background: var(--bg-mid); color: var(--text-1); }
+.sidebar-item.active {
+  background: linear-gradient(135deg, rgba(124,92,255,.12), rgba(124,92,255,.04));
+  color: var(--accent);
+}
+.sidebar-item.active::before {
+  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 60%; border-radius: 0 3px 3px 0; background: var(--accent);
+}
+.sidebar-item.danger { color: var(--danger, #ef4444); }
+.sidebar-item.danger:hover { background: rgba(239,68,68,.1); }
+
+/* Section header ในหน้า admin */
+.admin-section-title {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: 1.4rem; color: var(--text-1); margin-bottom: .25rem;
+  display: flex; align-items: center; gap: .5rem;
+}
+.admin-section-sub { font-size: .86rem; color: var(--text-3); margin-bottom: 1.3rem; }
+
+/* Stat cards (Dashboard overview) */
+.stat-card {
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: var(--r-xl); padding: 1.2rem 1.3rem;
+  transition: transform .2s, box-shadow .2s, border-color .2s;
+  position: relative; overflow: hidden;
+}
+.stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
+.stat-card::after {
+  content: ''; position: absolute; top: -20px; right: -20px;
+  width: 80px; height: 80px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(124,92,255,.1), transparent 70%);
+}
+.stat-value { font-family: var(--font-display); font-weight: 800; font-size: 2rem; color: var(--accent); line-height: 1; }
+.stat-label { font-size: .82rem; color: var(--text-2); margin-top: .35rem; }
+
+/* Admin boxes/cards */
+.admin-box {
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: var(--r-xl); padding: 1.3rem; margin-bottom: 1.2rem;
+}
+.admin-box-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.admin-box-title { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; color: var(--text-1); }
+
+/* Tables สวยขึ้น */
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th {
+  text-align: left; font-family: var(--font-display); font-weight: 700;
+  font-size: .8rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px;
+  padding: .7rem .6rem; border-bottom: 2px solid var(--border);
+}
+.admin-table td { padding: .8rem .6rem; border-bottom: 1px solid var(--border); font-size: .88rem; vertical-align: middle; }
+.admin-table tr:hover td { background: var(--bg-mid); }
+
+/* Buttons ในหลังบ้าน — ลบขอบ raw, เพิ่ม polish */
+.admin-shell .btn { font-family: var(--font-display); font-weight: 600; transition: all .15s; }
+.admin-shell .btn-primary { box-shadow: 0 3px 10px rgba(124,92,255,.25); }
+.admin-shell .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(124,92,255,.35); }
+
+/* Mobile: หลังบ้าน */
+@media (max-width: 860px) {
+  .admin-section-title { font-size: 1.2rem; }
+  .admin-box { padding: 1rem; border-radius: var(--r-lg); }
+  .stat-value { font-size: 1.6rem; }
+  /* topbar ปุ่มกระชับ */
+  .admin-nav .btn-sm, .navbar .btn-sm { padding: .4rem .7rem; font-size: .8rem; }
+  /* ตารางเลื่อนแนวนอนได้ */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}

@@ -488,42 +488,68 @@ async function loadCategoryCounts() {
 // ─── Hero showcase: ใช้ผลงานจริงล่าสุด 2-4 ชิ้น ───
 async function loadHeroShowcase() {
   if (typeof DMC === 'undefined') return;
+  const mobileStage = document.getElementById('hero-mobile-showcase');  // มือถือ (Header แบบ 4)
+  const deskStage   = document.getElementById('hero-carousel');         // เดสก์ท็อป
+  if (!mobileStage && !deskStage) return;
+
+  let pick = [];
   try {
     const db = await DMC.getFirebaseReady();
     const snap = await db.collection('gallery').limit(20).get();
-    if (snap.empty) return;
     const imgs = [];
     snap.forEach(doc => {
       const x = doc.data();
       if (x.active === false) return;
       const url = x.image || x.imageUrl || x.url;
-      if (url) imgs.push({ url, name: x.name || x.title || 'ผลงาน', cat: x.cat || x.category || '' });
+      if (url) imgs.push({ url, name: x.name || x.title || 'ผลงาน' });
     });
-    if (imgs.length < 2) return; // ผลงานจริงน้อยไป → คงการ์ด default
+    pick = imgs.slice(0, Math.min(4, imgs.length));
+  } catch (e) { /* ออฟไลน์ → ใช้ fallback */ }
 
-    // เรียงล่าสุด + เอา 2-4
-    const pick = imgs.slice(0, Math.min(4, imgs.length));
-    const stage = document.querySelector('.hero-visual') || document.querySelector('.hero-carousel');
-    if (!stage) return;
+  // ยังไม่มีรูปจริง → ภาพ fallback สวยๆ (ธีมงานพิมพ์/ความทรงจำ)
+  const usingFallback = (pick.length < 2);
+  if (usingFallback) {
+    pick = HERO_FALLBACK_IMAGES.slice();
+  }
 
-    // สร้าง showcase ใหม่ (รูปจริงซ้อนหมุน)
-    stage.innerHTML = '<div class="hero-showcase" id="hero-showcase">'
-      + pick.map((p, i) => '<div class="hsc-card ' + (i === 0 ? 'on' : '') + '" data-i="' + i + '">'
-          + '<img src="' + p.url + '" alt="' + DMC.escapeHtml(p.name) + '" loading="eager" data-emoji="🖼️">'
-          + '<div class="hsc-cap">' + DMC.escapeHtml(p.name) + '</div></div>').join('')
-      + '<div class="hsc-dots">' + pick.map((p, i) => '<span class="hsc-dot ' + (i === 0 ? 'on' : '') + '"></span>').join('') + '</div>'
-      + '</div>';
+  function showcaseHTML() {
+    return pick.map((p, i) => '<div class="hsc-card ' + (i === 0 ? 'on' : '') + '" data-i="' + i + '">'
+        + '<img src="' + p.url + '" alt="' + DMC.escapeHtml(p.name) + '" loading="eager" data-emoji="🖼️">'
+        + '<div class="hsc-cap">' + DMC.escapeHtml(p.name) + '</div></div>').join('')
+      + '<div class="hsc-dots">' + pick.map((p, i) => '<span class="hsc-dot ' + (i === 0 ? 'on' : '') + '"></span>').join('') + '</div>';
+  }
 
-    let idx = 0;
-    setInterval(() => {
+  // มือถือ: ใส่ตรงๆ ใน container (CSS จัด absolute ให้แล้ว)
+  if (mobileStage) mobileStage.innerHTML = showcaseHTML();
+  // เดสก์ท็อป: ห่อ .hero-showcase (ไม่แตะ hero-float-badge)
+  if (deskStage) deskStage.innerHTML = '<div class="hero-showcase" id="hero-showcase">' + showcaseHTML() + '</div>';
+
+  if (pick.length < 2) return;
+  let idx = 0;
+  setInterval(() => {
+    [mobileStage, deskStage].forEach(stage => {
+      if (!stage) return;
       const cards = stage.querySelectorAll('.hsc-card');
       const dots = stage.querySelectorAll('.hsc-dot');
       if (!cards.length) return;
-      cards[idx].classList.remove('on');
-      dots[idx].classList.remove('on');
-      idx = (idx + 1) % cards.length;
-      cards[idx].classList.add('on');
-      dots[idx].classList.add('on');
-    }, 3000);
-  } catch (e) { /* คงการ์ด default */ }
+      cards[idx % cards.length].classList.remove('on');
+      dots[idx % dots.length].classList.remove('on');
+    });
+    idx = (idx + 1) % pick.length;
+    [mobileStage, deskStage].forEach(stage => {
+      if (!stage) return;
+      const cards = stage.querySelectorAll('.hsc-card');
+      const dots = stage.querySelectorAll('.hsc-dot');
+      if (!cards.length) return;
+      cards[idx % cards.length].classList.add('on');
+      dots[idx % dots.length].classList.add('on');
+    });
+  }, 3000);
 }
+
+// รูป fallback (ใช้เมื่อร้านยังไม่อัปผลงานจริง) — ธีมงานพิมพ์/ความทรงจำ สัดส่วน 4:5
+const HERO_FALLBACK_IMAGES = [
+  { url: 'https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?w=600&h=750&fit=crop', name: 'โพลารอยด์สุดน่ารัก 📸' },
+  { url: 'https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=600&h=750&fit=crop', name: 'เก็บทุกความทรงจำ 💕' },
+  { url: 'https://images.unsplash.com/photo-1554080353-a576cf803bda?w=600&h=750&fit=crop', name: 'งานพิมพ์คุณภาพ ✨' },
+];

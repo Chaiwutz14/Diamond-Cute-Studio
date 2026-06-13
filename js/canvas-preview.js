@@ -220,7 +220,7 @@ window.initPreviewTool = async function(options = {}) {
     '<div class="preview-tool-inner">',
       '<div class="preview-howto">💡 <strong>วิธีใช้:</strong> อัปโหลดรูปของคุณ → เลือกแบบ → เห็นตัวอย่างจริงทันที → กด 💾 บันทึกภาพได้</div>',
       '<div style="position:relative;text-align:center;margin-bottom:.9rem">',
-        '<canvas id="preview-canvas" style="border-radius:var(--r-xl);border:1.5px solid var(--border);box-shadow:var(--shadow-card);max-width:100%;cursor:pointer" title="คลิกเพื่ออัปโหลดรูป"></canvas>',
+        '<canvas id="preview-canvas" style="border-radius:var(--r-xl);border:1.5px solid var(--border);box-shadow:var(--shadow-card);max-width:100%;height:auto;cursor:pointer;display:block;margin:0 auto" title="คลิกเพื่ออัปโหลดรูป"></canvas>',
         '<div id="preview-upload-hint" class="preview-hint">📌 คลิกที่รูป หรือกดปุ่มด้านล่างเพื่ออัปโหลด</div>',
       '</div>',
       '<div style="display:flex;gap:.5rem;margin-bottom:.9rem">',
