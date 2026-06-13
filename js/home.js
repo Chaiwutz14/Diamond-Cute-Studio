@@ -445,15 +445,8 @@ async function loadCategoryCounts() {
     const db = await DMC.getFirebaseReady();
 
     // map ชื่อหมวด → slug + emoji (ทั้ง built-in และ custom)
-    const BUILTIN = [
-      { slug:'polaroid',      name:'รูปโพลารอยด์', match:['โพลารอยด์','รูปโพลารอยด์','polaroid'], emoji:'📸' },
-      { slug:'lanyard',       name:'บัตรแขวนคอ',   match:['บัตรแขวนคอ','lanyard'],               emoji:'🪪' },
-      { slug:'business-card', name:'นามบัตร',       match:['นามบัตร','business-card'],            emoji:'💼' },
-      { slug:'shop-sign',     name:'ป้ายร้านค้า',   match:['ป้ายร้านค้า','shop-sign'],            emoji:'🏪' },
-      { slug:'qrcode',        name:'QR Code',       match:['qr code','qrcode','QR Code'],         emoji:'📱' },
-      { slug:'doll-tag',      name:'ป้ายตุ๊กตา',    match:['ป้ายตุ๊กตา','doll-tag'],              emoji:'🧸' },
-      { slug:'student-card',  name:'บัตรนักเรียน',  match:['บัตรนักเรียน','student-card'],         emoji:'🎓' },
-    ];
+    // หมวดหมู่จาก module กลาง (js/categories.js)
+    const BUILTIN = (window.DMCCat ? DMCCat.BUILTIN : []);
 
     const snap = await db.collection('products').get();
     const counts = {};
@@ -469,14 +462,8 @@ async function loadCategoryCounts() {
       return matches.reduce((s, m) => s + (counts[m.toLowerCase()] || 0), 0);
     }
 
-    // โหลด custom categories เพิ่ม
-    let customCats = [];
-    try {
-      const cs = await db.collection('categories').get();
-      cs.forEach(d => { const x = d.data(); customCats.push({ slug:x.slug||d.id, name:x.name||d.id, emoji:x.emoji||'🏷️', match:[(x.name||'').toLowerCase()] }); });
-    } catch(e) {}
-
-    const allCats = BUILTIN.concat(customCats.filter(cc => !BUILTIN.some(b => b.name === cc.name)));
+    // built-in + custom จาก module กลาง
+    const allCats = window.DMCCat ? await DMCCat.loadAll(db) : BUILTIN;
 
     // สร้างการ์ดใหม่
     let html = '';

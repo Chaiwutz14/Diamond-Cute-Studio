@@ -5,14 +5,7 @@
 
 // ─── Firebase Config ───
 // TODO: Replace with your actual Firebase project config
-const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyB7bssyVp57OOX2Q0PDcmjdL259VuEOP-0",
-  authDomain:        "diamond-cute-studio.firebaseapp.com",
-  projectId:         "diamond-cute-studio",
-  storageBucket:     "diamond-cute-studio.firebasestorage.app",
-  messagingSenderId: "896135008460",
-  appId:             "1:896135008460:web:be9bb385f3aca1533f3269"
-};
+const FIREBASE_CONFIG = (window.DMC_CONFIG || {}).FIREBASE_CONFIG || {};
 
 // ─── Firebase Ready Promise ───
 let _db = null;
@@ -70,11 +63,23 @@ function getFirebaseReady() {
 function getDb() { return _db; }
 
 // ─── ImgBB Upload ───
-const IMGBB_API_KEY = "df00a7ad6294a89bc99d7c6f900e7393"; // TODO: replace
+const IMGBB_API_KEY = (window.DMC_CONFIG || {}).IMGBB_API_KEY || ""; // TODO: replace
 
 async function uploadToImgBB(file) {
   // บีบอัดอัตโนมัติ (ยกเว้น PNG เทมเพลตที่ส่ง compressImage มาก่อนแล้ว)
   try { if (file && file.type && file.type.startsWith('image/') && file.type !== 'image/png') file = await compressImage(file); } catch(e) {}
+
+  // ⭐ แนะนำ: อัปผ่าน Cloudflare Worker → API key ไม่หลุดสู่สาธารณะ
+  const proxy = (window.DMC_CONFIG || {}).UPLOAD_PROXY_URL || '';
+  if (proxy) {
+    const fd = new FormData();
+    fd.append('image', file);
+    const res = await fetch(proxy, { method: 'POST', body: fd });
+    if (!res.ok) throw new Error('อัปโหลดผ่าน Worker ไม่สำเร็จ (' + res.status + ')');
+    const data = await res.json();
+    if (!data.url) throw new Error(data.error || 'Worker ไม่คืน URL รูป');
+    return { url: data.url, deleteUrl: data.deleteUrl || '' };
+  }
   const formData = new FormData();
   formData.append('image', file);
 
@@ -94,7 +99,7 @@ async function uploadToImgBB(file) {
 }
 
 // ─── Cloudflare Worker LINE Notify ───
-const CF_WORKER_URL = "https://dmc-studio-notify.peeza1482546.workers.dev"; // TODO: replace
+const CF_WORKER_URL = (window.DMC_CONFIG || {}).CF_WORKER_URL || ""; // TODO: replace
 
 async function sendLineNotify(payload) {
   try {

@@ -81,7 +81,7 @@ function renderSummary() {
   if (!rowsEl) return;
 
   const subtotal   = DMC.getCartTotal();
-  const shipping   = selectedPayment === 'cod' ? 80 : 50;
+  const shipping   = selectedPayment === 'cod' ? ((window.DMC_CONFIG||{}).SHIPPING||{}).cod ?? 80 : ((window.DMC_CONFIG||{}).SHIPPING||{}).transfer ?? 50;
   const discount   = couponDiscount;
   const grandTotal = Math.max(0, subtotal + shipping - discount);
 
@@ -356,7 +356,7 @@ async function submitOrder() {
   const orderId = DMC.generateOrderId();
 
   const subtotal  = DMC.getCartTotal();
-  const shipping  = selectedPayment === 'cod' ? 80 : 50;   // COD ฿80 (รวมค่าธรรมเนียม) / โอน ฿50
+  const shipping  = selectedPayment === 'cod' ? (((window.DMC_CONFIG||{}).SHIPPING||{}).cod ?? 80) : (((window.DMC_CONFIG||{}).SHIPPING||{}).transfer ?? 50);
   const total     = Math.max(0, subtotal + shipping - couponDiscount);
 
   const orderData = {

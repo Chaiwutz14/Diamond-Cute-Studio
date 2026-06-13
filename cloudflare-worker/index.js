@@ -4,7 +4,8 @@
  *
  * Secrets (set in Dashboard → Settings → Variables and Secrets):
  *   LINE_TOKEN   = Channel Access Token
- *   LINE_USER_ID = User ID (U-prefix)
+ *   LINE_USER_ID = User ID (U-prefix) — หลายคนคั่นด้วย ,
+ *   IMGBB_KEY    = ImgBB API key (สำหรับ /upload — key ไม่หลุดสู่หน้าเว็บ)
  */
 
 export default {
@@ -16,6 +17,36 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    // ─── POST /upload — proxy อัปรูปขึ้น ImgBB (key เป็น secret) ───
+    if (request.method === 'POST' && url.pathname === '/upload') {
+      try {
+        if (!env.IMGBB_KEY) {
+          return cors(JSON.stringify({ error: 'IMGBB_KEY not set in Worker secrets' }), 500);
+        }
+        const inForm = await request.formData();
+        const img = inForm.get('image');
+        if (!img) return cors(JSON.stringify({ error: 'no image field' }), 400);
+
+        const outForm = new FormData();
+        outForm.append('image', img);   // รองรับทั้ง File และ base64 string
+
+        const res = await fetch('https://api.imgbb.com/1/upload?key=' + env.IMGBB_KEY, {
+          method: 'POST',
+          body: outForm,
+        });
+        const data = await res.json();
+        if (!data.success) {
+          return cors(JSON.stringify({ error: (data.error && data.error.message) || 'imgbb failed' }), 502);
+        }
+        return cors(JSON.stringify({
+          url: data.data.url,
+          deleteUrl: data.data.delete_url || '',
+        }), 200);
+      } catch (e) {
+        return cors(JSON.stringify({ error: e.message }), 500);
+      }
+    }
 
     // ─── POST /notify ───────────────────────────
     if (request.method === 'POST' && url.pathname === '/notify') {

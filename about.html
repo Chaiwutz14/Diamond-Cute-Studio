@@ -219,6 +219,7 @@
 <div id="footer-mount"></div>
 <div id="toast-container"></div>
 <script src="js/loading.js"></script>
+<script src="js/config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/cms.js"></script>
 <script src="js/navbar.js"></script>
@@ -226,47 +227,10 @@
 <script src="js/bottom-nav.js"></script>
 <script src="js/theme-switcher.js"></script>
 <script src="js/admin-access.js"></script>
-<script>
-  // FAQ accordion
-  document.querySelectorAll('.faq-q').forEach(function(q){
-    q.addEventListener('click', function(){
-      var item = q.closest('.faq-item');
-      item.classList.toggle('open');
-    });
-  });
-</script>
-<script>
-// ── FAQ จากหลังบ้าน (CMS) — มีข้อมูลจึงแทนที่ค่า default ──
-(function(){
-  if (typeof CMS === 'undefined') return;
-  CMS.get().then(function(c){
-    var faq = c.faq || [];
-    if (!faq.length) return;
-    var wrap = document.getElementById('faq-list');
-    if (!wrap) return;
-    wrap.innerHTML = '';
-    faq.forEach(function(f){
-      var item = document.createElement('div');
-      item.className = 'faq-item';
-      var q = document.createElement('div');
-      q.className = 'faq-q';
-      q.textContent = f.q + ' ';
-      var arrow = document.createElement('span');
-      arrow.className = 'arrow';
-      arrow.textContent = '▼';
-      q.appendChild(arrow);
-      var ans = document.createElement('div');
-      ans.className = 'faq-a';
-      ans.textContent = f.a;
-      q.addEventListener('click', function(){ item.classList.toggle('open'); });
-      item.appendChild(q);
-      item.appendChild(ans);
-      wrap.appendChild(item);
-    });
-  }).catch(function(){});
-})();
-</script>
+
+
 <script src="js/sw-register.js"></script>
 <script src="js/pwa-install.js"></script>
+<script src="js/about-page.js"></script>
 </body>
 </html>
