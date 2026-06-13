@@ -334,3 +334,19 @@
 .qr-save-btn:hover { opacity: .85; }
 /* บังคับ QR ให้อ่านง่ายแม้ในธีมมืด (เป็นการ์ดขาวเสมอ) */
 [data-theme] .qr-pay-card { background: #fff; }
+
+/* ══════════════════════════════════════════════
+   V17 — ช่องทางชำระเงินที่ยังไม่พร้อม
+══════════════════════════════════════════════ */
+.payment-method.pay-disabled {
+  opacity: .55; cursor: not-allowed; position: relative;
+  background: var(--bg-mid);
+}
+.payment-method.pay-disabled:hover { border-color: var(--border); transform: none; }
+.payment-method.pay-disabled .pay-radio { opacity: .4; }
+.pay-soon {
+  display: inline-block; font-size: .68rem; font-weight: 700;
+  background: var(--gold-soft, #fff3e0); color: var(--gold-deep, #b8860b);
+  padding: .12rem .5rem; border-radius: var(--r-pill); margin-left: .35rem;
+  vertical-align: middle; font-family: var(--font-display);
+}

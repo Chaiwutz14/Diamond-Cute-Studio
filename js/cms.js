@@ -47,6 +47,14 @@ window.CMS = (function(){
       promptpayId:   '',      // เบอร์/เลขบัตรประชาชนพร้อมเพย์ — ใช้สร้าง QR อัตโนมัติ
       promptpayName: '',      // ชื่อบัญชี แสดงใต้ QR
       qrImageUrl:    '',      // ถ้าอัปโหลดรูป QR เอง จะใช้รูปนี้แทน QR อัตโนมัติ
+      // ช่องทางชำระเงิน — แอดมินเปิด/ปิด + ตั้งสถานะพร้อม/ไม่พร้อมได้
+      // shown = แสดงในหน้าเว็บ, ready = กดเลือกได้ (false = ขึ้น "เร็วๆ นี้")
+      methods: {
+        promptpay: { shown: true,  ready: true  },
+        cod:       { shown: true,  ready: true  },
+        truemoney: { shown: false, ready: false },
+        credit:    { shown: false, ready: false },
+      },
     },
     faq: [
       { q: 'ใช้เวลาผลิตกี่วัน?',        a: 'ส่วนใหญ่ 1-3 วันทำการ ขึ้นกับจำนวนและประเภทงาน หากเร่งด่วนแจ้งทาง LINE ได้เลยครับ' },
@@ -55,6 +63,18 @@ window.CMS = (function(){
       { q: 'แก้ไขงานได้ไหม?',           a: 'แก้ไขได้ฟรีก่อนเริ่มผลิต หลังผลิตแล้วขึ้นกับกรณีครับ' },
     ],
     announce: { active: false, text: '' },
+    // เนื้อหาหน้าต่างๆ ที่แอดมินแก้ inline บนหน้าบ้านได้
+    pages: {
+      about: {
+        title:    'วิธีสั่งซื้อ',
+        subtitle: 'สั่งง่ายๆ ไม่กี่ขั้นตอน ส่งทั่วไทย',
+        stepsHead: '🚀 ขั้นตอนการสั่งซื้อ',
+      },
+      gallery: {
+        title:    'ตัวอย่างงาน',
+        subtitle: 'ผลงานจริงจากลูกค้า คุณภาพที่คุณมั่นใจได้',
+      },
+    },
   };
 
   const CACHE_KEY = 'dmc_cms_cache_v1';

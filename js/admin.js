@@ -1487,6 +1487,7 @@ async function loadContentCMS(container) {
     <div class="admin-topbar">
       <div class="admin-greeting"><h2>📝 เนื้อหาเว็บไซต์</h2><p>แก้ไขข้อความหน้าบ้านทั้งหมด — บันทึกแล้วมีผลทันที</p></div>
       <div class="admin-topbar-actions">
+        <a href="about.html?edit=1" class="btn btn-ghost btn-md" style="border-radius:var(--r-lg)" title="ไปแก้เนื้อหาบนหน้าเว็บจริงแบบเห็นภาพ">✏️ แก้บนหน้าเว็บจริง</a>
         <button class="btn btn-primary btn-md" id="cms-save-btn">💾 บันทึกทั้งหมด</button>
       </div>
     </div>
@@ -1569,6 +1570,18 @@ async function loadContentCMS(container) {
       <div id="cms-qr-preview" style="text-align:center"></div>
     </div>
 
+    <!-- ช่องทางชำระเงิน (เปิด/ปิด + พร้อม/ไม่พร้อม) -->
+    <div class="admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">🔘 ช่องทางชำระเงิน</div></div>
+      <p style="font-size:.82rem;color:var(--text-2);line-height:1.6;margin-bottom:.9rem">
+        เลือกช่องทางที่จะแสดงในหน้าชำระเงิน และตั้งสถานะว่าพร้อมใช้งานหรือยัง
+      </p>
+      <div id="cms-pay-methods-list"></div>
+      <div style="font-size:.74rem;color:var(--text-3);margin-top:.6rem;line-height:1.6">
+        💡 <strong>แสดงในเว็บ</strong> = ลูกค้าเห็นช่องทางนี้ &nbsp;·&nbsp; <strong>พร้อมใช้งาน</strong> = กดเลือกได้ (ปิด = ขึ้น "เร็วๆ นี้" กดไม่ได้)
+      </div>
+    </div>
+
     <!-- FAQ -->
     <div class="admin-box" style="grid-column:1/-1">
       <div class="admin-box-header">
@@ -1601,6 +1614,51 @@ async function loadContentCMS(container) {
   }
   renderFaqList();
   document.getElementById('cms-faq-add')?.addEventListener('click', () => { faqData.push({ q:'', a:'' }); renderFaqList(); });
+
+  // ── ช่องทางชำระเงิน: render toggles ──
+  const PAY_META = {
+    promptpay: { icon:'📱', name:'PromptPay',          sub:'โอน QR พร้อมเพย์' },
+    cod:       { icon:'🚚', name:'เก็บเงินปลายทาง',     sub:'COD' },
+    truemoney: { icon:'💰', name:'TrueMoney Wallet',    sub:'ทรูมันนี่ วอลเล็ท' },
+    credit:    { icon:'💳', name:'บัตรเครดิต/เดบิต',     sub:'Visa · Mastercard' },
+  };
+  const payMethodsCfg = JSON.parse(JSON.stringify(
+    (content.payment && content.payment.methods) || {
+      promptpay:{shown:true,ready:true}, cod:{shown:true,ready:true},
+      truemoney:{shown:false,ready:false}, credit:{shown:false,ready:false}
+    }
+  ));
+  // เผื่อ key ใหม่ที่ยังไม่มีใน data เก่า
+  ['promptpay','cod','truemoney','credit'].forEach(k => { if (!payMethodsCfg[k]) payMethodsCfg[k] = {shown:false,ready:false}; });
+
+  function renderPayMethods() {
+    const box = document.getElementById('cms-pay-methods-list');
+    if (!box) return;
+    box.innerHTML = ['promptpay','cod','truemoney','credit'].map(key => {
+      const m = PAY_META[key];
+      const c = payMethodsCfg[key];
+      return `
+        <div style="display:flex;align-items:center;gap:.7rem;padding:.7rem .2rem;border-bottom:1px solid var(--border)">
+          <span style="font-size:1.4rem">${m.icon}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--font-display);font-weight:700;font-size:.9rem;color:var(--text-1)">${m.name}</div>
+            <div style="font-size:.74rem;color:var(--text-3)">${m.sub}</div>
+          </div>
+          <label class="cms-pay-toggle" title="แสดงในเว็บ">
+            <input type="checkbox" class="cms-pay-shown" data-k="${key}" ${c.shown ? 'checked' : ''}>
+            <span class="cms-pay-toggle-label">แสดง</span>
+          </label>
+          <label class="cms-pay-toggle" title="พร้อมใช้งาน">
+            <input type="checkbox" class="cms-pay-ready" data-k="${key}" ${c.ready ? 'checked' : ''}>
+            <span class="cms-pay-toggle-label">พร้อม</span>
+          </label>
+        </div>`;
+    }).join('');
+    box.querySelectorAll('.cms-pay-shown').forEach(el => el.addEventListener('change', () => { payMethodsCfg[el.dataset.k].shown = el.checked; }));
+    box.querySelectorAll('.cms-pay-ready').forEach(el => el.addEventListener('change', () => { payMethodsCfg[el.dataset.k].ready = el.checked; }));
+  }
+  renderPayMethods();
+  window._getPayMethodsCfg = () => payMethodsCfg;  // ให้ปุ่มบันทึกอ่านค่า
 
   // ── QR upload + live preview ──
   const qrFile = document.getElementById('cms-qr-file');
@@ -1636,7 +1694,7 @@ async function loadContentCMS(container) {
       stats: { orders: g('cms-stat-orders'), rating: g('cms-stat-rating'), days: g('cms-stat-days') },
       promo: { active: !!document.getElementById('cms-promo-active')?.checked, tag: g('cms-promo-tag'), title: g('cms-promo-title'), desc: g('cms-promo-desc'), btnText: g('cms-promo-btn'), btnLink: 'catalog.html' },
       contact: { line: g('cms-ct-line'), lineLabel: g('cms-ct-linelabel'), facebook: g('cms-ct-fb'), instagram: g('cms-ct-ig'), tiktok: g('cms-ct-tiktok'), email: g('cms-ct-email'), phone: g('cms-ct-phone'), hours: g('cms-ct-hours') },
-      payment: { promptpayId: g('cms-pay-id'), promptpayName: g('cms-pay-name'), qrImageUrl: g('cms-pay-qrimg') },
+      payment: { promptpayId: g('cms-pay-id'), promptpayName: g('cms-pay-name'), qrImageUrl: g('cms-pay-qrimg'), methods: (window._getPayMethodsCfg ? window._getPayMethodsCfg() : undefined) },
       faq: faqData.filter(f => f.q.trim() && f.a.trim()),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     };

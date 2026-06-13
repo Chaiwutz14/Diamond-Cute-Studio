@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try { db = await DMC.getFirebaseReady(); } catch {}
   renderCart();
   bindStepNavigation();
-  bindPaymentMethods();
+  renderPaymentMethods();
   bindFileUpload();
   bindSlipUpload();
   bindCoupon();
@@ -202,24 +202,79 @@ function highlightError(id, message) {
 }
 
 // ─── Payment Methods ───
+// ─── ช่องทางชำระเงิน (เมตาดาต้า) ───
+const PAY_METHODS_META = {
+  promptpay: { icon: '📱', name: 'PromptPay QR',          desc: 'สแกน QR Code แล้วแนบสลิปโอนเงิน' },
+  cod:       { icon: '🚚', name: 'เก็บเงินปลายทาง (COD)', desc: 'ชำระเมื่อได้รับสินค้า มีค่าธรรมเนียมเพิ่ม' },
+  truemoney: { icon: '💰', name: 'TrueMoney Wallet',      desc: 'ชำระผ่านทรูมันนี่ วอลเล็ท' },
+  credit:    { icon: '💳', name: 'บัตรเครดิต/เดบิต',       desc: 'Visa · Mastercard · JCB' },
+};
+
+async function renderPaymentMethods() {
+  const wrap = document.getElementById('payment-methods');
+  if (!wrap) return;
+
+  // ดึงการตั้งค่าช่องทางจาก CMS (แอดมินกำหนด)
+  let cfg = { promptpay:{shown:true,ready:true}, cod:{shown:true,ready:true} };
+  try {
+    if (typeof CMS !== 'undefined') {
+      const content = await CMS.get();
+      if (content.payment && content.payment.methods) cfg = content.payment.methods;
+    }
+  } catch(e) {}
+
+  // เรียงตามลำดับมาตรฐาน + แสดงเฉพาะที่ shown
+  const order = ['promptpay', 'cod', 'truemoney', 'credit'];
+  const visible = order.filter(k => cfg[k] && cfg[k].shown);
+  if (visible.length === 0) visible.push('promptpay');  // กันว่าง
+
+  // เลือกตัวแรกที่ "พร้อมใช้งาน" เป็นค่าเริ่มต้น
+  const firstReady = visible.find(k => cfg[k] && cfg[k].ready) || visible[0];
+  selectedPayment = firstReady;
+
+  wrap.innerHTML = visible.map(key => {
+    const meta = PAY_METHODS_META[key];
+    const ready = !!(cfg[key] && cfg[key].ready);
+    const isSel = (key === firstReady);
+    return `
+      <div class="payment-method ${isSel ? 'selected' : ''} ${ready ? '' : 'pay-disabled'}" data-method="${key}" ${ready ? '' : 'data-disabled="1"'}>
+        <div class="pay-icon-wrap">${meta.icon}</div>
+        <div class="pay-info">
+          <div class="pay-name">${meta.name}${ready ? '' : ' <span class="pay-soon">🔜 เร็วๆ นี้</span>'}</div>
+          <div class="pay-desc">${meta.desc}</div>
+        </div>
+        <div class="pay-radio"></div>
+      </div>`;
+  }).join('');
+
+  bindPaymentMethods();
+  updatePaymentUI();
+}
+
 function bindPaymentMethods() {
   const methods = document.querySelectorAll('.payment-method');
-  const qrBox   = document.getElementById('qr-box');
-  const slipWrap = document.getElementById('slip-upload-wrap');
-
   methods.forEach(m => {
     m.addEventListener('click', () => {
+      if (m.dataset.disabled) {            // ช่องทางที่ยังไม่พร้อม — กดไม่ได้
+        DMC.toast('ช่องทางนี้กำลังเปิดให้บริการเร็วๆ นี้ 🔜', 'info');
+        return;
+      }
       methods.forEach(x => x.classList.remove('selected'));
       m.classList.add('selected');
       selectedPayment = m.dataset.method;
-
-      const isQR = selectedPayment === 'promptpay';
-      if (qrBox)    qrBox.classList.toggle('visible', isQR);
-      if (slipWrap) slipWrap.style.display = isQR ? '' : 'none';
-
+      updatePaymentUI();
       renderSummary();
     });
   });
+}
+
+// แสดง/ซ่อน QR + slip ตามช่องทางที่เลือก
+function updatePaymentUI() {
+  const qrBox = document.getElementById('qr-box');
+  const slipWrap = document.getElementById('slip-upload-wrap');
+  const isQR = selectedPayment === 'promptpay';
+  if (qrBox)    qrBox.classList.toggle('visible', isQR);
+  if (slipWrap) slipWrap.style.display = isQR ? '' : 'none';
 }
 
 // ─── File Upload (photos) ───

@@ -48,7 +48,7 @@ name · cat (slug) · image (URL) · emoji · size('tall'/'wide'/'') · active(b
 > โค้ดอ่านเผื่อ field เก่า: imageUrl, url, title, category
 
 ## siteContent/main — เนื้อหาเว็บ (CMS, doc เดียว)
-hero{badge,title1,title2,title3,desc} · promo{active,tag,title,desc,btnText,btnLink} · stats{orders,rating,days} · contact{line,lineLabel,facebook,instagram,tiktok,email,phone,hours} · payment{promptpayId,promptpayName,qrImageUrl} · faq[{q,a}]
+hero{badge,title1,title2,title3,desc} · promo{active,tag,title,desc,btnText,btnLink} · stats{orders,rating,days} · contact{line,lineLabel,facebook,instagram,tiktok,email,phone,hours} · payment{promptpayId,promptpayName,qrImageUrl, **methods{promptpay,cod,truemoney,credit : {shown,ready}}**} · faq[{q,a}] · **pages{about{title,subtitle,stepsHead}, gallery{title,subtitle}}** (แก้ inline บนหน้าบ้านได้)
 
 ## templates — กรอบรูป PNG ของร้าน
 name · frameUrl (PNG กลางโปร่งใส) · active · createdAt
