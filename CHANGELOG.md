@@ -1,5 +1,17 @@
 # 📜 CHANGELOG — Diamond Cute Studio
 
+## V4 — หน้าแรกโฉมใหม่ (Homepage Redesign · Direction B Bright Premium)
+- 🎨 **Hero ใหม่**: การ์ดไล่สีสดใสพรีเมียม (วงตกแต่ง + เงาเรืองสีตามธีม) แทน hero เดิม
+- ✍️ **พาดหัวใหม่**: "เพราะทุกรูปภาพของคุณ ล้วนมีความหมาย"
+- 🌈 รองรับครบ **6 ธีม** (เพิ่มตัวแปร `--hg1/--hg2/--hglow/--soft` ต่อธีมใน themes.css)
+- 🧩 ส่วนใหม่: **service chips** การ์ดขาวไอคอนพื้นนุ่ม · **แถบผลงานจริง** (gallery strip เลื่อนได้) · promo/รีวิว/features จัดโทนใหม่
+- 📱 **Responsive** มือถือ→เดสก์ท็อป (chips/products 4 คอลัมน์บนจอใหญ่) + ใช้ฟอนต์ Kanit
+- 🔌 **คงทุกฟังก์ชัน + ข้อมูล Firebase จริง**: CMS (hero/promo/stats), หมวดหมู่+จำนวนจริง, สินค้าแนะนำ, รีวิว, ตะกร้า, navbar/footer/bottom-nav, theme switcher, PWA
+- 🧹 ลบ dead code: particle canvas, hero carousel/showcase, float badge เก่า
+- ✅ ผ่าน recheck: syntax ทุกไฟล์ · CSS สมดุล · ทุก ID ที่ JS ใช้มีครบ · render จริง 6 ธีม + เดสก์ท็อป ไม่มี JS error
+
+---
+
 ## Security v3 — อุดช่องโหว่ความปลอดภัย (Security Hardening)
 > รายละเอียด + ขั้นตอน Console ดูที่ `SECURITY-v3.md`
 

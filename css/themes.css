@@ -17,6 +17,8 @@
   --shadow-hover:0 8px 32px rgba(14,165,233,0.22);
   --hero-g1:rgba(14,165,233,0.13); --hero-g2:rgba(245,158,11,0.08); --hero-g3:rgba(16,185,129,0.05);
   --particle:#0EA5E9;
+  /* V4: Hero-card gradient (bright premium) + chip soft */
+  --hg1:#38BDF8; --hg2:#6366F1; --hglow:rgba(56,189,248,0.30); --soft:#E0F2FE;
   /* V2: ตัวแปรที่ขาด — เงา/ประกายตามธีม + แสงนวล hero */
   --accent-rgb:14,165,233;
   --hero-grad1:var(--hero-g1); --hero-grad2:var(--hero-g2); --hero-grad3:var(--hero-g3);
@@ -36,6 +38,8 @@
   --shadow-hover:0 8px 32px rgba(236,72,153,0.22);
   --hero-g1:rgba(236,72,153,0.10); --hero-g2:rgba(251,207,232,0.40); --hero-g3:rgba(245,158,11,0.06);
   --particle:#EC4899;
+  /* V4: Hero-card gradient (bright premium) + chip soft */
+  --hg1:#FB7AC3; --hg2:#C084FC; --hglow:rgba(236,72,153,0.28); --soft:#FCE7F3;
   /* V2: ตัวแปรที่ขาด — เงา/ประกายตามธีม + แสงนวล hero */
   --accent-rgb:236,72,153;
   --hero-grad1:var(--hero-g1); --hero-grad2:var(--hero-g2); --hero-grad3:var(--hero-g3);
@@ -55,6 +59,8 @@
   --shadow-hover:0 8px 32px rgba(16,185,129,0.22);
   --hero-g1:rgba(16,185,129,0.10); --hero-g2:rgba(52,211,153,0.15); --hero-g3:rgba(245,158,11,0.05);
   --particle:#10B981;
+  /* V4: Hero-card gradient (bright premium) + chip soft */
+  --hg1:#34D399; --hg2:#22D3EE; --hglow:rgba(16,185,129,0.28); --soft:#D1FAE5;
   /* V2: ตัวแปรที่ขาด — เงา/ประกายตามธีม + แสงนวล hero */
   --accent-rgb:16,185,129;
   --hero-grad1:var(--hero-g1); --hero-grad2:var(--hero-g2); --hero-grad3:var(--hero-g3);
@@ -74,6 +80,8 @@
   --shadow-hover:0 8px 32px rgba(249,115,22,0.22);
   --hero-g1:rgba(249,115,22,0.10); --hero-g2:rgba(251,191,36,0.15); --hero-g3:rgba(239,68,68,0.05);
   --particle:#F97316;
+  /* V4: Hero-card gradient (bright premium) + chip soft */
+  --hg1:#FB923C; --hg2:#FB7185; --hglow:rgba(251,146,60,0.30); --soft:#FFEDD5;
   /* V2: ตัวแปรที่ขาด — เงา/ประกายตามธีม + แสงนวล hero */
   --accent-rgb:249,115,22;
   --hero-grad1:var(--hero-g1); --hero-grad2:var(--hero-g2); --hero-grad3:var(--hero-g3);
@@ -93,6 +101,8 @@
   --shadow-hover:0 8px 32px rgba(139,92,246,0.22);
   --hero-g1:rgba(139,92,246,0.10); --hero-g2:rgba(167,139,250,0.20); --hero-g3:rgba(236,72,153,0.05);
   --particle:#8B5CF6;
+  /* V4: Hero-card gradient (bright premium) + chip soft */
+  --hg1:#A78BFA; --hg2:#818CF8; --hglow:rgba(124,58,237,0.26); --soft:#EDE9FE;
   /* V2: ตัวแปรที่ขาด — เงา/ประกายตามธีม + แสงนวล hero */
   --accent-rgb:139,92,246;
   --hero-grad1:var(--hero-g1); --hero-grad2:var(--hero-g2); --hero-grad3:var(--hero-g3);
@@ -112,6 +122,8 @@
   --shadow-hover:0 8px 32px rgba(56,189,248,0.16);
   --hero-g1:rgba(56,189,248,0.12); --hero-g2:rgba(252,211,77,0.06); --hero-g3:rgba(110,231,183,0.04);
   --particle:#38BDF8;
+  /* V4: Hero-card gradient (bright premium) + chip soft */
+  --hg1:#38BDF8; --hg2:#818CF8; --hglow:rgba(56,189,248,0.26); --soft:rgba(56,189,248,0.15);
   /* V2: ตัวแปรที่ขาด — เงา/ประกายตามธีม + แสงนวล hero */
   --accent-rgb:56,189,248;
   --hero-grad1:var(--hero-g1); --hero-grad2:var(--hero-g2); --hero-grad3:var(--hero-g3);

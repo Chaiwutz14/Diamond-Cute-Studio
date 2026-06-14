@@ -16,22 +16,15 @@ function homeCoverOf(p) {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-  applyCMSContent();   // เนื้อหาจากหลังบ้าน (hero/promo/stats)
-  loadHomeReviews();   // รีวิวจริงจากลูกค้า
-  showLastOrderBadge();// V.upgrade1: ป้าย "งานล่าสุด" — ใช้ข้อความ evergreen ไม่กุเวลาปลอม
-  loadCategoryCounts();// นับจำนวนสินค้าจริงต่อหมวด (เจ้าของ #categories-grid)
-  loadHeroShowcase();  // การ์ด Hero = ผลงานจริงล่าสุด (เจ้าของ hero visual)
-
-  // ─── Hero Particle Canvas ───
-  initParticles();
-
-  // V.upgrade1: ตัด initHeroCarousel() ที่ถูกเรียกซ้ำ + ชนกับ loadHeroShowcase ออก
-  // (loadHeroShowcase เป็นผู้ดูแล #hero-carousel ทั้งหมด — มีภาพ fallback เสมอ)
+  applyCMSContent();    // เนื้อหาจากหลังบ้าน (hero/promo/stats)
+  loadHomeReviews();    // รีวิวจริงจากลูกค้า
+  loadCategoryCounts(); // นับจำนวนสินค้าจริงต่อหมวด (เจ้าของ #categories-grid)
+  loadHomeGallery();    // V4: แถบผลงานจริง (#home-gallery)
 
   // ─── Load Firebase + Products ───
   try {
     const db = await DMC.getFirebaseReady();
-    await loadFeaturedProducts(db);   // V.upgrade1: หมวดหมู่จัดการโดย loadCategoryCounts แล้ว
+    await loadFeaturedProducts(db);
   } catch (e) {
     console.warn('Firebase not configured yet, showing placeholder data');
     renderPlaceholderProducts();
@@ -39,116 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ─── Intersection Observer (scroll animations) ───
   initScrollAnimations();
-
 });
-
-// ─── Particle Canvas ───
-function initParticles() {
-  const canvas = document.getElementById('hero-canvas');
-  if (!canvas) return;
-  // V.upgrade1: เคารพ prefers-reduced-motion — ไม่รันอนิเมชันถ้าผู้ใช้ตั้งค่าลดการเคลื่อนไหว
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const ctx = canvas.getContext('2d');
-
-  function resize() {
-    canvas.width  = canvas.offsetWidth  || window.innerWidth;
-    canvas.height = canvas.offsetHeight || window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize, { passive: true });
-
-  // Re-init particles when theme changes (MutationObserver on html[data-theme])
-  const observer = new MutationObserver(() => { buildParticles(); });
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-  let particles = [];
-
-  function getAccentRgb() {
-    // Read accent from computed CSS variable
-    const raw = getComputedStyle(document.documentElement)
-      .getPropertyValue('--particle-col').trim() || '#0EA5E9';
-    const hex = raw.replace('#','');
-    if (hex.length === 6) {
-      return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
-    }
-    return [14,165,233];
-  }
-
-  function buildParticles() {
-    const COUNT = 48;
-    particles = [];
-    for (let i = 0; i < COUNT; i++) {
-      const useGold = Math.random() > 0.72;
-      particles.push({
-        x:  Math.random() * canvas.width,
-        y:  Math.random() * canvas.height,
-        r:  Math.random() * 1.4 + 0.5,
-        dx: (Math.random() - 0.5) * 0.32,
-        dy: (Math.random() - 0.5) * 0.32,
-        alpha: Math.random() * 0.45 + 0.12,
-        useGold,
-      });
-    }
-  }
-  buildParticles();
-
-  let raf;
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const [ar, ag, ab] = getAccentRgb();
-
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const ddx = particles[i].x - particles[j].x;
-        const ddy = particles[i].y - particles[j].y;
-        const dist = Math.sqrt(ddx*ddx + ddy*ddy);
-        if (dist < 108) {
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(${ar},${ag},${ab},${0.07 * (1 - dist/108)})`;
-          ctx.lineWidth = 0.7;
-          ctx.stroke();
-        }
-      }
-    }
-
-    particles.forEach(p => {
-      p.x += p.dx; p.y += p.dy;
-      if (p.x < 0 || p.x > canvas.width)  p.dx *= -1;
-      if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
-
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      if (p.useGold) {
-        ctx.fillStyle = `rgba(245,158,11,${p.alpha})`;
-      } else {
-        ctx.fillStyle = `rgba(${ar},${ag},${ab},${p.alpha})`;
-      }
-      ctx.fill();
-    });
-
-    raf = requestAnimationFrame(draw);
-  }
-
-  // Stop animation when tab hidden (perf)
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { cancelAnimationFrame(raf); }
-    else { draw(); }
-  });
-
-  // V.upgrade1: หยุดวาดเมื่อ hero เลื่อนพ้นจอ (ประหยัดแบตมือถือ)
-  if (window.IntersectionObserver) {
-    let onScreen = true;
-    new IntersectionObserver((entries) => {
-      const vis = entries[0].isIntersecting;
-      if (vis && !onScreen) { onScreen = true; draw(); }
-      else if (!vis && onScreen) { onScreen = false; cancelAnimationFrame(raf); }
-    }, { threshold: 0 }).observe(canvas);
-  }
-
-  draw();
-}
 
 // ─── Load Featured Products ───
 async function loadFeaturedProducts(db) {
@@ -323,7 +207,7 @@ function initScrollAnimations() {
   });
 }
 
-// V2: ลบฟังก์ชัน initHeroCarousel ที่เป็น dead code (เลิกใช้ตั้งแต่ upgrade1 — loadHeroShowcase ดูแล hero แทน)
+// V4: หน้าแรกออกแบบใหม่ (Direction B) — hero เป็นการ์ดไล่สี ไม่มี carousel/particle อีกต่อไป
 
 // ─── CMS: เนื้อหาหน้าแรกจากหลังบ้าน ───────────
 async function applyCMSContent() {
@@ -381,14 +265,6 @@ async function loadHomeReviews() {
   }
 }
 
-// ─── V.upgrade1: ป้ายสถานะร้าน (เลิกกุเวลาออเดอร์ปลอม) ───
-// หมายเหตุ: ดึงออเดอร์จริงมาโชว์ที่หน้าแรกไม่ได้ เพราะ Firestore rules ห้าม list ออเดอร์แบบสาธารณะ
-// จึงใช้ข้อความ evergreen ที่เป็นจริงเสมอแทน
-function showLastOrderBadge() {
-  const el = document.querySelector('.float-badge-text span');
-  if (el) el.textContent = 'เปิดรับงานทุกวัน · ส่งทั่วไทย';
-}
-
 // ─── นับจำนวนสินค้าจริงต่อหมวด + รองรับหมวด custom ───
 async function loadCategoryCounts() {
   const grid = document.getElementById('categories-grid');
@@ -438,65 +314,34 @@ async function loadCategoryCounts() {
 }
 
 // ─── Hero showcase: ใช้ผลงานจริงล่าสุด 2-4 ชิ้น ───
-async function loadHeroShowcase() {
+async function loadHomeGallery() {
   if (typeof DMC === 'undefined') return;
-  const mobileStage = document.getElementById('hero-mobile-showcase');  // มือถือ (Header แบบ 4)
-  const deskStage   = document.getElementById('hero-carousel');         // เดสก์ท็อป
-  if (!mobileStage && !deskStage) return;
+  const wrap = document.getElementById('home-gallery');
+  const section = document.getElementById('home-gallery-section');
+  if (!wrap) return;
 
-  let pick = [];
+  let imgs = [];
   try {
     const db = await DMC.getFirebaseReady();
     const snap = await db.collection('gallery').limit(20).get();
-    const imgs = [];
     snap.forEach(doc => {
       const x = doc.data();
       if (x.active === false) return;
       const url = x.image || x.imageUrl || x.url;
       if (url) imgs.push({ url, name: x.name || x.title || 'ผลงาน' });
     });
-    pick = imgs.slice(0, Math.min(4, imgs.length));
   } catch (e) { /* ออฟไลน์ → ใช้ fallback */ }
 
-  // ยังไม่มีรูปจริง → ภาพ fallback สวยๆ (ธีมงานพิมพ์/ความทรงจำ)
-  const usingFallback = (pick.length < 2);
-  if (usingFallback) {
-    pick = HERO_FALLBACK_IMAGES.slice();
-  }
+  // ยังไม่มีรูปจริงพอ → ใช้ภาพ fallback (ธีมงานพิมพ์/ความทรงจำ)
+  if (imgs.length < 3) imgs = HERO_FALLBACK_IMAGES.slice();
+  imgs = imgs.slice(0, 8);
 
-  function showcaseHTML() {
-    return pick.map((p, i) => '<div class="hsc-card ' + (i === 0 ? 'on' : '') + '" data-i="' + i + '">'
-        + '<img src="' + p.url + '" alt="' + DMC.escapeHtml(p.name) + '" loading="eager" data-emoji="🖼️">'
-        + '<div class="hsc-cap">' + DMC.escapeHtml(p.name) + '</div></div>').join('')
-      + '<div class="hsc-dots">' + pick.map((p, i) => '<span class="hsc-dot ' + (i === 0 ? 'on' : '') + '"></span>').join('') + '</div>';
-  }
+  wrap.innerHTML = imgs.map(p =>
+    '<div class="hp-gcard"><img src="' + DMC.escapeHtml(p.url) + '" alt="' + DMC.escapeHtml(p.name) + '" loading="lazy">'
+    + '<div class="hp-gcap">' + DMC.escapeHtml(p.name) + '</div></div>'
+  ).join('');
 
-  // มือถือ: ใส่ตรงๆ ใน container (CSS จัด absolute ให้แล้ว)
-  if (mobileStage) mobileStage.innerHTML = showcaseHTML();
-  // เดสก์ท็อป: ห่อ .hero-showcase (ไม่แตะ hero-float-badge)
-  if (deskStage) deskStage.innerHTML = '<div class="hero-showcase" id="hero-showcase">' + showcaseHTML() + '</div>';
-
-  if (pick.length < 2) return;
-  let idx = 0;
-  setInterval(() => {
-    [mobileStage, deskStage].forEach(stage => {
-      if (!stage) return;
-      const cards = stage.querySelectorAll('.hsc-card');
-      const dots = stage.querySelectorAll('.hsc-dot');
-      if (!cards.length) return;
-      cards[idx % cards.length].classList.remove('on');
-      dots[idx % dots.length].classList.remove('on');
-    });
-    idx = (idx + 1) % pick.length;
-    [mobileStage, deskStage].forEach(stage => {
-      if (!stage) return;
-      const cards = stage.querySelectorAll('.hsc-card');
-      const dots = stage.querySelectorAll('.hsc-dot');
-      if (!cards.length) return;
-      cards[idx % cards.length].classList.add('on');
-      dots[idx % dots.length].classList.add('on');
-    });
-  }, 3000);
+  if (typeof Loading !== 'undefined' && Loading.staggerItems) Loading.staggerItems('#home-gallery .hp-gcard', 60);
 }
 
 // รูป fallback (ใช้เมื่อร้านยังไม่อัปผลงานจริง) — ธีมงานพิมพ์/ความทรงจำ สัดส่วน 4:5
