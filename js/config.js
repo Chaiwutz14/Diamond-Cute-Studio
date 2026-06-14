@@ -28,11 +28,20 @@ window.DMC_CONFIG = {
   ADMIN_EMAIL: '',
 
   // ── อัปโหลดรูป ──
-  // แนะนำ: ใช้ผ่าน Cloudflare Worker (key ไม่หลุด) → ใส่ URL Worker + /upload
-  // เช่น 'https://dmc-studio-notify.xxx.workers.dev/upload'
-  UPLOAD_PROXY_URL: '',
-  // สำรอง: เรียก ImgBB ตรง (key เปิดเผยในหน้าเว็บ)
-  IMGBB_API_KEY: 'df00a7ad6294a89bc99d7c6f900e7393',
+  // V3 Security: อัปผ่าน Cloudflare Worker เท่านั้น (ImgBB key เป็น secret ฝั่ง Worker — ไม่เปิดในหน้าเว็บ)
+  // ⚠️ ต้องตั้ง secret IMGBB_KEY ใน Worker (Dashboard → Settings → Variables and Secrets)
+  UPLOAD_PROXY_URL: 'https://dmc-studio-notify.peeza1482546.workers.dev/upload',
+  // V3: ลบ key ออกจากฝั่ง client แล้ว (กัน quota/abuse) — เว้นว่างไว้
+  IMGBB_API_KEY: '',
+
+  // V3 Security: Firebase App Check — กันการยิง Firestore/Auth ตรงด้วย config สาธารณะ
+  // ขอ site key (reCAPTCHA v3) ที่ Firebase Console → App Check → เว็บแอป → reCAPTCHA v3
+  // เว้นว่าง = ปิด App Check (ระบบยังทำงานปกติ)
+  APP_CHECK_SITE_KEY: '',
+
+  // V3 Security: เก็บสลิป/รูปลูกค้าใน Firebase Storage แบบ private (แทน ImgBB สาธารณะ)
+  // ต้องเปิด Firebase Storage + deploy storage.rules ก่อน แล้วตั้งเป็น true
+  PRIVATE_UPLOADS: false,
 
   // ── แจ้งเตือน LINE ผ่าน Cloudflare Worker ──
   CF_WORKER_URL: 'https://dmc-studio-notify.peeza1482546.workers.dev',

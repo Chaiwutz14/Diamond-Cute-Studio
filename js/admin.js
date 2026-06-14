@@ -41,6 +41,25 @@ const BUILTIN_TEMPLATES = [
   { id:'cute',    name:'Cute',    emoji:'🎀' },
 ];
 
+// V3 Security: แสดงสถานะความปลอดภัยตามค่าจริงใน config (ไม่โชว์คำรับรองเกินจริง)
+function securityRows() {
+  const cfg = window.DMC_CONFIG || {};
+  const hasAuth     = !!(cfg.ADMIN_EMAIL || '').trim();
+  const hasAppCheck = !!(cfg.APP_CHECK_SITE_KEY || '').trim();
+  const rows = [];
+  rows.push(hasAuth
+    ? '<div class="security-row ok">✅ ยืนยันตัวตนด้วย Firebase Auth (เซิร์ฟเวอร์ตรวจสอบ)</div>'
+    : '<div class="security-row" style="color:var(--danger);font-weight:600">⚠️ ยังไม่เปิด Firebase Auth — ตั้ง ADMIN_EMAIL + deploy กฎ secure</div>');
+  rows.push(hasAppCheck
+    ? '<div class="security-row ok">✅ Firebase App Check (กันยิง API ตรง)</div>'
+    : '<div class="security-row" style="color:var(--gold-deep);font-weight:600">⚠️ ยังไม่เปิด App Check — ตั้ง APP_CHECK_SITE_KEY</div>');
+  rows.push('<div class="security-row ok">✅ รีวิวต้องอนุมัติก่อนแสดง</div>');
+  rows.push('<div class="security-row ok">✅ Rate Limit หน้า login (5 ครั้ง/15 นาที)</div>');
+  rows.push('<div class="security-row ok">✅ HTTPS + CSP + กัน clickjacking</div>');
+  rows.push('<div class="security-row" style="color:var(--text-2)">ℹ️ ตรวจให้แน่ใจว่า deploy firestore.rules (ตัว secure) แล้ว</div>');
+  return rows.join('');
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const isLogin     = document.getElementById('admin-login-page');
   const isDashboard = document.getElementById('admin-dashboard');
@@ -49,11 +68,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     try { db = await DMC.getFirebaseReady(); }
     catch (e) { DMC.toast('ไม่สามารถเชื่อมต่อ Firebase ได้', 'error'); return; }
 
-    // เช็คสิทธิ์: session ปกติ หรือ Firebase Auth (ลูกผสม — ไม่ต้องพิมพ์รหัสซ้ำ)
-    if (!DMC.isAdminAuthenticated()) {
-      const ok = await checkFirebaseAdmin();
-      if (!ok) { window.location.href = 'admin-login.html'; return; }
-      DMC.createSession();   // ต่ออายุ session จาก Firebase Auth
+    // V3 Security: เมื่อตั้ง ADMIN_EMAIL แล้ว → "ตัวตน" ต้องพิสูจน์ด้วย Firebase Auth (เซิร์ฟเวอร์ตรวจสอบ)
+    // sessionStorage เป็นแค่ความสะดวก ไม่ใช่ขอบเขตความปลอดภัย (กันการปลอม session ใน Console)
+    const adminEmail = ((window.DMC_CONFIG || {}).ADMIN_EMAIL || '').trim();
+    if (adminEmail) {
+      const ok = await checkFirebaseAdmin();           // ← ตรวจสถานะ Firebase Auth จริง (ปลอมไม่ได้)
+      if (!ok) { DMC.clearSession(); window.location.href = 'admin-login.html'; return; }
+      DMC.createSession();                              // UX only
+    } else {
+      // โหมด hash เดิม (ยังไม่ตั้ง ADMIN_EMAIL — ไม่ปลอดภัยเท่า): ใช้ session gate
+      if (!DMC.isAdminAuthenticated()) { window.location.href = 'admin-login.html'; return; }
     }
     initDashboard();
   }
@@ -287,11 +311,7 @@ async function loadOverview(container) {
         <div class="admin-box">
           <div class="admin-box-header"><div class="admin-box-title">🔐 ความปลอดภัย</div></div>
           <div class="security-status">
-            <div class="security-row ok">✅ PBKDF2-SHA256 (100k iterations)</div>
-            <div class="security-row ok">✅ Session Token (8 ชม.)</div>
-            <div class="security-row ok">✅ Rate Limit 5 ครั้ง/15 นาที</div>
-            <div class="security-row ok">✅ รีวิวต้องอนุมัติก่อนแสดง</div>
-            <div class="security-row ok">✅ HTTPS Only</div>
+            ${securityRows()}
           </div>
         </div>
       </div>
@@ -326,25 +346,24 @@ async function loadKPIs() {
   }
   try {
     const now        = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const [all, today, month] = await Promise.all([
-      db.collection('orders').get(),
-      db.collection('orders').where('createdAt','>=',firebase.firestore.Timestamp.fromDate(todayStart)).get(),
-      db.collection('orders').where('createdAt','>=',firebase.firestore.Timestamp.fromDate(monthStart)).get(),
-    ]);
-    let active=0, done=0, revenue=0;
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    // V.upgrade1: ดึง orders ครั้งเดียวแล้วคำนวณในหน่วยความจำ (ลดจาก 3 query เหลือ 1 → ประหยัด Firestore reads)
+    const all = await db.collection('orders').get();
+    let active=0, done=0, revenue=0, todayCount=0;
     all.forEach(d => {
       const o = d.data();
+      const ms = o.createdAt?.toDate ? o.createdAt.toDate().getTime() : 0;
+      if (ms >= todayStart) todayCount++;
       if (o.status==='cancelled') return;
       if (['pending','processing','shipping'].includes(o.status)) active++;
       if (o.status==='done') done++;
+      if (ms >= monthStart) revenue += o.total||0;
     });
-    month.forEach(d => { const o=d.data(); if (o.status!=='cancelled') revenue += o.total||0; });
     setAdminText('kpi-pending', active);
     setAdminText('kpi-revenue', DMC.formatPrice(revenue));
     setAdminText('kpi-done', done);
-    setAdminText('kpi-today', today.size);
+    setAdminText('kpi-today', todayCount);
     setAdminText('greeting-sub', active>0 ? `มี ${active} ออเดอร์กำลังดำเนินการ 🔔` : 'ทุกออเดอร์เรียบร้อยดี 🎉');
   } catch(e) { ['pending','revenue','done','today'].forEach(k=>setAdminText(`kpi-${k}`,'—')); }
 }
@@ -533,7 +552,8 @@ window.openOrderModal = async function(orderId) {
 
       ${o.slipUrl?`<div style="margin-bottom:1rem">
         <div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);margin-bottom:.5rem">สลิปโอนเงิน <span style="font-size:.7rem;color:var(--accent)">(คลิกเพื่อขยาย)</span></div>
-        <img src="${o.slipUrl}" id="slip-img-${o.id}" style="max-height:180px;border-radius:var(--r-md);border:1.5px solid var(--border);cursor:zoom-in" title="คลิกเพื่อดูเต็มหน้าจอ">
+        <img src="" id="slip-img-${o.id}" style="max-height:180px;border-radius:var(--r-md);border:1.5px solid var(--border);cursor:zoom-in;background:var(--bg-mid)" title="คลิกเพื่อดูเต็มหน้าจอ">
+        <div id="slip-loading-${o.id}" style="font-size:.72rem;color:var(--text-3)">กำลังโหลดสลิป...</div>
       </div>`:''}
 
       ${o.fileUrls?.length?`<div style="margin-bottom:1rem">
@@ -570,20 +590,29 @@ window.openOrderModal = async function(orderId) {
         <button class="btn btn-ghost btn-md" onclick="closeModal()">ปิด</button>
       </div>`;
 
-    // Wire image clicks (createElement — ปลอดภัยจาก quote ใน URL)
-    setTimeout(() => {
+    // Wire image clicks — V3: resolve รองรับทั้ง ImgBB URL และ storage path (สลิป private)
+    setTimeout(async () => {
       const slipImg = document.getElementById('slip-img-' + o.id);
-      if (slipImg) slipImg.addEventListener('click', () => openImageLightbox(slipImg.src));
+      const slipLoad = document.getElementById('slip-loading-' + o.id);
+      if (slipImg && o.slipUrl) {
+        const src = await DMC.resolveImageSrc(o.slipUrl);
+        if (src) { slipImg.src = src; slipImg.addEventListener('click', () => openImageLightbox(src)); }
+        else if (slipImg) slipImg.style.display = 'none';
+        if (slipLoad) slipLoad.remove();
+      } else if (slipLoad) { slipLoad.remove(); }
+
       const fileWrap = document.getElementById('file-urls-wrap-' + o.id);
       if (fileWrap && o.fileUrls && o.fileUrls.length) {
-        o.fileUrls.forEach(url => {
+        for (const val of o.fileUrls) {
+          const src = await DMC.resolveImageSrc(val);
+          if (!src) continue;
           const img = document.createElement('img');
-          img.src = url;
+          img.src = src;
           img.style.cssText = 'height:70px;border-radius:var(--r-md);border:1.5px solid var(--border);cursor:zoom-in;object-fit:cover';
           img.title = 'คลิกเพื่อดูเต็มหน้าจอ';
-          img.addEventListener('click', () => openImageLightbox(url));
+          img.addEventListener('click', () => openImageLightbox(src));
           fileWrap.appendChild(img);
-        });
+        }
       }
     }, 50);
   } catch(e) { body.innerHTML = '<p style="color:var(--rose)">เกิดข้อผิดพลาด: '+DMC.escapeHtml(e.message)+'</p>'; }
@@ -1855,6 +1884,10 @@ async function loadSettings(container) {
     <div class="settings-grid">
       <div class="admin-box">
         <div class="admin-box-header"><div class="admin-box-title">🔐 เปลี่ยนรหัสผ่าน Admin</div></div>
+        <div style="background:rgba(14,165,233,.06);border:1px solid var(--border);border-radius:var(--r-md);padding:.7rem .9rem;font-size:.78rem;color:var(--text-2);line-height:1.65;margin-bottom:.9rem">
+          💡 <strong>ถ้าเปิดใช้ Firebase Auth แล้ว</strong> (ตั้ง ADMIN_EMAIL ใน config) — เปลี่ยนรหัสผ่านได้ที่ Firebase Console → Authentication ไม่ต้องแก้โค้ด<br>
+          กล่องด้านล่างนี้สำหรับ <strong>โหมด hash เดิม</strong> (ยังไม่ตั้ง ADMIN_EMAIL) เท่านั้น
+        </div>
         <div class="form-group">
           <label class="form-label">รหัสผ่านใหม่</label>
           <input class="form-input" type="password" id="new-pass" placeholder="••••••••" autocomplete="new-password">
@@ -1884,12 +1917,8 @@ async function loadSettings(container) {
       <div class="admin-box">
         <div class="admin-box-header"><div class="admin-box-title">🛡️ ความปลอดภัยของระบบ</div></div>
         <div class="security-status">
-          <div class="security-row ok">✅ PBKDF2-SHA256 (100,000 iterations)</div>
-          <div class="security-row ok">✅ Session Token หมดอายุ 8 ชั่วโมง</div>
-          <div class="security-row ok">✅ ล็อคหลังพิมพ์ผิด 5 ครั้ง (15 นาที)</div>
-          <div class="security-row ok">✅ รีวิวลูกค้าต้องอนุมัติก่อนแสดง</div>
-          <div class="security-row ok">✅ ดูประวัติออเดอร์ต้องยืนยัน OTP</div>
-          <div class="security-row ok">✅ HTTPS ทุกหน้า</div>
+          ${securityRows()}
+          <div class="security-row" style="color:var(--text-3);font-size:.72rem;margin-top:.4rem">โหมด hash เดิม: PBKDF2-SHA256 100k (เลิกใช้เมื่อเปิด Firebase Auth)</div>
         </div>
       </div>
     </div>`;

@@ -103,6 +103,7 @@
 
   function renderFAB(lineUrl) {
     if (document.getElementById('dcs-fab-line')) return;
+    if (!lineUrl || lineUrl === '#') return;   // V.upgrade1: ไม่โชว์ปุ่ม LINE ที่ยังไม่ตั้งค่า
     var a = document.createElement('a');
     a.id = 'dcs-fab-line';
     a.href = lineUrl || '#';

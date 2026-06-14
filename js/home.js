@@ -18,26 +18,20 @@ function homeCoverOf(p) {
 document.addEventListener('DOMContentLoaded', async () => {
   applyCMSContent();   // เนื้อหาจากหลังบ้าน (hero/promo/stats)
   loadHomeReviews();   // รีวิวจริงจากลูกค้า
-  randomizeLastOrder();// เวลาออเดอร์ล่าสุดสุ่มให้สมจริง
-  loadCategoryCounts();// นับจำนวนสินค้าจริงต่อหมวด
-  loadHeroShowcase();  // การ์ด Hero = ผลงานจริงล่าสุด
+  showLastOrderBadge();// V.upgrade1: ป้าย "งานล่าสุด" — ใช้ข้อความ evergreen ไม่กุเวลาปลอม
+  loadCategoryCounts();// นับจำนวนสินค้าจริงต่อหมวด (เจ้าของ #categories-grid)
+  loadHeroShowcase();  // การ์ด Hero = ผลงานจริงล่าสุด (เจ้าของ hero visual)
 
   // ─── Hero Particle Canvas ───
   initParticles();
 
-  // ─── Hero Card Carousel ───
-  initHeroCarousel();
-
-  // ─── Hero Card Carousel ───
-  initHeroCarousel();
+  // V.upgrade1: ตัด initHeroCarousel() ที่ถูกเรียกซ้ำ + ชนกับ loadHeroShowcase ออก
+  // (loadHeroShowcase เป็นผู้ดูแล #hero-carousel ทั้งหมด — มีภาพ fallback เสมอ)
 
   // ─── Load Firebase + Products ───
   try {
     const db = await DMC.getFirebaseReady();
-    await Promise.all([
-      loadFeaturedProducts(db),
-      loadCategories(db)
-    ]);
+    await loadFeaturedProducts(db);   // V.upgrade1: หมวดหมู่จัดการโดย loadCategoryCounts แล้ว
   } catch (e) {
     console.warn('Firebase not configured yet, showing placeholder data');
     renderPlaceholderProducts();
@@ -52,6 +46,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 function initParticles() {
   const canvas = document.getElementById('hero-canvas');
   if (!canvas) return;
+  // V.upgrade1: เคารพ prefers-reduced-motion — ไม่รันอนิเมชันถ้าผู้ใช้ตั้งค่าลดการเคลื่อนไหว
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const ctx = canvas.getContext('2d');
 
   function resize() {
@@ -141,6 +137,16 @@ function initParticles() {
     else { draw(); }
   });
 
+  // V.upgrade1: หยุดวาดเมื่อ hero เลื่อนพ้นจอ (ประหยัดแบตมือถือ)
+  if (window.IntersectionObserver) {
+    let onScreen = true;
+    new IntersectionObserver((entries) => {
+      const vis = entries[0].isIntersecting;
+      if (vis && !onScreen) { onScreen = true; draw(); }
+      else if (!vis && onScreen) { onScreen = false; cancelAnimationFrame(raf); }
+    }, { threshold: 0 }).observe(canvas);
+  }
+
   draw();
 }
 
@@ -150,19 +156,26 @@ async function loadFeaturedProducts(db) {
   if (!container) return;
 
   try {
+    // V.upgrade1: ดึงเฉพาะ active แล้วจัดอันดับ featured ฝั่ง client
+    // (เลี่ยง composite index ที่ทำให้หน้าแรกเด้งไปโชว์สินค้า demo เมื่อ index ยังไม่ถูกสร้าง)
     const snap = await db.collection('products')
       .where('active', '==', true)
-      .orderBy('featured', 'desc')
-      .limit(8)
+      .limit(60)
       .get();
 
     if (snap.empty) { renderPlaceholderProducts(); return; }
 
-    container.innerHTML = '';
-    snap.forEach(doc => {
-      const p = { id: doc.id, ...doc.data() };
-      container.insertAdjacentHTML('beforeend', buildProductCard(p));
+    let items = [];
+    snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+    items.sort((a, b) => {
+      const fa = a.featured ? 1 : 0, fb = b.featured ? 1 : 0;
+      if (fb !== fa) return fb - fa;                                  // featured ก่อน
+      return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0); // ใหม่ก่อน
     });
+    items = items.slice(0, 8);
+
+    container.innerHTML = '';
+    items.forEach(p => container.insertAdjacentHTML('beforeend', buildProductCard(p)));
 
     bindProductCardEvents(container);
 
@@ -310,58 +323,7 @@ function initScrollAnimations() {
   });
 }
 
-// ── Hero Card Carousel ──────────────────────────
-function initHeroCarousel() {
-  var carousel = document.getElementById('hero-carousel');
-  if (!carousel) return;
-  var cards = Array.from(carousel.querySelectorAll('.hcard'));
-  if (cards.length < 2) return;
-
-  // Dot indicators
-  var dotsWrap = document.createElement('div');
-  dotsWrap.className = 'hc-dots';
-  cards.forEach(function(_, i){
-    var d = document.createElement('div');
-    d.className = 'hc-dot' + (i===0?' on':'');
-    dotsWrap.appendChild(d);
-  });
-  carousel.appendChild(dotsWrap);
-
-  var activeIdx = 0;
-
-  function goTo(next) {
-    if (next === activeIdx) return;
-    cards.forEach(function(card, i){
-      card.classList.remove('hc-active','hc-back','hc-hidden');
-      var rel = ((i - next) + cards.length) % cards.length;
-      if      (rel === 0) card.classList.add('hc-active');
-      else if (rel === 1) card.classList.add('hc-back');
-      else                card.classList.add('hc-hidden');
-    });
-    activeIdx = next;
-    dotsWrap.querySelectorAll('.hc-dot').forEach(function(d,i){
-      d.classList.toggle('on', i === activeIdx);
-    });
-  }
-
-  // Click back or hidden card to bring to front
-  cards.forEach(function(card, i){
-    card.addEventListener('click', function(){
-      if (card.classList.contains('hc-back') ||
-          card.classList.contains('hc-hidden')) {
-        goTo(i);
-      }
-    });
-  });
-
-  // Auto-rotate every 4s, pause on hover
-  var timer = setInterval(function(){ goTo((activeIdx+1) % cards.length); }, 4000);
-  carousel.addEventListener('mouseenter', function(){ clearInterval(timer); });
-  carousel.addEventListener('mouseleave', function(){
-    timer = setInterval(function(){ goTo((activeIdx+1) % cards.length); }, 4000);
-  });
-}
-
+// V2: ลบฟังก์ชัน initHeroCarousel ที่เป็น dead code (เลิกใช้ตั้งแต่ upgrade1 — loadHeroShowcase ดูแล hero แทน)
 
 // ─── CMS: เนื้อหาหน้าแรกจากหลังบ้าน ───────────
 async function applyCMSContent() {
@@ -419,23 +381,13 @@ async function loadHomeReviews() {
   }
 }
 
-// ─── ออเดอร์ล่าสุด: สุ่มเวลาให้สมจริง (ไม่ค้าง "2 ชม.") ───
-function randomizeLastOrder() {
+// ─── V.upgrade1: ป้ายสถานะร้าน (เลิกกุเวลาออเดอร์ปลอม) ───
+// หมายเหตุ: ดึงออเดอร์จริงมาโชว์ที่หน้าแรกไม่ได้ เพราะ Firestore rules ห้าม list ออเดอร์แบบสาธารณะ
+// จึงใช้ข้อความ evergreen ที่เป็นจริงเสมอแทน
+function showLastOrderBadge() {
   const el = document.querySelector('.float-badge-text span');
-  if (!el) return;
-  // ถ่วงน้ำหนัก: ส่วนใหญ่ไม่กี่นาที-ชั่วโมง บางทีหลักวัน
-  const buckets = [
-    { w: 38, gen: () => 'เมื่อ ' + (rint(5, 59)) + ' นาทีที่แล้ว' },
-    { w: 40, gen: () => 'เมื่อ ' + (rint(1, 8)) + ' ชั่วโมงที่แล้ว' },
-    { w: 16, gen: () => 'เมื่อวานนี้' },
-    { w: 6,  gen: () => 'เมื่อ ' + (rint(2, 4)) + ' วันที่แล้ว' },
-  ];
-  let total = buckets.reduce((s, b) => s + b.w, 0);
-  let r = Math.random() * total;
-  for (const b of buckets) { if ((r -= b.w) <= 0) { el.textContent = b.gen(); return; } }
-  el.textContent = buckets[0].gen();
+  if (el) el.textContent = 'เปิดรับงานทุกวัน · ส่งทั่วไทย';
 }
-function rint(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
 
 // ─── นับจำนวนสินค้าจริงต่อหมวด + รองรับหมวด custom ───
 async function loadCategoryCounts() {

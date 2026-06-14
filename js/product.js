@@ -62,6 +62,14 @@ function renderProduct() {
   document.getElementById('product-detail').style.display  = '';
   if (typeof Loading !== 'undefined') Loading.progressDone();
 
+  // V2: เปิดแถบสั่งซื้อลอย (มือถือ) + เติมค่าส่งจริงจาก config
+  document.getElementById('sticky-buy-bar')?.classList.add('show');
+  const sh = (window.DMC_CONFIG || {}).SHIPPING || {};
+  const shipEl = document.getElementById('price-shipping-hint');
+  if (shipEl && (sh.transfer != null || sh.cod != null)) {
+    shipEl.textContent = `🚚 ค่าจัดส่งเริ่ม ฿${sh.transfer ?? 50} · เก็บเงินปลายทาง ฿${sh.cod ?? 80}`;
+  }
+
   document.title = product.name + ' — Diamond Cute Studio 💎';
   setText('breadcrumb-name', product.name);
   setText('product-title', product.name);
@@ -126,6 +134,9 @@ function renderProduct() {
     e.preventDefault();
     addToCart(true);
   });
+  // V2: ปุ่มในแถบสั่งซื้อลอย ใช้ logic เดียวกัน
+  document.getElementById('sticky-add-cart')?.addEventListener('click', () => addToCart(false));
+  document.getElementById('sticky-order-now')?.addEventListener('click', () => addToCart(true));
 
   // ── Canvas Preview — เฉพาะสินค้าที่ร้านเปิดใช้ ──
   const previewToolEl = document.getElementById('preview-tool');
@@ -143,6 +154,8 @@ function renderProduct() {
             size,
             templates: product.templates || [],
             lineUrl: lineUrl || '#',
+            productId: product.id,            // V2: เพื่อแนบแบบเข้าออเดอร์
+            productName: product.name,
           });
         }
       };
@@ -338,7 +351,9 @@ function switchImageByLabel(label) {
 function updateQtyUI() {
   setText('qty-val', qty);
   setText('qty-display', qty);
-  setText('subtotal-display', DMC.formatPrice((product.price || 0) * qty));
+  const sub = DMC.formatPrice((product.price || 0) * qty);
+  setText('subtotal-display', sub);
+  setText('sticky-buy-value', sub);   // V2: ซิงค์ราคากับแถบสั่งซื้อลอย
 }
 
 function addToCart(goToCart) {
@@ -353,7 +368,7 @@ function addToCart(goToCart) {
     emoji: product.emoji || '📦',
     image: (galleryItems.find(g => g.type === 'image') || {}).url || product.image || '',
   });
-  DMC.toast(`เพิ่ม "${product.name}" ลงตะกร้าแล้ว 🛒`, 'success');
+  // V.upgrade1: ตัด toast ซ้ำออก — DMC.addToCart() แจ้งเตือนให้แล้ว
   if (goToCart) setTimeout(() => { window.location.href = 'cart.html'; }, 350);
 }
 

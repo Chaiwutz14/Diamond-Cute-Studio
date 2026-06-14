@@ -2,6 +2,10 @@
 <html lang="th" data-theme="sky">
 <head>
   <meta charset="UTF-8">
+  <!-- V3 Security headers (meta). frame-ancestors/X-Frame-Options ทำงานเฉพาะผ่าน HTTP header — ใช้ frame-buster ใน theme-init.js เสริม -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com; frame-src https://www.google.com https://*.firebaseapp.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Diamond Cute Studio 💎 บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ ป้ายร้านค้า QR Code คุณภาพระดับมืออาชีพ ส่งทั่วไทย">
   <title>Diamond Cute Studio 💎 — หน้าแรก</title>
@@ -11,6 +15,18 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="DMC Studio">
 
+  <!-- V.upgrade1: Open Graph / Twitter — รูป preview ตอนแชร์ LINE/Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Diamond Cute Studio">
+  <meta property="og:title" content="Diamond Cute Studio 💎 — พิมพ์ภาพ นามบัตร บัตรแขวนคอ ป้ายร้าน QR">
+  <meta property="og:description" content="บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ ป้ายร้านค้า QR Code คุณภาพระดับมืออาชีพ ส่งทั่วไทย">
+  <meta property="og:url" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/">
+  <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Diamond Cute Studio 💎">
+  <meta name="twitter:description" content="พิมพ์ภาพ นามบัตร บัตรแขวนคอ ป้ายร้าน QR — งานคุณภาพ ส่งทั่วไทย">
+  <meta name="twitter:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
+
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://i.ibb.co">
@@ -18,6 +34,10 @@
   <link rel="dns-prefetch" href="https://promptpay.io">
 
   <script src="js/theme-init.js"></script>
+  <!-- V2: ฟอนต์โหลดแบบ non-blocking (preconnect + link) แทน @import -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800;900&family=Sarabun:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/themes.css">
   <link rel="stylesheet" href="css/loading.css">
   <link rel="stylesheet" href="css/main.css">
@@ -84,35 +104,17 @@
 
     <!-- Hero Card Carousel -->
     <div class="hero-visual">
-      <div class="hero-carousel" id="hero-carousel">
-        <div class="hcard hcard-lg hc-active" data-idx="0">
-          <div class="hcard-inner">
-            <span class="hcard-emoji">📸</span>
-            <div class="hcard-label">โพลารอยด์</div>
-            <div class="hcard-sub">3×4 · 4×6 · Square</div>
-            <div class="hcard-dots"><div class="hcard-dot on"></div><div class="hcard-dot on"></div><div class="hcard-dot"></div></div>
-          </div>
-        </div>
-        <div class="hcard hcard-sm hc-back" data-idx="1">
-          <div class="hcard-inner">
-            <span class="hcard-emoji">🪪</span>
-            <div class="hcard-label">บัตรแขวนคอ</div>
-            <div class="hcard-sub">PVC · ทนทาน</div>
-          </div>
-        </div>
-        <div class="hcard hcard-sm hc-hidden" data-idx="2">
-          <div class="hcard-inner">
-            <span class="hcard-emoji">💼</span>
-            <div class="hcard-label">นามบัตร</div>
-            <div class="hcard-sub">100 ใบ · พรีเมียม</div>
-          </div>
+      <div id="hero-carousel">
+        <!-- V2: loadHeroShowcase() เป็นผู้เรนเดอร์รูปผลงานจริงทับตรงนี้ — แสดง skeleton ระหว่างโหลด -->
+        <div class="hero-showcase">
+          <div class="hsc-card on"><span class="skeleton" style="display:block;width:100%;height:100%"></span></div>
         </div>
       </div>
       <div class="hero-float-badge">
         <span class="float-badge-icon">✅</span>
         <div class="float-badge-text">
-          <strong>ออเดอร์ล่าสุด เสร็จแล้ว</strong>
-          <span>เมื่อ 2 ชั่วโมงที่แล้ว</span>
+          <strong>พร้อมรับออเดอร์</strong>
+          <span>เปิดรับงานทุกวัน · ส่งทั่วไทย</span>
         </div>
       </div>
     </div>

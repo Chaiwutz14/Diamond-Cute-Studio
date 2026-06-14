@@ -34,13 +34,15 @@ window.CMS = (function(){
       guarantee: 'รับประกัน',
     },
     contact: {
-      line:      'https://line.me/R/ti/p/@your_line_oa',
-      lineLabel: '@your_line_oa',
-      facebook:  'https://facebook.com/yourpage',
-      instagram: 'https://instagram.com/youraccount',
-      tiktok:    'https://tiktok.com/@youraccount',
-      email:     'contact@example.com',
-      phone:     '08x-xxx-xxxx',
+      // V.upgrade1: ค่าเริ่มต้นเป็นค่าว่าง — ไม่มีลิงก์ตัวอย่างหลุดออกหน้าเว็บ
+      // แอดมินกรอกจริงที่ หลังบ้าน → เนื้อหาเว็บไซต์ → ช่องทางติดต่อ
+      line:      '',
+      lineLabel: '',
+      facebook:  '',
+      instagram: '',
+      tiktok:    '',
+      email:     '',
+      phone:     '',
       hours:     'จันทร์–เสาร์ 9:00–19:00 น.',
     },
     payment: {
@@ -91,7 +93,9 @@ window.CMS = (function(){
     for (const k of Object.keys(over)) {
       if (base && typeof base[k] === 'object' && !Array.isArray(base[k]) && over[k] && typeof over[k] === 'object' && !Array.isArray(over[k])) {
         out[k] = mergeDeep(base[k], over[k]);
-      } else if (over[k] !== undefined && over[k] !== null && over[k] !== '') {
+      } else if (over[k] !== undefined && over[k] !== null) {
+        // V.upgrade1: ยอมให้ค่าว่าง ('') ทับ default ได้ → แอดมินล้างช่องแล้วค่าหายจริง
+        // (ไม่เด้งกลับเป็นลิงก์ตัวอย่าง เช่น tiktok.com/@youraccount)
         out[k] = over[k];
       } else if (out[k] === undefined) {
         out[k] = base ? base[k] : undefined;

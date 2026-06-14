@@ -9,7 +9,7 @@
    - ไม่แตะ Firebase / ImgBB / API (ให้ผ่านตรงเสมอ)
 ═══════════════════════════════════════════════ */
 
-const CACHE_VERSION = 'dcs-v14';
+const CACHE_VERSION = 'dcs-v15-upgrade1';
 const CACHE_NAME = 'dcs-cache-' + CACHE_VERSION;
 
 // ไฟล์หลักที่ pre-cache ตอนติดตั้ง (โหลดครั้งแรกเร็วขึ้น + ออฟไลน์ได้)
@@ -35,21 +35,31 @@ const PRECACHE = [
   './css/product.css',
   './css/order.css',
   './js/theme-init.js',
+  './js/config.js',
   './js/loading.js',
   './js/utils.js',
   './js/cms.js',
+  './js/categories.js',
   './js/reviews.js',
   './js/navbar.js',
   './js/footer.js',
   './js/bottom-nav.js',
+  './js/custom-select.js',
+  './js/skeleton.js',
   './js/theme-switcher.js',
   './js/admin-access.js',
+  './js/inline-editor.js',
   './js/home.js',
   './js/catalog.js',
   './js/product.js',
+  './js/gallery.js',
   './js/canvas-preview.js',
   './js/order.js',
   './js/order-history.js',
+  './js/about-page.js',
+  './js/contact-page.js',
+  './js/pwa-install.js',
+  './js/sw-register.js',
 ];
 
 // โดเมนที่ "ห้าม" แคช — ต้องสดเสมอ

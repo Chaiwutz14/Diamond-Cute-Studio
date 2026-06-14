@@ -6,12 +6,13 @@
 (function(){
   'use strict';
 
+  // V.upgrade1: ค่าเริ่มต้นว่าง — ปุ่มจะแสดงเฉพาะช่องทางที่แอดมินตั้งค่าจริง
   var LINKS = {
-    line:      'https://line.me/R/ti/p/@your_line_oa',
-    facebook:  'https://facebook.com/yourpage',
-    instagram: 'https://instagram.com/youraccount',
-    tiktok:    'https://tiktok.com/@youraccount',
-    email:     'mailto:contact@example.com',
+    line:      '',
+    facebook:  '',
+    instagram: '',
+    tiktok:    '',
+    email:     '',
   };
 
   // ─── SVG icons (คมชัดทุกขนาด แทน emoji) ───
@@ -56,6 +57,7 @@
     return LINKS.line;
   }
   function social(kind, cls, url, label) {
+    if (!url || url === '#' || url === 'mailto:') return '';   // V.upgrade1: ซ่อนช่องทางที่ยังไม่ตั้งค่า
     return '<a href="' + url + '" target="_blank" rel="noopener" class="social-btn ' + cls + '" title="' + label + '" aria-label="' + label + '">' + IC[kind] + '</a>';
   }
 

@@ -169,6 +169,7 @@ function applyFiltersAndRender() {
   renderProducts();
   updateResultCount();
   updateActiveFilterTags(search, priceMin, priceMax, filterNew, filterHot, filterSale);
+  if (typeof Loading !== 'undefined') Loading.progressDone();   // V.upgrade1: ปิดแถบโหลด (กันค้าง)
 }
 
 // ─── Render Grid ───

@@ -7,8 +7,9 @@
 let uploadedFileUrls = [];
 let slipUrl = '';
 let selectedPayment = 'promptpay';
-let couponDiscount = 0;
+let couponPct = 0;            // V.upgrade1: เก็บเป็น % แล้วคิดสดทุกครั้ง (กันยอดเพี้ยนเมื่อแก้ตะกร้า)
 let db = null;
+window._orderFiles = [];      // V.upgrade1: เก็บไฟล์รูปงานจริงเพื่ออัปตอน submit
 
 document.addEventListener('DOMContentLoaded', async () => {
   try { db = await DMC.getFirebaseReady(); } catch {}
@@ -16,8 +17,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindStepNavigation();
   renderPaymentMethods();
   bindFileUpload();
+  renderPendingDesigns();   // V2: แสดงแบบที่ลูกค้าออกแบบจากหน้าสินค้า
   bindSlipUpload();
   bindCoupon();
+  bindInlineValidation();   // V2: ตรวจฟอร์มแบบเรียลไทม์
   renderSummary();
 });
 
@@ -82,7 +85,7 @@ function renderSummary() {
 
   const subtotal   = DMC.getCartTotal();
   const shipping   = selectedPayment === 'cod' ? ((window.DMC_CONFIG||{}).SHIPPING||{}).cod ?? 80 : ((window.DMC_CONFIG||{}).SHIPPING||{}).transfer ?? 50;
-  const discount   = couponDiscount;
+  const discount   = Math.floor(subtotal * couponPct / 100);   // V.upgrade1: คิดสดจาก %
   const grandTotal = Math.max(0, subtotal + shipping - discount);
 
   rowsEl.innerHTML = cart.map(item => `
@@ -277,7 +280,7 @@ function updatePaymentUI() {
   if (slipWrap) slipWrap.style.display = isQR ? '' : 'none';
 }
 
-// ─── File Upload (photos) ───
+// ─── File Upload (photos) — V.upgrade1: เก็บไฟล์จริงเพื่ออัปตอน submit ───
 function bindFileUpload() {
   const zone  = document.getElementById('files-upload-zone');
   const input = document.getElementById('files-input');
@@ -298,18 +301,26 @@ function bindFileUpload() {
 
   function handleFiles(files) {
     if (!files.length) return;
-    if (files.length > 20) { DMC.toast('อัพโหลดได้สูงสุด 20 ไฟล์', 'error'); files = files.slice(0, 20); }
+    const room = 20 - window._orderFiles.filter(Boolean).length;
+    if (room <= 0) { DMC.toast('อัพโหลดได้สูงสุด 20 ไฟล์', 'warning'); return; }
+    if (files.length > room) { DMC.toast('อัพโหลดได้สูงสุด 20 ไฟล์', 'warning'); files = files.slice(0, room); }
 
     files.forEach(file => {
+      window._orderFiles.push(file);                 // ← เก็บ File จริงไว้สำหรับอัปตอน submit
+      const idx = window._orderFiles.length - 1;
       const reader = new FileReader();
       reader.onload = e => {
         const item = document.createElement('div');
         item.className = 'file-preview-item';
+        item.dataset.fileIdx = String(idx);
         item.innerHTML = `
           <img src="${e.target.result}" alt="${DMC.escapeHtml(file.name)}">
           <button class="file-preview-remove" aria-label="ลบ">✕</button>
         `;
-        item.querySelector('.file-preview-remove').addEventListener('click', () => item.remove());
+        item.querySelector('.file-preview-remove').addEventListener('click', () => {
+          window._orderFiles[idx] = null;            // mark ว่าลบแล้ว (คง index เดิมของไฟล์อื่น)
+          item.remove();
+        });
         preview?.appendChild(item);
       };
       reader.readAsDataURL(file);
@@ -317,6 +328,48 @@ function bindFileUpload() {
 
     DMC.toast(`เพิ่ม ${files.length} ไฟล์แล้ว`, 'success');
   }
+}
+
+// ─── V2: แบบที่ลูกค้าออกแบบจากหน้าสินค้า (แนบมาทาง localStorage เป็น URL) ───
+window._attachedDesignUrls = [];
+function renderPendingDesigns() {
+  let designs = [];
+  try { designs = JSON.parse(localStorage.getItem('dmc_pending_designs') || '[]'); } catch(e){}
+  if (!designs.length) return;
+  window._attachedDesignUrls = designs.map(d => d.url).filter(Boolean);
+
+  const preview = document.getElementById('file-preview-list');
+  const zone = document.getElementById('files-upload-zone');
+  // แถบแจ้งว่ามีแบบที่ออกแบบแนบมาแล้ว
+  if (zone && !document.getElementById('attached-design-note')) {
+    const note = document.createElement('div');
+    note.id = 'attached-design-note';
+    note.style.cssText = 'background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.28);border-radius:var(--r-md);padding:.6rem .85rem;margin-bottom:.7rem;font-size:.82rem;color:var(--emerald);font-family:var(--font-display)';
+    note.innerHTML = '🎨 มีแบบที่คุณออกแบบไว้ ' + designs.length + ' รูป แนบไปกับออเดอร์นี้แล้ว';
+    zone.parentNode.insertBefore(note, zone);
+  }
+  // แสดง thumbnail ของแบบ (ลบได้)
+  designs.forEach((d, idx) => {
+    if (!preview) return;
+    const item = document.createElement('div');
+    item.className = 'file-preview-item';
+    item.title = d.name || 'แบบที่ออกแบบ';
+    item.innerHTML = `
+      <img src="${d.url}" alt="${DMC.escapeHtml(d.name || 'แบบที่ออกแบบ')}">
+      <span style="position:absolute;bottom:0;left:0;right:0;background:rgba(16,185,129,.85);color:#fff;font-size:.5rem;text-align:center;font-family:var(--font-display)">แบบที่ออกแบบ</span>
+      <button class="file-preview-remove" aria-label="ลบ">✕</button>`;
+    item.querySelector('.file-preview-remove').addEventListener('click', () => {
+      window._attachedDesignUrls = window._attachedDesignUrls.filter(u => u !== d.url);
+      // อัปเดต localStorage
+      try {
+        let arr = JSON.parse(localStorage.getItem('dmc_pending_designs') || '[]');
+        arr = arr.filter(x => x.url !== d.url);
+        localStorage.setItem('dmc_pending_designs', JSON.stringify(arr));
+      } catch(e){}
+      item.remove();
+    });
+    preview.appendChild(item);
+  });
 }
 
 // ─── Slip Upload ───
@@ -360,6 +413,38 @@ const VALID_COUPONS = {
   'DMC10': 10,
 };
 
+// ─── V2: Inline validation (เรียลไทม์ บนฟอร์มชำระเงิน) ───
+function bindInlineValidation() {
+  const fields = [
+    { id: 'customer-name',    test: v => v.trim().length >= 2,  err: 'กรุณากรอกชื่อ-นามสกุล' },
+    { id: 'customer-phone',   test: v => /^0\d{1,2}[-\s]?\d{3}[-\s]?\d{3,4}$/.test(v.trim()) && (v.replace(/\D/g,'').length>=9), err: 'เบอร์โทรไม่ถูกต้อง (เช่น 081-234-5678)' },
+    { id: 'customer-address', test: v => v.trim().length >= 10, err: 'กรุณากรอกที่อยู่ให้ครบถ้วน' },
+  ];
+  fields.forEach(f => {
+    const input = document.getElementById(f.id);
+    if (!input) return;
+    // สร้างกล่องข้อความใต้ช่อง
+    let msg = input.parentNode.querySelector('.field-msg');
+    if (!msg) {
+      msg = document.createElement('div');
+      msg.className = 'field-msg';
+      input.insertAdjacentElement('afterend', msg);
+    }
+    let touched = false;
+    const validate = () => {
+      const ok = f.test(input.value);
+      input.classList.toggle('input-valid', ok && input.value.trim() !== '');
+      input.classList.toggle('input-invalid', !ok && touched);
+      if (!ok && touched) { msg.textContent = '⚠ ' + f.err; msg.className = 'field-msg err'; }
+      else if (ok && input.value.trim() !== '') { msg.textContent = '✓ ใช้ได้'; msg.className = 'field-msg ok'; }
+      else { msg.textContent = ''; msg.className = 'field-msg'; }
+      return ok;
+    };
+    input.addEventListener('blur', () => { touched = true; validate(); });
+    input.addEventListener('input', () => { if (touched) validate(); });
+  });
+}
+
 function bindCoupon() {
   document.getElementById('apply-coupon-btn')?.addEventListener('click', applyCoupon);
   document.getElementById('coupon-input')?.addEventListener('keydown', e => {
@@ -372,13 +457,13 @@ function applyCoupon() {
   if (!code) return;
 
   if (VALID_COUPONS[code]) {
-    const pct = VALID_COUPONS[code];
-    const subtotal = DMC.getCartTotal();
-    couponDiscount = Math.floor(subtotal * pct / 100);
+    couponPct = VALID_COUPONS[code];                       // V.upgrade1: เก็บ % ไว้คิดสด
+    const discount = Math.floor(DMC.getCartTotal() * couponPct / 100);
     renderSummary();
-    DMC.toast(`✅ ใช้โค้ด ${code} ได้รับส่วนลด ${pct}% (${DMC.formatPrice(couponDiscount)})`, 'success');
+    DMC.toast(`✅ ใช้โค้ด ${code} ได้รับส่วนลด ${couponPct}% (${DMC.formatPrice(discount)})`, 'success');
   } else {
-    couponDiscount = 0;
+    couponPct = 0;
+    renderSummary();
     DMC.toast('❌ โค้ดส่วนลดไม่ถูกต้องหรือหมดอายุแล้ว', 'error');
   }
 }
@@ -396,22 +481,51 @@ async function submitOrder() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:0.4rem"></span> กำลังส่งออเดอร์...';
 
-  // Upload slip image to ImgBB first (avoid storing base64 in Firestore)
+  const orderId = DMC.generateOrderId();   // V3: สร้างก่อน เพื่อใช้เป็น path ของไฟล์ private
+
+  // Upload slip — V3: ถ้าเปิด PRIVATE_UPLOADS จะไปเก็บ Storage แบบ private (อ่านได้เฉพาะแอดมิน)
   if (selectedPayment === 'promptpay' && window._slipFile) {
     try {
-      const uploaded = await DMC.uploadToImgBB(window._slipFile);
+      const uploaded = await DMC.uploadSensitive(window._slipFile, 'orders/' + orderId);
       slipUrl = uploaded.url;
     } catch (e) {
-      console.warn('ImgBB upload failed, continuing without slip URL:', e);
+      console.warn('slip upload failed:', e);
       slipUrl = '';
+      DMC.toast('⚠️ อัปสลิปไม่สำเร็จ ระบบจะรับออเดอร์ไว้ก่อน รบกวนส่งสลิปทาง LINE อีกครั้งครับ', 'warning', 5000);
     }
   }
 
+  // V.upgrade1/V3: อัปรูปงานของลูกค้า (private เมื่อเปิด PRIVATE_UPLOADS)
+  uploadedFileUrls = [];
+  const pendingFiles = (window._orderFiles || []).filter(Boolean);
+  if (pendingFiles.length) {
+    const prog = document.getElementById('upload-progress');
+    const bar  = document.getElementById('upload-bar');
+    const stat = document.getElementById('upload-status');
+    if (prog) prog.style.display = '';
+    let failed = 0;
+    for (let i = 0; i < pendingFiles.length; i++) {
+      if (stat) stat.textContent = `กำลังอัปโหลดรูป ${i + 1}/${pendingFiles.length}...`;
+      try {
+        const up = await DMC.uploadSensitive(pendingFiles[i], 'orders/' + orderId);
+        if (up && up.url) uploadedFileUrls.push(up.url); else failed++;
+      } catch (e) { failed++; console.warn('upload file failed', e); }
+      if (bar) bar.style.width = Math.round(((i + 1) / pendingFiles.length) * 100) + '%';
+    }
+    if (prog) prog.style.display = 'none';
+    if (failed) DMC.toast(`⚠️ มี ${failed} รูปอัปไม่สำเร็จ ส่งเพิ่มทาง LINE ได้หลังสั่งซื้อครับ`, 'warning', 5000);
+  }
+
+  // V2: รวมแบบที่ลูกค้าออกแบบจากหน้าสินค้า (เป็น URL ImgBB — แสดงให้ลูกค้าเห็นได้)
+  if (window._attachedDesignUrls && window._attachedDesignUrls.length) {
+    uploadedFileUrls = uploadedFileUrls.concat(window._attachedDesignUrls);
+  }
+
   const cart    = DMC.getCart();
-  const orderId = DMC.generateOrderId();
 
   const subtotal  = DMC.getCartTotal();
   const shipping  = selectedPayment === 'cod' ? (((window.DMC_CONFIG||{}).SHIPPING||{}).cod ?? 80) : (((window.DMC_CONFIG||{}).SHIPPING||{}).transfer ?? 50);
+  const couponDiscount = Math.floor(subtotal * couponPct / 100);   // V.upgrade1: คิดสดจาก %
   const total     = Math.max(0, subtotal + shipping - couponDiscount);
 
   const orderData = {
@@ -456,6 +570,9 @@ async function submitOrder() {
 
     // Clear cart
     DMC.saveCart([]);
+    window._orderFiles = [];   // V.upgrade1: เคลียร์ไฟล์ที่อัปแล้ว
+    window._attachedDesignUrls = [];                     // V2
+    try { localStorage.removeItem('dmc_pending_designs'); } catch(e){}  // V2: เคลียร์แบบที่แนบ
 
     // Show success
     showSuccess(orderId, total);

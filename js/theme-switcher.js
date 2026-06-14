@@ -15,6 +15,12 @@
   function apply(id){
     document.documentElement.setAttribute('data-theme', id);
     localStorage.setItem('dmc_theme', id);
+    // V.upgrade1: อัปเดตสีแถบเบราว์เซอร์ให้ตรงธีมทันทีที่สลับ
+    var TC = { sky:'#0EA5E9', sakura:'#f472b6', mint:'#10b981', peach:'#fb923c', lavender:'#8b5cf6', midnight:'#0f172a' };
+    try {
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.setAttribute('content', TC[id] || '#0EA5E9');
+    } catch (e) {}
     document.querySelectorAll('.ts-option').forEach(function(o){
       o.classList.toggle('active', o.dataset.theme === id);
     });

@@ -350,3 +350,17 @@
   padding: .12rem .5rem; border-radius: var(--r-pill); margin-left: .35rem;
   vertical-align: middle; font-family: var(--font-display);
 }
+
+/* ══════════════════════════════════════════════
+   V2 — Inline validation (เรียลไทม์)
+══════════════════════════════════════════════ */
+.form-input.input-valid   { border-color: var(--emerald); }
+.form-input.input-valid:focus   { box-shadow: 0 0 0 3px color-mix(in srgb, var(--emerald) 16%, transparent); }
+.form-input.input-invalid { border-color: var(--rose); }
+.form-input.input-invalid:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--rose) 16%, transparent); }
+.field-msg {
+  font-size: .73rem; margin-top: .28rem; min-height: 1em;
+  font-family: var(--font-display); transition: color .15s;
+}
+.field-msg.ok  { color: var(--emerald); }
+.field-msg.err { color: var(--rose); }

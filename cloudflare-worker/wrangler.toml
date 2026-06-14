@@ -1,7 +1,9 @@
 name = "dmc-studio-notify"
 main = "index.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-09-23"
 
-# Secrets (set via: wrangler secret put LINE_TOKEN)
-# LINE_TOKEN = "your_channel_access_token"
-# LINE_USER_ID = "Uxxxxxxxxxxxxxxxxx"
+# Secrets (set via Dashboard → Settings → Variables and Secrets, หรือ wrangler secret put)
+#   LINE_TOKEN     = Channel Access Token (จำเป็น)
+#   LINE_USER_ID   = User ID (U...) — หลายคนคั่นด้วย ,  → ระบบใช้ multicast ให้อัตโนมัติ
+#   IMGBB_KEY      = ImgBB API key (สำหรับ /upload — key ไม่หลุดสู่หน้าเว็บ)
+#   ALLOWED_ORIGIN = (ออปชัน) เช่น "https://chaiwutz14.github.io" คั่น , ได้ — จำกัดคนยิง Worker

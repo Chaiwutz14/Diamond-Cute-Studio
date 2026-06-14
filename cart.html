@@ -2,9 +2,17 @@
 <html lang="th" data-theme="sky">
 <head>
   <script src="js/theme-init.js"></script>
+  <!-- V2: ฟอนต์โหลดแบบ non-blocking (preconnect + link) แทน @import -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800;900&family=Sarabun:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/themes.css">
   <link rel="stylesheet" href="css/loading.css">
   <meta charset="UTF-8">
+  <!-- V3 Security headers (meta). frame-ancestors/X-Frame-Options ทำงานเฉพาะผ่าน HTTP header — ใช้ frame-buster ใน theme-init.js เสริม -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com; frame-src https://www.google.com https://*.firebaseapp.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta property="og:title" content="ตะกร้าสินค้า — Diamond Cute Studio 💎">
   <meta property="og:description" content="Diamond Cute Studio 💎 — ตะกร้าสินค้าและชำระเงิน">
   <meta property="og:type" content="website">
@@ -109,27 +117,27 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">ชื่อ-นามสกุล *</label>
+            <label class="form-label" for="customer-name">ชื่อ-นามสกุล *</label>
             <input class="form-input" id="customer-name" placeholder="กรอกชื่อ-นามสกุล" required>
           </div>
           <div class="form-group">
-            <label class="form-label">เบอร์โทรศัพท์ *</label>
+            <label class="form-label" for="customer-phone">เบอร์โทรศัพท์ *</label>
             <input class="form-input" id="customer-phone" type="tel" placeholder="0xx-xxx-xxxx" required>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">ที่อยู่จัดส่ง *</label>
+          <label class="form-label" for="customer-address">ที่อยู่จัดส่ง *</label>
           <input class="form-input" id="customer-address" placeholder="บ้านเลขที่ หมู่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์" required>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">LINE ID (ถ้ามี)</label>
+            <label class="form-label" for="customer-line">LINE ID (ถ้ามี)</label>
             <input class="form-input" id="customer-line" placeholder="@lineid">
           </div>
           <div class="form-group">
-            <label class="form-label">ขนส่งที่ต้องการ</label>
+            <label class="form-label" for="shipping-method">ขนส่งที่ต้องการ</label>
             <select class="form-input form-select" id="shipping-method" data-custom data-title="วิธีจัดส่ง">
               <option value="kerry">Kerry Express</option>
               <option value="flash">Flash Express</option>
@@ -140,7 +148,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">หมายเหตุเพิ่มเติม</label>
+          <label class="form-label" for="customer-note">หมายเหตุเพิ่มเติม</label>
           <textarea class="form-input form-textarea" id="customer-note" placeholder="เช่น ต้องการกล่องพิเศษ, ห่อของขวัญ, งานด่วน..."></textarea>
           <div style="font-size:.76rem;color:var(--text-3);margin-top:.4rem;line-height:1.6">💡 ส่งภาพและรายละเอียดส่วนตัว (เช่น ข้อความบนการ์ด) ทาง LINE โดยตรงได้เช่นกัน หลังกดสั่งซื้อ</div>
         </div>

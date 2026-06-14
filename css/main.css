@@ -2,12 +2,15 @@
    Diamond Cute Studio 💎 — Main CSS  (v2 Light)
 ═══════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&family=Sarabun:wght@300;400;500;600;700&display=swap');
+/* V2: ฟอนต์ย้ายไปโหลดแบบ non-blocking ใน <head> ของแต่ละหน้า (preconnect + link) แทน @import ที่บล็อกการเรนเดอร์ */
 
 /* ─── Semantic aliases (read from theme vars) ─── */
 :root {
   --font-display: 'Kanit', sans-serif;
   --font-body:    'Sarabun', sans-serif;
+  /* V2: นิยามตัวแปร soft ที่เดิมเรียกผ่าน fallback — คุมจากที่เดียว ครบทุกธีม */
+  --rose-soft:#FFE9EF; --gold-soft:#FFF3E0; --gold-deep:#B8860B;
+  --danger:#EF4444; --gray-light:#E5E7EB;
   --nav-h: 64px;
   --r-sm:  6px;  --r-md: 10px; --r-lg: 14px;
   --r-xl:  18px; --r-2xl:24px; --r-pill:9999px;
@@ -243,6 +246,15 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-display);line-height:1.25;color:var(--t
   /* Larger tap targets */
   .cat-card { min-height: 88px; }
   .filter-item { padding: .6rem .7rem; min-height: 44px; }
+
+  /* V2: กัน iOS ซูมหน้าจอตอนแตะช่องกรอก — input ต้อง >= 16px */
+  .form-input, .search-bar input, input, textarea, select,
+  .coupon-input, .otp-code-input, .price-input { font-size: 16px; }
+
+  /* V2: touch target ขั้นต่ำ 44px สำหรับปุ่มไอคอนเล็ก */
+  .btn-add-cart { width: 44px; height: 44px; }
+  .product-wish { width: 40px; height: 40px; }
+  .qty-btn      { width: 44px; height: 44px; }
 
   /* Full-screen sheet modal on mobile — เลื่อนสบาย ปุ่มเข้าถึงง่าย */
   .modal {

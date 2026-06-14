@@ -17,11 +17,17 @@ function getFirebaseReady() {
   _firebaseReady = new Promise((resolve, reject) => {
     try {
       // Load Firebase SDK dynamically
+      const _cfg = window.DMC_CONFIG || {};
+      const _appCheckKey = (_cfg.APP_CHECK_SITE_KEY || '').trim();
       const scripts = [
         'https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js',
         'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js',
         'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js'
       ];
+      // V3: โหลด App Check SDK เฉพาะเมื่อตั้งค่า site key แล้ว
+      if (_appCheckKey) scripts.push('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-check-compat.js');
+      // V3: โหลด Storage SDK เฉพาะเมื่อเปิดใช้สลิป/รูป private
+      if (_cfg.PRIVATE_UPLOADS) scripts.push('https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js');
 
       let loaded = 0;
 
@@ -34,6 +40,11 @@ function getFirebaseReady() {
             try {
               if (!firebase.apps.length) {
                 firebase.initializeApp(FIREBASE_CONFIG);
+              }
+              // V3 Security: เปิด App Check — ยืนยันว่า request มาจากแอปจริง (กันยิง Firestore/Auth ตรงด้วย config สาธารณะ)
+              if (_appCheckKey && firebase.appCheck) {
+                try { firebase.appCheck().activate(_appCheckKey, true); }
+                catch (e) { console.warn('App Check activate failed:', e.message); }
               }
               _db = firebase.firestore();
 
@@ -70,21 +81,33 @@ async function uploadToImgBB(file) {
   try { if (file && file.type && file.type.startsWith('image/') && file.type !== 'image/png') file = await compressImage(file); } catch(e) {}
 
   // ⭐ แนะนำ: อัปผ่าน Cloudflare Worker → API key ไม่หลุดสู่สาธารณะ
+  // V.upgrade1: ถ้า proxy ล้มเหลว → fallback ไป ImgBB ตรง (อัปไม่มีวันพังเพราะตั้ง proxy)
   const proxy = (window.DMC_CONFIG || {}).UPLOAD_PROXY_URL || '';
   if (proxy) {
-    const fd = new FormData();
-    fd.append('image', file);
-    const res = await fetch(proxy, { method: 'POST', body: fd });
-    if (!res.ok) throw new Error('อัปโหลดผ่าน Worker ไม่สำเร็จ (' + res.status + ')');
-    const data = await res.json();
-    if (!data.url) throw new Error(data.error || 'Worker ไม่คืน URL รูป');
-    return { url: data.url, deleteUrl: data.deleteUrl || '' };
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await fetch(proxy, { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('proxy ' + res.status);
+      const data = await res.json();
+      if (!data.url) throw new Error(data.error || 'no url');
+      return { url: data.url, thumbUrl: data.url, deleteUrl: data.deleteUrl || '' };
+    } catch (e) {
+      console.warn('Upload proxy failed, falling back to direct ImgBB:', e.message);
+      // ไหลต่อไปใช้ ImgBB ตรงด้านล่าง
+    }
   }
   const formData = new FormData();
   formData.append('image', file);
 
+  // V3 Security: ไม่มี key ฝั่ง client แล้ว — ถ้า proxy ใช้ไม่ได้ ให้ฟ้องชัด (ไม่เรียก ImgBB ด้วย key ว่าง)
+  const _key = (window.DMC_CONFIG || {}).IMGBB_API_KEY || (typeof IMGBB_API_KEY !== 'undefined' ? IMGBB_API_KEY : '');
+  if (!_key) {
+    throw new Error('อัปโหลดรูปไม่สำเร็จ: ยังไม่ได้ตั้งค่า IMGBB_KEY ใน Cloudflare Worker (โปรดส่งรูปทาง LINE ชั่วคราว)');
+  }
+
   const response = await fetch(
-    `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
+    `https://api.imgbb.com/1/upload?key=${_key}`,
     { method: 'POST', body: formData }
   );
 
@@ -96,6 +119,36 @@ async function uploadToImgBB(file) {
     deleteUrl: data.data.delete_url,
     id:        data.data.id
   };
+}
+
+// ─── V3 Security: อัปไฟล์ "ลับ" (สลิป/รูปลูกค้า) ไป Firebase Storage แบบ private ───
+// คืน "path" (ไม่ใช่ URL สาธารณะ) — อ่านได้เฉพาะแอดมินผ่าน resolveImageSrc()
+async function uploadPrivateFile(file, pathPrefix) {
+  try { if (file && file.type && file.type.startsWith('image/') && file.type !== 'image/png') file = await compressImage(file); } catch (e) {}
+  if (!window.firebase || !firebase.storage) throw new Error('Firebase Storage ยังไม่พร้อม (ตรวจ PRIVATE_UPLOADS + เปิด Storage)');
+  const safe = (file.name || 'file').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-40);
+  const path = `${pathPrefix}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
+  const ref = firebase.storage().ref(path);
+  await ref.put(file, { contentType: file.type || 'image/jpeg' });
+  return { path };               // เก็บ path ลง Firestore
+}
+
+// อัปไฟล์ลับ: เลือกอัตโนมัติระหว่าง Storage private (ถ้าเปิด) หรือ Worker/ImgBB (เดิม)
+async function uploadSensitive(file, pathPrefix) {
+  if ((window.DMC_CONFIG || {}).PRIVATE_UPLOADS) {
+    const r = await uploadPrivateFile(file, pathPrefix);
+    return { url: r.path, storage: true };   // url = storage path
+  }
+  return await uploadToImgBB(file);           // url = ImgBB public URL
+}
+
+// แปลงค่าที่เก็บไว้ (อาจเป็น URL ImgBB หรือ storage path) → src ที่แสดงได้
+// storage path ต้องยืนยันตัวตน (แอดมิน) จึงจะได้ download URL → สลิปไม่สาธารณะ
+async function resolveImageSrc(value) {
+  if (!value) return '';
+  if (/^https?:\/\//.test(value) || value.startsWith('data:')) return value;  // ImgBB / legacy
+  try { return await firebase.storage().ref(value).getDownloadURL(); }         // private path
+  catch (e) { console.warn('resolveImageSrc failed:', e.message); return ''; }
 }
 
 // ─── Cloudflare Worker LINE Notify ───
@@ -196,6 +249,8 @@ function getSession() {
 
 function clearSession() {
   sessionStorage.removeItem(SESSION_KEY);
+  // V3 Security: ออกจากระบบ Firebase Auth ด้วย (ยุติ session ที่เซิร์ฟเวอร์ตรวจสอบจริง)
+  try { if (window.firebase && firebase.auth) firebase.auth().signOut(); } catch (e) {}
 }
 
 function isAdminAuthenticated() {
@@ -257,7 +312,7 @@ function generateOrderId() {
 // ─── Date / Time Helpers ───
 function formatDate(date, includeTime = false) {
   const d = date instanceof Date ? date : date?.toDate ? date.toDate() : new Date(date);
-  const opts = { day: '2-digit', month: 'short', year: 'numeric', locale: 'th-TH' };
+  const opts = { day: '2-digit', month: 'short', year: 'numeric' };   // V.upgrade1: ตัด key 'locale' ที่ไม่ถูกต้องออก
   if (includeTime) { opts.hour = '2-digit'; opts.minute = '2-digit'; }
   return d.toLocaleDateString('th-TH', opts);
 }
@@ -308,8 +363,8 @@ function getCart() {
 }
 
 function saveCart(cart) {
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));      // V.upgrade1: เขียนก่อน แล้วค่อยแจ้ง (กัน listener อ่านค่าเก่า)
   try { window.dispatchEvent(new Event('dcs-cart-changed')); } catch(e) {}
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
   updateCartBadge();
 }
 
@@ -357,7 +412,9 @@ function escapeHtml(str) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')      // V3: กัน attribute ที่ครอบด้วย single-quote
+    .replace(/`/g, '&#96;');     // V3: กัน template-literal context
 }
 
 // ─── Export ───
@@ -486,6 +543,9 @@ window.DMC = {
   getDb,
   // Image
   uploadToImgBB,
+  uploadSensitive,
+  uploadPrivateFile,
+  resolveImageSrc,
   compressImage,
   // Notify
   sendLineNotify,

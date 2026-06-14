@@ -198,7 +198,9 @@ window.CanvasPreview = (function(){
 
     drawPlaceholder();
     return { loadImage, selectBuiltin, selectCustomFrame, setCaption, render, download,
-             hasImage: () => !!userImage };
+             hasImage: () => !!userImage,
+             // V2: ดึงรูป composition เป็น Blob เพื่ออัปแนบออเดอร์
+             getBlob: (cb) => { try { canvas.toBlob(b => cb(b), 'image/jpeg', 0.92); } catch(e){ cb(null); } } };
   }
 
   return { create, loadCustomFrames, TEMPLATES };
@@ -227,6 +229,8 @@ window.initPreviewTool = async function(options = {}) {
         '<label class="btn btn-secondary btn-md" style="flex:1;border-radius:var(--r-lg);cursor:pointer;justify-content:center">📤 เลือกรูปจากเครื่อง<input type="file" id="preview-file-input" accept="image/*" style="display:none"></label>',
         '<button class="btn btn-ghost btn-md" id="preview-download-btn" style="border-radius:var(--r-lg)" title="บันทึกภาพตัวอย่าง" disabled>💾</button>',
       '</div>',
+      // V2: ปุ่มแนบแบบที่ออกแบบเข้าออเดอร์โดยตรง (จุดต่างจากร้านอื่น)
+      '<button class="btn btn-primary btn-md btn-block" id="preview-attach-btn" style="margin-bottom:.9rem" disabled>📎 ใช้แบบนี้ในออเดอร์</button>',
       '<div style="margin-bottom:.9rem"><input class="form-input" id="preview-caption" placeholder="ข้อความใต้รูป (ไม่บังคับ) เช่น Happy Birthday 🎂" style="font-size:.85rem"></div>',
       '<div>',
         '<div class="preview-tpl-label">🎨 เลือกแบบ</div>',
@@ -302,6 +306,7 @@ window.initPreviewTool = async function(options = {}) {
   // ─── Upload / drag-drop / caption / download ───
   const fileInput = document.getElementById('preview-file-input');
   const dlBtn     = document.getElementById('preview-download-btn');
+  const attachBtn = document.getElementById('preview-attach-btn');   // V2
   const canvasEl  = document.getElementById('preview-canvas');
   const hintEl    = document.getElementById('preview-upload-hint');
 
@@ -309,6 +314,7 @@ window.initPreviewTool = async function(options = {}) {
     try {
       await api.loadImage(file);
       dlBtn.disabled = false;
+      if (attachBtn) attachBtn.disabled = false;                     // V2
       hintEl.textContent = '✅ อัปโหลดแล้ว — ลองกดเปลี่ยนแบบด้านล่างได้เลย';
     } catch (e) {
       DMC.toast(e.message || 'โหลดรูปไม่สำเร็จ', 'error');
@@ -325,4 +331,32 @@ window.initPreviewTool = async function(options = {}) {
   });
   dlBtn?.addEventListener('click', () => api.download());
   document.getElementById('preview-caption')?.addEventListener('input', e => api.setCaption(e.target.value));
+
+  // ─── V2: แนบแบบที่ออกแบบเข้าออเดอร์ ───
+  attachBtn?.addEventListener('click', () => {
+    if (!api.hasImage()) { DMC.toast('กรุณาอัปโหลดรูปก่อนครับ', 'warning'); return; }
+    const original = attachBtn.innerHTML;
+    attachBtn.disabled = true;
+    attachBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> กำลังแนบ...';
+    api.getBlob(async (blob) => {
+      try {
+        if (!blob) throw new Error('no blob');
+        const f = new File([blob], 'design-' + Date.now() + '.jpg', { type: 'image/jpeg' });
+        const up = await DMC.uploadToImgBB(f);
+        if (!up || !up.url) throw new Error('upload failed');
+        // เก็บลง localStorage เพื่อส่งต่อไปหน้าตะกร้า/ชำระเงิน
+        let designs = [];
+        try { designs = JSON.parse(localStorage.getItem('dmc_pending_designs') || '[]'); } catch(e){}
+        designs.push({ productId: options.productId || '', name: options.productName || 'แบบที่ออกแบบ', url: up.url, at: Date.now() });
+        localStorage.setItem('dmc_pending_designs', JSON.stringify(designs));
+        attachBtn.innerHTML = '✅ แนบเข้าออเดอร์แล้ว';
+        DMC.toast('แนบแบบเข้าออเดอร์แล้ว — จะแสดงในหน้าสั่งซื้อ 🛒', 'success', 4000);
+        setTimeout(() => { attachBtn.innerHTML = original; attachBtn.disabled = false; }, 2200);
+      } catch (e) {
+        console.warn('attach design failed', e);
+        attachBtn.innerHTML = original; attachBtn.disabled = false;
+        DMC.toast('แนบแบบไม่สำเร็จ ลองใหม่ หรือส่งรูปทาง LINE ได้ครับ', 'error', 4500);
+      }
+    });
+  });
 };

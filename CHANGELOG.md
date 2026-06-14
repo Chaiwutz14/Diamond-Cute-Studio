@@ -1,5 +1,67 @@
 # 📜 CHANGELOG — Diamond Cute Studio
 
+## Security v3 — อุดช่องโหว่ความปลอดภัย (Security Hardening)
+> รายละเอียด + ขั้นตอน Console ดูที่ `SECURITY-v3.md`
+
+**แก้ในโค้ด**
+- 🔐 **Auth boundary ใหม่** — เมื่อเปิด Firebase Auth แล้ว session ปลอมใน Console ไม่ได้อีก (admin.js/utils.js)
+- 🛡️ **CSP + security headers** ทุกหน้า + frame-buster กัน clickjacking + ย้าย inline script เป็นไฟล์
+- ☁️ **ลบ ImgBB key ออกจากหน้าเว็บ** (อัปผ่าน Worker เท่านั้น)
+- 🧱 **escapeHtml แข็งขึ้น** (escape `'` และ `` ` ``)
+- 📊 **Panel ความปลอดภัยในหลังบ้านแสดงสถานะจริง** (เตือนถ้ายังไม่เปิด Auth/App Check)
+- 🚪 logout ออกจาก Firebase Auth ด้วย
+- ✅ **โค้ด App Check พร้อมเปิด** (ตั้ง APP_CHECK_SITE_KEY) + `storage.rules` พร้อม deploy
+
+**ต้องตั้งค่า Console เอง (สู่ 10/10):** เปิด Firebase Auth + deploy กฎ secure · App Check · สลิป private ใน Storage · ตั้ง IMGBB_KEY/ALLOWED_ORIGIN ใน Worker
+
+---
+
+## Upgrade v.2 — ยกระดับ UX/UI เป็น 10/10 (UX/UI Polish)
+> รายละเอียดเต็มดูที่ `UPGRADE-v2.md`
+
+**🅰️ Polish gap** — นิยาม `--hero-grad*` (แก้ hero แบน), `--accent-rgb` (เงาตามธีม), `--text-3` ผ่าน WCAG AA จริงทั้ง 6 ธีม, iOS no-zoom (input 16px), touch target 44px
+
+**🅱️ Conversion & a11y**
+- ⭐ Canvas Preview → ปุ่ม "ใช้แบบนี้ในออเดอร์" แนบแบบที่ออกแบบเข้าออเดอร์จริง (canvas-preview.js, order.js)
+- 📌 แถบสั่งซื้อลอยล่างจอบนมือถือ (product.*)
+- 🚚 แจ้งค่าส่งตั้งแต่หน้าสินค้า
+- ✅ Inline validation เรียลไทม์ในฟอร์มชำระเงิน
+- ♿ ผูก label↔input ทุกช่อง (cart 6 + contact 4)
+
+**🅲 Performance & Design debt**
+- ฟอนต์ย้ายจาก @import → preconnect + link (ไม่บล็อกการเรนเดอร์) + subset
+- ลบ dead carousel code (markup + JS + CSS ~4,200 ตัวอักษร)
+- นิยามตัวแปร CSS ที่ขาดทั้งหมด
+
+---
+
+## V.upgrade1 — เก็บบั๊ก + อุดช่องโหว่ (Code Audit Fixes)
+> รายละเอียดเต็ม + ขั้นตอนตั้งค่าดูที่ `UPGRADE-V.upgrade1.md`
+
+**🔴 บั๊กร้ายแรง**
+- 🖼️ **รูปงานลูกค้าถูกอัปจริงและแนบกับออเดอร์** — เดิมหน้าตะกร้าแค่โชว์ preview แต่ไม่เคยอัป ทำให้ออเดอร์มาถึงร้านโดยไม่มีรูป (`order.js`)
+- 🔐 **เตรียมระบบ Firebase Auth ให้พร้อม** เพื่อปิดช่องโหว่ฐานข้อมูลเปิดโล่ง (ต้องตั้งค่า Console ตามคู่มือ)
+
+**🟠 กระทบของจริง**
+- 🏠 สินค้าแนะนำหน้าแรกเลิกพึ่ง composite index (เดิมเด้งไปโชว์สินค้า demo เมื่อ index ยังไม่ถูกสร้าง) (`home.js`)
+- 💬 Worker: แก้ URL ปุ่มซ้ำ `https://https` + รองรับแจ้งเตือนหลายคนด้วย multicast (`cloudflare-worker`)
+- 🎟️ คูปองส่วนลดเก็บเป็น % คิดสดทุกครั้ง — เดิมยอดเพี้ยนเมื่อแก้ตะกร้าหลังใส่โค้ด (`order.js`)
+- 🧹 ล้างช่องในหลังบ้านแล้วค่าหายจริง ไม่เด้งกลับลิงก์ตัวอย่าง + ซ่อนช่องทางที่ยังไม่ตั้งค่า (`cms.js`, `footer.js`, `bottom-nav.js`)
+
+**🟡 ประสิทธิภาพ/ความเรียบร้อย**
+- ⚡ Hero: ตัด `initHeroCarousel()` ที่ถูกเรียกซ้ำ + แก้ carousel/showcase ชนกัน (timer รั่ว) (`home.js`)
+- ⚡ KPI หลังบ้านดึง orders ครั้งเดียว (เดิม 3 query) — ประหยัด Firestore reads (`admin.js`)
+- ☁️ อัปรูป fallback proxy→ImgBB ตรง + เปิด upload proxy ผ่าน Worker เพื่อซ่อน key (`utils.js`, `config.js`)
+- ⚠️ เตือนชัดเมื่ออัปสลิป/รูปบางส่วนไม่สำเร็จ (`order.js`)
+
+**🟢 รายละเอียด/SEO**
+- 🔔 ตัด toast ซ้ำตอนเพิ่มลงตะกร้า (`product.js`)
+- 🖼️ สร้าง `assets/og-image.jpg` ใหม่ + OG/Twitter meta หน้าแรก (preview ตอนแชร์ LINE/FB)
+- 🤝 เลิกกุเวลาออเดอร์ปลอม → ใช้ข้อความที่เป็นจริงเสมอ (`home.js`)
+- ♿ particle เคารพ prefers-reduced-motion + หยุดเมื่อ hero พ้นจอ · แถบโหลด catalog ไม่ค้าง · theme-color ตรงธีม · SW precache ครบ (bump `dcs-v15-upgrade1`)
+
+---
+
 ## V17 — ชำระเงินหลายช่องทาง + แก้เนื้อหา inline
 - 💳 **ระบบชำระเงินหลายช่องทาง** — PromptPay, COD, TrueMoney, บัตรเครดิต (2 ตัวหลังขึ้น "เร็วๆ นี้")
 - ⚙️ **หลังบ้านจัดการช่องทางได้** — เปิด/ปิดการแสดง + ตั้งสถานะพร้อม/ไม่พร้อม รายช่องทาง (toggle)

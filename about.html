@@ -2,6 +2,10 @@
 <html lang="th" data-theme="sky">
 <head>
   <meta charset="UTF-8">
+  <!-- V3 Security headers (meta). frame-ancestors/X-Frame-Options ทำงานเฉพาะผ่าน HTTP header — ใช้ frame-buster ใน theme-init.js เสริม -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com; frame-src https://www.google.com https://*.firebaseapp.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta property="og:title" content="วิธีสั่งซื้อ — Diamond Cute Studio 💎">
   <meta property="og:description" content="Diamond Cute Studio 💎 — วิธีสั่งซื้อ ขั้นตอนง่ายๆ ส่งทั่วไทย รับประกันคุณภาพ">
   <meta property="og:type" content="website">
@@ -21,6 +25,10 @@
   <link rel="dns-prefetch" href="https://promptpay.io">
 
   <script src="js/theme-init.js"></script>
+  <!-- V2: ฟอนต์โหลดแบบ non-blocking (preconnect + link) แทน @import -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800;900&family=Sarabun:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/themes.css">
   <link rel="stylesheet" href="css/loading.css">
   <link rel="stylesheet" href="css/main.css">

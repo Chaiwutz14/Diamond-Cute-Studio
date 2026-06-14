@@ -21,6 +21,7 @@ export default {
     // ─── POST /upload — proxy อัปรูปขึ้น ImgBB (key เป็น secret) ───
     if (request.method === 'POST' && url.pathname === '/upload') {
       try {
+        if (!originAllowed(request, env)) return cors(JSON.stringify({ error: 'origin not allowed' }), 403);
         if (!env.IMGBB_KEY) {
           return cors(JSON.stringify({ error: 'IMGBB_KEY not set in Worker secrets' }), 500);
         }
@@ -51,21 +52,29 @@ export default {
     // ─── POST /notify ───────────────────────────
     if (request.method === 'POST' && url.pathname === '/notify') {
       try {
+        // V.upgrade1: (ออปชัน) จำกัด Origin ถ้าตั้ง ALLOWED_ORIGIN ไว้ — กันคนนอกยิง Worker
+        if (!originAllowed(request, env)) return cors(json({ ok: false, error: 'origin not allowed' }), 403);
         const body = await request.json();
 
-        const lineRes = await fetch('https://api.line.me/v2/bot/message/push', {
+        // V.upgrade1: รองรับหลาย User ID คั่นด้วย , → ใช้ multicast (push รับ ID เดียวเท่านั้น)
+        const ids = String(env.LINE_USER_ID || '').split(',').map(s => s.trim()).filter(Boolean);
+        if (!ids.length) return cors(json({ ok: false, error: 'LINE_USER_ID not set' }), 500);
+        const useMulticast = ids.length > 1;
+        const endpoint = useMulticast ? 'multicast' : 'push';
+        const payload = useMulticast
+          ? { to: ids, messages: [buildOrderCard(body)] }
+          : { to: ids[0], messages: [buildOrderCard(body)] };
+
+        const lineRes = await fetch(`https://api.line.me/v2/bot/message/${endpoint}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${env.LINE_TOKEN}`
           },
-          body: JSON.stringify({
-            to: env.LINE_USER_ID,
-            messages: [buildOrderCard(body)]
-          })
+          body: JSON.stringify(payload)
         });
 
-        const result = await lineRes.json();
+        const result = await lineRes.json().catch(() => ({}));
         if (!lineRes.ok) {
           console.error('LINE API error:', JSON.stringify(result));
           return cors(json({ ok: false, error: result }), 502);
@@ -229,7 +238,7 @@ function buildOrderCard(data) {
             action: {
               type: 'uri',
               label: '⚙️ จัดการออเดอร์',
-              uri: 'https://https://chaiwutz14.github.io/Diamond-Cute-Studio/admin.html'
+              uri: 'https://chaiwutz14.github.io/Diamond-Cute-Studio/admin.html'
             },
             flex: 1
           },
@@ -283,6 +292,14 @@ function infoRow(icon, label, value) {
 }
 
 // ─── Helpers ───
+// V.upgrade1: จำกัด Origin (เปิดใช้เมื่อตั้ง ALLOWED_ORIGIN = "https://โดเมนร้าน" คั่น , ได้)
+function originAllowed(request, env) {
+  const allow = String(env.ALLOWED_ORIGIN || '').trim();
+  if (!allow) return true;                       // ไม่ตั้ง = อนุญาตทุก origin (ค่าเริ่มต้น)
+  const origin = request.headers.get('Origin') || '';
+  if (!origin) return true;                       // ไม่มี Origin (server-to-server) = ผ่าน
+  return allow.split(',').map(s => s.trim()).filter(Boolean).includes(origin);
+}
 function json(data)           { return new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } }); }
 function cors(res, status = 200) {
   const headers = {
