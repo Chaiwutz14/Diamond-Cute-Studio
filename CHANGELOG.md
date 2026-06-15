@@ -1,5 +1,24 @@
 # 📜 CHANGELOG — Diamond Cute Studio
 
+## V4.1 — คูปอง(verified) + แถบประกาศ + แก้ empty-state
+- 🎟️ **ระบบคูปองส่วนลด (แนว B / Poka-yoke)** — collection `coupons` (doc id=CODE), validate ครบ (active/ช่วงเวลา/minSpend/usageLimit/maxDiscount cap), ส่วนลด percent/fixed/freeship, นับ `usedCount` ด้วย atomic transaction กันใช้เกินลิมิต · **ทดสอบ 9/9 scenarios ผ่าน**
+- 💸 **ค่าส่ง/ค่าธรรมเนียม/surcharge แก้ได้จากหลังบ้าน** (siteContent/main.fees) — มีผลกับยอดตะกร้าทันที
+- 📢 **แถบประกาศด่วน (announce)** ใหม่ — หลังบ้านเปิด/ปิด+พิมพ์ข้อความ → แสดงแถบบนสุดทุกหน้า (เลื่อน navbar+เนื้อหาลงอัตโนมัติ, ปิดได้, กัน XSS)
+- 🎯 **แก้ empty-state "ไม่พบสินค้า"** ให้อยู่กึ่งกลาง (flexbox centering — icon/ข้อความ/ปุ่ม ตรงกลางเป๊ะ) + แก้ตัวแปรสีที่ผิด
+- ✅ Recheck: syntax ทุกไฟล์ · จำลอง coupon 9 scenario + announce bar + empty-state ผ่านหมด 0 error
+
+---
+
+## V4 Final — อนิเมชัน Hero + ลูกเล่นพาดหัว + แก้ Responsive เทมเพลต
+- ✨ **อนิเมชันการ์ด Hero (6 ชั้น เบาๆ)**: ไล่สีหายใจ · วงกลมลอย · แสงกวาด (sheen) · ประกายวิบวับ · จุด badge เต้น · ปุ่มมีประกายวิ่ง
+- 🥇 **พาดหัวคงข้อความเดิม** "ทำให้ทุกภาพ / กลายเป็นของที่ระลึก / ที่สวยงามที่สุด" + ทำ **"ที่สวยงามที่สุด" เป็นทองเรืองแสงวิบวับ**
+- ♿ เคารพ `prefers-reduced-motion` — ปิดอนิเมชันทั้งหมดให้ผู้ใช้ที่ตั้งค่าลดการเคลื่อนไหว (คงสีทองไว้)
+- 🧹 **ลบค่าพาดหัวใหม่ที่ซ้อนทับ** — revert `cms.js` default + `index.html` กลับเป็นข้อความเดิม
+- 🐛 **แก้ Canvas/Preview เพี้ยนบนมือถือ**: ต้นเหตุคือ `.detail-info` (grid item) ไม่มี `min-width:0` → เมื่อสินค้ามีเทมเพลต ข้อความยาวใน preview-tool ดัน grid บวมเกินจอ (ล้น 192px) — แก้ด้วย `min-width:0` + `overflow-wrap:anywhere` บน `.detail-info`/`.detail-gallery`
+- ✅ **จำลอง Preview Tool จริง**: อัปโหลดรูป → วาด canvas สำเร็จ → สลับครบ 7 เทมเพลต → ใส่ caption → ทั้งมือถือ/เดสก์ท็อป overflow = 0 ทุกขั้น, 0 JS error
+
+---
+
 ## V4 — หน้าแรกโฉมใหม่ (Homepage Redesign · Direction B Bright Premium)
 - 🎨 **Hero ใหม่**: การ์ดไล่สีสดใสพรีเมียม (วงตกแต่ง + เงาเรืองสีตามธีม) แทน hero เดิม
 - ✍️ **พาดหัวใหม่**: "เพราะทุกรูปภาพของคุณ ล้วนมีความหมาย"

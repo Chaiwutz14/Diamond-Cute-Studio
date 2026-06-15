@@ -7,12 +7,14 @@
 let uploadedFileUrls = [];
 let slipUrl = '';
 let selectedPayment = 'promptpay';
-let couponPct = 0;            // V.upgrade1: เก็บเป็น % แล้วคิดสดทุกครั้ง (กันยอดเพี้ยนเมื่อแก้ตะกร้า)
+let appliedCoupon = null;     // V4: คูปองจริงจาก Firestore { code, type, value, minSpend, maxDiscount }
+let _cms = null;              // V4: เนื้อหา + ค่าธรรมเนียมจากหลังบ้าน (CMS)
 let db = null;
 window._orderFiles = [];      // V.upgrade1: เก็บไฟล์รูปงานจริงเพื่ออัปตอน submit
 
 document.addEventListener('DOMContentLoaded', async () => {
   try { db = await DMC.getFirebaseReady(); } catch {}
+  try { _cms = await CMS.get(); } catch { _cms = null; }   // V4: ค่าธรรมเนียม/ค่าส่งที่แก้ได้
   renderCart();
   bindStepNavigation();
   renderPaymentMethods();
@@ -23,6 +25,44 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindInlineValidation();   // V2: ตรวจฟอร์มแบบเรียลไทม์
   renderSummary();
 });
+
+// ─── V4: ค่าส่ง/ค่าธรรมเนียม จากหลังบ้าน (fallback config.js) ───
+function getFees() {
+  const f = (_cms && _cms.fees) || {};
+  const cfg = (window.DMC_CONFIG || {}).SHIPPING || {};
+  return {
+    shipTransfer: Number(f.shipTransfer ?? cfg.transfer ?? 50),
+    shipCod:      Number(f.shipCod ?? cfg.cod ?? 80),
+    freeShipMin:  Number(f.freeShipMin ?? 0),
+    surchargePromptpay: Number(f.surchargePromptpay ?? 0),
+    surchargeCod:       Number(f.surchargeCod ?? 0),
+  };
+}
+
+// ─── V4: คำนวณค่าส่ง + ค่าธรรมเนียมช่องทาง + ส่วนลดคูปอง → ยอดรวม (แหล่งเดียว) ───
+function computeTotals() {
+  const subtotal = DMC.getCartTotal();
+  const fees = getFees();
+  let shipping  = selectedPayment === 'cod' ? fees.shipCod : fees.shipTransfer;
+  const surcharge = selectedPayment === 'cod' ? fees.surchargeCod : fees.surchargePromptpay;
+
+  let discount = 0, freeship = false;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === 'percent') {
+      discount = Math.floor(subtotal * Number(appliedCoupon.value) / 100);
+      const cap = Number(appliedCoupon.maxDiscount || 0);
+      if (cap > 0) discount = Math.min(discount, cap);
+    } else if (appliedCoupon.type === 'fixed') {
+      discount = Math.min(Number(appliedCoupon.value), subtotal);
+    } else if (appliedCoupon.type === 'freeship') {
+      freeship = true;
+    }
+  }
+  if (freeship || (fees.freeShipMin > 0 && subtotal >= fees.freeShipMin)) shipping = 0;
+
+  const total = Math.max(0, subtotal + shipping + surcharge - discount);
+  return { subtotal, shipping, surcharge, discount, freeship, total };
+}
 
 // ─── Render Cart List ───
 function renderCart() {
@@ -83,10 +123,7 @@ function renderSummary() {
 
   if (!rowsEl) return;
 
-  const subtotal   = DMC.getCartTotal();
-  const shipping   = selectedPayment === 'cod' ? ((window.DMC_CONFIG||{}).SHIPPING||{}).cod ?? 80 : ((window.DMC_CONFIG||{}).SHIPPING||{}).transfer ?? 50;
-  const discount   = Math.floor(subtotal * couponPct / 100);   // V.upgrade1: คิดสดจาก %
-  const grandTotal = Math.max(0, subtotal + shipping - discount);
+  const t = computeTotals();   // V4: แหล่งคำนวณเดียว
 
   rowsEl.innerHTML = cart.map(item => `
     <div class="summary-row">
@@ -96,18 +133,28 @@ function renderSummary() {
   `).join('') + `
     <div class="summary-row">
       <span class="label">${selectedPayment === 'cod' ? 'ค่าจัดส่ง COD (รวมค่าธรรมเนียม)' : 'ค่าจัดส่ง'}</span>
-      <span class="value">${DMC.formatPrice(shipping)}</span>
+      <span class="value">${t.shipping === 0 ? '<span style="color:#10B981;font-weight:700">ฟรี</span>' : DMC.formatPrice(t.shipping)}</span>
     </div>
-    ${discount > 0 ? `
+    ${t.surcharge > 0 ? `
     <div class="summary-row">
-      <span class="label">ส่วนลด</span>
-      <span class="value discount">-${DMC.formatPrice(discount)}</span>
+      <span class="label">ค่าธรรมเนียมช่องทางชำระ</span>
+      <span class="value">${DMC.formatPrice(t.surcharge)}</span>
+    </div>` : ''}
+    ${t.discount > 0 ? `
+    <div class="summary-row">
+      <span class="label">ส่วนลด${appliedCoupon ? ' (' + DMC.escapeHtml(appliedCoupon.code) + ')' : ''}</span>
+      <span class="value discount">-${DMC.formatPrice(t.discount)}</span>
+    </div>` : ''}
+    ${(appliedCoupon && appliedCoupon.type === 'freeship') ? `
+    <div class="summary-row">
+      <span class="label">ส่วนลด (${DMC.escapeHtml(appliedCoupon.code)})</span>
+      <span class="value discount">ส่งฟรี</span>
     </div>` : ''}
   `;
 
-  if (totalEl)  totalEl.textContent  = DMC.formatPrice(grandTotal);
-  if (qrAmtEl)  qrAmtEl.textContent  = DMC.formatPrice(grandTotal);
-  updatePromptpayQR(grandTotal);
+  if (totalEl)  totalEl.textContent  = DMC.formatPrice(t.total);
+  if (qrAmtEl)  qrAmtEl.textContent  = DMC.formatPrice(t.total);
+  updatePromptpayQR(t.total);
 }
 
 
@@ -407,11 +454,8 @@ function bindSlipUpload() {
 }
 
 // ─── Coupon ───
-const VALID_COUPONS = {
-  'DIAMOND15': 15, // percent
-  'FIRSTORDER': 20,
-  'DMC10': 10,
-};
+// V4: คูปองย้ายไป Firestore collection 'coupons' (doc id = CODE) — จัดการจากหลังบ้าน
+// validate + นับการใช้แบบ atomic (กันใช้เกินลิมิต) ใน applyCoupon() / submitOrder()
 
 // ─── V2: Inline validation (เรียลไทม์ บนฟอร์มชำระเงิน) ───
 function bindInlineValidation() {
@@ -446,26 +490,84 @@ function bindInlineValidation() {
 }
 
 function bindCoupon() {
-  document.getElementById('apply-coupon-btn')?.addEventListener('click', applyCoupon);
+  _markCouponApplied(false);   // ตั้งสถานะปุ่มเริ่มต้น
   document.getElementById('coupon-input')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') applyCoupon();
+    if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); }
   });
 }
 
-function applyCoupon() {
-  const code = document.getElementById('coupon-input')?.value.trim().toUpperCase();
+// V4: ดึงคูปองจาก Firestore + validate ครบเงื่อนไข (active/วันที่/ยอดขั้นต่ำ/โควต้า)
+async function applyCoupon() {
+  const input = document.getElementById('coupon-input');
+  const code  = (input?.value || '').trim().toUpperCase();
   if (!code) return;
+  const btn = document.getElementById('apply-coupon-btn');
+  if (btn) btn.disabled = true;
 
-  if (VALID_COUPONS[code]) {
-    couponPct = VALID_COUPONS[code];                       // V.upgrade1: เก็บ % ไว้คิดสด
-    const discount = Math.floor(DMC.getCartTotal() * couponPct / 100);
+  try {
+    if (!db) db = await DMC.getFirebaseReady();
+    const doc = await db.collection('coupons').doc(code).get();
+    if (!doc.exists) return failCoupon('ไม่พบโค้ดนี้');
+    const c = doc.data();
+
+    if (c.active === false) return failCoupon('โค้ดนี้ถูกปิดใช้งาน');
+    const now = Date.now();
+    if (c.startAt  && now < _toMs(c.startAt))  return failCoupon('ยังไม่ถึงเวลาใช้โค้ดนี้');
+    if (c.expireAt && now > _toMs(c.expireAt)) return failCoupon('โค้ดหมดอายุแล้ว');
+    const subtotal = DMC.getCartTotal();
+    if (c.minSpend && subtotal < Number(c.minSpend)) return failCoupon(`ยอดสั่งซื้อขั้นต่ำ ${DMC.formatPrice(Number(c.minSpend))}`);
+    if (c.usageLimit && Number(c.usedCount || 0) >= Number(c.usageLimit)) return failCoupon('โค้ดถูกใช้ครบจำนวนแล้ว');
+
+    appliedCoupon = {
+      code,
+      type:        c.type || 'percent',
+      value:       Number(c.value || 0),
+      minSpend:    Number(c.minSpend || 0),
+      maxDiscount: Number(c.maxDiscount || 0),
+    };
     renderSummary();
-    DMC.toast(`✅ ใช้โค้ด ${code} ได้รับส่วนลด ${couponPct}% (${DMC.formatPrice(discount)})`, 'success');
-  } else {
-    couponPct = 0;
-    renderSummary();
-    DMC.toast('❌ โค้ดส่วนลดไม่ถูกต้องหรือหมดอายุแล้ว', 'error');
+    const t = computeTotals();
+    const msg = appliedCoupon.type === 'freeship' ? 'ส่งฟรี' : DMC.formatPrice(t.discount);
+    DMC.toast(`✅ ใช้โค้ด ${code} สำเร็จ — ${msg}`, 'success');
+    if (input) input.disabled = true;
+    _markCouponApplied(true);
+  } catch (e) {
+    failCoupon('ตรวจสอบโค้ดไม่สำเร็จ ลองใหม่อีกครั้ง');
+  } finally {
+    if (btn) btn.disabled = false;
   }
+}
+
+function failCoupon(reason) {
+  appliedCoupon = null;
+  renderSummary();
+  _markCouponApplied(false);
+  DMC.toast('❌ ' + reason, 'error');
+}
+
+function removeCoupon() {
+  appliedCoupon = null;
+  const input = document.getElementById('coupon-input');
+  if (input) { input.disabled = false; input.value = ''; }
+  _markCouponApplied(false);
+  renderSummary();
+}
+
+function _markCouponApplied(on) {
+  const btn = document.getElementById('apply-coupon-btn');
+  if (!btn) return;
+  if (on) { btn.textContent = 'เอาออก'; btn.onclick = removeCoupon; }
+  else    { btn.textContent = 'ใช้โค้ด'; btn.onclick = applyCoupon; }
+}
+
+// แปลงวันที่หลายรูปแบบ (ISO string / number / Firestore Timestamp) → ms
+function _toMs(v) {
+  if (!v) return 0;
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string') return new Date(v).getTime();
+  if (v.toMillis) return v.toMillis();
+  if (v.seconds)  return v.seconds * 1000;
+  return 0;
 }
 
 // ─── Submit Order ───
@@ -523,10 +625,12 @@ async function submitOrder() {
 
   const cart    = DMC.getCart();
 
-  const subtotal  = DMC.getCartTotal();
-  const shipping  = selectedPayment === 'cod' ? (((window.DMC_CONFIG||{}).SHIPPING||{}).cod ?? 80) : (((window.DMC_CONFIG||{}).SHIPPING||{}).transfer ?? 50);
-  const couponDiscount = Math.floor(subtotal * couponPct / 100);   // V.upgrade1: คิดสดจาก %
-  const total     = Math.max(0, subtotal + shipping - couponDiscount);
+  const _t = computeTotals();        // V4: ค่าส่ง + ค่าธรรมเนียม + ส่วนลดคูปอง (แหล่งเดียว)
+  const subtotal       = _t.subtotal;
+  const shipping       = _t.shipping;
+  const surcharge      = _t.surcharge;
+  const couponDiscount = _t.discount;
+  const total          = _t.total;
 
   const orderData = {
     orderId,
@@ -542,6 +646,8 @@ async function submitOrder() {
     itemsSummary:    cart.map(i => `${i.name} ×${i.qty}`).join(', '),
     subtotal,
     shipping,
+    surcharge,
+    couponCode:      appliedCoupon ? appliedCoupon.code : '',
     couponDiscount,
     total,
     status:          'pending',
@@ -559,6 +665,21 @@ async function submitOrder() {
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
       savedDocId = docRef.id;
+    }
+
+    // V4: นับการใช้คูปองแบบ atomic — กันใช้เกินลิมิต (แนว B / Poka-yoke)
+    if (appliedCoupon && db) {
+      try {
+        const ref = db.collection('coupons').doc(appliedCoupon.code);
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(ref);
+          if (!snap.exists) return;
+          const used  = Number(snap.data().usedCount || 0);
+          const limit = Number(snap.data().usageLimit || 0);
+          if (limit > 0 && used >= limit) throw new Error('coupon exhausted');
+          tx.update(ref, { usedCount: used + 1 });   // เปลี่ยนเฉพาะ usedCount +1 (ตรงกับ rules)
+        });
+      } catch (e) { console.warn('coupon usage update skipped:', e.message); }
     }
 
     // บันทึกลงเครื่องนี้ — ลูกค้าดูประวัติได้ทันทีที่หน้า "ติดตามออเดอร์"

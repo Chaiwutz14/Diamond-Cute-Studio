@@ -129,7 +129,7 @@
 }
 
 /* Gallery */
-.detail-gallery { position: sticky; top: calc(var(--nav-h) + 1rem); }
+.detail-gallery { position: sticky; top: calc(var(--nav-h) + 1rem); min-width: 0; }
 
 .gallery-main {
   aspect-ratio: 1/1;
@@ -168,6 +168,8 @@
   border-radius: var(--r-2xl);
   padding: 1.75rem;
   box-shadow: var(--shadow-card);
+  min-width: 0;            /* V4 FIX: กัน grid blowout บนมือถือ เมื่อมี preview-tool (เทมเพลต) */
+  overflow-wrap: anywhere; /* ข้อความไทยยาวๆ ตัดบรรทัดได้ ไม่ดันความกว้าง */
 }
 
 .detail-title { font-size: 1.7rem; font-weight: 800; margin-bottom: .5rem; color: var(--text-1); }

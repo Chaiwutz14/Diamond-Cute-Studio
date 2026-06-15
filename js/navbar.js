@@ -85,6 +85,50 @@
 
     initBehavior();
     applyLineLinks();
+    applyAnnounce();
+  }
+
+  function applyAnnounce() {
+    if (typeof CMS === 'undefined') return;
+    var page = location.pathname.split('/').pop() || 'index.html';
+    if (page.indexOf('admin') === 0) return;          // ไม่โชว์ในหลังบ้าน
+    CMS.get().then(function (c) {
+      var a = c.announce || {};
+      if (!a.active || !a.text) return;
+      if (document.getElementById('dmc-announce-bar')) return;
+      if (!document.getElementById('dmc-announce-style')) {
+        var st = document.createElement('style');
+        st.id = 'dmc-announce-style';
+        st.textContent = '#dmc-announce-bar{position:fixed;top:0;left:0;right:0;z-index:901;background:linear-gradient(90deg,var(--accent,#0EA5E9),var(--accent-dark,#0369A1));color:#fff;font-family:var(--font-display),sans-serif;font-size:.78rem;font-weight:600;text-align:center;padding:.45rem 2.3rem .45rem 1rem;line-height:1.4}#dmc-announce-bar .dmc-an-x{position:absolute;right:.55rem;top:50%;transform:translateY(-50%);cursor:pointer;opacity:.85;font-size:.95rem;line-height:1;padding:.2rem}';
+        document.head.appendChild(st);
+      }
+      var bar = document.createElement('div');
+      bar.id = 'dmc-announce-bar';
+      var span = document.createElement('span');
+      span.textContent = a.text;                      // textContent — กัน XSS
+      bar.appendChild(span);
+      var x = document.createElement('span');
+      x.className = 'dmc-an-x'; x.textContent = '✕';
+      x.setAttribute('role', 'button'); x.setAttribute('aria-label', 'ปิดประกาศ');
+      bar.appendChild(x);
+      document.body.insertAdjacentElement('afterbegin', bar);
+
+      function applyOffset() {
+        var h = bar.offsetHeight;
+        var navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 64;
+        document.body.style.paddingTop = h + 'px';
+        var nav = document.getElementById('main-nav'); if (nav) nav.style.top = h + 'px';
+        var dr = document.getElementById('mobile-drawer'); if (dr) dr.style.top = (h + navH) + 'px';
+      }
+      applyOffset();
+      window.addEventListener('resize', applyOffset, { passive: true });
+      x.addEventListener('click', function () {
+        bar.remove();
+        document.body.style.paddingTop = '';
+        var nav = document.getElementById('main-nav'); if (nav) nav.style.top = '';
+        var dr = document.getElementById('mobile-drawer'); if (dr) dr.style.top = '';
+      });
+    }).catch(function () {});
   }
 
   function applyLineLinks() {

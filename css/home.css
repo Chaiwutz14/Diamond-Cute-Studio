@@ -13,14 +13,25 @@
   position:relative; overflow:hidden;
   border-radius:30px;
   padding:2.1rem 1.6rem 2.2rem;
-  background:linear-gradient(140deg, var(--hg1) 0%, var(--hg2) 100%);
+  background:linear-gradient(140deg, var(--hg1) 0%, var(--hg2) 52%, var(--hg1) 100%);
+  background-size:180% 180%;
   box-shadow:0 22px 48px var(--hglow);
   isolation:isolate;
-  animation:fadeInUp .6s ease both;
+  animation:fadeInUp .6s ease both, hpGradBreath 11s ease-in-out infinite;
 }
 .hp-deco{position:absolute;border-radius:50%;z-index:0;pointer-events:none}
-.hp-deco1{width:240px;height:240px;background:rgba(255,255,255,.16);top:-90px;right:-70px}
-.hp-deco2{width:150px;height:150px;background:rgba(255,255,255,.10);bottom:-60px;left:8%}
+.hp-deco1{width:240px;height:240px;background:rgba(255,255,255,.16);top:-90px;right:-70px;animation:hpFloatA 7s ease-in-out infinite}
+.hp-deco2{width:150px;height:150px;background:rgba(255,255,255,.10);bottom:-60px;left:8%;animation:hpFloatB 8.5s ease-in-out infinite}
+.hp-deco3{width:74px;height:74px;background:rgba(255,255,255,.10);top:44%;right:13%;animation:hpFloatA 6s ease-in-out .6s infinite}
+/* sheen sweep + twinkling sparkles */
+.hp-sheen{position:absolute;top:-40%;left:0;width:55%;height:180%;z-index:1;pointer-events:none;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.32) 50%,transparent);
+  transform:translateX(-160%) rotate(8deg);animation:hpSheen 6.5s ease-in-out infinite}
+.hp-spark{position:absolute;z-index:2;color:#fff;opacity:0;pointer-events:none;text-shadow:0 0 8px rgba(255,255,255,.85);font-size:14px}
+.hp-s1{top:17%;right:11%;animation:hpTwinkle 2.6s ease-in-out infinite}
+.hp-s2{top:33%;right:22%;font-size:11px;animation:hpTwinkle 3.1s ease-in-out .8s infinite}
+.hp-s3{top:58%;left:15%;font-size:12px;animation:hpTwinkle 2.9s ease-in-out 1.4s infinite}
+.hp-s4{bottom:24%;right:16%;font-size:13px;animation:hpTwinkle 3.4s ease-in-out .4s infinite}
 .hp-hero-inner{position:relative;z-index:1;max-width:620px}
 
 .hp-badge{
@@ -40,7 +51,15 @@
   color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.12);
 }
 .hp-title span{display:block}
-.hp-title-accent{color:#fff;opacity:.96}
+.hp-title-accent{
+  display:block;
+  background:linear-gradient(90deg,#FFE9A8 0%,#FFFBE8 25%,#FFD86E 50%,#FFFBE8 75%,#FFE9A8 100%);
+  background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  filter:drop-shadow(0 2px 10px rgba(255,200,80,.40));
+  animation:hpShimmer 3.4s linear infinite;
+}
 .hp-sub{
   font-family:var(--font-body,var(--font-display));
   font-size:clamp(.92rem,2.4vw,1.06rem);color:rgba(255,255,255,.94);
@@ -56,7 +75,10 @@
   transition:transform var(--t-fast),box-shadow var(--t-fast),background var(--t-fast);
   min-height:48px;
 }
-.hp-btn-primary{background:#fff;color:var(--accent);box-shadow:0 8px 20px rgba(0,0,0,.14)}
+.hp-btn-primary{background:#fff;color:var(--accent);box-shadow:0 8px 20px rgba(0,0,0,.14);position:relative;overflow:hidden}
+.hp-btn-primary::after{content:"";position:absolute;top:0;left:0;width:42%;height:100%;pointer-events:none;
+  background:linear-gradient(105deg,transparent,rgba(var(--accent-rgb),.14),transparent);
+  transform:translateX(-180%) skewX(-18deg);animation:hpBtnShine 5s ease-in-out 1.2s infinite}
 .hp-btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(0,0,0,.20)}
 .hp-btn-ghost{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.34)}
 .hp-btn-ghost:hover{background:rgba(255,255,255,.28);transform:translateY(-2px)}
@@ -235,4 +257,23 @@
   .hp-chips{gap:.5rem}
   .hp-chips .cat-card{padding:.85rem .4rem}
   .hp-chips .cat-icon{width:42px;height:42px;font-size:1.3rem}
+}
+
+/* ══════════════════════════════════════════════
+   V4 — Hero card subtle animations (keyframes)
+══════════════════════════════════════════════ */
+@keyframes hpGradBreath{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes hpFloatA{0%,100%{transform:translate(0,0)}50%{transform:translate(7px,-16px)}}
+@keyframes hpFloatB{0%,100%{transform:translate(0,0)}50%{transform:translate(-9px,13px)}}
+@keyframes hpSheen{0%{transform:translateX(-160%) rotate(8deg)}55%,100%{transform:translateX(360%) rotate(8deg)}}
+@keyframes hpTwinkle{0%,100%{opacity:0;transform:scale(.5) rotate(0)}50%{opacity:1;transform:scale(1) rotate(15deg)}}
+@keyframes hpShimmer{0%{background-position:0% 50%}100%{background-position:220% 50%}}
+@keyframes hpBtnShine{0%{transform:translateX(-180%) skewX(-18deg)}55%,100%{transform:translateX(360%) skewX(-18deg)}}
+
+/* เคารพผู้ใช้ที่ตั้งค่าลดการเคลื่อนไหว — ปิดอนิเมชันทั้งหมด แต่คงสีทองไว้ */
+@media (prefers-reduced-motion: reduce){
+  .hp-hero-card{animation:fadeInUp .6s ease both;background-position:0% 50%}
+  .hp-deco1,.hp-deco2,.hp-deco3,.hp-sheen,.hp-title-accent,.hp-btn-primary::after{animation:none}
+  .hp-spark{display:none}
+  .hp-title-accent{background-position:0 50%}
 }

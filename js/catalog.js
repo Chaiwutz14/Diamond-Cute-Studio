@@ -179,10 +179,10 @@ function renderProducts() {
 
   if (filteredProducts.length === 0) {
     grid.innerHTML = `
-      <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 1.5rem;color:var(--text-muted);width:100%">
+      <div style="grid-column:1/-1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 1.5rem;color:var(--text-3)">
         <div style="font-size:2.5rem;margin-bottom:0.75rem">🔍</div>
-        <p style="text-align:center;margin:0">ไม่พบสินค้าที่ตรงกับเงื่อนไข</p>
-        <button class="btn btn-ghost btn-md" style="margin-top:1rem;border-radius:var(--r-lg)" onclick="clearFilters()">ล้างตัวกรอง</button>
+        <p style="margin:0 0 1rem">ไม่พบสินค้าที่ตรงกับเงื่อนไข</p>
+        <button class="btn btn-ghost btn-md" style="border-radius:var(--r-lg)" onclick="clearFilters()">ล้างตัวกรอง</button>
       </div>
     `;
     return;
