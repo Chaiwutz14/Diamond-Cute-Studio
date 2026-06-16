@@ -25,7 +25,7 @@ window.DMC_CONFIG = {
   // วิธีตั้งค่า: Firebase Console → Authentication → เปิด Email/Password
   // → Add user (อีเมล+รหัสผ่าน) → เอาอีเมลนั้นมาใส่ตรงนี้
   // เว้นว่าง = ใช้ระบบรหัสผ่านแบบเดิม (hash) ไปก่อน
-  ADMIN_EMAIL: '',
+  ADMIN_EMAIL: 'peeza1482546@gmail.com',
 
   // ── อัปโหลดรูป ──
   // V3 Security: อัปผ่าน Cloudflare Worker เท่านั้น (ImgBB key เป็น secret ฝั่ง Worker — ไม่เปิดในหน้าเว็บ)
@@ -37,18 +37,18 @@ window.DMC_CONFIG = {
   // V3 Security: Firebase App Check — กันการยิง Firestore/Auth ตรงด้วย config สาธารณะ
   // ขอ site key (reCAPTCHA v3) ที่ Firebase Console → App Check → เว็บแอป → reCAPTCHA v3
   // เว้นว่าง = ปิด App Check (ระบบยังทำงานปกติ)
-  APP_CHECK_SITE_KEY: '',
+  APP_CHECK_SITE_KEY: 'Diamond-Cute-Studio',
 
   // V3 Security: เก็บสลิป/รูปลูกค้าใน Firebase Storage แบบ private (แทน ImgBB สาธารณะ)
   // ต้องเปิด Firebase Storage + deploy storage.rules ก่อน แล้วตั้งเป็น true
-  PRIVATE_UPLOADS: false,
+  PRIVATE_UPLOADS: true,
 
   // ── แจ้งเตือน LINE ผ่าน Cloudflare Worker ──
   CF_WORKER_URL: 'https://dmc-studio-notify.peeza1482546.workers.dev',
 
   // ── ค่าจัดส่ง (บาท) ──
   SHIPPING: {
-    cod: 80,        // เก็บเงินปลายทาง (รวมค่าธรรมเนียม COD แล้ว)
-    transfer: 50,   // โอนผ่าน PromptPay
+    cod: 40,        // เก็บเงินปลายทาง (รวมค่าธรรมเนียม COD แล้ว)
+    transfer: 35,   // โอนผ่าน PromptPay
   },
 };
