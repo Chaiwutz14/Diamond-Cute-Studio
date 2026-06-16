@@ -97,197 +97,150 @@ export default {
 };
 
 // ════════════════════════════════════════════════
-//  BUILD FLEX MESSAGE CARD
+//  BUILD FLEX MESSAGE CARD  ·  "Vibrant Cute" หลายโทนหมุนเวียน
+//  แต่ละออเดอร์เปลี่ยนโทนสีอัตโนมัติตามเลขออเดอร์
+//  → ร้านแยกออกง่ายว่าออเดอร์ไหนจัดการแล้ว/ยัง
 // ════════════════════════════════════════════════
+const CARD_PALETTES = [
+  { name:'pink',     h1:'#FB7185', h2:'#F472B6', h3:'#C084FC', accent:'#DB2777', soft:'#FFF1F8', lbl:'#BE6593', val:'#831843', btnBg:'#FCE7F3', btnTx:'#DB2777' },
+  { name:'sky',      h1:'#38BDF8', h2:'#3B82F6', h3:'#6366F1', accent:'#2563EB', soft:'#EFF6FF', lbl:'#3B6CA8', val:'#1E3A8A', btnBg:'#DBEAFE', btnTx:'#2563EB' },
+  { name:'mint',     h1:'#34D399', h2:'#10B981', h3:'#06B6D4', accent:'#059669', soft:'#ECFDF5', lbl:'#3C8A6E', val:'#064E3B', btnBg:'#D1FAE5', btnTx:'#059669' },
+  { name:'peach',    h1:'#FBBF24', h2:'#FB923C', h3:'#FB7185', accent:'#EA580C', soft:'#FFF7ED', lbl:'#B5764A', val:'#7C2D12', btnBg:'#FFEDD5', btnTx:'#EA580C' },
+  { name:'lavender', h1:'#A78BFA', h2:'#8B5CF6', h3:'#6366F1', accent:'#7C3AED', soft:'#F5F3FF', lbl:'#7E6BB0', val:'#4C1D95', btnBg:'#EDE9FE', btnTx:'#7C3AED' },
+  { name:'coral',    h1:'#FB7185', h2:'#F43F5E', h3:'#EC4899', accent:'#E11D48', soft:'#FFF1F2', lbl:'#B05670', val:'#881337', btnBg:'#FFE4E6', btnTx:'#E11D48' },
+  { name:'teal',     h1:'#2DD4BF', h2:'#06B6D4', h3:'#0EA5E9', accent:'#0891B2', soft:'#ECFEFF', lbl:'#3C7E8A', val:'#164E63', btnBg:'#CFFAFE', btnTx:'#0891B2' },
+  { name:'gold',     h1:'#FCD34D', h2:'#FBBF24', h3:'#F59E0B', accent:'#D97706', soft:'#FFFBEB', lbl:'#A6824A', val:'#78350F', btnBg:'#FEF3C7', btnTx:'#D97706' },
+];
+
+// เลือกพาเลตจากเลขออเดอร์ (หมุนเวียน — ออเดอร์ติดกันจะคนละโทนเสมอ)
+function pickPalette(orderId) {
+  const n = parseInt(String(orderId).replace(/\D/g, ''), 10);
+  const i = Number.isFinite(n) ? n : Math.floor(Math.random() * CARD_PALETTES.length);
+  return CARD_PALETTES[((i % CARD_PALETTES.length) + CARD_PALETTES.length) % CARD_PALETTES.length];
+}
+
+// การ์ดข้อมูลย่อย (พื้นพาสเทลตามโทน) — flex กำหนดเองได้สำหรับแถว 2 คอลัมน์
+function cardlet(label, value, P, flex) {
+  const box = {
+    type: 'box', layout: 'vertical', backgroundColor: P.soft, cornerRadius: '12px',
+    paddingAll: '10px', spacing: 'xs',
+    contents: [
+      { type: 'text', text: label, size: 'xxs', color: P.lbl, weight: 'bold' },
+      { type: 'text', text: String(value || '—'), size: 'sm', color: P.val, weight: 'bold', wrap: true }
+    ]
+  };
+  if (flex !== undefined) box.flex = flex;
+  return box;
+}
+
 function buildOrderCard(data) {
   const {
-    orderId       = '—',
-    customerName  = '—',
-    customerPhone = '—',
-    itemsSummary  = '—',
-    total         = 0,
-    paymentMethod = '—',
-    address       = '—',
-    note          = '',
-    shippingMethod = '—',
+    orderId        = '—',
+    customerName   = '—',
+    customerPhone  = '—',
+    itemsSummary   = '—',
+    total          = 0,
+    paymentMethod  = '—',
+    address        = '—',
+    note           = '',
+    shippingMethod = '—'
   } = data;
 
-  const payLabel = paymentMethod === 'promptpay' ? '📱 PromptPay QR' : '🚚 เก็บเงินปลายทาง';
-  const totalStr = '฿' + Number(total).toLocaleString('th-TH');
-  const now      = new Date().toLocaleString('th-TH', {
-    timeZone: 'Asia/Bangkok',
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
+  const P = pickPalette(orderId);
+  const payLabel = paymentMethod === 'promptpay' ? '📱 PromptPay QR'
+                 : paymentMethod === 'cod'       ? '🚚 เก็บเงินปลายทาง (COD)'
+                 : (paymentMethod || '—');
+  const totalStr = '฿' + Number(total || 0).toLocaleString('th-TH');
+  let when = '';
+  try {
+    when = new Date().toLocaleString('th-TH', {
+      timeZone: 'Asia/Bangkok', day: '2-digit', month: 'short',
+      year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+  } catch (e) { when = ''; }
+
+  const bodyContents = [
+    // ── ยอดรวม (กล่องเด่น พื้นพาสเทล ขอบสีโทน) ──
+    {
+      type: 'box', layout: 'vertical', backgroundColor: P.soft,
+      borderColor: P.accent, borderWidth: '1px', cornerRadius: '14px',
+      paddingAll: '14px', spacing: 'xs',
+      contents: [
+        { type: 'text', text: 'ยอดรวมทั้งสิ้น', align: 'center', size: 'xs', color: P.lbl, weight: 'bold' },
+        { type: 'text', text: totalStr, align: 'center', size: '3xl', weight: 'bold', color: P.accent },
+        { type: 'text', text: payLabel, align: 'center', size: 'xs', color: P.accent }
+      ]
+    },
+    // ── ข้อมูลลูกค้า: 2 คอลัมน์ ──
+    { type: 'box', layout: 'horizontal', spacing: 'sm',
+      contents: [ cardlet('👤 ลูกค้า', customerName, P, 1), cardlet('📞 เบอร์', customerPhone, P, 1) ] },
+    // ── สินค้า: เต็มแถว ──
+    cardlet('🛒 สินค้า', itemsSummary, P),
+    // ── ขนส่ง | ชำระเงิน ──
+    { type: 'box', layout: 'horizontal', spacing: 'sm',
+      contents: [ cardlet('🚚 ขนส่ง', shippingMethod, P, 1), cardlet('💳 ชำระ', payLabel, P, 1) ] },
+    // ── ที่อยู่: เต็มแถว ──
+    cardlet('📍 ที่อยู่', address, P)
+  ];
+
+  // ── หมายเหตุ (ถ้ามี) — โทนเหลืองคงที่ ──
+  if (note) {
+    bodyContents.push({
+      type: 'box', layout: 'vertical', backgroundColor: '#FEF9C3',
+      cornerRadius: '12px', paddingAll: '11px', spacing: 'xs',
+      contents: [
+        { type: 'text', text: '💬 หมายเหตุจากลูกค้า', size: 'xxs', color: '#854D0E', weight: 'bold' },
+        { type: 'text', text: note, size: 'sm', color: '#713F12', wrap: true }
+      ]
+    });
+  }
+
+  // ── ขอบคุณ ──
+  bodyContents.push({
+    type: 'text', text: 'ขอบคุณที่ไว้วางใจ Diamond Cute Studio 💕',
+    align: 'center', size: 'xxs', color: P.lbl, margin: 'md', wrap: true
   });
 
   return {
     type: 'flex',
-    altText: `📦 ออเดอร์ใหม่ #${orderId} — ${customerName} (${totalStr})`,
+    altText: `🎉 ออเดอร์ใหม่ #${orderId} — ${customerName} (${totalStr})`,
     contents: {
       type: 'bubble',
-      size: 'kilo',
-
-      // ── Header ──
+      size: 'mega',
+      // ── หัวการ์ด: ไล่สีตามโทน ──
       header: {
-        type: 'box',
-        layout: 'vertical',
-        backgroundColor: '#0EA5E9',
-        paddingAll: '16px',
+        type: 'box', layout: 'vertical', paddingAll: '18px', spacing: 'xs',
+        background: { type: 'linearGradient', angle: '135deg', startColor: P.h1, centerColor: P.h2, endColor: P.h3, centerPosition: '50%' },
         contents: [
-          {
-            type: 'box',
-            layout: 'horizontal',
-            contents: [
-              {
-                type: 'text',
-                text: '💎 Diamond Cute Studio',
-                color: '#FFFFFF',
-                size: 'sm',
-                weight: 'bold',
-                flex: 1
-              },
-              {
-                type: 'text',
-                text: '🛍️ ออเดอร์ใหม่',
-                color: '#DBEAFE',
-                size: 'xs',
-                align: 'end'
-              }
-            ]
-          },
-          {
-            type: 'text',
-            text: `#${orderId}`,
-            color: '#FFFFFF',
-            size: 'xl',
-            weight: 'bold',
-            margin: 'sm'
-          },
-          {
-            type: 'text',
-            text: now,
-            color: '#BFDBFE',
-            size: 'xs',
-            margin: 'xs'
-          }
+          { type: 'text', text: '🎉 ✨', align: 'center', size: 'lg', color: '#FFFFFF' },
+          { type: 'text', text: 'มีออเดอร์ใหม่เข้ามา!', align: 'center', size: 'xl', weight: 'bold', color: '#FFFFFF' },
+          { type: 'text', text: `#${orderId}${when ? ' · ' + when : ''}`, align: 'center', size: 'xs', color: '#FFFFFF', margin: 'sm', wrap: true }
         ]
       },
-
-      // ── Body ──
       body: {
-        type: 'box',
-        layout: 'vertical',
-        paddingAll: '16px',
-        spacing: 'md',
-        contents: [
-
-          // ── ราคา (big) ──
-          {
-            type: 'box',
-            layout: 'horizontal',
-            backgroundColor: '#F0F9FF',
-            cornerRadius: '8px',
-            paddingAll: '12px',
-            contents: [
-              { type: 'text', text: '💰 ยอดรวม', size: 'sm', color: '#0369A1', flex: 1 },
-              { type: 'text', text: totalStr, size: 'lg', weight: 'bold', color: '#0EA5E9', align: 'end' }
-            ]
-          },
-
-          // ── Divider ──
-          { type: 'separator', color: '#E0F2FE' },
-
-          // ── ข้อมูลลูกค้า ──
-          infoRow('👤', 'ลูกค้า',    customerName),
-          infoRow('📞', 'เบอร์',     customerPhone),
-          infoRow('🛒', 'สินค้า',   itemsSummary),
-          infoRow('💳', 'ชำระ',     payLabel),
-          infoRow('🚚', 'ขนส่ง',    shippingMethod),
-          infoRow('📍', 'ที่อยู่',   address),
-
-          // ── หมายเหตุ (ถ้ามี) ──
-          ...(note ? [
-            { type: 'separator', color: '#E0F2FE' },
-            {
-              type: 'box',
-              layout: 'vertical',
-              backgroundColor: '#FFFBEB',
-              cornerRadius: '8px',
-              paddingAll: '10px',
-              contents: [
-                { type: 'text', text: '💬 หมายเหตุ', size: 'xs', color: '#92400E', weight: 'bold' },
-                { type: 'text', text: note, size: 'sm', color: '#78350F', wrap: true, margin: 'xs' }
-              ]
-            }
-          ] : [])
-        ]
+        type: 'box', layout: 'vertical', paddingAll: '16px', spacing: 'md',
+        contents: bodyContents
       },
-
-      // ── Footer ──
       footer: {
-        type: 'box',
-        layout: 'horizontal',
-        paddingAll: '12px',
-        spacing: 'sm',
+        type: 'box', layout: 'horizontal', paddingAll: '12px', spacing: 'sm',
         contents: [
           {
-            type: 'button',
-            style: 'primary',
-            color: '#0EA5E9',
-            height: 'sm',
-            action: {
-              type: 'uri',
-              label: '⚙️ จัดการออเดอร์',
-              uri: 'https://chaiwutz14.github.io/Diamond-Cute-Studio/admin.html'
-            },
+            type: 'button', style: 'primary', color: P.accent, height: 'sm',
+            action: { type: 'uri', label: '⚙️ จัดการออเดอร์', uri: 'https://chaiwutz14.github.io/Diamond-Cute-Studio/admin.html' },
             flex: 1
           },
           {
-            type: 'button',
-            style: 'secondary',
-            height: 'sm',
-            action: {
-              type: 'uri',
-              label: '📋 ดูรายละเอียด',
-              uri: 'https://chaiwutz14.github.io/Diamond-Cute-Studio/admin.html#orders'
-            },
+            type: 'button', style: 'secondary', height: 'sm',
+            action: { type: 'uri', label: '📋 ดูรายละเอียด', uri: 'https://chaiwutz14.github.io/Diamond-Cute-Studio/admin.html#orders' },
             flex: 1
           }
         ]
       },
-
       styles: {
         header: { separator: false },
-        footer: { separator: true, separatorColor: '#E0F2FE' }
+        footer: { separator: true, separatorColor: P.soft }
       }
     }
-  };
-}
-
-// ─── Helper: แถวข้อมูลแต่ละบรรทัด ───
-function infoRow(icon, label, value) {
-  return {
-    type: 'box',
-    layout: 'horizontal',
-    contents: [
-      {
-        type: 'text',
-        text: `${icon} ${label}`,
-        size: 'xs',
-        color: '#64748B',
-        flex: 2,
-        offsetTop: '1px'
-      },
-      {
-        type: 'text',
-        text: String(value || '—'),
-        size: 'xs',
-        color: '#0F172A',
-        flex: 4,
-        wrap: true,
-        align: 'end'
-      }
-    ]
   };
 }
 

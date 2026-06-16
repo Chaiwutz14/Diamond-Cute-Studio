@@ -591,3 +591,42 @@ window.DMC = {
 document.addEventListener('DOMContentLoaded', () => {
   DMC.updateCartBadge();
 });
+
+/* ── DMC.confirm — กล่องยืนยันตามธีม (แทน window.confirm ที่ดูไม่สวย) ── */
+(function () {
+  if (!window.DMC) window.DMC = {};
+  window.DMC.confirm = function (message, opts) {
+    opts = opts || {};
+    return new Promise(function (resolve) {
+      var old = document.getElementById('dmc-confirm-modal'); if (old) old.remove();
+      var modal = document.createElement('div');
+      modal.id = 'dmc-confirm-modal';
+      modal.style.cssText = 'position:fixed;inset:0;z-index:10060;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)';
+      var box = document.createElement('div');
+      box.style.cssText = 'background:var(--bg-card,#fff);border:1.5px solid var(--border,#e5e7eb);border-radius:var(--r-2xl,24px);padding:1.75rem;max-width:340px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.3);text-align:center';
+      var icon = document.createElement('div');
+      icon.style.cssText = 'font-size:2.4rem;margin-bottom:.55rem'; icon.textContent = opts.icon || '⚠️';
+      var title = document.createElement('div');
+      title.style.cssText = 'font-family:var(--font-display),sans-serif;font-weight:700;font-size:1.08rem;color:var(--text-1);margin-bottom:.4rem';
+      title.textContent = opts.title || 'ยืนยันการทำรายการ';
+      var msg = document.createElement('div');
+      msg.style.cssText = 'font-size:.88rem;color:var(--text-2);margin-bottom:1.5rem;line-height:1.55;white-space:pre-line';
+      msg.textContent = message || '';
+      var btns = document.createElement('div'); btns.style.cssText = 'display:flex;gap:.7rem';
+      var ok = document.createElement('button'); ok.textContent = opts.okText || 'ยืนยัน';
+      ok.style.cssText = 'flex:1;padding:.72rem 1rem;background:' + (opts.danger === false ? 'var(--accent,#0ea5e9)' : 'var(--rose,#f43f5e)') + ';border:none;border-radius:var(--r-lg,14px);color:#fff;font-family:var(--font-display),sans-serif;font-weight:600;font-size:.9rem;cursor:pointer';
+      var cancel = document.createElement('button'); cancel.textContent = opts.cancelText || 'ยกเลิก';
+      cancel.style.cssText = 'flex:1;padding:.72rem 1rem;background:var(--bg-mid,#f1f5f9);border:1.5px solid var(--border,#e5e7eb);color:var(--text-2);border-radius:var(--r-lg,14px);font-family:var(--font-display),sans-serif;font-weight:600;font-size:.9rem;cursor:pointer';
+      btns.appendChild(ok); btns.appendChild(cancel);
+      box.appendChild(icon); box.appendChild(title); box.appendChild(msg); box.appendChild(btns);
+      modal.appendChild(box); document.body.appendChild(modal);
+      function done(v) { modal.remove(); document.removeEventListener('keydown', onKey); resolve(v); }
+      function onKey(e) { if (e.key === 'Escape') done(false); if (e.key === 'Enter') done(true); }
+      ok.addEventListener('click', function () { done(true); });
+      cancel.addEventListener('click', function () { done(false); });
+      modal.addEventListener('click', function (e) { if (e.target === modal) done(false); });
+      document.addEventListener('keydown', onKey);
+      setTimeout(function () { ok.focus(); }, 50);
+    });
+  };
+})();

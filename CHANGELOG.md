@@ -1,5 +1,24 @@
 # 📜 CHANGELOG — Diamond Cute Studio
 
+## V4.3 — แก้ 6 บั๊ก/UX แอดมิน + แตกไฟล์ admin.js
+- 🎨 **#1 Dropdown + ยืนยันสวยตามธีม** — เติม `data-custom` ให้ select แอดมินทุกจุด (custom-select เด้ง bottom-sheet/dropdown) + global observer enhance select ที่ render ทีหลังอัตโนมัติ · สร้าง `DMC.confirm()` modal ตามธีม แทน `confirm()` เดิม 7 จุด (Esc/Enter รองรับ)
+- 📐 **#2 ปุ่มบันทึกไม่ถูก bottom-nav บัง** — ยก modal overlay z-index 800→9400 (เหนือ bottom-nav 9000)
+- ✏️ **#3 แก้เนื้อหาได้ทั้งหน้าเว็บจริง + หลังบ้าน** — เติม `data-edit` 32 จุด (ขั้นตอน 6 ข้อ, ไฟล์/จัดส่ง 8 การ์ด, นโยบาย 4 ข้อ) → มีดินสอแก้ inline + render จาก CMS + บันทึกอัตโนมัติ (รวมเป็น 35 จุดแก้ได้)
+- 🔝 **#4 แถบโหมดแอดมินไม่บังส่วนบนร้าน** — วัดความสูงแถบจริง แล้วดัน navbar + เนื้อหา + drawer ลง (รองรับปุ่มขึ้น 2 บรรทัด)
+- 🖱️ **#5 ปุ่ม "แก้ไข" สินค้าใช้งานได้** — ต้นเหตุ: CSP บล็อก inline `onclick` → แปลง 13 handler เป็น event delegation (`data-act`/`data-act-change`) ปลอดภัยตาม CSP
+- 🗂️ **#6 แตก admin.js (2,310 บรรทัด) เป็น 11 โมดูล** — core/overview/orders/products/gallery/contacts/reviews/content/coupons/templates/settings (ไฟล์ใหญ่สุดเหลือ 468 บรรทัด) ดูแลง่ายขึ้นมาก · แตกแบบ lossless 100%
+- ✅ ทดสอบจริงทุกจุด: DMC.confirm, custom-select, pencils 35 จุด, navbar offset (navTop=barH), delegation dispatch, z-index, 11 modules โหลดครบไม่มี error
+
+---
+
+## V4.2 — LINE Flex card โฉมใหม่ "Vibrant Cute หลายโทน"
+- 🎨 ออกแบบการ์ดแจ้งเตือนออเดอร์เข้า LINE ใหม่ทั้งหมด (แทน buildOrderCard เดิม) — สไตล์ Vibrant Cute: หัวไล่สี gradient, กล่องยอดรวมเด่น, ข้อมูลเป็นการ์ดพาสเทล 2 คอลัมน์, ปุ่มสีโทน, "ขอบคุณที่ไว้วางใจ 💕"
+- 🌈 **หลายโทนหมุนเวียน (8 พาเลต)** — แต่ละออเดอร์เปลี่ยนโทนอัตโนมัติตามเลขออเดอร์ (`pickPalette`) → ออเดอร์ติดกันคนละโทนเสมอ ร้านแยกออกง่ายว่าจัดการออเดอร์ไหนแล้ว
+- ✅ ใช้ linearGradient + box พาสเทล + ปุ่มสีกำหนดเอง (LINE Flex รองรับจริง) · คง field ข้อมูลครบ + 2 ปุ่มลิงก์หลังบ้าน · ลบ `infoRow` เดิมที่ไม่ใช้
+- 🧪 ทดสอบ: card สร้างเป็น JSON ถูกต้อง (มี/ไม่มีหมายเหตุ) + โทนหมุน 9 ออเดอร์วน 8 โทนถูกต้อง
+
+---
+
 ## V4.1 — คูปอง(verified) + แถบประกาศ + แก้ empty-state
 - 🎟️ **ระบบคูปองส่วนลด (แนว B / Poka-yoke)** — collection `coupons` (doc id=CODE), validate ครบ (active/ช่วงเวลา/minSpend/usageLimit/maxDiscount cap), ส่วนลด percent/fixed/freeship, นับ `usedCount` ด้วย atomic transaction กันใช้เกินลิมิต · **ทดสอบ 9/9 scenarios ผ่าน**
 - 💸 **ค่าส่ง/ค่าธรรมเนียม/surcharge แก้ได้จากหลังบ้าน** (siteContent/main.fees) — มีผลกับยอดตะกร้าทันที

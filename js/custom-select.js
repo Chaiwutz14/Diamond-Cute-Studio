@@ -155,6 +155,23 @@
   function initAll(root) {
     injectCSS();
     (root || document).querySelectorAll('select[data-custom]').forEach(build);
+    startGlobalObserver();
+  }
+
+  // จับ <select data-custom> ที่ถูก render ทีหลัง (modal/section) → enhance อัตโนมัติ
+  var _globalObs = false;
+  function startGlobalObserver() {
+    if (_globalObs || !window.MutationObserver || !document.body) return;
+    _globalObs = true;
+    new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        m.addedNodes && m.addedNodes.forEach(function (node) {
+          if (node.nodeType !== 1) return;
+          if (node.matches && node.matches('select[data-custom]')) build(node);
+          if (node.querySelectorAll) node.querySelectorAll('select[data-custom]').forEach(build);
+        });
+      });
+    }).observe(document.body, { childList: true, subtree: true });
   }
 
   // เปิดให้เรียกซ้ำได้ (หลัง render modal/หน้าใหม่)

@@ -125,6 +125,18 @@
     document.body.appendChild(bar);
     document.body.classList.add('has-admin-bar');
 
+    // ดัน navbar (fixed) + เนื้อหา + drawer ลงให้พ้นแถบโหมดแอดมิน (วัดความสูงจริง — รองรับปุ่มขึ้น 2 บรรทัด)
+    function applyAdminBarOffset() {
+      var h = bar.offsetHeight;
+      var navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 60;
+      document.body.style.paddingTop = h + 'px';
+      var nav = document.getElementById('main-nav'); if (nav) nav.style.top = h + 'px';
+      var dr = document.getElementById('mobile-drawer'); if (dr) dr.style.top = (h + navH) + 'px';
+    }
+    applyAdminBarOffset();
+    window.addEventListener('resize', applyAdminBarOffset, { passive: true });
+    setTimeout(applyAdminBarOffset, 300);
+
     document.getElementById('amb-edit-btn').addEventListener('click', toggleEdit);
     document.getElementById('amb-back-btn').addEventListener('click', function(){
       location.href = 'admin.html';
