@@ -37,11 +37,11 @@ window.DMC_CONFIG = {
   // V3 Security: Firebase App Check — กันการยิง Firestore/Auth ตรงด้วย config สาธารณะ
   // ขอ site key (reCAPTCHA v3) ที่ Firebase Console → App Check → เว็บแอป → reCAPTCHA v3
   // เว้นว่าง = ปิด App Check (ระบบยังทำงานปกติ)
-  APP_CHECK_SITE_KEY: '6Lc9uCEtAAAAAHKx-mjHL7Gr_-h4ZZfmxlOqVY2m',
+  APP_CHECK_SITE_KEY: '6LcDmCMtAAAAAOUqHLw7G3jXC0hf3AkU8DGJn-jB',
 
   // V3 Security: เก็บสลิป/รูปลูกค้าใน Firebase Storage แบบ private (แทน ImgBB สาธารณะ)
   // ต้องเปิด Firebase Storage + deploy storage.rules ก่อน แล้วตั้งเป็น true
-  PRIVATE_UPLOADS: true,
+  PRIVATE_UPLOADS: false,
 
   // ── แจ้งเตือน LINE ผ่าน Cloudflare Worker ──
   CF_WORKER_URL: 'https://dmc-studio-notify.peeza1482546.workers.dev',

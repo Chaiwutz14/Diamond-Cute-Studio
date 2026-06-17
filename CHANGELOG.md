@@ -1,5 +1,15 @@
 # 📜 CHANGELOG — Diamond Cute Studio
 
+## V4.4 — คูปองเช็กจากเบอร์โทร (ลูกค้าใหม่ / 1 เบอร์ครั้งเดียว)
+- 🆕 เพิ่มตัวเลือกคูปอง **"เฉพาะลูกค้าใหม่"** (`firstOrderOnly`) — เช็กจากเบอร์: ถ้าเบอร์นี้เคยสั่งซื้อแล้ว → ใช้ไม่ได้
+- 📱 เพิ่มตัวเลือก **"1 เบอร์ใช้ได้ครั้งเดียว"** (`oncePerPhone`) — เบอร์เดิมใช้คูปองนี้ซ้ำไม่ได้
+- 🔒 ใช้ collection แยก `couponGuard` (เก็บแค่ marker เบอร์+โค้ด + timestamp — ไม่มีข้อมูลส่วนตัว) แทนการอ่านออเดอร์ตรงๆ (ที่ติด privacy/OTP) → **เช็กข้ามเบราว์เซอร์/Incognito ได้** (ผูกกับเบอร์ ไม่ใช่เครื่อง)
+- เช็กตอนกดสั่งซื้อ (ก่อนอัปโหลด) + บันทึก marker หลังสั่งสำเร็จ · fail-open (เน็ตมีปัญหายังสั่งได้) · หลังบ้านมี checkbox 2 ตัวในฟอร์มคูปอง
+- ✅ ทดสอบ logic 11 scenario ผ่านหมด (ลูกค้าใหม่/เก่า, 1เบอร์ครั้งเดียว, คนละคูปอง, คูปองปกติไม่จำกัด)
+- ⚠️ ต้อง **deploy firestore.rules ใหม่** (เพิ่ม rule couponGuard แล้ว)
+
+---
+
 ## V4.3 — แก้ 6 บั๊ก/UX แอดมิน + แตกไฟล์ admin.js
 - 🎨 **#1 Dropdown + ยืนยันสวยตามธีม** — เติม `data-custom` ให้ select แอดมินทุกจุด (custom-select เด้ง bottom-sheet/dropdown) + global observer enhance select ที่ render ทีหลังอัตโนมัติ · สร้าง `DMC.confirm()` modal ตามธีม แทน `confirm()` เดิม 7 จุด (Esc/Enter รองรับ)
 - 📐 **#2 ปุ่มบันทึกไม่ถูก bottom-nav บัง** — ยก modal overlay z-index 800→9400 (เหนือ bottom-nav 9000)

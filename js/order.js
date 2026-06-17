@@ -524,11 +524,14 @@ async function applyCoupon() {
       value:       Number(c.value || 0),
       minSpend:    Number(c.minSpend || 0),
       maxDiscount: Number(c.maxDiscount || 0),
+      firstOrderOnly: !!c.firstOrderOnly,   // V4.4: เช็กตอนสั่งจากเบอร์
+      oncePerPhone:   !!c.oncePerPhone,
     };
     renderSummary();
     const t = computeTotals();
     const msg = appliedCoupon.type === 'freeship' ? 'ส่งฟรี' : DMC.formatPrice(t.discount);
     DMC.toast(`✅ ใช้โค้ด ${code} สำเร็จ — ${msg}`, 'success');
+    if (appliedCoupon.firstOrderOnly) DMC.toast('ℹ️ คูปองนี้สำหรับลูกค้าใหม่ (เช็กจากเบอร์ตอนสั่งซื้อ)', 'info', 4500);
     if (input) input.disabled = true;
     _markCouponApplied(true);
   } catch (e) {
@@ -578,6 +581,24 @@ async function submitOrder() {
   if (selectedPayment === 'promptpay' && !slipUrl) {
     DMC.toast('กรุณาแนบสลิปโอนเงินก่อน', 'error');
     return;
+  }
+
+  // V4.4: เช็กคูปองตามเบอร์โทร (ลูกค้าใหม่ / 1 เบอร์ครั้งเดียว) — ก่อนเริ่มอัปโหลด เพื่อ abort ได้สะอาด
+  if (appliedCoupon && (appliedCoupon.firstOrderOnly || appliedCoupon.oncePerPhone)) {
+    const _ph = DMC.normalizePhone(document.getElementById('customer-phone')?.value || '');
+    if (_ph) {
+      try {
+        if (!db) db = await DMC.getFirebaseReady();
+        if (appliedCoupon.firstOrderOnly) {
+          const d = await db.collection('couponGuard').doc('cust__' + _ph).get();
+          if (d.exists) { DMC.toast('คูปอง ' + appliedCoupon.code + ' สำหรับลูกค้าใหม่เท่านั้น — เบอร์นี้เคยสั่งซื้อแล้ว 🙏', 'error', 5500); return; }
+        }
+        if (appliedCoupon.oncePerPhone) {
+          const d = await db.collection('couponGuard').doc(appliedCoupon.code + '__' + _ph).get();
+          if (d.exists) { DMC.toast('เบอร์นี้ใช้คูปอง ' + appliedCoupon.code + ' ไปแล้ว 🙏', 'error', 5500); return; }
+        }
+      } catch (e) { console.warn('coupon guard check skipped:', e.message); }   // fail-open: เน็ตมีปัญหาก็ให้สั่งได้
+    }
   }
 
   btn.disabled = true;
@@ -680,6 +701,18 @@ async function submitOrder() {
           tx.update(ref, { usedCount: used + 1 });   // เปลี่ยนเฉพาะ usedCount +1 (ตรงกับ rules)
         });
       } catch (e) { console.warn('coupon usage update skipped:', e.message); }
+    }
+
+    // V4.4: บันทึก marker เบอร์ลง couponGuard (existence = เคยสั่ง/เคยใช้คูปอง) — ใช้เช็กครั้งหน้า
+    if (db && orderData.phoneSearch) {
+      const _ph = orderData.phoneSearch;
+      const _FV = firebase.firestore.FieldValue;
+      // mark "เบอร์นี้เป็นลูกค้าแล้ว" (ทุกออเดอร์) → ใช้เช็ก firstOrderOnly
+      db.collection('couponGuard').doc('cust__' + _ph).set({ at: _FV.serverTimestamp() }).catch(() => {});
+      // mark "เบอร์นี้ใช้คูปองนี้แล้ว" (เฉพาะคูปอง 1-เบอร์-ครั้งเดียว) → ใช้เช็ก oncePerPhone
+      if (appliedCoupon && appliedCoupon.oncePerPhone) {
+        db.collection('couponGuard').doc(appliedCoupon.code + '__' + _ph).set({ code: appliedCoupon.code, at: _FV.serverTimestamp() }).catch(() => {});
+      }
     }
 
     // บันทึกลงเครื่องนี้ — ลูกค้าดูประวัติได้ทันทีที่หน้า "ติดตามออเดอร์"

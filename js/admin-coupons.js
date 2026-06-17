@@ -40,8 +40,14 @@ async function loadCouponsAdmin(container) {
         <div class="form-group" style="margin:0"><label class="form-label">วันหมดอายุ (เว้นว่าง=ไม่จำกัด)</label><input class="form-input" id="coupon-expire" type="date"></div>
       </div>
       <div class="form-group"><label class="form-label">คำอธิบาย (ให้แอดมินจำ)</label><input class="form-input" id="coupon-desc" maxlength="80" placeholder="เช่น โปรเปิดร้าน ลูกค้าใหม่"></div>
-      <label style="display:flex;align-items:center;gap:.45rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem;margin-bottom:1rem">
+      <label style="display:flex;align-items:center;gap:.45rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem;margin-bottom:.55rem">
         <input type="checkbox" id="coupon-active" checked style="accent-color:var(--accent)"> เปิดใช้งานคูปองนี้
+      </label>
+      <label style="display:flex;align-items:center;gap:.45rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem;margin-bottom:.55rem">
+        <input type="checkbox" id="coupon-firstorder" style="accent-color:var(--accent)"> 🆕 เฉพาะลูกค้าใหม่ (เบอร์ที่ไม่เคยสั่งซื้อ)
+      </label>
+      <label style="display:flex;align-items:center;gap:.45rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem;margin-bottom:1rem">
+        <input type="checkbox" id="coupon-oncephone" style="accent-color:var(--accent)"> 📱 1 เบอร์ใช้ได้ครั้งเดียว
       </label>
       <div style="display:flex;gap:.6rem">
         <button class="btn btn-primary btn-md" id="coupon-save-btn">💾 บันทึกคูปอง</button>
@@ -80,6 +86,8 @@ function resetCouponForm() {
   document.getElementById('coupon-edit-id').value = '';
   const code = document.getElementById('coupon-code'); code.disabled = false;
   document.getElementById('coupon-active').checked = true;
+  document.getElementById('coupon-firstorder').checked = false;
+  document.getElementById('coupon-oncephone').checked = false;
   document.getElementById('coupon-type').value = 'percent';
   document.getElementById('coupon-type').dispatchEvent(new Event('change'));
   document.getElementById('coupon-form-title').textContent = '➕ สร้างคูปองใหม่';
@@ -105,6 +113,8 @@ async function saveCoupon() {
     expireAt:    _couponDateToMs(document.getElementById('coupon-expire').value),
     description: (document.getElementById('coupon-desc').value || '').trim(),
     active:      !!document.getElementById('coupon-active').checked,
+    firstOrderOnly: !!document.getElementById('coupon-firstorder').checked,   // เฉพาะลูกค้าใหม่ (เช็กจากเบอร์)
+    oncePerPhone:   !!document.getElementById('coupon-oncephone').checked,    // 1 เบอร์/ครั้ง
   };
 
   const btn = document.getElementById('coupon-save-btn');
@@ -184,6 +194,8 @@ function editCoupon(id) {
   document.getElementById('coupon-expire').value = _couponMsToDate(c.expireAt);
   document.getElementById('coupon-desc').value = c.description || '';
   document.getElementById('coupon-active').checked = c.active !== false;
+  document.getElementById('coupon-firstorder').checked = !!c.firstOrderOnly;
+  document.getElementById('coupon-oncephone').checked = !!c.oncePerPhone;
   document.getElementById('coupon-type').dispatchEvent(new Event('change'));
   document.getElementById('coupon-form-title').textContent = '✏️ แก้ไขคูปอง: ' + c.code;
   document.getElementById('coupon-cancel-btn').style.display = '';

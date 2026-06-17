@@ -9,7 +9,7 @@ service cloud.firestore {
     // ═══════════════════════════════════════════
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.email == 'REPLACE_WITH_ADMIN_EMAIL@example.com';
+        && request.auth.token.email == 'peeza1482546@gmail.com';
     }
 
     // เบอร์จาก Phone Auth (+66xxxxxxxxx → 0xxxxxxxxx)
@@ -101,6 +101,14 @@ service cloud.firestore {
         resource.data.active == true &&
         (resource.data.usageLimit == 0 || resource.data.usedCount < resource.data.usageLimit)
       );
+    }
+
+    // V4.4: marker เบอร์โทรสำหรับคูปอง "ลูกค้าใหม่" / "1 เบอร์ครั้งเดียว"
+    // doc id = "cust__<เบอร์>" หรือ "<CODE>__<เบอร์>" — เก็บแค่ timestamp ไม่มีข้อมูลส่วนตัว
+    match /couponGuard/{id} {
+      allow get:            if true;        // เช็กได้ (ต้องรู้ id = โค้ด+เบอร์ ถึงเช็กได้)
+      allow create, update: if true;        // ลูกค้าบันทึก marker ได้ (existence = เคยใช้)
+      allow list, delete:   if isAdmin();   // ห้าม list ทั้งหมด / ลบได้เฉพาะแอดมิน (กันลูกค้าปลดล็อกเอง)
     }
   }
 }
