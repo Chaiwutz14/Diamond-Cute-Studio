@@ -358,6 +358,7 @@ function updateQtyUI() {
 
 function addToCart(goToCart) {
   const options = [selectedSize, selectedMaterial].filter(Boolean).join(' · ');
+  const customDetails = (document.getElementById('product-details')?.value || '').trim();   // V4.6
   DMC.addToCart({
     id: product.id,
     name: product.name,
@@ -365,6 +366,7 @@ function addToCart(goToCart) {
     qty,
     unit: product.unit || 'ชิ้น',
     options,
+    customDetails,                                                                          // V4.6: เก็บใน cart
     emoji: product.emoji || '📦',
     image: (galleryItems.find(g => g.type === 'image') || {}).url || product.image || '',
   });

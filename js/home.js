@@ -290,8 +290,8 @@ async function loadCategoryCounts() {
       return matches.reduce((s, m) => s + (counts[m.toLowerCase()] || 0), 0);
     }
 
-    // built-in + custom จาก module กลาง
-    const allCats = window.DMCCat ? await DMCCat.loadAll(db) : BUILTIN;
+    // built-in เท่านั้น (ไม่รวมหมวด custom จาก Firestore) — fix 8 รายการบนหน้าแรกถาวร
+    const allCats = BUILTIN;
 
     // สร้างการ์ดใหม่
     let html = '';

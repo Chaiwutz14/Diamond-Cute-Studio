@@ -89,7 +89,7 @@ window.openOrderModal = async function(orderId) {
 
     const items = (o.items||[]).map(item => `
       <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.87rem">
-        <div><div style="font-weight:600">${DMC.escapeHtml(item.name||'—')}</div><div style="color:var(--text-3);font-size:.78rem">${DMC.escapeHtml(item.options||'')} × ${item.qty||1} ${DMC.escapeHtml(item.unit||'ชิ้น')}</div></div>
+        <div><div style="font-weight:600">${DMC.escapeHtml(item.name||'—')}</div><div style="color:var(--text-3);font-size:.78rem">${DMC.escapeHtml(item.options||'')} × ${item.qty||1} ${DMC.escapeHtml(item.unit||'ชิ้น')}</div>${item.customDetails ? `<div style="margin-top:.25rem;padding:.4rem .6rem;background:var(--bg-mid);border-left:3px solid var(--accent);border-radius:6px;color:var(--text-2);font-size:.8rem;line-height:1.45;white-space:pre-line">📝 ${DMC.escapeHtml(item.customDetails)}</div>` : ''}</div>
         <div style="font-family:var(--font-display);font-weight:700;color:var(--accent)">${DMC.formatPrice((item.price||0)*(item.qty||1))}</div>
       </div>`).join('');
 

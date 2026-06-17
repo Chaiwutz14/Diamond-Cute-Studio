@@ -138,6 +138,17 @@
         <span class="subtotal-value" id="subtotal-display">—</span>
       </div>
 
+      <!-- V4.6: รายละเอียดเพิ่มเติม (โลโก้/ชื่อ/ข้อมูลส่วนตัว) -->
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label" for="product-details" style="display:flex;align-items:center;gap:.4rem;font-size:.92rem">
+          📝 รายละเอียดเพิ่มเติม <span style="font-weight:400;color:var(--text-3);font-size:.78rem">(ไม่บังคับ)</span>
+        </label>
+        <textarea id="product-details" class="form-input" rows="3" maxlength="500"
+          style="resize:vertical;min-height:80px;font-family:inherit;line-height:1.55"
+          placeholder="ใส่ข้อมูลที่ต้องการ เช่น ชื่อ-ตำแหน่ง (นามบัตร), ชื่อเด็ก-ห้อง (บัตรนักเรียน), โลโก้ — หรือส่งไฟล์/ข้อมูลทาง LINE ภายหลังก็ได้ครับ"></textarea>
+        <div style="font-size:.72rem;color:var(--text-3);margin-top:.3rem;line-height:1.5">💡 สำหรับสินค้าที่ต้องระบุข้อมูลส่วนตัว (นามบัตร · บัตรแขวนคอ · บัตรนักเรียน) — ใส่ที่นี่หรือส่งผ่าน LINE ก็ได้</div>
+      </div>
+
       <!-- Action Buttons -->
       <div class="detail-actions">
         <button class="btn btn-secondary btn-lg btn-to-cart" id="add-to-cart-btn" style="flex:1">

@@ -1,5 +1,15 @@
 # 📜 CHANGELOG — Diamond Cute Studio
 
+## V4.6 — แก้ 4 จุด (หน้าติดตาม + จัดการหมวด + หน้าแรก fix 8 + รายละเอียดสินค้า)
+- 📦 **#1 หน้าติดตามออเดอร์** `.track-page` ใช้ `calc(--nav-h + 1.5rem)` แทน `2rem` (เลขคงที่) → หัวข้อ "ติดตามออเดอร์" ไม่ถูก navbar/announce บัง
+- 🗑️ **#2 จัดการหมวดหมู่ในหน้าเพิ่มสินค้า** — เพิ่ม option "🗑️ จัดการหมวดหมู่ที่เพิ่มเอง..." ใน dropdown หมวด → เปิด modal สวยตามธีม แสดงหมวด custom พร้อมปุ่มลบ + เช็กว่าหมวดมีสินค้าอยู่หรือไม่ก่อนลบ + DMC.confirm ก่อน delete (กัน built-in ลบไม่ได้)
+- 🏠 **#3 หน้าแรก "เลือกบริการ" fix 8 รายการถาวร** — เปลี่ยน `loadCategoryCounts` ให้ใช้ `BUILTIN` เท่านั้น (ไม่รวม custom) → 7 built-in + การ์ด "ทั้งหมด" = 8 รายการเป๊ะ หมวด custom ใหม่จะไม่โผล่หน้าแรกอีก (ยังอยู่ในหน้าสินค้าและหน้าเพิ่มสินค้า)
+- 📝 **#4 รายละเอียดเพิ่มเติมในหน้าสินค้า** — เพิ่ม textarea "รายละเอียดเพิ่มเติม" (500 ตัวอักษร) บนปุ่มซื้อ → ลูกค้ากรอกข้อมูลส่วนตัว (ชื่อบนนามบัตร/บัตรนักเรียน) หรือบอกว่าส่งโลโก้ทาง LINE → เก็บใน cart item `customDetails` → แสดงในตะกร้า + ใน LINE Flex card (`itemsSummary`) + ในหลังบ้าน (กล่องไฮไลต์ฟ้า) · ละเอียดต่าง = แยกชิ้นในตะกร้า
+- 🔧 อัปเดต `js/config.js` ตรงกับ ADMIN_EMAIL + APP_CHECK_SITE_KEY ของคุณ
+- ✅ ทดสอบจริง: orders title ไม่ทับ navbar, manage modal เปิด+ลบได้+confirm ก่อนลบ, home logic 8 รายการตรงเป๊ะ, product details textarea ครบ
+
+---
+
 ## V4.5 — เก็บกวาด Console warnings (ไม่กระทบการทำงาน)
 - ลบ `frame-ancestors` ออกจาก meta CSP (browser ignore อยู่แล้ว — frame-buster ใน theme-init.js กันแทน)
 - เพิ่ม `https://www.gstatic.com` ใน connect-src → เลิก block source-map (.js.map) ของ Firebase

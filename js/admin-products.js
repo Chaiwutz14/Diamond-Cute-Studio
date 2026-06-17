@@ -195,6 +195,7 @@ window.openProductModal = async function(productId) {
         <select data-custom class="form-input form-select" id="p-category">
           ${categories.map(c=>`<option ${product.category===c?'selected':''}>${c}</option>`).join('')}
           <option value="__add__">➕ เพิ่มหมวดหมู่ใหม่...</option>
+          ${customCats.length ? `<option value="__manage__">🗑️ จัดการหมวดหมู่ที่เพิ่มเอง...</option>` : ''}
         </select>
       </div>
       <div class="form-group" style="margin:0">
@@ -300,9 +301,10 @@ window.openProductModal = async function(productId) {
     _modalImages.push({url:'', label:''});
     renderModalImages();
   });
-  // เพิ่มหมวดหมู่ใหม่จาก dropdown
+  // เพิ่ม/จัดการหมวดหมู่จาก dropdown
   document.getElementById('p-category')?.addEventListener('change', function(){
-    if (this.value === '__add__') promptNewCategory(this);
+    if (this.value === '__add__')    promptNewCategory(this);
+    if (this.value === '__manage__') openManageCategories(this);
   });
   document.getElementById('p-save-btn')?.addEventListener('click', () => saveProduct(productId||''));
 };
@@ -341,6 +343,68 @@ async function promptNewCategory(selectEl) {
     DMC.toast('เพิ่มไม่สำเร็จ: '+e.message,'error');
     selectEl.value = selectEl.options[0].value;
   }
+}
+
+// V4.6: เปิด modal จัดการหมวดหมู่ที่เพิ่มเอง (ลบได้)
+async function openManageCategories(selectEl) {
+  // reset dropdown ก่อน (กันค้างที่ __manage__)
+  selectEl.value = selectEl.options[0].value;
+  const cats = await fetchCustomCategoriesOnce();
+  if (!cats.length) { DMC.toast('ยังไม่มีหมวดหมู่ที่เพิ่มเอง', 'info'); return; }
+
+  // สร้าง modal (z-index สูงกว่า product modal)
+  const old = document.getElementById('cat-manage-modal'); if (old) old.remove();
+  const m = document.createElement('div');
+  m.id = 'cat-manage-modal';
+  m.style.cssText = 'position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg-card,#fff);border:1.5px solid var(--border,#e5e7eb);border-radius:var(--r-2xl,24px);padding:1.5rem 1.4rem 1.3rem;max-width:380px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.3)';
+  box.innerHTML = '<div style="font-family:var(--font-display);font-weight:700;font-size:1.05rem;margin-bottom:.25rem;color:var(--text-1)">🗑️ จัดการหมวดหมู่ที่เพิ่มเอง</div>'
+    + '<div style="font-size:.78rem;color:var(--text-3);margin-bottom:1rem">หมวด built-in (โพลารอยด์ บัตรแขวนคอ ฯลฯ) ลบไม่ได้</div>'
+    + '<div id="cat-mng-list"></div>'
+    + '<button id="cat-mng-close" style="margin-top:1rem;width:100%;padding:.7rem;background:var(--bg-mid,#f1f5f9);border:1.5px solid var(--border,#e5e7eb);color:var(--text-2);border-radius:var(--r-lg,14px);font-family:var(--font-display),sans-serif;font-weight:600;cursor:pointer">ปิด</button>';
+  m.appendChild(box);
+  document.body.appendChild(m);
+
+  function renderList() {
+    const list = document.getElementById('cat-mng-list');
+    list.innerHTML = cats.map(c =>
+      '<div style="display:flex;align-items:center;gap:.55rem;padding:.7rem .85rem;background:var(--bg-mid,#f8fafc);border:1px solid var(--border,#e5e7eb);border-radius:12px;margin-bottom:.5rem">'
+      + '<span style="font-size:1.15rem">' + DMC.escapeHtml(c.emoji || '🏷️') + '</span>'
+      + '<span style="flex:1;font-weight:600;font-size:.9rem;color:var(--text-1);min-width:0;overflow-wrap:anywhere">' + DMC.escapeHtml(c.name) + '</span>'
+      + '<button data-del-cat="' + DMC.escapeHtml(c.id) + '" style="background:transparent;border:1.5px solid var(--rose,#f43f5e);color:var(--rose,#f43f5e);padding:.35rem .7rem;border-radius:9px;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer">🗑️ ลบ</button>'
+      + '</div>'
+    ).join('') || '<div style="text-align:center;color:var(--text-3);padding:1rem">ไม่มีหมวดหมู่ที่เพิ่มเอง</div>';
+    list.querySelectorAll('button[data-del-cat]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-del-cat');
+        const c = cats.find(x => x.id === id); if (!c) return;
+        // ✅ กันลบหมวดที่ยังมีสินค้าอยู่
+        try {
+          const used = await db.collection('products').where('category', '==', c.name).limit(1).get();
+          if (!used.empty) { DMC.toast('ลบไม่ได้: ยังมีสินค้าในหมวด "' + c.name + '"', 'error', 5000); return; }
+        } catch(e) {}
+        if (!(await DMC.confirm('ลบหมวด "' + c.name + '" ?\n(การลบไม่ส่งผลกับสินค้าเก่าที่ใช้ชื่อเดียวกัน)', { icon: '🗑️', title: 'ลบหมวดหมู่' }))) return;
+        try {
+          await db.collection('categories').doc(id).delete();
+          // ลบจาก cache + dropdown
+          const idx = cats.findIndex(x => x.id === id); if (idx >= 0) cats.splice(idx, 1);
+          _customCatsCache = null;
+          const opt = selectEl.querySelector('option[value="' + CSS.escape(c.name) + '"]'); if (opt) opt.remove();
+          DMC.toast('ลบหมวด "' + c.name + '" แล้ว ✅', 'success');
+          renderList();
+          // ถ้าไม่เหลือ custom → ลบ option __manage__
+          if (cats.length === 0) {
+            const mOpt = selectEl.querySelector('option[value="__manage__"]'); if (mOpt) mOpt.remove();
+            m.remove();
+          }
+        } catch(e) { DMC.toast('ลบไม่สำเร็จ: ' + e.message, 'error'); }
+      });
+    });
+  }
+  renderList();
+  document.getElementById('cat-mng-close').addEventListener('click', () => m.remove());
+  m.addEventListener('click', e => { if (e.target === m) m.remove(); });
 }
 
 function renderModalImages() {

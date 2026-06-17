@@ -94,6 +94,7 @@ function renderCart() {
           ${item.options ? DMC.escapeHtml(item.options) + ' · ' : ''}
           จำนวน ${item.qty} ${item.unit || 'ชิ้น'}
         </div>
+        ${item.customDetails ? `<div class="cart-item-spec" style="margin-top:.2rem;color:var(--accent);font-size:.8rem;line-height:1.45">📝 ${DMC.escapeHtml(item.customDetails)}</div>` : ''}
       </div>
       <div class="cart-item-right">
         <div class="cart-item-price">${DMC.formatPrice(item.price * item.qty)}</div>
@@ -664,7 +665,7 @@ async function submitOrder() {
     note:            document.getElementById('customer-note')?.value.trim() || '',
     paymentMethod:   selectedPayment,
     items:           cart,
-    itemsSummary:    cart.map(i => `${i.name} ×${i.qty}`).join(', '),
+    itemsSummary:    cart.map(i => `${i.name} ×${i.qty}${i.customDetails ? ' [📝 '+i.customDetails+']' : ''}`).join(', '),
     subtotal,
     shipping,
     surcharge,

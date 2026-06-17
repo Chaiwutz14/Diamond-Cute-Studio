@@ -147,7 +147,7 @@
 /* ══════════════════════════════════════════════
    V12 — TRACK PAGE (orders.html)
 ══════════════════════════════════════════════ */
-.track-page { min-height: 70vh; padding: 2rem 1.25rem 4rem; background: var(--bg); }
+.track-page { min-height: 70vh; padding: calc(var(--nav-h) + 1.5rem) 1.25rem 4rem; background: var(--bg); }
 .track-container { max-width: 760px; margin: 0 auto; }
 .track-header { text-align: center; margin-bottom: 1.75rem; }
 .track-title { font-family: var(--font-display); font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 800; color: var(--text-1); }

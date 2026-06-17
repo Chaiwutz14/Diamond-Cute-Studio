@@ -365,7 +365,7 @@ function saveCart(cart) {
 
 function addToCart(item) {
   const cart = getCart();
-  const existing = cart.find(i => i.id === item.id && (i.options||'') === (item.options||''));
+  const existing = cart.find(i => i.id === item.id && (i.options||'') === (item.options||'') && (i.customDetails||'') === (item.customDetails||''));   // V4.6: ละเอียดต่าง = แยกชิ้น
   if (existing) {
     existing.qty += item.qty || 1;
   } else {
