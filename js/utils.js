@@ -48,11 +48,6 @@ function getFirebaseReady() {
               }
               _db = firebase.firestore();
 
-              // Cache settings (แทน enablePersistence ที่ deprecated)
-              try {
-                _db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
-              } catch(e) { /* settings ต้องเรียกก่อน operation แรก */ }
-
               console.log('✅ Firebase ready');
               resolve(_db);
             } catch (e) {
