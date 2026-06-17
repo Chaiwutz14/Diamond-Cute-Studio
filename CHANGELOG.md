@@ -1,5 +1,14 @@
 # 📜 CHANGELOG — Diamond Cute Studio
 
+## V4.5 — เก็บกวาด Console warnings (ไม่กระทบการทำงาน)
+- ลบ `frame-ancestors` ออกจาก meta CSP (browser ignore อยู่แล้ว — frame-buster ใน theme-init.js กันแทน)
+- เพิ่ม `https://www.gstatic.com` ใน connect-src → เลิก block source-map (.js.map) ของ Firebase
+- เพิ่ม `<meta name=mobile-web-app-capable>` คู่กับ apple อันเดิม (เลิก deprecation warning)
+- ลบ `_db.settings({cacheSizeBytes})` → เลิก warning "overriding host" (ใช้ default cache, ไม่กระทบ)
+- หมายเหตุ: warning จาก reCAPTCHA/App Check เป็นของ Google เอง ปลอดภัย 100% แก้ที่เราไม่ได้
+
+---
+
 ## V4.4 — คูปองเช็กจากเบอร์โทร (ลูกค้าใหม่ / 1 เบอร์ครั้งเดียว)
 - 🆕 เพิ่มตัวเลือกคูปอง **"เฉพาะลูกค้าใหม่"** (`firstOrderOnly`) — เช็กจากเบอร์: ถ้าเบอร์นี้เคยสั่งซื้อแล้ว → ใช้ไม่ได้
 - 📱 เพิ่มตัวเลือก **"1 เบอร์ใช้ได้ครั้งเดียว"** (`oncePerPhone`) — เบอร์เดิมใช้คูปองนี้ซ้ำไม่ได้
