@@ -1,93 +1,111 @@
 /* ═══════════════════════════════════════════════
-   Diamond Cute Studio 💎 — Homepage CSS  (V4 — Direction B Bright Premium)
+   Diamond Cute Studio 💎 — Homepage CSS  (V5 — Blended hero · faint photo-garland · effects kept)
 ═══════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════
-   HERO — Direction B (Bright Premium gradient card)
+   HERO — V5 (blended into bg · faint photo-garland behind text · original effects kept)
 ══════════════════════════════════════════════ */
 .hp-hero{
-  max-width:1180px; margin:0 auto;
-  padding:calc(var(--nav-h) + 1.4rem) 1.1rem 0.5rem;
+  position:relative; max-width:1180px; margin:0 auto; overflow:hidden;
+  padding:calc(var(--nav-h) + 1.5rem) 1.1rem 1.4rem;
+  min-height:clamp(410px,56vh,510px); display:flex; align-items:center;
+  background:
+    radial-gradient(54% 46% at 82% 14%, rgba(var(--accent-rgb),.12), transparent 62%),
+    radial-gradient(44% 40% at 6% 94%, rgba(var(--accent-rgb),.07), transparent 60%),
+    color-mix(in srgb, var(--bg) 82%, var(--accent) 18%);
 }
-.hp-hero-card{
-  position:relative; overflow:hidden;
-  border-radius:30px;
-  padding:2.1rem 1.6rem 2.2rem;
-  background:linear-gradient(140deg, var(--hg1) 0%, var(--hg2) 52%, var(--hg1) 100%);
-  background-size:180% 180%;
-  box-shadow:0 22px 48px var(--hglow);
-  isolation:isolate;
-  animation:fadeInUp .6s ease both, hpGradBreath 11s ease-in-out infinite;
-}
-.hp-deco{position:absolute;border-radius:50%;z-index:0;pointer-events:none}
-.hp-deco1{width:240px;height:240px;background:rgba(255,255,255,.16);top:-90px;right:-70px;animation:hpFloatA 7s ease-in-out infinite}
-.hp-deco2{width:150px;height:150px;background:rgba(255,255,255,.10);bottom:-60px;left:8%;animation:hpFloatB 8.5s ease-in-out infinite}
-.hp-deco3{width:74px;height:74px;background:rgba(255,255,255,.10);top:44%;right:13%;animation:hpFloatA 6s ease-in-out .6s infinite}
-/* sheen sweep + twinkling sparkles */
-.hp-sheen{position:absolute;top:-40%;left:0;width:55%;height:180%;z-index:1;pointer-events:none;
-  background:linear-gradient(105deg,transparent,rgba(255,255,255,.32) 50%,transparent);
-  transform:translateX(-160%) rotate(8deg);animation:hpSheen 6.5s ease-in-out infinite}
-.hp-spark{position:absolute;z-index:2;color:#fff;opacity:0;pointer-events:none;text-shadow:0 0 8px rgba(255,255,255,.85);font-size:14px}
-.hp-s1{top:17%;right:11%;animation:hpTwinkle 2.6s ease-in-out infinite}
-.hp-s2{top:33%;right:22%;font-size:11px;animation:hpTwinkle 3.1s ease-in-out .8s infinite}
-.hp-s3{top:58%;left:15%;font-size:12px;animation:hpTwinkle 2.9s ease-in-out 1.4s infinite}
-.hp-s4{bottom:24%;right:16%;font-size:13px;animation:hpTwinkle 3.4s ease-in-out .4s infinite}
-.hp-hero-inner{position:relative;z-index:1;max-width:620px}
+
+/* ── faint hanging photo-garland (background layer) ── */
+.gd{position:absolute;top:calc(var(--nav-h) + 6px);left:0;right:0;bottom:0;z-index:0;
+  opacity:.32;filter:saturate(.92);pointer-events:none}
+.gd-string{position:absolute;top:0;left:0;width:100%;height:130px;overflow:visible}
+.gd-item{position:absolute;transform-origin:top center;transform:rotate(var(--rot));
+  animation-name:gdSway;animation-timing-function:ease-in-out;animation-iteration-count:infinite}
+.gd-thread{position:absolute;top:-20px;left:50%;width:1.4px;height:20px;background:var(--text-3);opacity:.45;transform:translateX(-50%)}
+.gd-clip{position:absolute;top:-7px;left:50%;width:11px;height:14px;border-radius:3px;
+  background:linear-gradient(#F6D8A8,#E0A85C);box-shadow:0 1px 3px rgba(0,0,0,.18);transform:translateX(-50%);z-index:3}
+.gd-clip::after{content:"";position:absolute;top:4px;left:50%;width:2px;height:7px;background:rgba(120,80,30,.4);transform:translateX(-50%)}
+.gd-card{display:block;filter:drop-shadow(0 8px 12px rgba(12,45,78,.14))}
+.gd-film{filter:drop-shadow(0 9px 13px rgba(12,45,78,.2))}
+
+/* ── original floating "balloon" decos — kept ── */
+.hp-deco{position:absolute;border-radius:50%;z-index:0;pointer-events:none;background:rgba(var(--accent-rgb),.10)}
+.hp-deco1{width:230px;height:230px;top:-60px;right:4%;animation:hpFloatA 7s ease-in-out infinite}
+.hp-deco2{width:150px;height:150px;bottom:6%;left:7%;background:rgba(var(--accent-rgb),.08);animation:hpFloatB 8.5s ease-in-out infinite}
+.hp-deco3{width:78px;height:78px;top:46%;right:16%;background:rgba(var(--accent-rgb),.08);animation:hpFloatA 6s ease-in-out .6s infinite}
+
+/* ── original sheen sweep — kept ── */
+.hp-sheen{position:absolute;top:-40%;left:0;width:48%;height:180%;z-index:1;pointer-events:none;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.28) 50%,transparent);
+  transform:translateX(-160%) rotate(8deg);animation:hpSheen 7s ease-in-out infinite}
+
+/* ── readability scrim behind text (lets faint garland show, keeps copy crisp) ── */
+.hp-scrim{position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(50% 46% at 22% 42%, color-mix(in srgb,var(--bg) 42%,transparent) 0%, transparent 68%)}
+
+/* ── original twinkling sparkles — kept ── */
+.hp-spark{position:absolute;z-index:3;color:var(--accent);opacity:0;pointer-events:none;
+  text-shadow:0 0 8px rgba(var(--accent-rgb),.55);font-size:14px}
+.hp-s1{top:30%;left:5%;animation:hpTwinkle 2.6s ease-in-out infinite}
+.hp-s2{top:64%;left:44%;font-size:11px;animation:hpTwinkle 3.1s ease-in-out .8s infinite}
+.hp-s3{top:24%;right:24%;font-size:12px;animation:hpTwinkle 2.9s ease-in-out 1.4s infinite}
+.hp-s4{bottom:22%;right:14%;font-size:13px;animation:hpTwinkle 3.4s ease-in-out .4s infinite}
+
+.hp-hero-inner{position:relative;z-index:4;max-width:600px}
 
 .hp-badge{
   display:inline-flex;align-items:center;gap:.45rem;
-  font-family:var(--font-display);font-size:.78rem;font-weight:500;
-  color:#fff;background:rgba(255,255,255,.20);
-  border:1px solid rgba(255,255,255,.28);
-  padding:.34rem .85rem;border-radius:var(--r-pill);
-  margin-bottom:1.05rem;backdrop-filter:blur(6px);
+  font-family:var(--font-display);font-size:.78rem;font-weight:600;
+  color:var(--accent-dark);background:var(--bg-card);
+  border:1px solid var(--border);padding:.36rem .9rem;border-radius:var(--r-pill);
+  margin-bottom:1rem;box-shadow:var(--shadow-card);
 }
-.hp-badge-dot{width:6px;height:6px;border-radius:50%;background:#fff;animation:pulseGlow 2s ease infinite}
+.hp-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulseGlow 2s ease infinite}
 
 .hp-title{
   font-family:var(--font-display);
-  font-size:clamp(1.95rem, 6.4vw, 3.4rem);
-  font-weight:800;line-height:1.16;letter-spacing:-.01em;
-  color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.12);
+  font-size:clamp(1.95rem, 6vw, 3.3rem);
+  font-weight:800;line-height:1.15;letter-spacing:-.01em;
+  color:var(--text-1);text-shadow:0 1px 10px var(--bg);
 }
 .hp-title span{display:block}
 .hp-title-accent{
   display:block;
-  background:linear-gradient(90deg,#FFE9A8 0%,#FFFBE8 25%,#FFD86E 50%,#FFFBE8 75%,#FFE9A8 100%);
+  background:linear-gradient(92deg,var(--accent-dark) 0%,var(--accent) 38%,var(--accent-light) 60%,var(--accent) 100%);
   background-size:220% 100%;
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent;
-  filter:drop-shadow(0 2px 10px rgba(255,200,80,.40));
-  animation:hpShimmer 3.4s linear infinite;
+  animation:hpShimmer 3.6s linear infinite;
 }
 .hp-sub{
   font-family:var(--font-body,var(--font-display));
-  font-size:clamp(.92rem,2.4vw,1.06rem);color:rgba(255,255,255,.94);
-  line-height:1.6;margin-top:.95rem;max-width:460px;
+  font-size:clamp(.93rem,2.2vw,1.05rem);color:var(--text-2);
+  line-height:1.6;margin-top:.9rem;max-width:30rem;
 }
 
-.hp-cta{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.5rem}
+.hp-cta{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.4rem}
 .hp-btn{
   display:inline-flex;align-items:center;justify-content:center;gap:.45rem;
   font-family:var(--font-display);font-weight:700;font-size:.96rem;
-  padding:.85rem 1.5rem;border-radius:14px;
+  padding:.82rem 1.45rem;border-radius:14px;
   text-decoration:none;cursor:pointer;border:1.5px solid transparent;
-  transition:transform var(--t-fast),box-shadow var(--t-fast),background var(--t-fast);
+  transition:transform var(--t-fast),box-shadow var(--t-fast),background var(--t-fast),border-color var(--t-fast);
   min-height:48px;
 }
-.hp-btn-primary{background:#fff;color:var(--accent);box-shadow:0 8px 20px rgba(0,0,0,.14);position:relative;overflow:hidden}
+.hp-btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;
+  box-shadow:0 10px 24px rgba(var(--accent-rgb),.30);position:relative;overflow:hidden}
 .hp-btn-primary::after{content:"";position:absolute;top:0;left:0;width:42%;height:100%;pointer-events:none;
-  background:linear-gradient(105deg,transparent,rgba(var(--accent-rgb),.14),transparent);
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.35),transparent);
   transform:translateX(-180%) skewX(-18deg);animation:hpBtnShine 5s ease-in-out 1.2s infinite}
-.hp-btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(0,0,0,.20)}
-.hp-btn-ghost{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.34)}
-.hp-btn-ghost:hover{background:rgba(255,255,255,.28);transform:translateY(-2px)}
+.hp-btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 28px rgba(var(--accent-rgb),.40)}
+.hp-btn-ghost{background:var(--bg-card);color:var(--text-1);border-color:var(--border)}
+.hp-btn-ghost:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
 
-.hp-trust{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:1.6rem}
+.hp-trust{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:1.5rem}
 .hp-trust-item{display:flex;flex-direction:column;line-height:1.1}
-.hp-trust-val{font-family:var(--font-display);font-weight:800;font-size:1.15rem;color:#fff}
-.hp-trust-lbl{font-size:.72rem;color:rgba(255,255,255,.82);margin-top:1px}
-.hp-trust-sep{width:1px;height:26px;background:rgba(255,255,255,.28)}
+.hp-trust-val{font-family:var(--font-display);font-weight:800;font-size:1.18rem;color:var(--text-1)}
+.hp-trust-lbl{font-size:.72rem;color:var(--text-3);margin-top:1px}
+.hp-trust-sep{width:1px;height:26px;background:var(--border)}
 
 /* ══════════════════════════════════════════════
    SECTION shell + headers
@@ -240,16 +258,17 @@
    Responsive
 ══════════════════════════════════════════════ */
 @media(min-width:1025px){
-  .hp-hero-card{padding:3.2rem 3rem 3.4rem;border-radius:34px}
-  .hp-deco1{width:340px;height:340px;top:-110px;right:-80px}
+  .hp-deco1{width:340px;height:340px;top:-120px;right:-60px}
 }
 @media(max-width:768px){
   .promo-inner{flex-direction:column;text-align:center;align-items:center}
   .promo-inner::before{display:none}
 }
 @media(max-width:560px){
-  .hp-hero{padding-top:calc(var(--nav-h) + .8rem)}
-  .hp-hero-card{padding:1.8rem 1.3rem 1.9rem;border-radius:26px}
+  .hp-hero{padding-top:calc(var(--nav-h) + .8rem);min-height:370px}
+  .gd{opacity:.26}
+  .gd-item:nth-child(6),.gd-item:nth-child(7){display:none}
+  .gd-card{transform:scale(.82)}
   .hp-products{grid-template-columns:repeat(2,1fr);gap:.75rem}
   .hp-features{grid-template-columns:repeat(2,1fr);gap:.7rem}
 }
@@ -260,20 +279,20 @@
 }
 
 /* ══════════════════════════════════════════════
-   V4 — Hero card subtle animations (keyframes)
+   V5 — Hero effects (keyframes) — balloons · sheen · sparkle · shimmer · garland sway
 ══════════════════════════════════════════════ */
-@keyframes hpGradBreath{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @keyframes hpFloatA{0%,100%{transform:translate(0,0)}50%{transform:translate(7px,-16px)}}
 @keyframes hpFloatB{0%,100%{transform:translate(0,0)}50%{transform:translate(-9px,13px)}}
 @keyframes hpSheen{0%{transform:translateX(-160%) rotate(8deg)}55%,100%{transform:translateX(360%) rotate(8deg)}}
 @keyframes hpTwinkle{0%,100%{opacity:0;transform:scale(.5) rotate(0)}50%{opacity:1;transform:scale(1) rotate(15deg)}}
 @keyframes hpShimmer{0%{background-position:0% 50%}100%{background-position:220% 50%}}
 @keyframes hpBtnShine{0%{transform:translateX(-180%) skewX(-18deg)}55%,100%{transform:translateX(360%) skewX(-18deg)}}
+@keyframes gdSway{0%,100%{transform:rotate(calc(var(--rot) - 2.8deg))}50%{transform:rotate(calc(var(--rot) + 2.8deg))}}
 
 /* เคารพผู้ใช้ที่ตั้งค่าลดการเคลื่อนไหว — ปิดอนิเมชันทั้งหมด แต่คงสีทองไว้ */
 @media (prefers-reduced-motion: reduce){
-  .hp-hero-card{animation:fadeInUp .6s ease both;background-position:0% 50%}
-  .hp-deco1,.hp-deco2,.hp-deco3,.hp-sheen,.hp-title-accent,.hp-btn-primary::after{animation:none}
+  .hp-hero{animation:none}
+  .hp-deco1,.hp-deco2,.hp-deco3,.hp-sheen,.hp-title-accent,.hp-btn-primary::after,.gd-item{animation:none}
   .hp-spark{display:none}
   .hp-title-accent{background-position:0 50%}
 }
