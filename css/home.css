@@ -71,7 +71,7 @@
 .hp-title span{display:block}
 .hp-title-accent{
   display:block;
-  background:linear-gradient(92deg,var(--accent-dark),color-mix(in srgb,var(--accent) 55%,var(--accent-dark)) 50%,var(--accent-dark));
+  background:linear-gradient(92deg,#8B6000 0%,#D4930A 30%,#F9D66A 50%,#D4930A 70%,#8B6000 100%);
   background-size:220% 100%;
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent;
