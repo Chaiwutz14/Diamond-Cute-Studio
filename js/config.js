@@ -46,6 +46,18 @@ window.DMC_CONFIG = {
   // ── แจ้งเตือน LINE ผ่าน Cloudflare Worker ──
   CF_WORKER_URL: 'https://dmc-studio-notify.peeza1482546.workers.dev',
 
+  // ── ตรวจสลิปอัตโนมัติ ──
+  // โหมดฟรี (enabled): อ่าน QR ในสลิปฝั่งเบราว์เซอร์ (jsQR) → เช็กว่าเป็นสลิปจริง + กันสลิปซ้ำ
+  //   ตรวจได้แค่ "เป็นสลิปจริงและไม่ซ้ำ" (ฟรี ไม่เช็กยอดเงิน)
+  // blockOnFail:false = สลิปไม่ผ่านก็ยังสั่งซื้อได้ (เตือน + ติดธงให้แอดมินตรวจเอง)
+  // โหมด API (api.enabled): ตรวจกับธนาคารจริง (ยอด/ผู้รับ) ผ่าน Worker /verify-slip
+  //   ต้องตั้ง secret SLIP_VERIFY_KEY ใน Worker ก่อน (มีค่าใช้จ่ายตามผู้ให้บริการ) — ปิดไว้ก่อน
+  SLIP_VERIFY: {
+    enabled:     true,
+    blockOnFail: false,
+    api: { enabled: false, provider: 'easyslip', url: '' },
+  },
+
   // ── ค่าจัดส่ง (บาท) ──
   SHIPPING: {
     cod: 40,        // เก็บเงินปลายทาง (รวมค่าธรรมเนียม COD แล้ว)

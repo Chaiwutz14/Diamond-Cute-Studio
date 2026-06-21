@@ -1,5 +1,17 @@
 # 📜 CHANGELOG — Diamond Cute Studio
 
+## V16.0 — ย้ายที่เก็บสลิป + ตรวจสลิปอัตโนมัติ
+- 📦 **ย้ายที่เก็บสลิป/รูปลูกค้าไป ImgBB (ที่เดียวกับรูปสินค้า)** — `js/order.js` เปลี่ยนจาก `uploadSensitive` (ผูก Firebase Storage แบบ private ที่ยังไม่เปิด มีค่าใช้จ่าย) → `uploadToImgBB` โดยตรง → แนบสลิปได้โดยไม่ต้องเปิด Storage · ⚠️ trade-off: ImgBB URL เป็นสาธารณะ (ตามที่เลือก: ฟรี > private)
+- 🔎 **ตรวจสลิปอัตโนมัติ 2 ชั้น** (`js/slip-verify.js` ใหม่ + `js/vendor/jsqr.min.js`)
+  - ชั้นฟรี (ฝั่งเบราว์เซอร์): อ่าน QR ในสลิปด้วย jsQR → เช็กว่าเป็นสลิปจริง + **กันสลิปซ้ำ** ผ่าน collection `slipGuard` (existence = เคยใช้)
+  - ชั้น API (ออปชัน ปิดไว้): Worker `/verify-slip` ตรวจกับธนาคารจริง (ยอด/ผู้รับ) รองรับ EasySlip/SlipOK — เปิดเมื่อตั้ง secret `SLIP_VERIFY_KEY` (มีค่าใช้จ่าย)
+- 🚦 **ไม่ผ่าน = เตือนแต่ยังสั่งได้ + ติดธงแอดมิน** — หน้าตะกร้าโชว์สถานะใต้สลิป (✅/⚠️), บันทึก `slipRef`+`slipVerify` ลงออเดอร์, แอดมินเห็น badge ในโมดอล + จุด ⚠️ ในลิสต์ + แสดงในการ์ด LINE
+- ⚙️ เพิ่ม `SLIP_VERIFY` ใน `js/config.js` (`enabled/blockOnFail/api`), rule `slipGuard` ใน `firestore-v15-secure.rules`, เอกสาร secret ใน `wrangler.toml`, อัปเดต `DATA-MODEL.md`
+- 🔧 **ต้องทำหลัง deploy**: deploy `firestore-v15-secure.rules` (เพิ่ม slipGuard) และ deploy Worker `cloudflare-worker/` ใหม่ (เพิ่ม `/verify-slip` + สถานะสลิปในการ์ด LINE); ตั้ง secret `IMGBB_KEY` ใน Worker ให้พร้อม (ใช้เก็บสลิป)
+- ✅ ทดสอบตรรกะตรวจสลิปครบ 10 เคส (ไม่มี QR / สั้นเกิน / ซ้ำ / ผ่าน / ปิดระบบ / ไม่ใช่รูป / API ยอดตรง-ไม่ตรง-ปฏิเสธ / บันทึก slipGuard) + ยืนยัน asset เสิร์ฟครบ (jsQR vendor ในเครื่องเพื่อให้ผ่าน CSP)
+
+---
+
 ## V5.0 — Redesign หน้าแรก (Hero สายรูปจาง + พื้นหลังตามธีม + คงเอฟเฟกต์เดิม)
 - 🎨 **Hero กลืนเป็นแผ่นเดียวกับพื้นหลัง** — ถอดการ์ดขอบมน (`.hp-hero-card`) ใช้พื้นหลังโปร่งแทน
 - 🪅 **สายห้อยรูปแบบราวแขวนรูป (photo-garland)** — เชือกโค้ง + ไม้หนีบ แขวนโพลารอยด์/ฟิล์มสไลด์ วาดเป็น **SVG เวกเตอร์เอง 100% ปลอดลิขสิทธิ์** วางเป็นพื้นหลังจางๆ (`opacity .32`) หลังข้อความ → ไม่กินพื้นที่ เห็นหมวด "เลือกบริการ" ต่อทันที

@@ -54,6 +54,14 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ─── กันสลิปซ้ำ (doc id = hash ของ QR ในสลิป — ไม่มี PII) ───
+    // อ่าน/สร้างทีละ doc ได้ (ลูกค้าเช็ก+จดตอนสั่งซื้อ) · แก้/ลบเฉพาะแอดมิน
+    match /slipGuard/{ref} {
+      allow get:    if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
     // ─── รีวิว ───
     match /reviews/{id} {
       allow read: if true;

@@ -443,6 +443,7 @@ function bindSlipUpload() {
   function handleSlipFile(file) {
     // Store file reference for upload on submit (NOT base64)
     window._slipFile = file;
+    window._slipVerify = null;
     const reader = new FileReader();
     reader.onload = e => {
       if (previewImg)  previewImg.src = e.target.result;
@@ -451,6 +452,40 @@ function bindSlipUpload() {
       slipUrl = 'pending_upload'; // placeholder — actual URL set during submitOrder
     };
     reader.readAsDataURL(file);
+    runSlipVerify(file);
+  }
+}
+
+// ─── ตรวจสลิปอัตโนมัติ (ไม่บล็อกการสั่งซื้อ — แค่เตือน + ติดธงให้แอดมิน) ───
+async function runSlipVerify(file) {
+  const box = document.getElementById('slip-verify-status');
+  if (!window.DMC || !DMC.verifySlip) return;     // โมดูลไม่พร้อม → ข้าม
+  if (box) {
+    box.style.display = '';
+    box.style.color = 'var(--text-3)';
+    box.innerHTML = '<span class="spinner" style="width:13px;height:13px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:0.35rem"></span> กำลังตรวจสลิป...';
+  }
+  let total = 0;
+  try { total = (computeTotals() || {}).total || 0; } catch (e) {}
+  let r;
+  try { r = await DMC.verifySlip(file, { orderTotal: total }); }
+  catch (e) { r = { status: 'unverified', reason: 'ตรวจสลิปไม่สำเร็จ' }; }
+
+  // กันผลเก่าทับ (ลูกค้าเปลี่ยนสลิประหว่างตรวจ)
+  if (file !== window._slipFile) return;
+  window._slipVerify = r;
+  if (!box) return;
+
+  if (r.status === 'passed') {
+    box.style.color = 'var(--emerald-light)';
+    box.innerHTML = '✅ ' + (r.reason || 'ตรวจสลิปอัตโนมัติผ่าน');
+  } else if (r.status === 'failed') {
+    box.style.color = 'var(--amber, #f59e0b)';
+    box.innerHTML = '⚠️ ' + DMC.escapeHtml(r.reason || 'สลิปอาจไม่ถูกต้อง') +
+      '<br><span style="color:var(--text-3)">ยังสั่งซื้อได้ตามปกติ — ทางร้านจะตรวจสลิปอีกครั้งก่อนจัดส่ง</span>';
+  } else {
+    box.style.color = 'var(--text-3)';
+    box.innerHTML = 'ℹ️ ' + DMC.escapeHtml(r.reason || 'ข้ามการตรวจอัตโนมัติ');
   }
 }
 
@@ -607,10 +642,10 @@ async function submitOrder() {
 
   const orderId = DMC.generateOrderId();   // V3: สร้างก่อน เพื่อใช้เป็น path ของไฟล์ private
 
-  // Upload slip — V3: ถ้าเปิด PRIVATE_UPLOADS จะไปเก็บ Storage แบบ private (อ่านได้เฉพาะแอดมิน)
+  // Upload slip — เก็บที่เดียวกับรูปสินค้า (ImgBB ผ่าน Worker) เพื่อไม่ต้องพึ่ง Firebase Storage (มีค่าใช้จ่าย)
   if (selectedPayment === 'promptpay' && window._slipFile) {
     try {
-      const uploaded = await DMC.uploadSensitive(window._slipFile, 'orders/' + orderId);
+      const uploaded = await DMC.uploadToImgBB(window._slipFile);
       slipUrl = uploaded.url;
     } catch (e) {
       console.warn('slip upload failed:', e);
@@ -619,7 +654,7 @@ async function submitOrder() {
     }
   }
 
-  // V.upgrade1/V3: อัปรูปงานของลูกค้า (private เมื่อเปิด PRIVATE_UPLOADS)
+  // อัปรูปงานของลูกค้า — เก็บที่เดียวกับรูปสินค้า (ImgBB ผ่าน Worker) เช่นเดียวกับสลิป
   uploadedFileUrls = [];
   const pendingFiles = (window._orderFiles || []).filter(Boolean);
   if (pendingFiles.length) {
@@ -631,7 +666,7 @@ async function submitOrder() {
     for (let i = 0; i < pendingFiles.length; i++) {
       if (stat) stat.textContent = `กำลังอัปโหลดรูป ${i + 1}/${pendingFiles.length}...`;
       try {
-        const up = await DMC.uploadSensitive(pendingFiles[i], 'orders/' + orderId);
+        const up = await DMC.uploadToImgBB(pendingFiles[i]);
         if (up && up.url) uploadedFileUrls.push(up.url); else failed++;
       } catch (e) { failed++; console.warn('upload file failed', e); }
       if (bar) bar.style.width = Math.round(((i + 1) / pendingFiles.length) * 100) + '%';
@@ -678,6 +713,19 @@ async function submitOrder() {
     createdAt:       new Date().toISOString(),
   };
 
+  // ผลตรวจสลิปอัตโนมัติ (ติดธงให้แอดมิน — ไม่บล็อกการสั่งซื้อ)
+  if (selectedPayment === 'promptpay' && window._slipVerify) {
+    const sv = window._slipVerify;
+    orderData.slipRef = sv.ref || '';
+    orderData.slipVerify = {
+      status:    sv.status   || 'unverified',
+      reason:    sv.reason   || '',
+      provider:  sv.provider || 'local',
+      amount:    (sv.amount != null) ? sv.amount : null,
+      checkedAt: sv.checkedAt || new Date().toISOString(),
+    };
+  }
+
   try {
     // Save to Firestore
     let savedDocId = null;
@@ -719,12 +767,18 @@ async function submitOrder() {
     // บันทึกลงเครื่องนี้ — ลูกค้าดูประวัติได้ทันทีที่หน้า "ติดตามออเดอร์"
     if (savedDocId) DMC.saveMyOrder(savedDocId, orderId);
 
+    // กันสลิปซ้ำ: จดอ้างอิง QR ของสลิปว่าถูกใช้กับออเดอร์นี้แล้ว (existence = เคยใช้)
+    if (DMC.recordSlipUsed && window._slipVerify && window._slipVerify.refHash) {
+      DMC.recordSlipUsed(window._slipVerify.refHash, orderId).catch(() => {});
+    }
+
     // LINE Notify
     // Send structured data to Worker (builds Flex Card)
     await DMC.sendLineNotify(orderData);
 
     // Clear cart
     DMC.saveCart([]);
+    window._slipFile = null; window._slipVerify = null;   // เคลียร์สลิป/ผลตรวจ
     window._orderFiles = [];   // V.upgrade1: เคลียร์ไฟล์ที่อัปแล้ว
     window._attachedDesignUrls = [];                     // V2
     try { localStorage.removeItem('dmc_pending_designs'); } catch(e){}  // V2: เคลียร์แบบที่แนบ
