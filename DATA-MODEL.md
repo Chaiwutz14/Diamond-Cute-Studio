@@ -32,13 +32,19 @@
 | itemsSummary | string | สรุปย่อ |
 | subtotal / shipping / discount / total | number | |
 | paymentMethod | string | 'promptpay' \| 'cod' |
-| slipUrl | string | URL สลิป |
-| fileUrls | array | รูปที่ลูกค้าแนบ |
+| slipUrl | string | URL สลิป (เก็บที่ ImgBB ผ่าน Worker — ที่เดียวกับรูปสินค้า) |
+| slipRef | string | อ้างอิงจาก QR ในสลิป (อ่านง่าย — แสดงให้แอดมิน) |
+| slipVerify | object | ผลตรวจสลิปอัตโนมัติ `{status:'passed'\|'failed'\|'unverified', reason, provider:'local'\|'easyslip'\|'slipok', amount, checkedAt}` |
+| fileUrls | array | รูปที่ลูกค้าแนบ (ImgBB) |
 | customerNote | string | |
 | status | string | pending → processing → shipping → done \| cancelled |
 | carrier | string | kerry \| flash \| jt \| thaipost |
 | trackingNo | string | เลขพัสดุ |
 | createdAt | timestamp | |
+
+## slipGuard — กันสลิปซ้ำ
+doc id = hash ของเนื้อ QR ในสลิป (ไม่มี PII) · field: orderId · at(timestamp)
+> existence = สลิปนี้เคยถูกใช้แล้ว → ตอนสั่งซื้อจะเช็ก doc นี้ก่อน (อ่านทีละ doc ได้ตาม rules)
 
 ## reviews — รีวิว
 name(2-40) · rating(1-5) · text(10-500) · productId · productName · status(`pending`/`approved`/`rejected`) · source(`customer`/`admin`) · createdAt

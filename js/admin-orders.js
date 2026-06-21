@@ -42,7 +42,7 @@ async function loadOrdersTable() {
     docs.sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
 
     const rows = docs.map(o => `<tr>
-      <td><span class="order-id-cell">#${o.orderId||o.id.slice(-6).toUpperCase()}</span></td>
+      <td><span class="order-id-cell">#${o.orderId||o.id.slice(-6).toUpperCase()}</span>${o.slipVerify&&o.slipVerify.status==='failed'?` <span title="ตรวจสลิปอัตโนมัติไม่ผ่าน — ควรตรวจเอง" style="color:#f59e0b">⚠️</span>`:''}</td>
       <td><div style="font-weight:600">${DMC.escapeHtml(o.customerName||'—')}</div><div style="font-size:.75rem;color:var(--text-3)">${DMC.escapeHtml(o.customerPhone||'')}</div></td>
       <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.83rem">${DMC.escapeHtml(o.itemsSummary||'—')}</td>
       <td class="price-cell">${DMC.formatPrice(o.total||0)}</td>
@@ -124,6 +124,26 @@ window.openOrderModal = async function(orderId) {
         <img src="" id="slip-img-${o.id}" style="max-height:180px;border-radius:var(--r-md);border:1.5px solid var(--border);cursor:zoom-in;background:var(--bg-mid)" title="คลิกเพื่อดูเต็มหน้าจอ">
         <div id="slip-loading-${o.id}" style="font-size:.72rem;color:var(--text-3)">กำลังโหลดสลิป...</div>
       </div>`:''}
+
+      ${(() => {
+        const sv = o.slipVerify;
+        if (!sv && !o.slipRef) return '';
+        const st = (sv && sv.status) || 'unverified';
+        const map = {
+          passed:     { c:'#10b981', bg:'rgba(16,185,129,.10)', icon:'✅', label:'ตรวจสลิปอัตโนมัติผ่าน' },
+          failed:     { c:'#f59e0b', bg:'rgba(245,158,11,.12)', icon:'⚠️', label:'ตรวจสลิปไม่ผ่าน — ควรตรวจด้วยตนเอง' },
+          unverified: { c:'var(--text-3)', bg:'var(--bg-mid)',  icon:'ℹ️', label:'ยังไม่ได้ตรวจอัตโนมัติ' },
+        };
+        const m = map[st] || map.unverified;
+        const reason = sv && sv.reason ? `<div style="font-size:.74rem;color:var(--text-2);margin-top:.25rem">${DMC.escapeHtml(sv.reason)}</div>` : '';
+        const ref    = o.slipRef ? `<div style="font-size:.7rem;color:var(--text-3);margin-top:.2rem">อ้างอิง: ${DMC.escapeHtml(o.slipRef)}</div>` : '';
+        const amt    = (sv && sv.amount != null) ? `<div style="font-size:.7rem;color:var(--text-3)">ยอดในสลิป: ${DMC.formatPrice(sv.amount)}</div>` : '';
+        const prov   = (sv && sv.provider && sv.provider !== 'local') ? ` <span style="font-size:.66rem;color:var(--text-3)">(${DMC.escapeHtml(sv.provider)})</span>` : '';
+        return `<div style="margin-bottom:1rem;background:${m.bg};border-left:3px solid ${m.c};border-radius:var(--r-md);padding:.6rem .75rem">
+          <div style="font-family:var(--font-display);font-size:.82rem;font-weight:700;color:${m.c}">${m.icon} ${m.label}${prov}</div>
+          ${reason}${amt}${ref}
+        </div>`;
+      })()}
 
       ${o.fileUrls?.length?`<div style="margin-bottom:1rem">
         <div style="font-family:var(--font-display);font-size:.78rem;color:var(--text-3);margin-bottom:.5rem">ไฟล์รูปภาพ (${o.fileUrls.length} ไฟล์) <span style="font-size:.7rem;color:var(--accent)">(คลิกเพื่อขยาย)</span></div>

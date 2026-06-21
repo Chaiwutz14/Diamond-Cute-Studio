@@ -7,3 +7,9 @@ compatibility_date = "2024-09-23"
 #   LINE_USER_ID   = User ID (U...) — หลายคนคั่นด้วย ,  → ระบบใช้ multicast ให้อัตโนมัติ
 #   IMGBB_KEY      = ImgBB API key (สำหรับ /upload — key ไม่หลุดสู่หน้าเว็บ)
 #   ALLOWED_ORIGIN = (ออปชัน) เช่น "https://chaiwutz14.github.io" คั่น , ได้ — จำกัดคนยิง Worker
+#
+#   ── ตรวจสลิปกับธนาคาร (ออปชัน /verify-slip — เปิดเมื่อต้องการตรวจยอด/ผู้รับจริง) ──
+#   SLIP_VERIFY_KEY      = API key ของผู้ให้บริการ (EasySlip = Bearer token / SlipOK = x-authorization)
+#   SLIP_VERIFY_PROVIDER = "easyslip" (ค่าเริ่มต้น) หรือ "slipok"
+#   SLIPOK_BRANCH_ID     = (เฉพาะ slipok) Branch ID จากแดชบอร์ด SlipOK
+#   ไม่ตั้ง SLIP_VERIFY_KEY = /verify-slip ตอบ ok:null → เว็บใช้ผลตรวจฟรี (อ่าน QR) ต่อไป (ไม่มีค่าใช้จ่าย)

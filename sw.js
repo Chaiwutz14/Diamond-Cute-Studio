@@ -9,7 +9,7 @@
    - ไม่แตะ Firebase / ImgBB / API (ให้ผ่านตรงเสมอ)
 ═══════════════════════════════════════════════ */
 
-const CACHE_VERSION = 'dcs-v15-upgrade1';
+const CACHE_VERSION = 'dcs-v16-slipverify';
 const CACHE_NAME = 'dcs-cache-' + CACHE_VERSION;
 
 // ไฟล์หลักที่ pre-cache ตอนติดตั้ง (โหลดครั้งแรกเร็วขึ้น + ออฟไลน์ได้)
@@ -38,6 +38,8 @@ const PRECACHE = [
   './js/config.js',
   './js/loading.js',
   './js/utils.js',
+  './js/vendor/jsqr.min.js',
+  './js/slip-verify.js',
   './js/cms.js',
   './js/categories.js',
   './js/reviews.js',

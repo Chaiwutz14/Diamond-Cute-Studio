@@ -49,6 +49,33 @@ export default {
       }
     }
 
+    // ─── POST /verify-slip — ตรวจสลิปกับธนาคารผ่านผู้ให้บริการ (EasySlip/SlipOK) ───
+    // ปิดอยู่จนกว่าจะตั้ง secret SLIP_VERIFY_KEY ใน Worker (ค่าใช้จ่ายตามผู้ให้บริการ)
+    // คืนค่ามาตรฐาน: { ok, amount, ref, receiver, sender, reason }
+    if (request.method === 'POST' && url.pathname === '/verify-slip') {
+      try {
+        if (!originAllowed(request, env)) return cors(json({ ok: null, reason: 'origin not allowed' }), 403);
+        if (!env.SLIP_VERIFY_KEY) {
+          // ยังไม่เปิดใช้ → ตอบ ok:null เพื่อให้ฝั่งเว็บใช้ผลตรวจฟรี (local) ต่อไป
+          return cors(json({ ok: null, reason: 'slip verify not configured' }), 200);
+        }
+        const provider = (env.SLIP_VERIFY_PROVIDER || 'easyslip').toLowerCase();
+        const inForm   = await request.formData();
+        const img      = inForm.get('image');
+        const amount   = Number(inForm.get('amount') || 0);
+        if (!img) return cors(json({ ok: null, reason: 'no image field' }), 400);
+
+        let out;
+        if (provider === 'easyslip') out = await verifyEasySlip(img, env);
+        else if (provider === 'slipok') out = await verifySlipOk(img, amount, env);
+        else return cors(json({ ok: null, reason: 'unknown provider' }), 200);
+
+        return cors(json(out), 200);
+      } catch (e) {
+        return cors(json({ ok: null, reason: e.message }), 200);   // fail-soft → คงผล local
+      }
+    }
+
     // ─── POST /notify ───────────────────────────
     if (request.method === 'POST' && url.pathname === '/notify') {
       try {
@@ -97,6 +124,61 @@ export default {
 };
 
 // ════════════════════════════════════════════════
+//  SLIP VERIFY PROVIDERS  ·  คืนรูปแบบมาตรฐานเดียวกัน
+//  { ok:true|false|null, amount, ref, receiver, sender, reason }
+// ════════════════════════════════════════════════
+async function verifyEasySlip(img, env) {
+  // EasySlip: POST multipart 'file' → developer.easyslip.com/api/v1/verify
+  const fd = new FormData();
+  fd.append('file', img);
+  const res = await fetch('https://developer.easyslip.com/api/v1/verify', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + env.SLIP_VERIFY_KEY },
+    body: fd,
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok || !j || !j.data) {
+    return { ok: false, reason: (j && (j.message || (j.status))) || 'easyslip verify failed' };
+  }
+  const d = j.data;
+  return {
+    ok: true,
+    amount:   d.amount && (d.amount.amount != null ? Number(d.amount.amount) : null),
+    ref:      d.transRef || d.ref || '',
+    receiver: (d.receiver && (d.receiver.account && (d.receiver.account.name && (d.receiver.account.name.th || d.receiver.account.name.en)))) || '',
+    sender:   (d.sender && (d.sender.account && (d.sender.account.name && (d.sender.account.name.th || d.sender.account.name.en)))) || '',
+    reason:   'verified',
+  };
+}
+
+async function verifySlipOk(img, amount, env) {
+  // SlipOK: POST multipart 'files' → api.slipok.com/api/line/apikey/{BRANCH_ID}
+  const branch = env.SLIPOK_BRANCH_ID || '';
+  if (!branch) return { ok: null, reason: 'SLIPOK_BRANCH_ID not set' };
+  const fd = new FormData();
+  fd.append('files', img);
+  if (amount) fd.append('amount', String(amount));
+  const res = await fetch('https://api.slipok.com/api/line/apikey/' + branch, {
+    method: 'POST',
+    headers: { 'x-authorization': env.SLIP_VERIFY_KEY },
+    body: fd,
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok || !j || j.success === false || !j.data) {
+    return { ok: false, reason: (j && j.message) || 'slipok verify failed' };
+  }
+  const d = j.data;
+  return {
+    ok: true,
+    amount:   d.amount != null ? Number(d.amount) : null,
+    ref:      d.transRef || d.transRef || '',
+    receiver: (d.receiver && d.receiver.displayName) || (d.receivingBank || ''),
+    sender:   (d.sender && d.sender.displayName) || '',
+    reason:   'verified',
+  };
+}
+
+// ════════════════════════════════════════════════
 //  BUILD FLEX MESSAGE CARD  ·  "Vibrant Cute" หลายโทนหมุนเวียน
 //  แต่ละออเดอร์เปลี่ยนโทนสีอัตโนมัติตามเลขออเดอร์
 //  → ร้านแยกออกง่ายว่าออเดอร์ไหนจัดการแล้ว/ยัง
@@ -143,7 +225,8 @@ function buildOrderCard(data) {
     paymentMethod  = '—',
     address        = '—',
     note           = '',
-    shippingMethod = '—'
+    shippingMethod = '—',
+    slipVerify     = null
   } = data;
 
   const P = pickPalette(orderId);
@@ -192,6 +275,23 @@ function buildOrderCard(data) {
         { type: 'text', text: '💬 หมายเหตุจากลูกค้า', size: 'xxs', color: '#854D0E', weight: 'bold' },
         { type: 'text', text: note, size: 'sm', color: '#713F12', wrap: true }
       ]
+    });
+  }
+
+  // ── ผลตรวจสลิปอัตโนมัติ (เฉพาะ PromptPay) ──
+  if (paymentMethod === 'promptpay' && slipVerify && slipVerify.status) {
+    const SV = {
+      passed:     { bg:'#DCFCE7', fg:'#166534', icon:'✅', label:'ตรวจสลิปอัตโนมัติผ่าน' },
+      failed:     { bg:'#FEF3C7', fg:'#92400E', icon:'⚠️', label:'ตรวจสลิปไม่ผ่าน — โปรดตรวจเอง' },
+      unverified: { bg:'#F1F5F9', fg:'#475569', icon:'ℹ️', label:'ยังไม่ได้ตรวจสลิปอัตโนมัติ' },
+    }[slipVerify.status] || { bg:'#F1F5F9', fg:'#475569', icon:'ℹ️', label:'สถานะสลิป' };
+    const lines = [
+      { type:'text', text: SV.icon + ' ' + SV.label, size:'xs', color: SV.fg, weight:'bold', wrap:true }
+    ];
+    if (slipVerify.reason) lines.push({ type:'text', text: String(slipVerify.reason), size:'xxs', color: SV.fg, wrap:true });
+    bodyContents.push({
+      type:'box', layout:'vertical', backgroundColor: SV.bg,
+      cornerRadius:'12px', paddingAll:'11px', spacing:'xs', contents: lines
     });
   }
 
