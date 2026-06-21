@@ -9,6 +9,7 @@
 - 🐛 **กัน Hero หายตอนสลับธีม** — ถอด `animation:fadeInUp ... both` ออกจาก `.hp-hero` (เคยทำ opacity ค้าง 0)
 - 🔒 คง element ID เดิมทั้งหมด (CMS/แก้ inline ทำงานปกติ) · ♿ คง `prefers-reduced-motion` (ปิดอนิเมชันรวม `gdSway`) · เก็บ dead CSS ออก
 - ✅ ทดสอบไฟล์จริง (โหลดผ่าน `<link>` ไม่ inject — กันบั๊ก CSP) ครบ 6 ธีม + มือถือ: ยืนยันค่าสี pixel แต่ละธีม + จับ 2 เฟรมยืนยันสายแขวนขยับจริง
+- 🔆 **แก้บรรทัดเน้น "ที่สวยงามที่สุด" ไม่ให้กลืนพื้น** — ปรับ gradient `.hp-title-accent` ตัดสต็อปสีอ่อน (accent-light) ออก ยึดโทนเข้ม (accent-dark) → contrast ≥3:1 ทุกธีม (sky 3.05 / midnight 6.07) ยังคงเอฟเฟกต์วิ่งแสง `hpShimmer`
 
 ---
 
