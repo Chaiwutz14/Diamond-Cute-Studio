@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-06-23T16:40:21.782Z",
+  "count": 4,
+  "items": [
+    {
+      "id": "0YBwEGJh3usWaNYqm0Hd",
+      "createdAt": {
+        "seconds": 1781085410
+      },
+      "image": "https://i.ibb.co/rftGWd7L/1000068870.jpg",
+      "cat": "doll-tag",
+      "name": "หัวดุ๊กดิ๊ก",
+      "active": true
+    },
+    {
+      "id": "6o1lVqpAPW5okSZEHLPp",
+      "active": true,
+      "name": "โพลารอยด์ พวงกุญแจ",
+      "cat": "polaroid",
+      "image": "https://i.ibb.co/Z1JMnCfZ/355619.jpg",
+      "createdAt": {
+        "seconds": 1781070326
+      }
+    },
+    {
+      "id": "mGAQt5HktHBKWMC8J6aV",
+      "name": "บัตรประจำตัว",
+      "cat": "lanyard",
+      "active": true,
+      "createdAt": {
+        "seconds": 1781070282
+      },
+      "image": "https://i.ibb.co/HL47S5ZZ/355627.jpg"
+    },
+    {
+      "id": "xaW6AAvYiJTmkDy9c7QG",
+      "active": true,
+      "cat": "business-card",
+      "name": "อัลบั้มหนูน้อย 1-12 เดือน",
+      "image": "https://i.ibb.co/G3JJ82gd/1000041356.jpg",
+      "createdAt": {
+        "seconds": 1781259321
+      }
+    }
+  ]
+}
