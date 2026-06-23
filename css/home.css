@@ -71,26 +71,13 @@
 .hp-title span{display:block}
 .hp-title-accent{
   display:block;
-  /* V16.5: ขอบเข้มสีตามธีม → อ่านชัดทุกธีม + glow เบาๆ ความรู้สึกพรีเมียม */
-  background:linear-gradient(135deg,
-    var(--accent-light) 0%,
-    var(--accent) 50%,
-    var(--accent-dark) 100%);
-  -webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;color:transparent;
-  /* outline 8 ทิศ (1px) สี accent-dark + soft glow รอบนอก → ตัวอักษรชัดบนพื้น hero ทุกธีม */
+  /* V16.6: solid สี accent-dark ตันๆ → contrast สูงสุดทุกธีม + วรรณยุกต์ไทยชัดครบ
+     ตัด outline 8 ทิศ + clipped gradient + wide glow ออก (ทำให้ไทยมั่ว) */
+  color:var(--accent-dark);
+  /* เอฟเฟกต์เล็กน้อย — เงาดำบาง (lift) + halo สี accent (พรีเมียม) ไม่กลืนกันระหว่างตัวอักษร */
   text-shadow:
-    -1px -1px 0 var(--accent-dark),
-     1px -1px 0 var(--accent-dark),
-    -1px  1px 0 var(--accent-dark),
-     1px  1px 0 var(--accent-dark),
-     0   -1px 0 var(--accent-dark),
-     0    1px 0 var(--accent-dark),
-    -1px  0   0 var(--accent-dark),
-     1px  0   0 var(--accent-dark),
-     0 0 14px rgba(var(--accent-rgb),.45);
-  /* แยกตัวอักษรออกจากพื้น hero แบบนุ่ม (สีกลาง ใช้กับทุกธีม) */
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.10));
+    0 1px 1px rgba(0,0,0,.12),
+    0 0 14px rgba(var(--accent-rgb),.22);
 }
 .hp-sub{
   font-family:var(--font-body,var(--font-display));
