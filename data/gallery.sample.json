@@ -1,8 +1,0 @@
-{
-  "generatedAt": "2026-06-22T00:00:00.000Z",
-  "count": 2,
-  "items": [
-    { "id": "exampleGalleryId1", "name": "ผลงานโพลารอยด์", "image": "https://i.ibb.co/xxxx/work1.jpg", "active": true },
-    { "id": "exampleGalleryId2", "title": "งานบัตรนักเรียน", "url": "https://i.ibb.co/xxxx/work2.jpg", "active": true }
-  ]
-}
