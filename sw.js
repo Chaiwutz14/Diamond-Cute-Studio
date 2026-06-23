@@ -9,7 +9,7 @@
    - ไม่แตะ Firebase / ImgBB / API (ให้ผ่านตรงเสมอ)
 ═══════════════════════════════════════════════ */
 
-const CACHE_VERSION = 'dcs-v16-2-hero-polish';
+const CACHE_VERSION = 'dcs-v16-3-gold';
 const CACHE_NAME = 'dcs-cache-' + CACHE_VERSION;
 
 // ไฟล์หลักที่ pre-cache ตอนติดตั้ง (โหลดครั้งแรกเร็วขึ้น + ออฟไลน์ได้)
