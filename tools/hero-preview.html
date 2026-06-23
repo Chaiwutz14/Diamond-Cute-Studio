@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Preview: Hero Showcase (Desktop) — Diamond Cute Studio</title>
+<title>Preview: Hero + Showcase (V16.2) — Diamond Cute Studio</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@600;700;800&family=Sarabun:wght@400;600&display=swap">
 <style>
   :root,[data-theme="sky"]{ --bg:#F0F7FF; --bg-mid:#E1EFFD; --bg-card:#fff; --border:#DCE8F5;
@@ -16,13 +16,13 @@
   --r-2xl:24px; --r-pill:999px; --font-display:'Kanit',sans-serif;
   *{box-sizing:border-box}
   body{margin:0;font-family:'Sarabun',sans-serif;background:#0E1424;color:#EAF0FF;padding:18px}
-  .bar{max-width:1180px;margin:0 auto 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .bar h1{font-family:'Kanit';font-size:18px;font-weight:800;margin:0 12px 0 0;color:#fff}
+  .bar{max-width:1180px;margin:0 auto 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .bar h1{font-family:'Kanit';font-size:17px;font-weight:800;margin:0 12px 0 0;color:#fff}
   .bar button{font-family:ui-monospace,monospace;font-size:12px;border:1px solid #2E3E66;background:#16234C;color:#C2CEF0;border-radius:8px;padding:6px 11px;cursor:pointer}
   .bar button.on{background:var(--accent);color:#fff;border-color:transparent}
   .note{max-width:1180px;margin:0 auto 14px;font-size:13px;color:#9DB0E8}
+  @keyframes hpShimmer{0%{background-position:0% 50%}100%{background-position:220% 50%}}
 
-  /* ===== hero (เหมือนของจริง ย่อเฉพาะส่วนซ้าย) ===== */
   .hp-hero{ position:relative; max-width:1180px; margin:0 auto; border-radius:18px; overflow:hidden;
     padding:2.4rem 1.6rem; min-height:480px;
     background:radial-gradient(54% 46% at 82% 14%, rgba(var(--accent-rgb),.12), transparent 62%),
@@ -32,7 +32,14 @@
   .hp-badge{ display:inline-flex;align-items:center;gap:.45rem;font-family:var(--font-display);font-size:.78rem;font-weight:600;color:var(--accent-dark);background:var(--bg-card);border:1px solid var(--border);padding:.36rem .9rem;border-radius:var(--r-pill);margin-bottom:1rem }
   .hp-badge-dot{ width:7px;height:7px;border-radius:50%;background:var(--accent) }
   .hp-title{ font-family:var(--font-display);font-weight:800;font-size:clamp(28px,3vw,40px);line-height:1.16;color:var(--text-1);margin:0 0 .8rem }
-  .hp-title-accent{ display:block;background:linear-gradient(92deg,var(--accent-dark),var(--accent) 50%,var(--accent-dark));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2)) }
+
+  .hp-title-accent{ display:block;
+    background:linear-gradient(96deg,var(--accent-dark) 0%,color-mix(in srgb, var(--accent) 72%, var(--accent-dark)) 48%,var(--accent-dark) 100%);
+    background-size:220% 100%;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 0 2px color-mix(in srgb, var(--bg-card) 80%, transparent)) drop-shadow(0 1px 1px rgba(0,0,0,.16)) drop-shadow(0 2px 10px rgba(var(--accent-rgb),.20));
+    animation:hpShimmer 3.6s linear infinite; }
+
   .hp-sub{ color:var(--text-2);font-size:1rem;line-height:1.6;margin:0 0 1.3rem;max-width:42ch }
   .hp-cta{ display:flex;gap:.6rem;margin-bottom:1.4rem }
   .hp-btn{ font-family:var(--font-display);font-weight:700;font-size:.95rem;padding:.7rem 1.3rem;border-radius:14px;text-decoration:none;border:1px solid var(--border) }
@@ -43,9 +50,20 @@
   .hp-trust-lbl{ font-size:.72rem;color:var(--text-3) }
   .hp-trust-sep{ width:1px;height:26px;background:var(--border) }
 
-  /* ===== showcase coverflow (คัดลอกจาก home.css จริง) ===== */
-  .hps-frame{ position:relative;background:color-mix(in srgb, var(--bg-card) 90%, transparent);border:1px solid var(--border);border-radius:var(--r-2xl);padding:1.3rem 1.3rem 1.05rem;box-shadow:0 24px 60px rgba(12,45,78,.16),0 2px 8px rgba(12,45,78,.06) }
-  .hps-meta{ display:flex;justify-content:space-between;align-items:center;font-family:ui-monospace,monospace;font-size:.66rem;letter-spacing:.12em;color:var(--text-3);text-transform:uppercase;margin-bottom:.5rem }
+  .hps-frame{ position:relative;
+    background:linear-gradient(155deg, color-mix(in srgb, var(--bg-card) 88%, var(--accent) 5%) 0%, color-mix(in srgb, var(--bg-card) 73%, var(--accent) 17%) 100%);
+    border:1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
+    border-radius:var(--r-2xl);padding:1.3rem 1.3rem 1.05rem;
+    box-shadow:0 22px 50px rgba(var(--accent-rgb),.20), 0 2px 10px rgba(var(--accent-rgb),.10), inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent);
+    backdrop-filter:blur(6px) }
+  .hps-meta{ display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem }
+  .hps-frameno{ font-family:ui-monospace,monospace;font-size:.6rem;font-weight:700;letter-spacing:.15em;color:var(--accent-dark);text-transform:uppercase;
+    background:color-mix(in srgb, var(--accent) 13%, transparent);border:0.5px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    padding:3px 9px 3px 7px;border-radius:999px;display:inline-flex;align-items:center;gap:5px }
+  .hps-frameno::before{ content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 22%, transparent) }
+  .hps-count{ font-family:ui-monospace,monospace;font-size:.66rem;letter-spacing:.04em;color:var(--text-3) }
+  .hps-count .cur{ color:var(--accent-dark);font-weight:700;font-size:.84rem }
+  .hps-count .tot{ opacity:.55 }
   .hps-stage{ position:relative;height:300px;perspective:1200px;transform-style:preserve-3d }
   .hps-card{ position:absolute;top:50%;left:50%;width:188px;height:248px;margin:-124px 0 0 -94px;border:none;padding:0;background:#0e1526;border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 18px 40px rgba(12,45,78,.30);transition:transform .52s cubic-bezier(.22,.61,.36,1),opacity .5s,box-shadow .5s;will-change:transform }
   .hps-card img{ width:100%;height:100%;object-fit:cover;display:block }
@@ -69,7 +87,7 @@
 </head>
 <body>
 <div class="bar">
-  <h1>🖥️ Preview — Hero Showcase (เดสก์ท็อป)</h1>
+  <h1>🖥️ Preview V16.2 — Hero + Showcase</h1>
   <button data-th="sky" class="on">sky</button>
   <button data-th="sakura">sakura</button>
   <button data-th="mint">mint</button>
@@ -77,10 +95,10 @@
   <button data-th="lavender">lavender</button>
   <button data-th="midnight">midnight</button>
 </div>
-<p class="note">คลิกการ์ดข้าง / ลูกศร / จุด เพื่อสลับรูป · มีเลื่อนอัตโนมัติ · ป้าย "ส่งล่าสุด" สั่นเล็กน้อยทุก ~3.6 วิ · เปลี่ยนธีมเพื่อดูการปรับสี (ในเว็บจริงรูปจะเป็นผลงานจากแกลเลอรี)</p>
+<p class="note">เทียบของใหม่: "ที่สวยงามที่สุด" มี halo อ่านง่ายขึ้น · กรอบขวาเป็นโทนธีม (ไม่ขาวจ้า) · FRAME เป็น pill มีจุดสี · เลขปัจจุบันเด่น · ลองเปลี่ยนธีมทั้ง 6 แบบ</p>
 
 <div data-theme="sky">
-  <div class="hp-hero" id="hero">
+  <div class="hp-hero">
     <div class="hp-hero-inner">
       <div class="hp-badge"><span class="hp-badge-dot"></span> งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ</div>
       <h1 class="hp-title">ทำให้ทุกภาพ<br>กลายเป็นของที่ระลึก<span class="hp-title-accent">ที่สวยงามที่สุด</span></h1>
@@ -94,12 +112,11 @@
         <div><span class="hp-trust-val">1-3</span><span class="hp-trust-lbl">วันได้รับ</span></div>
       </div>
     </div>
-
     <div class="hp-showcase">
       <div class="hps-frame">
-        <div class="hps-meta"><span id="fno">FRAME 01</span><span id="cnt">01 / 05</span></div>
+        <div class="hps-meta"><span class="hps-frameno" id="fno">FRAME 03</span><span class="hps-count" id="cnt"></span></div>
         <div class="hps-stage" id="stage"></div>
-        <div class="hps-caption"><div class="hps-title" id="ttl">ผลงานล่าสุด</div><div class="hps-sub" id="sub">Diamond Cute Studio</div></div>
+        <div class="hps-caption"><div class="hps-title" id="ttl">บัตรประจำตัว</div><div class="hps-sub" id="sub">Diamond Cute Studio</div></div>
         <div class="hps-controls"><button class="hps-arrow" id="prev">‹</button><div class="hps-dots" id="dots"></div><button class="hps-arrow" id="next">›</button></div>
       </div>
       <div class="hps-deliver"><span class="hps-deliver-dot"></span><span>ส่งล่าสุด 3 ชั่วโมงที่แล้ว</span></div>
@@ -108,13 +125,8 @@
 </div>
 
 <script>
-  // สร้างรูปตัวอย่างเป็น SVG (ทำงานออฟไลน์) — ในเว็บจริงใช้รูปจากแกลเลอรี
   const palettes = [['#FDE68A','#F59E0B','โพลารอยด์เซ็ต'],['#A7F3D0','#10B981','บัตรนักเรียน'],['#BFDBFE','#3B82F6','พวงกุญแจรูป'],['#FBCFE8','#EC4899','ป้ายตุ๊กตา'],['#DDD6FE','#8B5CF6','นามบัตร']];
-  function svgImg(i){
-    const [c1,c2,label]=palettes[i];
-    const s=`<svg xmlns='http://www.w3.org/2000/svg' width='376' height='496'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${c1}'/><stop offset='1' stop-color='${c2}'/></linearGradient></defs><rect width='376' height='496' fill='url(#g)'/><circle cx='300' cy='120' r='54' fill='#ffffff' opacity='.35'/><rect x='40' y='360' width='220' height='20' rx='10' fill='#ffffff' opacity='.55'/><rect x='40' y='400' width='150' height='16' rx='8' fill='#ffffff' opacity='.4'/><text x='188' y='250' font-family='Kanit,sans-serif' font-size='30' font-weight='700' fill='#ffffff' text-anchor='middle'>${label}</text></svg>`;
-    return 'data:image/svg+xml;utf8,'+encodeURIComponent(s);
-  }
+  function svgImg(i){const [c1,c2,label]=palettes[i];const s=`<svg xmlns='http://www.w3.org/2000/svg' width='376' height='496'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${c1}'/><stop offset='1' stop-color='${c2}'/></linearGradient></defs><rect width='376' height='496' fill='url(#g)'/><circle cx='300' cy='120' r='54' fill='#ffffff' opacity='.35'/><rect x='40' y='360' width='220' height='20' rx='10' fill='#ffffff' opacity='.55'/><rect x='40' y='400' width='150' height='16' rx='8' fill='#ffffff' opacity='.4'/><text x='188' y='250' font-family='Kanit,sans-serif' font-size='30' font-weight='700' fill='#ffffff' text-anchor='middle'>${label}</text></svg>`;return 'data:image/svg+xml;utf8,'+encodeURIComponent(s);}
   const items = palettes.map((p,i)=>({url:svgImg(i),name:p[2],sub:'งานพิมพ์คุณภาพ'}));
   const stage=document.getElementById('stage'), dotsEl=document.getElementById('dots');
   let active=2;
@@ -125,7 +137,6 @@
     const d=document.createElement('button'); d.className='hps-dot'; d.onclick=()=>{active=i;layout()}; dotsEl.appendChild(d);
   });
   const cards=[...stage.children], dots=[...dotsEl.children];
-  function setT(id,v){document.getElementById(id).textContent=v}
   function layout(){
     cards.forEach((card,i)=>{
       const off=i-active, a=Math.abs(off); let tx,sc,ry,op,z;
@@ -138,9 +149,10 @@
       card.classList.toggle('is-active',off===0);
     });
     dots.forEach((d,i)=>d.classList.toggle('on',i===active));
-    setT('ttl',items[active].name); setT('sub',items[active].sub);
-    setT('fno','FRAME '+String(active+1).padStart(2,'0'));
-    setT('cnt',String(active+1).padStart(2,'0')+' / '+String(items.length).padStart(2,'0'));
+    document.getElementById('ttl').textContent=items[active].name;
+    document.getElementById('sub').textContent=items[active].sub;
+    document.getElementById('fno').textContent='FRAME '+String(active+1).padStart(2,'0');
+    document.getElementById('cnt').innerHTML='<span class="cur">'+String(active+1).padStart(2,'0')+'</span><span class="sep"> / </span><span class="tot">'+String(items.length).padStart(2,'0')+'</span>';
   }
   function go(d){active=(active+d+items.length)%items.length;layout()}
   document.getElementById('prev').onclick=()=>go(-1);
@@ -150,8 +162,6 @@
   const sc=document.querySelector('.hp-showcase');
   sc.addEventListener('mouseenter',()=>{clearInterval(timer);timer=null});
   sc.addEventListener('mouseleave',()=>{if(!timer)timer=setInterval(()=>go(1),4200)});
-
-  // theme switcher
   document.querySelectorAll('.bar button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('.bar button').forEach(x=>x.classList.remove('on'));
     b.classList.add('on');
