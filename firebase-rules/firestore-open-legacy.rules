@@ -1,8 +1,0 @@
-// ⚠️ Rules แบบเก่า (เปิดกว้าง) — ใช้เฉพาะกรณียังไม่ได้ตั้งค่า Firebase Auth
-// ไม่แนะนำสำหรับใช้งานจริงระยะยาว
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} { allow read, write: if true; }
-  }
-}
