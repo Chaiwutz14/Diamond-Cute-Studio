@@ -610,9 +610,11 @@ function _toMs(v) {
 }
 
 // ─── Submit Order ───
+let _orderSubmitting = false;   // V16: กันกดส่งซ้ำ (double-submit) ระหว่างกำลังอัป/บันทึก
 async function submitOrder() {
   const btn = document.getElementById('submit-order-btn');
   if (!btn) return;
+  if (_orderSubmitting) return;   // กำลังส่งอยู่ — ไม่สร้างออเดอร์ซ้ำ
 
   if (selectedPayment === 'promptpay' && !slipUrl) {
     DMC.toast('กรุณาแนบสลิปโอนเงินก่อน', 'error');
@@ -637,15 +639,16 @@ async function submitOrder() {
     }
   }
 
+  _orderSubmitting = true;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:0.4rem"></span> กำลังส่งออเดอร์...';
 
   const orderId = DMC.generateOrderId();   // V3: สร้างก่อน เพื่อใช้เป็น path ของไฟล์ private
 
-  // Upload slip — เก็บที่เดียวกับรูปสินค้า (ImgBB ผ่าน Worker) เพื่อไม่ต้องพึ่ง Firebase Storage (มีค่าใช้จ่าย)
+  // V16: อัปสลิปผ่าน uploadSensitive → ถ้าเปิด Firebase Storage จะเป็น private (ไม่งั้น fallback ImgBB อัตโนมัติ)
   if (selectedPayment === 'promptpay' && window._slipFile) {
     try {
-      const uploaded = await DMC.uploadToImgBB(window._slipFile);
+      const uploaded = await DMC.uploadSensitive(window._slipFile, 'orders/' + orderId);
       slipUrl = uploaded.url;
     } catch (e) {
       console.warn('slip upload failed:', e);
@@ -666,7 +669,7 @@ async function submitOrder() {
     for (let i = 0; i < pendingFiles.length; i++) {
       if (stat) stat.textContent = `กำลังอัปโหลดรูป ${i + 1}/${pendingFiles.length}...`;
       try {
-        const up = await DMC.uploadToImgBB(pendingFiles[i]);
+        const up = await DMC.uploadSensitive(pendingFiles[i], 'orders/' + orderId);
         if (up && up.url) uploadedFileUrls.push(up.url); else failed++;
       } catch (e) { failed++; console.warn('upload file failed', e); }
       if (bar) bar.style.width = Math.round(((i + 1) / pendingFiles.length) * 100) + '%';
@@ -727,6 +730,29 @@ async function submitOrder() {
   }
 
   try {
+    // V16: จองสิทธิ์คูปอง "ก่อน" สร้างออเดอร์ (atomic) — ถ้าคูปองเต็มลิมิตให้ยกเลิกทันที
+    //      (เดิม: นับหลังสร้างออเดอร์ + กลืน error → ลูกค้าใช้คูปองเกินลิมิตได้)
+    if (appliedCoupon && db) {
+      const ref = db.collection('coupons').doc(appliedCoupon.code);
+      try {
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(ref);
+          if (!snap.exists) return;                  // ไม่มีคูปองนี้ใน Firestore — ปล่อยผ่าน (กันพัง)
+          const used  = Number(snap.data().usedCount || 0);
+          const limit = Number(snap.data().usageLimit || 0);
+          if (limit > 0 && used >= limit) throw new Error('COUPON_EXHAUSTED');
+          tx.update(ref, { usedCount: used + 1 });   // จองสิทธิ์ +1 (ตรงกับ rules)
+        });
+      } catch (e) {
+        if (String(e && e.message).indexOf('COUPON_EXHAUSTED') !== -1) {
+          DMC.toast('ขออภัย คูปอง ' + appliedCoupon.code + ' ถูกใช้ครบจำนวนแล้ว 🙏 กรุณานำส่วนลดออกแล้วลองใหม่', 'error', 6000);
+          btn.disabled = false; btn.innerHTML = '✅ ยืนยันออเดอร์'; _orderSubmitting = false;
+          return;
+        }
+        console.warn('coupon reserve skipped (network/permission):', e.message);  // เน็ต/สิทธิ์มีปัญหา → ไม่บล็อกการสั่ง
+      }
+    }
+
     // Save to Firestore
     let savedDocId = null;
     if (db) {
@@ -735,21 +761,6 @@ async function submitOrder() {
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
       savedDocId = docRef.id;
-    }
-
-    // V4: นับการใช้คูปองแบบ atomic — กันใช้เกินลิมิต (แนว B / Poka-yoke)
-    if (appliedCoupon && db) {
-      try {
-        const ref = db.collection('coupons').doc(appliedCoupon.code);
-        await db.runTransaction(async (tx) => {
-          const snap = await tx.get(ref);
-          if (!snap.exists) return;
-          const used  = Number(snap.data().usedCount || 0);
-          const limit = Number(snap.data().usageLimit || 0);
-          if (limit > 0 && used >= limit) throw new Error('coupon exhausted');
-          tx.update(ref, { usedCount: used + 1 });   // เปลี่ยนเฉพาะ usedCount +1 (ตรงกับ rules)
-        });
-      } catch (e) { console.warn('coupon usage update skipped:', e.message); }
     }
 
     // V4.4: บันทึก marker เบอร์ลง couponGuard (existence = เคยสั่ง/เคยใช้คูปอง) — ใช้เช็กครั้งหน้า
@@ -772,9 +783,8 @@ async function submitOrder() {
       DMC.recordSlipUsed(window._slipVerify.refHash, orderId).catch(() => {});
     }
 
-    // LINE Notify
-    // Send structured data to Worker (builds Flex Card)
-    await DMC.sendLineNotify(orderData);
+    // V16: แจ้งเตือน LINE แบบ "ไม่รอ" (fire-and-forget) → หน้าสำเร็จขึ้นทันที ไม่ค้างถ้า Worker ช้า/ล่ม
+    DMC.sendLineNotify(orderData).catch(() => {});
 
     // Clear cart
     DMC.saveCart([]);
@@ -794,6 +804,7 @@ async function submitOrder() {
     DMC.toast('เกิดข้อผิดพลาด กรุณาลองใหม่หรือติดต่อ LINE', 'error');
     btn.disabled = false;
     btn.innerHTML = '✅ ยืนยันออเดอร์';
+    _orderSubmitting = false;   // V16: ปลดล็อกให้ลองส่งใหม่ได้
   }
 }
 
@@ -801,6 +812,25 @@ async function showSuccess(orderId, total) {
   document.getElementById('order-wrapper').style.display = 'none';
   document.getElementById('success-page').style.display  = '';
   document.getElementById('success-order-id').textContent = orderId;
+  // V16: ปุ่มคัดลอกเลขออเดอร์ (ลูกค้าใช้เลขนี้ติดตามภายหลัง — เน้นให้บันทึกไว้)
+  try {
+    const idEl = document.getElementById('success-order-id');
+    if (idEl && idEl.parentElement && !document.getElementById('copy-order-id-btn')) {
+      const cp = document.createElement('button');
+      cp.id = 'copy-order-id-btn';
+      cp.type = 'button';
+      cp.textContent = '📋 คัดลอกเลขออเดอร์';
+      cp.style.cssText = 'margin-top:.7rem;display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1rem;border:1.5px solid var(--border,#e5e7eb);background:var(--bg-card,#fff);color:var(--text-2);border-radius:var(--r-lg,12px);font-family:var(--font-display),sans-serif;font-weight:600;font-size:.85rem;cursor:pointer';
+      cp.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(orderId);
+          cp.textContent = '✓ คัดลอกแล้ว';
+          setTimeout(() => { cp.textContent = '📋 คัดลอกเลขออเดอร์'; }, 1600);
+        } catch (e) { DMC.toast('กรุณาจดเลข ' + orderId + ' ไว้นะครับ', 'info', 4000); }
+      });
+      idEl.parentElement.appendChild(cp);
+    }
+  } catch (e) {}
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   // ปุ่ม LINE — เปิดแชทร้านพร้อมข้อความร่างไว้ให้ลูกค้ากดส่ง

@@ -129,12 +129,19 @@ async function uploadPrivateFile(file, pathPrefix) {
 }
 
 // อัปไฟล์ลับ: เลือกอัตโนมัติระหว่าง Storage private (ถ้าเปิด) หรือ Worker/ImgBB (เดิม)
+// V16: ถ้า PRIVATE_UPLOADS:true แต่ Storage ยังไม่พร้อม → fallback ไป ImgBB ให้เอง
+//      (ออเดอร์จะไม่มีวันพังเพราะตั้ง PRIVATE_UPLOADS — สลิปจะกลายเป็น private เองเมื่อเปิด Storage)
 async function uploadSensitive(file, pathPrefix) {
   if ((window.DMC_CONFIG || {}).PRIVATE_UPLOADS) {
-    const r = await uploadPrivateFile(file, pathPrefix);
-    return { url: r.path, storage: true };   // url = storage path
+    try {
+      const r = await uploadPrivateFile(file, pathPrefix);
+      return { url: r.path, storage: true };   // url = storage path (อ่านได้เฉพาะแอดมิน)
+    } catch (e) {
+      console.warn('Private upload not ready, falling back to proxy/ImgBB:', e.message);
+      // ไหลต่อไปใช้ ImgBB ด้านล่าง — กันออเดอร์หลุด
+    }
   }
-  return await uploadToImgBB(file);           // url = ImgBB public URL
+  return await uploadToImgBB(file);            // url = ImgBB public URL (legacy)
 }
 
 // แปลงค่าที่เก็บไว้ (อาจเป็น URL ImgBB หรือ storage path) → src ที่แสดงได้
@@ -300,8 +307,15 @@ function generateId(prefix = '') {
 }
 
 function generateOrderId() {
-  const num = String(Math.floor(Math.random() * 9000) + 1000);
-  return `DCS-${num}`;
+  // V16: เดิมสุ่ม 1000–9999 (มีแค่ 9,000 ค่า → ชนกันแน่นอนเมื่อออเดอร์เยอะ ~112 ใบ มีโอกาสซ้ำ 50%)
+  // ใหม่: วันที่ + เลขสุ่ม 4 หลัก + เศษเวลา → โอกาสชนต่ำมาก และเรียงตามเวลาอ่านง่าย
+  const d   = new Date();
+  const ymd = d.getFullYear().toString().slice(2)
+            + String(d.getMonth() + 1).padStart(2, '0')
+            + String(d.getDate()).padStart(2, '0');
+  const rnd = String(Math.floor(Math.random() * 9000) + 1000);
+  const tail = (d.getHours() % 10).toString(36);   // กันชนภายในวันเดียวกันเพิ่มอีกชั้น
+  return `DCS-${ymd}-${rnd}${tail}`;                // เช่น DCS-260622-4815a
 }
 
 // ─── Date / Time Helpers ───
@@ -480,11 +494,54 @@ function compressImage(file, opts) {
 }
 
 // ─── ตัวดักรูปโหลดพลาดทั้งเว็บ — กัน "รูปแตก" ───
+// ─── V16: Image CDN — ย่อรูป + แปลง WebP ตามขนาดที่แสดงจริง (เร่งโหลดรูปอย่างมาก) ───
+// ใช้ wsrv.nl (ฟรี, Cloudflare) · ข้ามรูป data:/relative/Storage(private) · ถ้าล่ม fallback ต้นฉบับเอง
+function imgCDN(url, width) {
+  try {
+    const cfg = window.DMC_CONFIG || {};
+    if (cfg.IMG_CDN === false) return url;
+    if (!url || typeof url !== 'string') return url;
+    if (url.indexOf('http') !== 0) return url;                  // data:, relative path, storage path
+    if (url.indexOf('firebasestorage') !== -1 || url.indexOf('googleapis') !== -1) return url; // private (มี token)
+    if (url.indexOf('wsrv.nl') !== -1 || url.indexOf('weserv') !== -1) return url;             // proxy แล้ว
+    const w = Math.max(80, Math.min(1600, width || 600));
+    return 'https://wsrv.nl/?url=' + encodeURIComponent(url) + '&w=' + w + '&q=80&output=webp&we';
+  } catch (e) { return url; }
+}
+
+// เพิ่ม preconnect/dns-prefetch ให้โดเมนรูป (เร่ง handshake รูปแรก) — ฉีดครั้งเดียว
+function injectImgPreconnect() {
+  try {
+    if (document.getElementById('dmc-img-preconnect')) return;
+    const hosts = ['https://wsrv.nl', 'https://i.ibb.co'];
+    const frag = document.createDocumentFragment();
+    hosts.forEach((h, i) => {
+      const l = document.createElement('link');
+      l.rel = 'preconnect'; l.href = h; l.crossOrigin = '';
+      if (i === 0) l.id = 'dmc-img-preconnect';
+      frag.appendChild(l);
+      const d = document.createElement('link');
+      d.rel = 'dns-prefetch'; d.href = h;
+      frag.appendChild(d);
+    });
+    (document.head || document.documentElement).appendChild(frag);
+  } catch (e) {}
+}
+
 function initImageFallback() {
+  injectImgPreconnect();
   function handle(img) {
     if (img.dataset.fbDone) return;
     img.dataset.fbDone = '1';
-    img.addEventListener('error', function() {
+    img.addEventListener('error', function onErr() {
+      // 1) ลองรูปต้นฉบับก่อน (กรณี image CDN ย่อรูปล่ม) — ครั้งเดียว
+      const full = img.getAttribute('data-full');
+      if (full && !img.dataset.triedFull && img.src !== full) {
+        img.dataset.triedFull = '1';
+        img.src = full;
+        return;   // ให้โอกาสโหลดต้นฉบับ (ถ้ายัง error จะวนกลับเข้ามา)
+      }
+      // 2) ต้นฉบับก็ยังพัง → แสดงกล่อง emoji แทน
       if (img.dataset.fbApplied) return;
       img.dataset.fbApplied = '1';
       const ph = img.getAttribute('data-emoji') || '🖼️';
@@ -493,7 +550,7 @@ function initImageFallback() {
       box.textContent = ph;
       box.style.cssText = 'width:100%;height:100%;min-height:60px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,var(--bg-mid),var(--bg-card2,var(--bg-mid)));color:var(--text-3);border-radius:inherit';
       if (img.parentElement) img.parentElement.replaceChild(box, img);
-    }, { once: true });
+    });
   }
   document.querySelectorAll('img').forEach(handle);
   if (window.MutationObserver) {
@@ -528,9 +585,98 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function(){ initImageFallback(); initOfflineBanner(); });
 } else { initImageFallback(); initOfflineBanner(); }
 
+// ─── V16: Read Cache (sessionStorage + TTL) — ลดการอ่าน Firestore ───
+const DMC_CACHE_PREFIX = 'dmc_cache_';
+function cacheGet(key) {
+  try {
+    const raw = sessionStorage.getItem(DMC_CACHE_PREFIX + key);
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    if (!o || Date.now() > o.exp) { sessionStorage.removeItem(DMC_CACHE_PREFIX + key); return null; }
+    return o.val;
+  } catch (e) { return null; }
+}
+function cacheSet(key, val, ttlMs) {
+  try { sessionStorage.setItem(DMC_CACHE_PREFIX + key, JSON.stringify({ val, exp: Date.now() + (ttlMs || 180000) })); }
+  catch (e) { /* storage เต็ม — ข้าม */ }
+}
+function cacheClear(key) {
+  try {
+    if (key) sessionStorage.removeItem(DMC_CACHE_PREFIX + key);
+    else Object.keys(sessionStorage).filter(k => k.indexOf(DMC_CACHE_PREFIX) === 0).forEach(k => sessionStorage.removeItem(k));
+  } catch (e) {}
+}
+// dedup คำขอที่ยิงพร้อมกัน (หน้าแรกเรียกสินค้า+หมวด+แกลเลอรีพร้อมกัน → อ่าน Firestore "ครั้งเดียว")
+const _dmcInflight = {};
+async function cachedQuery(key, ttlMs, loader) {
+  const c = cacheGet(key);
+  if (c !== null) return c;
+  if (_dmcInflight[key]) return _dmcInflight[key];
+  _dmcInflight[key] = (async () => {
+    try { const v = await loader(); cacheSet(key, v, ttlMs); return v; }
+    finally { delete _dmcInflight[key]; }
+  })();
+  return _dmcInflight[key];
+}
+
+// ─── V16: Static Snapshot loader — อ่านจากไฟล์ JSON บน GitHub Pages (อ่าน Firestore = 0) ───
+// คืน array ถ้ามีไฟล์ / null ถ้าไม่มีไฟล์หรือปิดสแนปช็อต → ผู้เรียก fallback ไป Firestore
+async function loadSnapshot(name) {
+  const cfg = window.DMC_CONFIG || {};
+  if (cfg.USE_SNAPSHOT === false) return null;
+  try {
+    const base = cfg.SNAPSHOT_BASE || './data/';
+    const res = await fetch(base + name + '.json', { cache: 'no-cache' });
+    if (!res.ok) return null;                 // ยังไม่มีไฟล์ (404) → fallback Firestore
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : null);
+  } catch (e) { return null; }
+}
+
+// ─── V16: โหลด "สินค้า active" ใช้ร่วมกันทุกหน้า (snapshot → cache → Firestore) ───
+// เดิม: หน้าแรกอ่านสินค้าทั้งคอลเลกชัน 2 รอบ (~140 reads). ใหม่: อ่านครั้งเดียว/เซสชัน หรือ 0 (snapshot)
+async function loadProducts(opts) {
+  opts = opts || {};
+  return cachedQuery('products_active', opts.ttlMs || 180000, async () => {
+    const snap = await loadSnapshot('products');
+    if (snap) return snap.filter(p => p && p.active !== false);
+    const db = await getFirebaseReady();
+    const qs = await db.collection('products').where('active', '==', true).limit(opts.limit || 300).get();
+    const items = [];
+    qs.forEach(d => {
+      const x = d.data();
+      if (x.createdAt && x.createdAt.seconds != null) x.createdAt = { seconds: x.createdAt.seconds }; // ให้ JSON cache ได้
+      items.push({ id: d.id, ...x });
+    });
+    return items;
+  });
+}
+
+async function loadGallery(opts) {
+  opts = opts || {};
+  return cachedQuery('gallery_active', opts.ttlMs || 300000, async () => {
+    const snap = await loadSnapshot('gallery');
+    if (snap) return snap.filter(x => x && x.active !== false);
+    const db = await getFirebaseReady();
+    const qs = await db.collection('gallery').limit(opts.limit || 60).get();
+    const items = [];
+    qs.forEach(d => { const x = d.data(); if (x.active !== false) items.push({ id: d.id, ...x }); });
+    return items;
+  });
+}
+
 window.DMC = {
   // Firebase
   getFirebaseReady,
+  // V16: data layer (cache + snapshot)
+  loadProducts,
+  loadGallery,
+  loadSnapshot,
+  cachedQuery,
+  cacheGet,
+  cacheSet,
+  cacheClear,
+  imgCDN,
   normalizePhone,
   toIntlPhone,
   saveMyOrder,

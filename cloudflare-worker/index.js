@@ -345,13 +345,21 @@ function buildOrderCard(data) {
 }
 
 // ─── Helpers ───
-// V.upgrade1: จำกัด Origin (เปิดใช้เมื่อตั้ง ALLOWED_ORIGIN = "https://โดเมนร้าน" คั่น , ได้)
+// V16: จำกัด Origin แบบ "fail-closed" — ค่าเริ่มต้นอนุญาตเฉพาะโดเมนร้าน + localhost
+//      (เดิม: ถ้าไม่ตั้ง ALLOWED_ORIGIN = เปิดทุก origin → คนอื่นยิง /upload, /notify ได้)
+//      ตั้ง secret ALLOWED_ORIGIN (คั่น , ) เพื่อ override รายการได้
 function originAllowed(request, env) {
-  const allow = String(env.ALLOWED_ORIGIN || '').trim();
-  if (!allow) return true;                       // ไม่ตั้ง = อนุญาตทุก origin (ค่าเริ่มต้น)
+  const DEFAULTS = [
+    'https://chaiwutz14.github.io',   // โดเมนร้าน (GitHub Pages)
+    'http://localhost',
+    'http://127.0.0.1',
+  ];
+  const configured = String(env.ALLOWED_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+  const list = configured.length ? configured : DEFAULTS;
   const origin = request.headers.get('Origin') || '';
-  if (!origin) return true;                       // ไม่มี Origin (server-to-server) = ผ่าน
-  return allow.split(',').map(s => s.trim()).filter(Boolean).includes(origin);
+  if (!origin) return true;          // ไม่มี Origin (server-to-server/health check) = ผ่าน
+  // อนุญาตถ้า origin ตรงหรือขึ้นต้นด้วยรายการที่กำหนด (ครอบ subpath ของ github.io)
+  return list.some(o => origin === o || origin.indexOf(o) === 0);
 }
 function json(data)           { return new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } }); }
 function cors(res, status = 200) {

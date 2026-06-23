@@ -59,9 +59,10 @@ window.CMS = (function(){
       },
     },
     // ── ค่าส่ง / ค่าธรรมเนียม / ค่าเพิ่มตามช่องทางจ่าย (แอดมินแก้ได้จากหลังบ้าน) ──
+    // V16: ค่าเริ่มต้นดึงจาก config.js (SHIPPING) ให้ตรงกัน — กันยอดเพี้ยน 50/80 vs 35/40
     fees: {
-      shipTransfer:  50,   // ค่าจัดส่ง เมื่อโอน/PromptPay
-      shipCod:       80,   // ค่าจัดส่ง COD (รวมค่าธรรมเนียมปลายทางแล้ว)
+      shipTransfer:  (((window.DMC_CONFIG || {}).SHIPPING || {}).transfer ?? 50),  // ค่าจัดส่ง เมื่อโอน/PromptPay
+      shipCod:       (((window.DMC_CONFIG || {}).SHIPPING || {}).cod ?? 80),        // ค่าจัดส่ง COD (รวมค่าธรรมเนียมปลายทางแล้ว)
       freeShipMin:   0,    // ส่งฟรีเมื่อยอดสินค้าถึงเท่านี้ (0 = ปิด)
       surchargePromptpay: 0, // ค่าธรรมเนียมเพิ่มเมื่อจ่าย PromptPay
       surchargeCod:       0, // ค่าธรรมเนียมเพิ่มเมื่อจ่าย COD (นอกเหนือค่าส่ง)

@@ -50,7 +50,7 @@ function renderGallery(cat) {
 
   grid.innerHTML = items.map(function(item, i){
     var inner = item.image
-      ? '<img src="'+item.image+'" alt="'+esc(item.name)+'" loading="lazy" data-emoji="'+esc(item.emoji)+'">'
+      ? '<img src="'+DMC.imgCDN(item.image, 520)+'" data-full="'+esc(item.image)+'" alt="'+esc(item.name)+'" loading="lazy" decoding="async" data-emoji="'+esc(item.emoji)+'">'
       : '<span class="gallery-emoji-ph">'+item.emoji+'</span>';
     return '<div class="gallery-item" data-idx="'+i+'" data-cat="'+esc(item.cat)+'">'
       + '<div class="gallery-img '+(item.size||'')+'">' + inner + '</div>'

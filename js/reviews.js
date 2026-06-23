@@ -105,6 +105,7 @@ window.Reviews = (function(){
 
   // ─── ดึงรีวิวที่อนุมัติแล้ว ───
   async function fetchApproved(db, productId, limit) {
+    // วิธีหลัก: query ตรง (เร็ว — แต่ถ้ามี productId จะต้องมี composite index)
     try {
       let q = db.collection('reviews').where('status', '==', 'approved');
       if (productId) q = q.where('productId', '==', productId);
@@ -114,6 +115,17 @@ window.Reviews = (function(){
       list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       return list;
     } catch (e) {
+      // V16 Fallback: ยังไม่ได้สร้าง composite index → กรองสถานะฝั่ง client (ไม่ต้องมี index)
+      //              ทำให้รีวิวต่อสินค้าแสดงผลได้แม้ยังไม่สร้าง index (index = ทำให้เร็วขึ้นเฉยๆ)
+      if (productId) {
+        try {
+          const snap = await db.collection('reviews').where('productId', '==', productId).limit((limit || 50) * 4).get();
+          const list = [];
+          snap.forEach(doc => { const x = doc.data(); if (x.status === 'approved') list.push({ id: doc.id, ...x }); });
+          list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+          return list.slice(0, limit || 50);
+        } catch (e2) { console.warn('Reviews fallback failed:', e2.message); }
+      }
       console.warn('Reviews fetch failed:', e.message);
       return [];
     }

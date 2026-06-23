@@ -64,9 +64,21 @@ async function loadOrdersTable() {
   } catch(e) { el.innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ: '+DMC.escapeHtml(e.message)+'</div>'; }
 }
 
+// V16: บันทึกเวลา "ส่งล่าสุด" ลง siteContent/main (public read) เพื่อโชว์บนหน้าแรก (coverflow badge)
+async function touchLastDelivered(status) {
+  if (status !== 'done') return;
+  try {
+    await db.collection('siteContent').doc('main').set(
+      { lastDeliveredAt: firebase.firestore.FieldValue.serverTimestamp() },
+      { merge: true }
+    );
+  } catch (e) { /* ไม่บล็อกงานหลัก */ }
+}
+
 window.quickUpdateStatus = async function(id, status) {
   try {
     await db.collection('orders').doc(id).update({ status, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    touchLastDelivered(status);   // V16
     DMC.toast('อัพเดทสถานะแล้ว ✅', 'success');
     if (status === 'shipping') {
       DMC.toast('💡 อย่าลืมใส่เลขพัสดุ — กด 📋 ดู เพื่อเพิ่ม', 'info', 4000);
@@ -217,6 +229,7 @@ window.updateOrderStatus = async function(id) {
       status: s, carrier, trackingNo: tracking,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    touchLastDelivered(s);   // V16
     DMC.toast('บันทึกสำเร็จ ✅', 'success');
     closeModal(); loadOrdersTable(); loadKPIs();
   } catch(e) { DMC.toast('บันทึกไม่สำเร็จ', 'error'); }

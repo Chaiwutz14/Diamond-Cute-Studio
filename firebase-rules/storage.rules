@@ -1,0 +1,29 @@
+rules_version = '2';
+
+// Diamond Cute Studio — Firebase Storage Rules (V3)
+// ใช้เมื่อย้ายสลิป/รูปลูกค้าไปเก็บแบบ private (ตั้ง PRIVATE_UPLOADS:true ใน config.js)
+// แทน ImgBB สาธารณะ — เฉพาะแอดมินเท่านั้นที่อ่านสลิป/รูปได้
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAdmin() {
+      // V16: ใส่อีเมลจริงแล้ว — ต้องตรงกับ ADMIN_EMAIL ใน config.js และ firestore.rules
+      return request.auth != null
+        && request.auth.token.email == 'peeza1482546@gmail.com';
+    }
+
+    // สลิปโอนเงิน + รูปงานลูกค้า: ลูกค้าอัปได้ (จำกัดขนาด/ชนิด) แต่ "อ่านได้เฉพาะแอดมิน"
+    match /orders/{orderId}/{fileName} {
+      allow create: if request.resource.size < 8 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+      allow read:   if isAdmin();           // ← สลิปไม่สาธารณะอีกต่อไป
+      allow update, delete: if isAdmin();
+    }
+
+    // ปฏิเสธอย่างอื่นทั้งหมด
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

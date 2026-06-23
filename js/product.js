@@ -32,19 +32,73 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadingEl.innerHTML = Loading.Skeleton.productDetail();
   }
 
+  loadProductFlow();
+});
+
+// V16: แยก "โหลดไม่สำเร็จ (เน็ต/ชั่วคราว)" ออกจาก "ไม่มีสินค้าจริง (404)"
+//      เดิม error ทุกชนิดเด้งไปหน้า "ไม่พบสินค้า" แม้แค่เน็ตช้า/รูปโหลดไม่ทัน — ทำให้เหมือนสินค้าหาย
+async function loadProductFlow() {
+  const loadingEl = document.getElementById('product-loading');
+  if (loadingEl) {
+    loadingEl.style.display = '';
+    if (typeof Loading !== 'undefined') loadingEl.innerHTML = Loading.Skeleton.productDetail();
+  }
+  const errEl = document.getElementById('product-error');
+  if (errEl) errEl.style.display = 'none';
+
+  let doc;
   try {
     db = await DMC.getFirebaseReady();
-    const doc = await db.collection('products').doc(productId).get();
-    if (!doc.exists) { showNotFound(); return; }
-    product = { id: doc.id, ...doc.data() };
+    doc = await fetchProductWithRetry(productId, 2);   // ลองซ้ำ 2 ครั้งถ้าเน็ตสะดุด (backoff)
+  } catch (e) {
+    console.error('Product load error (network):', e);
+    showLoadError();          // โหลดไม่สำเร็จ → แสดงปุ่มลองใหม่ (ไม่ใช่ 404)
+    return;
+  }
+
+  if (!doc || !doc.exists) { showNotFound(); return; }   // ไม่มีสินค้านี้จริงๆ → 404
+
+  product = { id: doc.id, ...doc.data() };
+  try {
     renderProduct();
     loadRelated();
     initReviews();
   } catch (e) {
-    console.error('Product load error:', e);
-    showNotFound();
+    console.error('Product render error:', e);   // render พัง ก็ไม่เด้ง 404 — โชว์เท่าที่โหลดได้
+    if (typeof Loading !== 'undefined') Loading.progressDone();
+    if (loadingEl) loadingEl.style.display = 'none';
   }
-});
+}
+
+// ลองโหลดสินค้าซ้ำถ้าเน็ตสะดุด (กัน 404 หลอกจากการเชื่อมต่อชั่วคราว)
+async function fetchProductWithRetry(id, retries) {
+  let lastErr;
+  for (let i = 0; i <= retries; i++) {
+    try { return await db.collection('products').doc(id).get(); }
+    catch (e) {
+      lastErr = e;
+      if (i < retries) await new Promise(r => setTimeout(r, 600 * (i + 1)));
+    }
+  }
+  throw lastErr;
+}
+
+// สถานะ "โหลดไม่สำเร็จ" พร้อมปุ่มลองใหม่ (แยกจากหน้า "ไม่พบสินค้า")
+function showLoadError() {
+  if (typeof Loading !== 'undefined') Loading.progressDone();
+  const l = document.getElementById('product-loading');
+  if (!l) { showNotFound(); return; }
+  l.style.display = '';
+  l.innerHTML =
+    '<div style="grid-column:1/-1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 1.5rem;color:var(--text-2)">'
+    + '<div style="font-size:2.6rem;margin-bottom:.6rem">📡</div>'
+    + '<p style="margin:0 0 .35rem;font-weight:700;font-size:1.05rem">โหลดข้อมูลไม่สำเร็จ</p>'
+    + '<p style="margin:0 0 1.2rem;color:var(--text-3)">เน็ตอาจช้าหรือหลุดชั่วคราว ลองอีกครั้งได้เลย</p>'
+    + '<button id="retry-product-btn" class="btn btn-primary btn-md" style="border-radius:var(--r-lg)">↻ ลองอีกครั้ง</button>'
+    + '</div>';
+  const b = document.getElementById('retry-product-btn');
+  if (b) b.addEventListener('click', loadProductFlow);
+}
 
 function showNotFound() {
   if (typeof Loading !== 'undefined') Loading.progressDone();
@@ -233,7 +287,8 @@ function renderGallery() {
 
   if (item.type === 'image') {
     const img = document.createElement('img');
-    img.src = item.url;
+    img.src = DMC.imgCDN(item.url, 900);          // V16: ย่อรูปสำหรับแสดง (zoom ยังใช้ต้นฉบับ)
+    img.setAttribute('data-full', item.url);      // fallback ถ้า CDN ล่ม
     img.alt = product.name + (item.label ? ' — ' + item.label : '');
     img.className = 'gallery-media';
     img.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:var(--r-xl);position:relative;z-index:1;cursor:zoom-in';
@@ -262,7 +317,8 @@ function renderGallery() {
         t.className = 'gallery-thumb' + (i === activeGalleryIndex ? ' active' : '');
         if (g.type === 'image') {
           const im = document.createElement('img');
-          im.src = g.url;
+          im.src = DMC.imgCDN(g.url, 160);          // V16: thumbnail เล็ก โหลดไว
+          im.setAttribute('data-full', g.url);
           im.alt = g.label || ('รูปที่ ' + (i + 1));
           im.loading = 'lazy';
           im.style.cssText = 'width:100%;height:100%;object-fit:contain;padding:2px';
@@ -401,7 +457,7 @@ async function loadRelated() {
       return `
       <a class="product-card" href="product.html?id=${p.id}">
         <div class="product-img-wrap">
-          ${cover ? `<img src="${cover}" alt="${DMC.escapeHtml(p.name)}" loading="lazy">` : `<span>${p.emoji || '📦'}</span>`}
+          ${cover ? `<img src="${DMC.imgCDN(cover, 440)}" data-full="${DMC.escapeHtml(cover)}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">` : `<span>${p.emoji || '📦'}</span>`}
         </div>
         <div class="product-card-body">
           <div class="product-card-name">${DMC.escapeHtml(p.name)}</div>

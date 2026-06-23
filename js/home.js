@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadHomeReviews();    // รีวิวจริงจากลูกค้า
   loadCategoryCounts(); // นับจำนวนสินค้าจริงต่อหมวด (เจ้าของ #categories-grid)
   loadHomeGallery();    // V4: แถบผลงานจริง (#home-gallery)
+  initHeroShowcase();   // V16: coverflow ผลงานฝั่งขวา (เฉพาะเดสก์ท็อป)
 
   // ─── Load Firebase + Products ───
   try {
@@ -40,17 +41,11 @@ async function loadFeaturedProducts(db) {
   if (!container) return;
 
   try {
-    // V.upgrade1: ดึงเฉพาะ active แล้วจัดอันดับ featured ฝั่ง client
-    // (เลี่ยง composite index ที่ทำให้หน้าแรกเด้งไปโชว์สินค้า demo เมื่อ index ยังไม่ถูกสร้าง)
-    const snap = await db.collection('products')
-      .where('active', '==', true)
-      .limit(60)
-      .get();
+    // V16: ใช้ตัวโหลดกลาง (snapshot → cache → Firestore) — อ่านสินค้า "ครั้งเดียว/เซสชัน" หรือ 0 (snapshot)
+    const all = await DMC.loadProducts();
+    if (!all || !all.length) { renderPlaceholderProducts(); return; }
 
-    if (snap.empty) { renderPlaceholderProducts(); return; }
-
-    let items = [];
-    snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+    let items = all.slice();
     items.sort((a, b) => {
       const fa = a.featured ? 1 : 0, fb = b.featured ? 1 : 0;
       if (fb !== fa) return fb - fa;                                  // featured ก่อน
@@ -113,7 +108,7 @@ function buildProductCard(p) {
     <a href="product.html?id=${p.id}" class="product-card" data-id="${p.id}">
       <div class="product-img-wrap">
         ${homeCoverOf(p)
-          ? `<img src="${homeCoverOf(p)}" alt="${DMC.escapeHtml(p.name)}" loading="lazy">`
+          ? `<img src="${DMC.imgCDN(homeCoverOf(p), 440)}" data-full="${DMC.escapeHtml(homeCoverOf(p))}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">`
           : `<span>${p.emoji || '📦'}</span>`
         }
         <div class="product-img-overlay"></div>
@@ -270,35 +265,29 @@ async function loadCategoryCounts() {
   const grid = document.getElementById('categories-grid');
   if (!grid || typeof DMC === 'undefined') return;
   try {
-    const db = await DMC.getFirebaseReady();
-
-    // map ชื่อหมวด → slug + emoji (ทั้ง built-in และ custom)
     // หมวดหมู่จาก module กลาง (js/categories.js)
     const BUILTIN = (window.DMCCat ? DMCCat.BUILTIN : []);
 
-    const snap = await db.collection('products').get();
+    // V16: นับจากชุดสินค้าชุดเดียวกับ featured (ไม่อ่านทั้งคอลเลกชันซ้ำอีกต่อไป → ลด Firestore reads ~50%)
+    const all = await DMC.loadProducts();
+    if (!all || !all.length) return;   // ไม่มีสินค้า → คงตัวเลขเดิม
+
     const counts = {};
     let total = 0;
-    snap.forEach(doc => {
-      const cat = (doc.data().category || '').toString().trim().toLowerCase();
+    all.forEach(p => {
+      const cat = (p.category || '').toString().trim().toLowerCase();
       counts[cat] = (counts[cat] || 0) + 1;
       total++;
     });
-    if (total === 0) return; // ไม่มีสินค้า → คงตัวเลขเดิม
 
     function countFor(matches) {
       return matches.reduce((s, m) => s + (counts[m.toLowerCase()] || 0), 0);
     }
 
-    // built-in เท่านั้น (ไม่รวมหมวด custom จาก Firestore) — fix 8 รายการบนหน้าแรกถาวร
-    const allCats = BUILTIN;
-
-    // สร้างการ์ดใหม่
+    // built-in เท่านั้น — fix 8 รายการบนหน้าแรกถาวร
     let html = '';
-    let shownTotal = 0;
-    allCats.forEach(cat => {
+    BUILTIN.forEach(cat => {
       const n = countFor(cat.match);
-      shownTotal += n;
       const label = n > 0 ? (n + ' รายการ') : 'เร็วๆ นี้';
       html += '<a href="catalog.html?cat=' + encodeURIComponent(cat.slug) + '" class="cat-card">'
         + '<span class="cat-icon">' + cat.emoji + '</span>'
@@ -317,16 +306,13 @@ async function loadCategoryCounts() {
 async function loadHomeGallery() {
   if (typeof DMC === 'undefined') return;
   const wrap = document.getElementById('home-gallery');
-  const section = document.getElementById('home-gallery-section');
   if (!wrap) return;
 
   let imgs = [];
   try {
-    const db = await DMC.getFirebaseReady();
-    const snap = await db.collection('gallery').limit(20).get();
-    snap.forEach(doc => {
-      const x = doc.data();
-      if (x.active === false) return;
+    // V16: ใช้ตัวโหลดกลาง (snapshot → cache → Firestore) — limit พอดีที่โชว์
+    const list = await DMC.loadGallery();
+    list.forEach(x => {
       const url = x.image || x.imageUrl || x.url;
       if (url) imgs.push({ url, name: x.name || x.title || 'ผลงาน' });
     });
@@ -337,7 +323,7 @@ async function loadHomeGallery() {
   imgs = imgs.slice(0, 8);
 
   wrap.innerHTML = imgs.map(p =>
-    '<div class="hp-gcard"><img src="' + DMC.escapeHtml(p.url) + '" alt="' + DMC.escapeHtml(p.name) + '" loading="lazy">'
+    '<div class="hp-gcard"><img src="' + DMC.imgCDN(p.url, 440) + '" data-full="' + DMC.escapeHtml(p.url) + '" alt="' + DMC.escapeHtml(p.name) + '" loading="lazy" decoding="async">'
     + '<div class="hp-gcap">' + DMC.escapeHtml(p.name) + '</div></div>'
   ).join('');
 
@@ -345,6 +331,143 @@ async function loadHomeGallery() {
 }
 
 // รูป fallback (ใช้เมื่อร้านยังไม่อัปผลงานจริง) — ธีมงานพิมพ์/ความทรงจำ สัดส่วน 4:5
+// ══════════════════════════════════════════════
+//  V16 — Hero Showcase (coverflow) · เฉพาะเดสก์ท็อป
+// ══════════════════════════════════════════════
+async function initHeroShowcase() {
+  const root = document.getElementById('hp-showcase');
+  const stage = document.getElementById('hps-stage');
+  const dotsEl = document.getElementById('hps-dots');
+  if (!root || !stage || !dotsEl) return;
+
+  // เฉพาะเดสก์ท็อป — มือถือใช้การ์ดแขวนเหมือนเดิม
+  if (!window.matchMedia || !window.matchMedia('(min-width:1025px)').matches) return;
+
+  // รูป: ใช้แกลเลอรี (ผลงานที่ส่งแล้ว) สูงสุด 5 รูป
+  let items = [];
+  try {
+    const list = await DMC.loadGallery();
+    list.forEach(x => {
+      const url = x.image || x.imageUrl || x.url;
+      if (url) items.push({
+        url,
+        name: x.name || x.title || 'ผลงานของเรา',
+        sub:  x.category || x.subtitle || x.sub || 'Diamond Cute Studio',
+        ts:   (x.createdAt && x.createdAt.seconds) || 0
+      });
+    });
+  } catch (e) { /* ออฟไลน์ → ใช้ fallback */ }
+
+  if (items.length < 2) {
+    items = HERO_FALLBACK_IMAGES.slice(0, 5).map(p => ({ url: p.url, name: p.name, sub: 'ตัวอย่างผลงาน', ts: 0 }));
+  }
+  items = items.slice(0, 5);
+  if (!items.length) return;
+
+  // ป้าย "ส่งล่าสุด ..."
+  updateDeliverBadge(items);
+
+  let active = Math.floor(items.length / 2);   // เริ่มที่รูปกลาง
+
+  stage.innerHTML = '';
+  dotsEl.innerHTML = '';
+  items.forEach((it, i) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'hps-card';
+    card.setAttribute('aria-label', it.name);
+    const img = document.createElement('img');
+    img.src = DMC.imgCDN(it.url, 420);
+    img.setAttribute('data-full', it.url);
+    img.alt = it.name;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    card.appendChild(img);
+    card.addEventListener('click', () => { active = i; layout(); });
+    stage.appendChild(card);
+
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'hps-dot';
+    dot.setAttribute('aria-label', 'รูปที่ ' + (i + 1));
+    dot.addEventListener('click', () => { active = i; layout(); });
+    dotsEl.appendChild(dot);
+  });
+
+  const cards = Array.prototype.slice.call(stage.children);
+  const dots  = Array.prototype.slice.call(dotsEl.children);
+
+  function setTxt(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
+
+  function layout() {
+    cards.forEach((card, i) => {
+      const off = i - active, aoff = Math.abs(off);
+      let tx, scale, ry, op, z;
+      if (off === 0)       { tx = 0;        scale = 1;   ry = 0;        op = 1;   z = 30; }
+      else if (aoff === 1) { tx = off * 128; scale = .82; ry = off * -26; op = .92; z = 20; }
+      else if (aoff === 2) { tx = off * 208; scale = .64; ry = off * -32; op = .55; z = 10; }
+      else                 { tx = off * 260; scale = .5;  ry = off * -34; op = 0;   z = 0;  }
+      card.style.transform = 'translateX(' + tx + 'px) scale(' + scale + ') rotateY(' + ry + 'deg)';
+      card.style.opacity = op;
+      card.style.zIndex = z;
+      card.style.pointerEvents = op > 0 ? 'auto' : 'none';
+      card.classList.toggle('is-active', off === 0);
+    });
+    dots.forEach((d, i) => d.classList.toggle('on', i === active));
+    const it = items[active];
+    setTxt('hps-title', it.name);
+    setTxt('hps-sub', it.sub);
+    setTxt('hps-frameno', 'FRAME ' + String(active + 1).padStart(2, '0'));
+    setTxt('hps-count', String(active + 1).padStart(2, '0') + ' / ' + String(items.length).padStart(2, '0'));
+  }
+  function go(dir) { active = (active + dir + items.length) % items.length; layout(); }
+
+  const prev = document.getElementById('hps-prev');
+  const next = document.getElementById('hps-next');
+  if (prev) prev.addEventListener('click', () => go(-1));
+  if (next) next.addEventListener('click', () => go(1));
+
+  layout();
+  root.parentElement && root.closest('.hp-hero') && root.closest('.hp-hero').classList.add('has-showcase');
+
+  // เลื่อนอัตโนมัติ (เคารพ reduced-motion + หยุดเมื่อ hover)
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduce && items.length > 1) {
+    let timer = setInterval(() => go(1), 4200);
+    root.addEventListener('mouseenter', () => { if (timer) { clearInterval(timer); timer = null; } });
+    root.addEventListener('mouseleave', () => { if (!timer) timer = setInterval(() => go(1), 4200); });
+  }
+}
+
+// อัปเดตป้ายเวลาส่งล่าสุด: CMS.lastDeliveredAt → รูปแกลเลอรีล่าสุด → ข้อความทั่วไป
+async function updateDeliverBadge(items) {
+  const el = document.getElementById('hps-deliver-text');
+  if (!el) return;
+  let ts = 0;
+  try {
+    const c = (typeof CMS !== 'undefined') ? await CMS.get() : null;
+    const v = c && c.lastDeliveredAt;
+    if (v) ts = v.seconds ? v.seconds : (typeof v === 'number' ? v : (Date.parse(v) / 1000 || 0));
+  } catch (e) {}
+  if (!ts && items) items.forEach(it => { if (it.ts > ts) ts = it.ts; });
+  el.textContent = ts ? ('ส่งล่าสุด ' + relTimeTH(ts * 1000)) : 'ส่งทั่วไทย ทุกวัน';
+}
+
+// เวลาแบบสัมพัทธ์ภาษาไทย
+function relTimeTH(ms) {
+  const diff = Date.now() - ms;
+  if (diff < 60000) return 'เมื่อสักครู่';
+  const min = Math.floor(diff / 60000);
+  if (min < 60) return min + ' นาทีที่แล้ว';
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return hr + ' ชั่วโมงที่แล้ว';
+  const d = Math.floor(hr / 24);
+  if (d < 30) return d + ' วันที่แล้ว';
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return mo + ' เดือนที่แล้ว';
+  return Math.floor(mo / 12) + ' ปีที่แล้ว';
+}
+
 const HERO_FALLBACK_IMAGES = [
   { url: 'https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?w=600&h=750&fit=crop', name: 'โพลารอยด์สุดน่ารัก 📸' },
   { url: 'https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=600&h=750&fit=crop', name: 'เก็บทุกความทรงจำ 💕' },

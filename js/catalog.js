@@ -65,16 +65,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ─── Firebase Load ───
 async function loadFromFirebase() {
   try {
-    const snap = await db.collection('products')
-      .where('active', '==', true)
-      .get();
-
-    if (snap.empty) {
-      allProducts = PLACEHOLDER_PRODUCTS;
-    } else {
-      allProducts = [];
-      snap.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
-    }
+    // V16: ใช้ตัวโหลดกลาง (snapshot → cache → Firestore) — แชร์แคชกับหน้าแรก ลดการอ่านซ้ำ
+    const list = await DMC.loadProducts({ limit: 500 });
+    allProducts = (list && list.length) ? list : PLACEHOLDER_PRODUCTS;
   } catch {
     allProducts = PLACEHOLDER_PRODUCTS;
   }
@@ -182,9 +175,11 @@ function renderProducts() {
       <div style="grid-column:1/-1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 1.5rem;color:var(--text-3)">
         <div style="font-size:2.5rem;margin-bottom:0.75rem">🔍</div>
         <p style="margin:0 0 1rem">ไม่พบสินค้าที่ตรงกับเงื่อนไข</p>
-        <button class="btn btn-ghost btn-md" style="border-radius:var(--r-lg)" onclick="clearFilters()">ล้างตัวกรอง</button>
+        <button id="empty-clear-btn" class="btn btn-ghost btn-md" style="border-radius:var(--r-lg)">ล้างตัวกรอง</button>
       </div>
     `;
+    // V16: ผูก event ด้วย JS (เดิมใช้ onclick inline → ถูก CSP บล็อก ทำให้ปุ่มกดไม่ทำงาน)
+    document.getElementById('empty-clear-btn')?.addEventListener('click', clearFilters);
     return;
   }
 
@@ -215,7 +210,7 @@ function buildCard(p) {
   return `
     <a href="product.html?id=${p.id}" class="product-card" data-id="${p.id}">
       <div class="product-img-wrap">
-        ${catalogCoverOf(p) ? `<img src="${catalogCoverOf(p)}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">` : `<span>${p.emoji||'📦'}</span>`}
+        ${catalogCoverOf(p) ? `<img src="${DMC.imgCDN(catalogCoverOf(p), 440)}" data-full="${DMC.escapeHtml(catalogCoverOf(p))}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">` : `<span>${p.emoji||'📦'}</span>`}
         <div class="product-img-overlay"></div>
         ${badges.length ? `<div class="product-badges">${badges.join('')}</div>` : ''}
         <button class="product-wish" data-id="${p.id}" aria-label="บันทึก" title="บันทึก">♡</button>

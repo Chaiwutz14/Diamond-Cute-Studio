@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สร้าง Static Snapshot — Diamond Cute Studio</title>
+<style>
+  :root{--ink:#0E1424;--card:#fff;--line:#E1E7F0;--muted:#64718A;--ok:#0B7A52;--ok-bg:#E7F6EF;--accent:#3A42C9;--accent-bg:#EEF0FF;--warn:#C77B0A;--warn-bg:#FDF5E5}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Sarabun',-apple-system,'Segoe UI',Tahoma,sans-serif;background:#EAEEF4;color:var(--ink);line-height:1.6;padding:18px}
+  .wrap{max-width:680px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 28px rgba(16,24,40,.08);padding:24px;margin-bottom:16px}
+  h1{font-size:22px;margin:0 0 4px;font-weight:800}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 4px}
+  .badge{display:inline-block;font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.08em;background:var(--accent-bg);color:var(--accent);border:1px solid #D3D7FB;border-radius:999px;padding:4px 10px;margin-bottom:14px}
+  button{font-family:inherit;font-weight:700;font-size:15px;border:none;border-radius:12px;padding:13px 20px;cursor:pointer;transition:transform .08s}
+  button:active{transform:translateY(1px)}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  .btn-primary{background:linear-gradient(135deg,#3A42C9,#6366F1);color:#fff;width:100%;font-size:16px}
+  .btn-dl{background:var(--ok-bg);color:var(--ok);border:1.5px solid #B9E4D0;width:100%;margin-top:8px}
+  .status{font-size:14px;margin-top:14px;padding:12px 14px;border-radius:10px;display:none}
+  .status.show{display:block}
+  .status.info{background:var(--accent-bg);color:var(--accent)}
+  .status.ok{background:var(--ok-bg);color:var(--ok)}
+  .status.err{background:#FDECEF;color:#D11F3D}
+  .steps{background:var(--warn-bg);border:1px solid #F4E1B4;border-radius:12px;padding:14px 16px 14px 14px;font-size:13.5px;color:#5A4A1A}
+  .steps b{color:var(--warn)}
+  .steps ol{margin:8px 0 0;padding-left:20px} .steps li{margin:4px 0}
+  code{font-family:ui-monospace,monospace;background:#F2F5FA;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.86em}
+  .count{font-family:ui-monospace,monospace;font-size:13px;color:var(--muted);margin-top:8px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="badge">ADMIN TOOL · V16</div>
+    <h1>🛠️ สร้าง Static Snapshot</h1>
+    <p class="sub">ดึงสินค้า + แกลเลอรีจาก Firestore แล้วสร้างไฟล์ JSON สำหรับวางใน <code>/data/</code></p>
+    <p class="sub">ทำให้หน้าเว็บอ่านจากไฟล์ (ผ่าน CDN) แทน Firestore → รับคนได้ไม่จำกัด ไม่เปลืองโควต้าฟรี</p>
+
+    <button id="gen" class="btn-primary">⚡ สร้าง Snapshot</button>
+    <div id="status" class="status"></div>
+    <div id="count" class="count"></div>
+
+    <button id="dl-products" class="btn-dl" style="display:none">⬇️ ดาวน์โหลด products.json</button>
+    <button id="dl-gallery" class="btn-dl" style="display:none">⬇️ ดาวน์โหลด gallery.json</button>
+  </div>
+
+  <div class="card">
+    <div class="steps">
+      <b>ขั้นตอนถัดไป (อัปขึ้น GitHub):</b>
+      <ol>
+        <li>กด "สร้าง Snapshot" → ดาวน์โหลดทั้ง 2 ไฟล์</li>
+        <li>ไปที่ repo บน <b>GitHub.com</b> → เข้าโฟลเดอร์ <code>data</code></li>
+        <li>กด <b>Add file → Upload files</b> → ลากไฟล์ <code>products.json</code> และ <code>gallery.json</code> ลงไป</li>
+        <li>กด <b>Commit changes</b> → เสร็จ! หน้าเว็บจะอ่านจากไฟล์ทันที</li>
+      </ol>
+      <p style="margin:10px 0 0">ทำซ้ำทุกครั้งที่เพิ่ม/แก้/ลบสินค้า เพื่อให้ snapshot ตรงกับข้อมูลจริง</p>
+    </div>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+'use strict';
+let _files = { products: null, gallery: null };
+
+function setStatus(msg, kind){
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status show ' + (kind || 'info');
+}
+
+// แปลง Firestore Timestamp → {seconds} เพื่อ JSON ได้สะอาด
+function clean(obj){
+  return JSON.parse(JSON.stringify(obj, (k, v) => {
+    if (v && typeof v === 'object' && typeof v.seconds === 'number' && typeof v.nanoseconds === 'number') return { seconds: v.seconds };
+    return v;
+  }));
+}
+
+function download(filename, dataObj){
+  const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+document.getElementById('gen').addEventListener('click', async () => {
+  const btn = document.getElementById('gen');
+  btn.disabled = true;
+  setStatus('กำลังเชื่อมต่อ Firebase...', 'info');
+  try {
+    const db = await DMC.getFirebaseReady();
+
+    setStatus('กำลังดึงสินค้า...', 'info');
+    const pSnap = await db.collection('products').where('active', '==', true).get();
+    const products = [];
+    pSnap.forEach(d => products.push(clean({ id: d.id, ...d.data() })));
+
+    setStatus('กำลังดึงแกลเลอรี...', 'info');
+    const gSnap = await db.collection('gallery').get();
+    const gallery = [];
+    gSnap.forEach(d => { const x = d.data(); if (x.active !== false) gallery.push(clean({ id: d.id, ...x })); });
+
+    const now = new Date().toISOString();
+    _files.products = { generatedAt: now, count: products.length, items: products };
+    _files.gallery  = { generatedAt: now, count: gallery.length,  items: gallery };
+
+    document.getElementById('count').textContent =
+      '📦 สินค้า ' + products.length + ' รายการ · 🖼️ แกลเลอรี ' + gallery.length + ' รูป';
+    document.getElementById('dl-products').style.display = '';
+    document.getElementById('dl-gallery').style.display = '';
+    setStatus('✅ สร้างเสร็จ! กดปุ่มดาวน์โหลดด้านล่าง แล้วอัปขึ้น GitHub โฟลเดอร์ /data/', 'ok');
+
+    // ดาวน์โหลดอัตโนมัติทั้ง 2 ไฟล์เลย (สะดวก)
+    download('products.json', _files.products);
+    setTimeout(() => download('gallery.json', _files.gallery), 400);
+  } catch (e) {
+    console.error(e);
+    setStatus('❌ ผิดพลาด: ' + e.message + ' — ลองรีเฟรชหน้า หรือเช็กว่าตั้งค่า Firebase ใน config.js ถูกต้อง', 'err');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('dl-products').addEventListener('click', () => { if (_files.products) download('products.json', _files.products); });
+document.getElementById('dl-gallery').addEventListener('click', () => { if (_files.gallery) download('gallery.json', _files.gallery); });
+</script>
+</body>
+</html>

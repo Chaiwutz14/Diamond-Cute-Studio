@@ -40,8 +40,11 @@ window.DMC_CONFIG = {
   APP_CHECK_SITE_KEY: '6LcDmCMtAAAAAOUqHLw7G3jXC0hf3AkU8DGJn-jB',
 
   // V3 Security: เก็บสลิป/รูปลูกค้าใน Firebase Storage แบบ private (แทน ImgBB สาธารณะ)
-  // ต้องเปิด Firebase Storage + deploy storage.rules ก่อน แล้วตั้งเป็น true
-  PRIVATE_UPLOADS: false,
+  // V16: เปิดเป็น true แล้ว + มี "ระบบสำรองอัตโนมัติ" — ถ้ายังไม่ได้เปิด Firebase Storage
+  //      ระบบจะ fallback ไปอัปแบบเดิม (ImgBB) ให้เอง ออเดอร์จึงไม่มีวันพังเพราะตั้งค่านี้
+  //      ✅ เมื่อเปิด Firebase Storage + deploy storage.rules เสร็จ → สลิปจะกลายเป็น private ทันที
+  //      ดูขั้นตอนใน DEPLOY-CHECKLIST.html (ข้อ SEC-02)
+  PRIVATE_UPLOADS: true,
 
   // ── แจ้งเตือน LINE ผ่าน Cloudflare Worker ──
   CF_WORKER_URL: 'https://dmc-studio-notify.peeza1482546.workers.dev',
@@ -63,4 +66,19 @@ window.DMC_CONFIG = {
     cod: 40,        // เก็บเงินปลายทาง (รวมค่าธรรมเนียม COD แล้ว)
     transfer: 35,   // โอนผ่าน PromptPay
   },
+
+  // ── V16: Static Snapshot — ลดการอ่าน Firestore ฝั่งหน้าบ้านให้เหลือ ~0 ──
+  // หลักการ: export สินค้า/แกลเลอรีเป็นไฟล์ JSON (จาก tools/export-snapshot.html)
+  //          แล้วอัปขึ้นโฟลเดอร์ /data/ บน GitHub → หน้าบ้านอ่านจากไฟล์ (ผ่าน CDN) แทน Firestore
+  // ✅ รองรับผู้ใช้ได้ "ไม่จำกัด" โดยไม่แตะโควต้าอ่าน Firestore ฟรีเทียร์
+  // ✅ ถ้ายังไม่มีไฟล์ /data/products.json ระบบจะ fallback ไปอ่าน Firestore ให้อัตโนมัติ (ไม่พัง)
+  // ตั้ง false = ปิดสแนปช็อต อ่าน Firestore ตรงเหมือนเดิม
+  USE_SNAPSHOT: true,
+  SNAPSHOT_BASE: './data/',   // โฟลเดอร์ที่วางไฟล์ products.json / gallery.json
+
+  // ── V16: เร่งโหลดรูป — ใช้ image CDN (wsrv.nl) ย่อรูป + แปลงเป็น WebP ตามขนาดที่แสดงจริง ──
+  // เดิมรูปการ์ดโหลดไฟล์เต็ม (สูงสุด 1600px) ทั้งที่แสดงแค่ ~200px → ช้ามาก
+  // CDN นี้ฟรี + ถ้าล่ม ระบบจะ fallback กลับไปใช้ลิงก์รูปเดิมอัตโนมัติ (รูปไม่หาย)
+  // ตั้ง false = ปิด ใช้ลิงก์รูปต้นฉบับตรงๆ
+  IMG_CDN: true,
 };

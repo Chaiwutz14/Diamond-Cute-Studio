@@ -1,4 +1,4 @@
-# Diamond Cute Studio 💎
+# 💎 Diamond Cute Studio — V15
 
 เว็บร้านพิมพ์ภาพ/สิ่งพิมพ์ครบวงจร: หน้าร้าน + ตะกร้า + ติดตามออเดอร์ (OTP) + รีวิว + หลังบ้านเต็มระบบ + PWA
 **Stack:** HTML/CSS/Vanilla JS (GitHub Pages) · Firebase Firestore + Auth · ImgBB · Cloudflare Worker (LINE แจ้งเตือน + upload proxy)

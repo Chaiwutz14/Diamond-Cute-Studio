@@ -1,0 +1,132 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ═══════════════════════════════════════════════════════════
+    //  Diamond Cute Studio 💎 — Firestore Security Rules (V16)
+    //  ★ ไฟล์ rules จริง "ไฟล์เดียว" ★
+    //  (รวม + แทนที่ firestore-open-legacy.rules และ
+    //   firestore-v15-secure.rules ที่ลบทิ้งแล้ว — ไม่ต้องสับสนอีก)
+    //
+    //  ใช้ Firebase Authentication (Email/Password) แล้ว
+    //  อีเมลด้านล่างต้องตรงกับ:
+    //   • บัญชีใน Firebase Console → Authentication
+    //   • ADMIN_EMAIL ใน js/config.js   (ปัจจุบัน: peeza1482546@gmail.com)
+    // ═══════════════════════════════════════════════════════════
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'peeza1482546@gmail.com';
+    }
+
+    // เบอร์จาก Phone Auth (+66xxxxxxxxx → 0xxxxxxxxx) ใช้ยืนยันเจ้าของออเดอร์ตอนค้นด้วยเบอร์
+    function authPhoneLocal() {
+      return request.auth.token.phone_number.replace('^\\+66', '0');
+    }
+
+    // ─── สินค้า / แกลเลอรี / เนื้อหา / เทมเพลต / หมวดหมู่ / ตั้งค่า ───
+    // ทุกคนอ่านได้ · เขียน-แก้-ลบ เฉพาะแอดมิน
+    match /products/{id}    { allow read: if true; allow write: if isAdmin(); }
+    match /gallery/{id}     { allow read: if true; allow write: if isAdmin(); }
+    match /siteContent/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /templates/{id}   { allow read: if true; allow write: if isAdmin(); }
+    match /categories/{id}  { allow read: if true; allow write: if isAdmin(); }
+    match /settings/{id}    { allow read: if true; allow write: if isAdmin(); }
+
+    // ─── ออเดอร์ ───
+    match /orders/{id} {
+      // ลูกค้าสร้างได้ (ตรวจ field + ต้องเริ่ม pending)
+      // V16 ปิดช่องโหว่: total ต้อง >= 1 (กันส่ง ฿0) + ต้องมีรายการสินค้าอย่างน้อย 1 ชิ้น
+      allow create: if
+        request.resource.data.keys().hasAll([
+          'orderId','customerName','customerPhone',
+          'address','total','status','createdAt'
+        ]) &&
+        request.resource.data.customerName is string &&
+        request.resource.data.customerName.size() > 0 &&
+        request.resource.data.customerName.size() <= 120 &&
+        request.resource.data.total is number &&
+        request.resource.data.total >= 1 &&
+        request.resource.data.items is list &&
+        request.resource.data.items.size() > 0 &&
+        request.resource.data.status == 'pending';
+
+      // อ่านทีละใบด้วย docId ได้ (แท็บ "เครื่องนี้" — docId สุ่มยาว 20 ตัวทำหน้าที่เป็น token)
+      allow get: if true;
+
+      // ค้นหาหลายใบ: แอดมิน หรือเจ้าของเบอร์ที่ยืนยัน OTP แล้วเท่านั้น
+      allow list: if isAdmin()
+        || (request.auth != null
+            && request.auth.token.phone_number != null
+            && (resource.data.phoneSearch == authPhoneLocal()
+                || resource.data.customerPhone == authPhoneLocal()));
+
+      // แก้สถานะ/เลขพัสดุ/ลบ — เฉพาะแอดมิน
+      allow update, delete: if isAdmin();
+    }
+
+    // ─── รีวิว ───
+    match /reviews/{id} {
+      allow read: if true;
+      // ลูกค้าส่งรีวิวได้ → ต้องเป็น pending เท่านั้น / แอดมินสร้าง approved ได้
+      allow create: if isAdmin() || (
+        request.resource.data.keys().hasAll(['name','rating','text','status','createdAt']) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() >= 2 &&
+        request.resource.data.name.size() <= 40 &&
+        request.resource.data.text is string &&
+        request.resource.data.text.size() >= 10 &&
+        request.resource.data.text.size() <= 500 &&
+        request.resource.data.rating is number &&
+        request.resource.data.rating >= 1 &&
+        request.resource.data.rating <= 5 &&
+        request.resource.data.status == 'pending'
+      );
+      // อนุมัติ/ปฏิเสธ/ลบ — เฉพาะแอดมิน
+      allow update, delete: if isAdmin();
+    }
+
+    // ─── กล่องข้อความ (ฟอร์มติดต่อ) ───
+    match /contacts/{id} {
+      allow create: if
+        request.resource.data.keys().hasAll(['name','message','createdAt']) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() <= 120 &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() > 0 &&
+        request.resource.data.message.size() <= 2000;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ─── คูปองส่วนลด (doc id = โค้ด) ───
+    match /coupons/{code} {
+      // อ่านทีละโค้ดด้วย docId ได้ (validate โค้ดที่ลูกค้าพิมพ์) — แต่ห้าม list ดูทั้งหมด
+      allow get:  if true;
+      allow list: if isAdmin();
+      // สร้าง / ลบ — เฉพาะแอดมิน
+      allow create, delete: if isAdmin();
+      // อัปเดต: แอดมินแก้ได้ทุกอย่าง / ลูกค้าบวก usedCount ได้ทีละ 1 เท่านั้น (กันใช้เกินลิมิต)
+      allow update: if isAdmin() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']) &&
+        resource.data.usedCount is number &&
+        request.resource.data.usedCount == resource.data.usedCount + 1 &&
+        resource.data.active == true &&
+        (resource.data.usageLimit == 0 || resource.data.usedCount < resource.data.usageLimit)
+      );
+    }
+
+    // ─── marker เบอร์โทรสำหรับคูปอง "ลูกค้าใหม่" / "1 เบอร์ครั้งเดียว" ───
+    // doc id = "cust__<เบอร์>" หรือ "<CODE>__<เบอร์>" — เก็บแค่ timestamp ไม่มีข้อมูลส่วนตัว
+    match /couponGuard/{id} {
+      allow get:            if true;        // เช็กได้ (ต้องรู้ id = โค้ด+เบอร์ ถึงเช็กได้)
+      allow create, update: if true;        // ลูกค้าบันทึก marker ได้ (existence = เคยใช้)
+      allow list, delete:   if isAdmin();   // ห้าม list ทั้งหมด / ลบได้เฉพาะแอดมิน (กันลูกค้าปลดล็อกเอง)
+    }
+
+    // ─── กันสลิปซ้ำ (อ้างอิง QR ที่เคยใช้แล้ว) — V16 รวมเข้าไฟล์นี้ ───
+    // doc id = แฮชของ payload ใน QR สลิป — เก็บแค่ว่า "สลิปนี้ถูกใช้กับออเดอร์ไหนแล้ว"
+    match /slipGuard/{id} {
+      allow get, create:    if true;        // เช็ก/บันทึกสลิปที่ใช้แล้ว (กันแนบสลิปซ้ำ)
+      allow list, update, delete: if isAdmin();
+    }
+  }
+}
