@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คู่มือ Deploy หลังแก้ระบบ V16 — Diamond Cute Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700;800&family=Sarabun:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+  :root{
+    --paper:#EAEEF4;--card:#fff;--ink:#111824;--ink2:#3A4659;--muted:#64718A;--line:#DEE5EF;
+    --p0:#D11F3D;--p0bg:#FDECEF;--p0ln:#F6C9D2;--p1:#E0541B;--p1bg:#FDEEE6;--p1ln:#F7CFBB;
+    --opt:#0B7C95;--optbg:#E6F6FA;--optln:#B7E2EC;--ok:#0B7A52;--okbg:#E7F6EF;--okln:#B9E4D0;
+    --acc:#3A42C9;--accbg:#EEF0FF;--mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Sarabun',sans-serif;background:var(--paper);color:var(--ink);line-height:1.62;font-size:15px}
+  h1,h2,h3{font-family:'Kanit',sans-serif;letter-spacing:-.01em}
+  .wrap{max-width:840px;margin:0 auto;padding:0 18px}
+  .cover{background:linear-gradient(135deg,#0B1124,#16234C 60%,#1B2A63);color:#EAF0FF;padding:34px 18px 28px;border-bottom:3px solid #6366F1}
+  .cover .in{max-width:840px;margin:0 auto}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:#9DB0E8;text-transform:uppercase}
+  .cover h1{color:#fff;font-size:clamp(24px,5vw,34px);margin:10px 0 6px;font-weight:800}
+  .cover p{color:#C2CEF0;margin:0;font-size:15px}
+  .done-note{margin-top:16px;background:rgba(11,122,82,.16);border:1px solid rgba(110,231,183,.3);border-radius:12px;padding:12px 14px;color:#A7F3D0;font-size:13.5px}
+  section{padding:26px 0 4px}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 22px rgba(16,24,40,.07);margin:14px 0;overflow:hidden;border-left:5px solid var(--line)}
+  .step.p0{border-left-color:var(--p0)}.step.p1{border-left-color:var(--p1)}.step.opt{border-left-color:var(--opt)}
+  .step-h{display:flex;align-items:flex-start;gap:12px;padding:16px 18px 6px;flex-wrap:wrap}
+  .chk{width:24px;height:24px;border:2px solid var(--line);border-radius:6px;flex-shrink:0;margin-top:2px;cursor:pointer;display:grid;place-items:center;font-size:15px;color:transparent;user-select:none;transition:.12s}
+  .chk.on{background:var(--ok);border-color:var(--ok);color:#fff}
+  .step-h h3{font-size:16.5px;margin:0;flex:1;min-width:200px}
+  .tag{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;padding:4px 9px;border-radius:999px;flex-shrink:0;margin-top:1px}
+  .tag.p0{background:var(--p0bg);color:var(--p0);border:1px solid var(--p0ln)}
+  .tag.p1{background:var(--p1bg);color:var(--p1);border:1px solid var(--p1ln)}
+  .tag.opt{background:var(--optbg);color:var(--opt);border:1px solid var(--optln)}
+  .step-b{padding:2px 18px 18px 54px}
+  .step-b p{margin:.45em 0;color:var(--ink2);font-size:14.5px}
+  ol.path{margin:8px 0;padding-left:20px} ol.path li{margin:5px 0;font-size:14px;color:var(--ink2)}
+  code{font-family:var(--mono);font-size:.85em;background:#F2F5FA;border:1px solid var(--line);border-radius:5px;padding:1px 5px;word-break:break-word}
+  .nav{font-family:var(--mono);font-size:13px;background:#0E1526;color:#D7E0F4;border-radius:8px;padding:8px 12px;margin:8px 0;overflow-x:auto}
+  .nav b{color:#FCD34D}
+  .file{display:inline-block;font-family:var(--mono);font-size:12.5px;background:var(--accbg);color:var(--acc);border:1px solid #D3D7FB;border-radius:6px;padding:2px 8px;margin:2px 3px 2px 0}
+  .why{font-size:13px;color:var(--muted);font-style:italic;margin-top:6px}
+  .sec-title{display:flex;align-items:center;gap:12px;margin:6px 0}
+  .sec-title h2{font-size:20px;margin:0}
+  .pill{font-family:var(--mono);font-size:11px;color:#fff;border-radius:7px;padding:4px 10px}
+  .pill.r{background:var(--p0)}.pill.o{background:var(--p1)}.pill.b{background:var(--opt)}
+  .callout{display:flex;gap:12px;background:var(--accbg);border:1px solid #D3D7FB;border-left:4px solid var(--acc);border-radius:12px;padding:14px 16px;margin:16px 0}
+  .callout .ic{font-size:20px} .callout p{margin:.2em 0;font-size:14px;color:var(--ink2)}
+  .upload-box{background:var(--okbg);border:1px solid var(--okln);border-radius:14px;padding:16px 18px;margin:14px 0}
+  .upload-box h3{margin:0 0 8px;color:var(--ok);font-size:16px}
+  .progress{position:sticky;top:0;z-index:5;background:rgba(234,238,244,.92);backdrop-filter:blur(8px);padding:10px 18px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13px;color:var(--ink2)}
+  .footer{padding:26px 0 50px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:30px}
+  @media print{.chk{border-color:#999}.progress{display:none}}
+</style>
+</head>
+<body>
+<header class="cover">
+  <div class="in">
+    <div class="eyebrow">Deployment Checklist · V16 Remediation</div>
+    <h1>🚀 คู่มือนำขึ้นใช้งานหลังแก้ระบบ</h1>
+    <p>โค้ดทั้งหมดแก้ให้แล้ว เหลือ "ขั้นตอนกดใน Console" ที่ต้องทำเอง — ทำตามทีละข้อ ติ๊กถูกไปเรื่อยๆ</p>
+    <div class="done-note">✅ คุณเปิด <b>Firebase Email Auth</b> แล้ว — เยี่ยมมาก! ข้อ SEC-01 จึงเหลือแค่ "วาง rules" ขั้นตอนเดียว</div>
+  </div>
+</header>
+
+<div class="progress" id="prog">ความคืบหน้า: 0 / 7 ขั้นตอน</div>
+
+<main class="wrap">
+
+  <div class="callout">
+    <span class="ic">📌</span>
+    <div>
+      <p><b>ภาพรวม:</b> มี 7 ขั้นตอน — <span class="pill r">P0 ทำก่อน</span> 3 ข้อ (กันข้อมูลรั่ว/เว็บล่ม), <span class="pill o">P1</span> 1 ข้อ, <span class="pill b">เสริม</span> 3 ข้อ</p>
+      <p>ทุกอย่างอยู่บนฟรีเทียร์ทั้งหมด ไม่มีค่าใช้จ่ายเพิ่ม</p>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-title"><span class="pill r">P0</span><h2>ต้องทำก่อนเปิดให้คนใช้</h2></div>
+
+    <div class="step p0">
+      <div class="step-h"><span class="chk" onclick="tog(this)"></span><h3>1. วาง Firestore Rules ตัวใหม่</h3><span class="tag p0">SEC-01</span></div>
+      <div class="step-b">
+        <p>เปิดไฟล์ <span class="file">firebase-rules/firestore.rules</span> ก๊อปทั้งหมด แล้ววางทับใน Console</p>
+        <div class="nav">Firebase Console → <b>Firestore Database</b> → แท็บ <b>Rules</b> → ลบของเดิม วางของใหม่ → <b>Publish</b></div>
+        <p class="why">อีเมลแอดมินใส่ให้แล้ว (<code>peeza1482546@gmail.com</code>) · รวม slipGuard + ปิดช่องส่งยอด ฿0 · ตอนนี้เหลือไฟล์ rules ไฟล์เดียว (ลบ legacy/v15-secure ที่ซ้ำซ้อนออกแล้ว)</p>
+      </div>
+    </div>
+
+    <div class="step p0">
+      <div class="step-h"><span class="chk" onclick="tog(this)"></span><h3>2. ตั้ง ALLOWED_ORIGIN + อัปโค้ด Worker ใหม่</h3><span class="tag p0">SEC-03</span></div>
+      <div class="step-b">
+        <p>เอาโค้ดใหม่จาก <span class="file">cloudflare-worker/index.js</span> วางใน Worker แล้ว Deploy (ตอนนี้ค่าเริ่มต้นกันคนนอกให้แล้ว แต่ตั้ง secret ให้ชัวร์ขึ้น)</p>
+        <ol class="path">
+          <li>Cloudflare Dashboard → Workers &amp; Pages → เลือก Worker ของร้าน</li>
+          <li>แท็บ <b>Settings → Variables and Secrets</b> → Add: ชื่อ <code>ALLOWED_ORIGIN</code> ค่า <code>https://chaiwutz14.github.io</code></li>
+          <li>แท็บ <b>Edit code</b> → วางโค้ดใหม่ทั้งไฟล์ → <b>Deploy</b></li>
+        </ol>
+        <p class="why">เดิม Worker เปิดให้ทุกเว็บยิง /upload, /notify ได้ · ตอนนี้รับเฉพาะโดเมนร้าน</p>
+      </div>
+    </div>
+
+    <div class="step p0">
+      <div class="step-h"><span class="chk" onclick="tog(this)"></span><h3>3. เปิด Firebase Storage + วาง storage.rules</h3><span class="tag p0">SEC-02</span></div>
+      <div class="step-b">
+        <p>ทำให้สลิปโอนเงินเป็นแบบ private (อ่านได้เฉพาะแอดมิน)</p>
+        <ol class="path">
+          <li>Firebase Console → <b>Storage</b> → <b>Get started</b> (เลือก location ใกล้ไทย เช่น asia-southeast1) → เปิดใช้</li>
+          <li>แท็บ <b>Rules</b> → วางทับด้วยไฟล์ <span class="file">firebase-rules/storage.rules</span> → <b>Publish</b></li>
+        </ol>
+        <div class="callout" style="margin:10px 0">
+          <span class="ic">✨</span>
+          <div><p>ใน <code>config.js</code> ตั้ง <code>PRIVATE_UPLOADS: true</code> ให้แล้ว — <b>พอเปิด Storage เสร็จ สลิปจะกลายเป็น private อัตโนมัติทันที</b> ถ้ายังไม่เปิด Storage ระบบจะ fallback ไป ImgBB ให้เอง (ออเดอร์ไม่พัง)</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-title"><span class="pill o">P1</span><h2>ทำเร็วๆ นี้</h2></div>
+    <div class="step p1">
+      <div class="step-h"><span class="chk" onclick="tog(this)"></span><h3>4. สร้าง + อัป Static Snapshot (สำคัญต่อการรับคนเยอะ)</h3><span class="tag p1">PERF</span></div>
+      <div class="step-b">
+        <p>ขั้นตอนนี้คือหัวใจของการ "รับ 100 คน/ชม. โดยไม่เปลืองโควต้า Firestore"</p>
+        <ol class="path">
+          <li>เปิด <span class="file">tools/export-snapshot.html</span> บนเบราว์เซอร์ (อัปขึ้น GitHub ก่อนแล้วเปิดผ่านลิงก์ หรือเปิดไฟล์ในเครื่องก็ได้)</li>
+          <li>กดปุ่ม <b>"สร้าง Snapshot"</b> → ได้ไฟล์ <code>products.json</code> + <code>gallery.json</code></li>
+          <li>อัป 2 ไฟล์ขึ้น GitHub ในโฟลเดอร์ <code>data/</code> (Add file → Upload files → Commit)</li>
+        </ol>
+        <p class="why">หน้าบ้านจะอ่านจากไฟล์ (ผ่าน CDN) แทน Firestore → ลดการอ่านจาก ~167 เหลือ ~0 ต่อการเข้าชม · ทำซ้ำทุกครั้งที่แก้สินค้า</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-title"><span class="pill b">เสริม</span><h2>ทำเมื่อพร้อม (ระบบทำงานได้แม้ยังไม่ทำ)</h2></div>
+
+    <div class="step opt">
+      <div class="step-h"><span class="chk" onclick="tog(this)"></span><h3>5. เปิด Enforce App Check</h3><span class="tag opt">SEC-08</span></div>
+      <div class="step-b">
+        <p>กันบอตยิง Firestore/Auth ตรงด้วย config สาธารณะ (site key ตั้งไว้ในโค้ดแล้ว เหลือแค่กด Enforce)</p>
+        <div class="nav">Firebase Console → <b>App Check</b> → เลือก <b>Firestore</b> และ <b>Authentication</b> → <b>Enforce</b></div>
+      </div>
+    </div>
+
+    <div class="step opt">
+      <div class="step-h"><span class="chk" onclick="tog(this)"></span><h3>6. สร้าง Composite Index ของรีวิว</h3><span class="tag opt">BUG-04</span></div>
+      <div class="step-b">
+        <p>ทำให้รีวิวต่อสินค้าโหลดเร็วขึ้น <i>(แก้โค้ดให้ทำงานได้แม้ไม่มี index แล้ว — index แค่ทำให้เร็วขึ้น)</i></p>
+        <ol class="path">
+          <li>เปิดหน้า product ของสินค้าที่มีรีวิว → เปิด Console เบราว์เซอร์ (F12)</li>
+          <li>ถ้ามีลิงก์ "create index" ขึ้นมา → กดลิงก์ → <b>Create</b> (รอ 1-2 นาที)</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="step opt">
+      <div class="step-h"><span class="chk" onclick="tog(this)"></span><h3>7. ตรวจรหัสแอดมิน + ลบเส้นทางรหัสสำรอง (ถ้าต้องการ)</h3><span class="tag opt">SEC-06</span></div>
+      <div class="step-b">
+        <p>ตอนนี้ใช้ Firebase Auth จริงแล้ว — ตั้งรหัสผ่านแอดมินให้ยาว/ซับซ้อน และถ้าต้องการความปลอดภัยสูงสุด สามารถลบเส้นทาง login สำรอง (hash) ใน <code>admin-core.js</code> ออกได้ (ไม่บังคับ)</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="upload-box">
+    <h3>📤 อย่าลืม: อัปไฟล์โค้ดที่แก้ทั้งหมดขึ้น GitHub</h3>
+    <p style="margin:0 0 8px;color:var(--ink2);font-size:14px">แตกไฟล์ ZIP แล้วอัปทับไฟล์เดิมบน GitHub (Add file → Upload files → ลากทั้งโฟลเดอร์ → Commit) ไฟล์ที่เปลี่ยน:</p>
+    <div>
+      <span class="file">js/config.js</span><span class="file">js/utils.js</span><span class="file">js/cms.js</span>
+      <span class="file">js/home.js</span><span class="file">js/catalog.js</span><span class="file">js/order.js</span>
+      <span class="file">js/reviews.js</span><span class="file">css/home.css</span><span class="file">sw.js</span>
+      <span class="file">cloudflare-worker/index.js</span><span class="file">firebase-rules/firestore.rules</span>
+      <span class="file">firebase-rules/storage.rules</span><span class="file">+ data/</span><span class="file">+ tools/</span>
+    </div>
+    <p style="margin:10px 0 0;color:var(--ink2);font-size:13.5px">⚠️ ลบ 2 ไฟล์เก่าบน GitHub ด้วย: <code>firestore-open-legacy.rules</code> และ <code>firestore-v15-secure.rules</code> (ไม่ใช้แล้ว)</p>
+  </div>
+
+  <div class="callout">
+    <span class="ic">✅</span>
+    <div>
+      <p><b>ทำครบ P0 (ข้อ 1-3) = ปลอดภัยพอเปิดให้คนใช้จริงแล้ว</b></p>
+      <p>ทำข้อ 4 (snapshot) เพิ่ม = รับ 100 คน/ชม. ได้สบายโดยไม่เปลืองโควต้า</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Diamond Cute Studio 💎 — Deployment Checklist V16 · ทุกขั้นตอนอยู่บนฟรีเทียร์ · การติ๊กถูกในหน้านี้เป็นเพียงตัวช่วยจำ (ไม่ถูกบันทึก)</p>
+  </div>
+</main>
+
+<script>
+  function tog(el){ el.classList.toggle('on'); el.textContent = el.classList.contains('on') ? '✓' : ''; upd(); }
+  function upd(){
+    const all = document.querySelectorAll('.chk').length;
+    const on  = document.querySelectorAll('.chk.on').length;
+    document.getElementById('prog').textContent = 'ความคืบหน้า: ' + on + ' / ' + all + ' ขั้นตอน' + (on===all ? ' 🎉 ครบแล้ว!' : '');
+  }
+</script>
+</body>
+</html>

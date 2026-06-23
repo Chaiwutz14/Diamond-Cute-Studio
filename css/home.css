@@ -71,13 +71,19 @@
 .hp-title span{display:block}
 .hp-title-accent{
   display:block;
-  /* V16: ใช้ "สีเข้มของธีม" (เดิมเป็นทองคงที่ จึงกลืนพื้นหลังธีม peach/gold อ่านยาก) */
-  background:linear-gradient(92deg,var(--accent-dark) 0%,var(--accent) 50%,var(--accent-dark) 100%);
+  /* V16.2: สีกลาง gradient เข้มขึ้น (70% accent + 30% dark) → ไม่จมบนพื้นอ่อน */
+  background:linear-gradient(96deg,
+    var(--accent-dark) 0%,
+    color-mix(in srgb, var(--accent) 72%, var(--accent-dark)) 48%,
+    var(--accent-dark) 100%);
   background-size:220% 100%;
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent;
-  /* เงาบางใต้ตัวอักษร → คมชัด อ่านง่ายขึ้นบนพื้นสว่างทุกธีม โดยไม่ทิ้งลุค gradient */
-  filter:drop-shadow(0 1px 1px rgba(0,0,0,.20));
+  /* halo สว่างรอบตัวอักษร → แยกจากพื้นหลัง อ่านง่ายแม้สีกลางสด + เงาบางให้มีมิติ */
+  filter:
+    drop-shadow(0 0 2px color-mix(in srgb, var(--bg-card) 80%, transparent))
+    drop-shadow(0 1px 1px rgba(0,0,0,.16))
+    drop-shadow(0 2px 10px rgba(var(--accent-rgb),.20));
   animation:hpShimmer 3.6s linear infinite;
 }
 .hp-sub{
@@ -319,18 +325,35 @@
 
 .hps-frame{
   position:relative;
-  background:color-mix(in srgb, var(--bg-card) 90%, transparent);
-  border:1px solid var(--border);
+  /* V16.2: พื้นโทนธีม (accent tint) แทนขาวจ้า → กลมกลืนกับ hero ไม่ดูตัดแปะ */
+  background:linear-gradient(155deg,
+    color-mix(in srgb, var(--bg-card) 88%, var(--accent) 5%) 0%,
+    color-mix(in srgb, var(--bg-card) 73%, var(--accent) 17%) 100%);
+  border:1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
   border-radius:var(--r-2xl,24px);
   padding:1.3rem 1.3rem 1.05rem;
-  box-shadow:0 24px 60px rgba(12,45,78,.16), 0 2px 8px rgba(12,45,78,.06);
-  backdrop-filter:blur(4px);
+  /* เงาเป็นสีธีม + เส้นไฮไลต์ด้านบน → ดูพรีเมียมแบบ glass */
+  box-shadow:
+    0 22px 50px rgba(var(--accent-rgb),.20),
+    0 2px 10px rgba(var(--accent-rgb),.10),
+    inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent);
+  backdrop-filter:blur(6px);
 }
 .hps-meta{
-  display:flex; justify-content:space-between; align-items:center;
-  font-family:ui-monospace,monospace; font-size:.66rem; letter-spacing:.12em;
-  color:var(--text-3); text-transform:uppercase; margin-bottom:.5rem;
+  display:flex; justify-content:space-between; align-items:center; margin-bottom:.6rem;
 }
+.hps-frameno{
+  font-family:ui-monospace,monospace; font-size:.6rem; font-weight:700; letter-spacing:.15em;
+  color:var(--accent-dark); text-transform:uppercase;
+  background:color-mix(in srgb, var(--accent) 13%, transparent);
+  border:0.5px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  padding:3px 9px 3px 7px; border-radius:999px;
+  display:inline-flex; align-items:center; gap:5px;
+}
+.hps-frameno::before{ content:""; width:5px; height:5px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 22%, transparent); }
+.hps-count{ font-family:ui-monospace,monospace; font-size:.66rem; letter-spacing:.04em; color:var(--text-3); }
+.hps-count .cur{ color:var(--accent-dark); font-weight:700; font-size:.84rem; }
+.hps-count .tot{ opacity:.55; }
 .hps-stage{ position:relative; height:300px; perspective:1200px; transform-style:preserve-3d; }
 .hps-card{
   position:absolute; top:50%; left:50%;

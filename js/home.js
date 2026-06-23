@@ -418,7 +418,9 @@ async function initHeroShowcase() {
     setTxt('hps-title', it.name);
     setTxt('hps-sub', it.sub);
     setTxt('hps-frameno', 'FRAME ' + String(active + 1).padStart(2, '0'));
-    setTxt('hps-count', String(active + 1).padStart(2, '0') + ' / ' + String(items.length).padStart(2, '0'));
+    const cntEl = document.getElementById('hps-count');
+    if (cntEl) cntEl.innerHTML = '<span class="cur">' + String(active + 1).padStart(2, '0')
+      + '</span><span class="sep"> / </span><span class="tot">' + String(items.length).padStart(2, '0') + '</span>';
   }
   function go(dir) { active = (active + dir + items.length) % items.length; layout(); }
 
