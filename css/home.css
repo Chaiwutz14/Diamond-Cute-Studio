@@ -71,23 +71,17 @@
 .hp-title span{display:block}
 .hp-title-accent{
   display:block;
-  /* V16.3: ทอง gold-foil สื่อความ "สวยงาม/พรีเมียม" — มีแถบไฮไลต์สว่างวิ่ง (เมทัลลิก) */
-  background:linear-gradient(100deg,
-    #7C5510 0%,
-    #B8860B 17%,
-    #F0CE6A 37%,
-    #FFF1C4 50%,
-    #F0CE6A 63%,
-    #B8860B 83%,
-    #7C5510 100%);
-  background-size:220% 100%;
+  /* V16.4: ไล่สีตามธีม (sky/sakura/mint/orange/purple/dark) แบบนิ่ง — สวย พรีเมียม อ่านง่าย ไม่วูบวาบ */
+  background:linear-gradient(135deg,
+    var(--accent-light) 0%,
+    var(--accent) 55%,
+    var(--accent-dark) 100%);
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent;
-  /* ขอบ/เงาเข้มบางๆ (ไม่ใช่ halo ขาว) → เกาะพื้นสว่าง ไม่จม + อ่านง่ายทุกธีม */
+  /* เงาเบาๆ สีเดียวกับ accent → ให้มิติ/น้ำหนัก โดยไม่เบลอตัวอักษร */
   filter:
-    drop-shadow(0 0 1px rgba(60,40,0,.45))
-    drop-shadow(0 1px 1.5px rgba(74,48,0,.40));
-  animation:hpShimmer 3.6s linear infinite;
+    drop-shadow(0 1px 1px rgba(var(--accent-rgb),.22))
+    drop-shadow(0 3px 8px rgba(var(--accent-rgb),.12));
 }
 .hp-sub{
   font-family:var(--font-body,var(--font-display));
@@ -301,12 +295,11 @@
 @keyframes hpBtnShine{0%{transform:translateX(-180%) skewX(-18deg)}55%,100%{transform:translateX(360%) skewX(-18deg)}}
 @keyframes gdSway{0%,100%{transform:rotate(calc(var(--rot) - 2.8deg))}50%{transform:rotate(calc(var(--rot) + 2.8deg))}}
 
-/* เคารพผู้ใช้ที่ตั้งค่าลดการเคลื่อนไหว — ปิดอนิเมชันทั้งหมด แต่คงสีทองไว้ */
+/* เคารพผู้ใช้ที่ตั้งค่าลดการเคลื่อนไหว — ปิดอนิเมชันทั้งหมด */
 @media (prefers-reduced-motion: reduce){
   .hp-hero{animation:none}
-  .hp-deco1,.hp-deco2,.hp-deco3,.hp-sheen,.hp-title-accent,.hp-btn-primary::after,.gd-item{animation:none}
+  .hp-deco1,.hp-deco2,.hp-deco3,.hp-sheen,.hp-btn-primary::after,.gd-item{animation:none}
   .hp-spark{display:none}
-  .hp-title-accent{background-position:0 50%}
 }
 
 /* ══════════════════════════════════════════════
