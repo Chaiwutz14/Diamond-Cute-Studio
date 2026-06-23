@@ -71,13 +71,12 @@
 .hp-title span{display:block}
 .hp-title-accent{
   display:block;
-  /* V16.6: solid สี accent-dark ตันๆ → contrast สูงสุดทุกธีม + วรรณยุกต์ไทยชัดครบ
-     ตัด outline 8 ทิศ + clipped gradient + wide glow ออก (ทำให้ไทยมั่ว) */
+  /* V16.7: solid accent-dark + halo เรืองชัด 2 ชั้น → เอฟเฟกต์มองเห็นได้จริง อ่านชัด วรรณยุกต์ครบ */
   color:var(--accent-dark);
-  /* เอฟเฟกต์เล็กน้อย — เงาดำบาง (lift) + halo สี accent (พรีเมียม) ไม่กลืนกันระหว่างตัวอักษร */
   text-shadow:
-    0 1px 1px rgba(0,0,0,.12),
-    0 0 14px rgba(var(--accent-rgb),.22);
+    0 1px 2px rgba(0,0,0,.18),
+    0 0 8px rgba(var(--accent-rgb),.50),
+    0 0 22px rgba(var(--accent-rgb),.30);
 }
 .hp-sub{
   font-family:var(--font-body,var(--font-display));
