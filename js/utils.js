@@ -21,53 +21,54 @@ let _firebaseReady = null;
 function getFirebaseReady() {
   if (_firebaseReady) return _firebaseReady;
 
+  // สาเหตุ error "Cannot read properties of undefined (reading 'INTERNAL')":
+  //   firebase-storage/appCheck/auth/firestore-compat ต้องการ window.firebase ที่สร้างโดย firebase-app-compat
+  //   ถ้าโหลด parallel ทั้งหมดพร้อมกัน SDK ย่อยโหลดเสร็จก่อน app-compat → ไม่มี firebase global → crash
+  // แก้: โหลด firebase-app-compat ก่อน (ขั้น 1) แล้วค่อยโหลด SDK ย่อยพร้อมกัน (ขั้น 2)
+  function loadScript(src) {
+    return new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = res;
+      s.onerror = () => rej(new Error('Failed to load ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
   _firebaseReady = new Promise((resolve, reject) => {
     try {
-      // Load Firebase SDK dynamically
       const _cfg = window.DMC_CONFIG || {};
       const _appCheckKey = (_cfg.APP_CHECK_SITE_KEY || '').trim();
-      const scripts = [
-        'https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js',
-        'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js',
-        'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js'
-      ];
-      // V3: โหลด App Check SDK เฉพาะเมื่อตั้งค่า site key แล้ว
-      if (_appCheckKey) scripts.push('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-check-compat.js');
-      // V3: โหลด Storage SDK เฉพาะเมื่อเปิดใช้สลิป/รูป private
-      if (_cfg.PRIVATE_UPLOADS) scripts.push('https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js');
+      const BASE = 'https://www.gstatic.com/firebasejs/9.22.2/';
 
-      let loaded = 0;
+      // ขั้น 1: โหลด firebase-app-compat ก่อนเสมอ (สร้าง window.firebase)
+      loadScript(BASE + 'firebase-app-compat.js').then(() => {
 
-      scripts.forEach(src => {
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = () => {
-          loaded++;
-          if (loaded === scripts.length) {
-            try {
-              if (!firebase.apps.length) {
-                firebase.initializeApp(FIREBASE_CONFIG);
-              }
-              // V3 Security: เปิด App Check — ยืนยันว่า request มาจากแอปจริง (กันยิง Firestore/Auth ตรงด้วย config สาธารณะ)
-              if (_appCheckKey && firebase.appCheck) {
-                try { firebase.appCheck().activate(_appCheckKey, true); }
-                catch (e) { console.warn('App Check activate failed:', e.message); }
-              }
-              _db = firebase.firestore();
+        // ขั้น 2: โหลด SDK ย่อยพร้อมกัน (firebase global พร้อมแล้ว)
+        const rest = [
+          BASE + 'firebase-firestore-compat.js',
+          BASE + 'firebase-auth-compat.js',
+        ];
+        if (_appCheckKey)       rest.push(BASE + 'firebase-app-check-compat.js');
+        if (_cfg.PRIVATE_UPLOADS) rest.push(BASE + 'firebase-storage-compat.js');
 
-              console.log('✅ Firebase ready');
-              resolve(_db);
-            } catch (e) {
-              reject(e);
-            }
+        return Promise.all(rest.map(loadScript));
+
+      }).then(() => {
+        try {
+          if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+
+          if (_appCheckKey && firebase.appCheck) {
+            try { firebase.appCheck().activate(_appCheckKey, true); }
+            catch (e) { console.warn('App Check activate failed:', e.message); }
           }
-        };
-        script.onerror = () => reject(new Error(`Failed to load ${src}`));
-        document.head.appendChild(script);
-      });
-    } catch (e) {
-      reject(e);
-    }
+          _db = firebase.firestore();
+          console.log('✅ Firebase ready');
+          resolve(_db);
+        } catch (e) { reject(e); }
+      }).catch(reject);
+
+    } catch (e) { reject(e); }
   });
 
   return _firebaseReady;
