@@ -91,7 +91,12 @@ async function uploadToImgBB(file) {
       const fd = new FormData();
       fd.append('image', file);
       const res = await fetch(proxy, { method: 'POST', body: fd, headers: dmcWorkerKeyHeader() });
-      if (!res.ok) throw new Error('proxy ' + res.status);
+      // bug-fix: เดิมโยน "proxy 500" — ปกปิดข้อความจริง · ใหม่: ดึง error จาก body มาแสดง
+      if (!res.ok) {
+        let detail = res.status;
+        try { const j = await res.json(); if (j && j.error) detail = j.error; } catch(e) {}
+        throw new Error('proxy ' + detail);
+      }
       const data = await res.json();
       if (!data.url) throw new Error(data.error || 'no url');
       return { url: data.url, thumbUrl: data.url, deleteUrl: data.deleteUrl || '' };
@@ -106,7 +111,8 @@ async function uploadToImgBB(file) {
   // V3 Security: ไม่มี key ฝั่ง client แล้ว — ถ้า proxy ใช้ไม่ได้ ให้ฟ้องชัด (ไม่เรียก ImgBB ด้วย key ว่าง)
   const _key = (window.DMC_CONFIG || {}).IMGBB_API_KEY || (typeof IMGBB_API_KEY !== 'undefined' ? IMGBB_API_KEY : '');
   if (!_key) {
-    throw new Error('อัปโหลดรูปไม่สำเร็จ: ยังไม่ได้ตั้งค่า IMGBB_KEY ใน Cloudflare Worker (โปรดส่งรูปทาง LINE ชั่วคราว)');
+    // ข้อความ user-friendly — บอกชัดว่าให้ส่งสลิป/รูปทาง LINE แทน
+    throw new Error('อัปโหลดรูปไม่สำเร็จ (Worker ยังไม่ได้ตั้งค่า IMGBB_KEY) — รบกวนส่งรูปทาง LINE หลังสั่งซื้อครับ');
   }
 
   const response = await fetch(

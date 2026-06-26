@@ -463,7 +463,12 @@ function cors(res, status = 200) {
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-DMC-Key',
   };
-  if (res === null) return new Response(null, { status, headers });
+  // bug-fix: ก่อนหน้านี้รองรับเฉพาะ Response object — แต่ทุก handler ส่ง string (JSON.stringify) เข้ามา
+  // ทำให้ Response ที่คืนกลับไม่มี CORS header → browser แสดง error เป็น "CORS policy" แทนข้อความจริง
+  // ผลคือ fallback path ฝั่งเว็บไม่รู้ว่าเกิดอะไรขึ้น (เห็นแค่ "Failed to fetch")
+  if (res === null)                  return new Response(null, { status, headers });
+  if (typeof res === 'string')       return new Response(res, { status, headers: { ...headers, 'Content-Type': 'application/json' } });
+  // Response object (legacy path) — รวม headers เดิม + CORS
   const r = new Response(res.body, { status, headers: { ...Object.fromEntries(res.headers), ...headers } });
   return r;
 }
