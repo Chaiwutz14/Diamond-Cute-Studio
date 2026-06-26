@@ -236,7 +236,9 @@ function bindCardEvents(container) {
       e.preventDefault(); e.stopPropagation();
       const p = filteredProducts.find(x => x.id === btn.dataset.id);
       if (!p) return;
-      DMC.addToCart({ id:p.id, name:p.name, price:p.price, unit:p.unit||'ชิ้น', emoji:p.emoji||'📦', qty:1 });
+      // bug-fix: เพิ่ม image field → ตะกร้าโชว์รูปสินค้าจริง (รองรับ p.images[0] ของสินค้าใหม่ + p.image ของสินค้าเก่า)
+      const image = (Array.isArray(p.images) && p.images[0] && (p.images[0].url || p.images[0])) || p.image || '';
+      DMC.addToCart({ id:p.id, name:p.name, price:p.price, unit:p.unit||'ชิ้น', emoji:p.emoji||'📦', image, qty:1 });
       btn.textContent = '✓';
       setTimeout(() => btn.textContent = '+', 1200);
     });

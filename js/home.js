@@ -144,7 +144,9 @@ function bindProductCardEvents(container) {
       const name = card?.querySelector('.product-name')?.textContent || '';
       const priceText = card?.querySelector('.product-price')?.textContent || '0';
       const price = parseInt(priceText.replace(/[^0-9]/g, '')) || 0;
-      DMC.addToCart({ id, name, price, qty: 1 });
+      // bug-fix: เดิมไม่ส่ง image → ตะกร้าโชว์เป็น emoji กล่อง 📦 · ตอนนี้อ่านจาก <img> ในการ์ด
+      const image = card?.querySelector('.product-card-img img, .product-img img, img')?.src || '';
+      DMC.addToCart({ id, name, price, image, qty: 1 });
       btn.textContent = '✓';
       setTimeout(() => btn.textContent = '+', 1200);
     });
