@@ -70,15 +70,14 @@ async function loadCategories(db) {
   if (!container) return;
 
   try {
-    const snap = await db.collection('categories')
-      .orderBy('order')
-      .get();
+    // PERF-03: อ่านจาก snapshot/cache (อ่าน Firestore ครั้งเดียว/เซสชัน หรือ 0) แล้วเรียงตาม order ฝั่ง client
+    const list = (await DMC.loadCategoriesRaw()).slice()
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    if (snap.empty) return; // keep static HTML
+    if (!list.length) return; // keep static HTML
 
     container.innerHTML = '';
-    snap.forEach(doc => {
-      const c = { id: doc.id, ...doc.data() };
+    list.forEach(c => {
       container.insertAdjacentHTML('beforeend', `
         <a href="catalog.html?cat=${c.id}" class="cat-card">
           <span class="cat-icon">${DMC.escapeHtml(c.icon || '📦')}</span>
@@ -432,12 +431,26 @@ async function initHeroShowcase() {
   layout();
   root.parentElement && root.closest('.hp-hero') && root.closest('.hp-hero').classList.add('has-showcase');
 
-  // เลื่อนอัตโนมัติ (เคารพ reduced-motion + หยุดเมื่อ hover)
+  // เลื่อนอัตโนมัติ (เคารพ reduced-motion + หยุดเมื่อ hover / พ้นจอ / สลับแท็บ)
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!reduce && items.length > 1) {
-    let timer = setInterval(() => go(1), 4200);
-    root.addEventListener('mouseenter', () => { if (timer) { clearInterval(timer); timer = null; } });
-    root.addEventListener('mouseleave', () => { if (!timer) timer = setInterval(() => go(1), 4200); });
+    let timer = null, onScreen = true, hovering = false;
+    function start() {
+      if (timer || !onScreen || hovering || document.hidden) return;   // เริ่มเฉพาะเมื่อควรเล่นจริง
+      timer = setInterval(() => go(1), 4200);
+    }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    root.addEventListener('mouseenter', () => { hovering = true; stop(); });
+    root.addEventListener('mouseleave', () => { hovering = false; start(); });
+    document.addEventListener('visibilitychange', () => { document.hidden ? stop() : start(); });
+    // V17 (LOW-03): หยุดเมื่อ carousel เลื่อนพ้นจอ → ไม่เปลือง CPU/เพนต์ตอนมองไม่เห็น
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver((ents) => {
+        onScreen = !!(ents[0] && ents[0].isIntersecting);
+        onScreen ? start() : stop();
+      }, { threshold: 0.1 }).observe(root);
+    }
+    start();
   }
 }
 

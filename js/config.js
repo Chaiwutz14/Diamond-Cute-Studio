@@ -43,11 +43,17 @@ window.DMC_CONFIG = {
   // V16: เปิดเป็น true แล้ว + มี "ระบบสำรองอัตโนมัติ" — ถ้ายังไม่ได้เปิด Firebase Storage
   //      ระบบจะ fallback ไปอัปแบบเดิม (ImgBB) ให้เอง ออเดอร์จึงไม่มีวันพังเพราะตั้งค่านี้
   //      ✅ เมื่อเปิด Firebase Storage + deploy storage.rules เสร็จ → สลิปจะกลายเป็น private ทันที
-  //      ดูขั้นตอนใน DEPLOY-CHECKLIST.html (ข้อ SEC-02)
+  //      (เปิด Storage ที่ Firebase Console → Storage → Get started แล้ว deploy firebase-rules/storage.rules)
   PRIVATE_UPLOADS: true,
 
   // ── แจ้งเตือน LINE ผ่าน Cloudflare Worker ──
   CF_WORKER_URL: 'https://dmc-studio-notify.peeza1482546.workers.dev',
+
+  // V17 (ออปชัน): shared secret กับ Cloudflare Worker — กันสคริปต์ยิง Worker มั่ว
+  //   ใส่ค่าเดียวกับ secret CLIENT_KEY ใน Worker (ตั้งทั้ง 2 ฝั่งให้ตรงกันถึงจะทำงาน)
+  //   เว้นว่าง = ไม่ส่ง header นี้ (Worker จะไม่บังคับ) — ระบบทำงานปกติ
+  //   หมายเหตุ: หน้าเว็บเป็น static คีย์นี้จึงไม่ลับสนิท เป็นแค่ชั้นกันสแปมเสริม
+  CF_CLIENT_KEY: '',
 
   // ── ตรวจสลิปอัตโนมัติ ──
   // โหมดฟรี (enabled): อ่าน QR ในสลิปฝั่งเบราว์เซอร์ (jsQR) → เช็กว่าเป็นสลิปจริง + กันสลิปซ้ำ
@@ -67,8 +73,16 @@ window.DMC_CONFIG = {
     transfer: 35,   // โอนผ่าน PromptPay
   },
 
+  // ── V17: สร้างออเดอร์ฝั่งเซิร์ฟเวอร์ (ปิดช่องโหว่ราคา CRIT-01) ──
+  // enabled:true = ส่งออเดอร์ให้ Worker /create-order คำนวณยอด "จากราคาจริง" แล้วเขียน Firestore ให้
+  //   → ส่งออเดอร์ ฿1 ไม่ได้อีกต่อไป
+  //   ต้องตั้ง secret ใน Worker ก่อน: GCP_SERVICE_ACCOUNT + PRODUCTS_SNAPSHOT_URL (+ SHIP_* ให้ตรง CMS)
+  //   ถ้า Worker ตอบ fallback/ผิดพลาด → หน้าเว็บเขียน Firestore ตรงเองอัตโนมัติ (เช็คเอาต์ไม่มีวันพัง)
+  // ปิดไว้ก่อน (false) จนกว่าจะตั้งค่า service account เสร็จและทดสอบแล้ว
+  SERVER_ORDER: { enabled: false },
+
   // ── V16: Static Snapshot — ลดการอ่าน Firestore ฝั่งหน้าบ้านให้เหลือ ~0 ──
-  // หลักการ: export สินค้า/แกลเลอรีเป็นไฟล์ JSON (จาก tools/export-snapshot.html)
+  // หลักการ: export สินค้า/แกลเลอรีเป็นไฟล์ JSON (ปุ่ม "เผยแพร่ snapshot" ในแอดมิน หรือ _dev/export-snapshot.html)
   //          แล้วอัปขึ้นโฟลเดอร์ /data/ บน GitHub → หน้าบ้านอ่านจากไฟล์ (ผ่าน CDN) แทน Firestore
   // ✅ รองรับผู้ใช้ได้ "ไม่จำกัด" โดยไม่แตะโควต้าอ่าน Firestore ฟรีเทียร์
   // ✅ ถ้ายังไม่มีไฟล์ /data/products.json ระบบจะ fallback ไปอ่าน Firestore ให้อัตโนมัติ (ไม่พัง)

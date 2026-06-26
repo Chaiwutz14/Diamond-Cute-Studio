@@ -26,22 +26,14 @@ async function loadOrders(container) {
   await loadOrdersTable();
 }
 
-async function loadOrdersTable() {
-  const el     = document.getElementById('orders-table-wrap');
-  const filter = document.getElementById('order-filter')?.value;
-  if (!el) return;
-  if (typeof Loading !== 'undefined') el.innerHTML = Loading.Skeleton.tableRows(5);
-  try {
-    let q = db.collection('orders').limit(150);
-    if (filter) q = q.where('status','==',filter);
-    const snap = await q.get();
-    if (snap.empty) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-3)">ไม่พบออเดอร์</div>'; return; }
+// ── BUG-01 fix: เดิม .limit(150) ไม่มี orderBy → Firestore คืน 150 ใบ "แรกตาม docId" (ไม่ใช่ล่าสุด)
+//    พอออเดอร์เกิน 150 ใบ ใบใหม่จะหายจากหน้าจอ (เรียงฝั่ง client ช่วยไม่ได้เพราะไม่อยู่ในชุดที่ดึงมา)
+//    ใหม่: เรียงที่เซิร์ฟเวอร์ด้วย orderBy('createdAt','desc') + แบ่งหน้า (startAfter) → ใบล่าสุดขึ้นเสมอ + โหลดเพิ่มได้
+const ORDERS_PAGE_SIZE = 50;
+let _ordersPage = { cursor: null, filter: '', clientSorted: false, busy: false };
 
-    const docs = [];
-    snap.forEach(doc => docs.push({id:doc.id,...doc.data()}));
-    docs.sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-
-    const rows = docs.map(o => `<tr>
+function orderRowHtml(o) {
+  return `<tr>
       <td><span class="order-id-cell">#${o.orderId||o.id.slice(-6).toUpperCase()}</span>${o.slipVerify&&o.slipVerify.status==='failed'?` <span title="ตรวจสลิปอัตโนมัติไม่ผ่าน — ควรตรวจเอง" style="color:#f59e0b">⚠️</span>`:''}</td>
       <td><div style="font-weight:600">${DMC.escapeHtml(o.customerName||'—')}</div><div style="font-size:.75rem;color:var(--text-3)">${DMC.escapeHtml(o.customerPhone||'')}</div></td>
       <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.83rem">${DMC.escapeHtml(o.itemsSummary||'—')}</td>
@@ -54,14 +46,74 @@ async function loadOrdersTable() {
       </td>
       <td style="font-size:.78rem;color:var(--text-3)">${o.createdAt?DMC.formatDate(o.createdAt,true):'—'}</td>
       <td><button class="table-action-btn" data-act="openOrderModal" data-id="${o.id}">📋 ดู</button></td>
-    </tr>`);
+    </tr>`;
+}
+
+async function fetchOrdersPage(filter, cursor) {
+  const col = db.collection('orders');
+  let docs = [], lastDoc = null, clientSorted = false;
+  try {
+    let q = filter
+      ? col.where('status', '==', filter).orderBy('createdAt', 'desc')
+      : col.orderBy('createdAt', 'desc');
+    if (cursor) q = q.startAfter(cursor);
+    q = q.limit(ORDERS_PAGE_SIZE);
+    const snap = await q.get();
+    snap.forEach(d => { docs.push({ id: d.id, ...d.data() }); lastDoc = d; });
+  } catch (idxErr) {
+    // กรองสถานะ + orderBy ต้องมี composite index (status + createdAt) — ถ้ายังไม่ได้สร้าง index จะ error ที่นี่
+    // fallback: ดึงตามสถานะแล้วเรียงฝั่ง client (แสดง 150 ล่าสุดของสถานะนั้น ไม่แบ่งหน้า) → ยังใช้งานได้ไม่พัง
+    const snap = await col.where('status', '==', filter).limit(150).get();
+    snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+    docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    clientSorted = true;
+  }
+  return { docs, cursor: lastDoc, clientSorted, canLoadMore: !clientSorted && docs.length === ORDERS_PAGE_SIZE };
+}
+
+async function loadOrdersTable() {
+  const el     = document.getElementById('orders-table-wrap');
+  const filter = document.getElementById('order-filter')?.value || '';
+  if (!el) return;
+  if (typeof Loading !== 'undefined') el.innerHTML = Loading.Skeleton.tableRows(5);
+  _ordersPage = { cursor: null, filter, clientSorted: false, busy: false };
+  try {
+    const page = await fetchOrdersPage(filter, null);
+    if (!page.docs.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-3)">ไม่พบออเดอร์</div>'; return; }
+    _ordersPage.cursor = page.cursor;
+    _ordersPage.clientSorted = page.clientSorted;
 
     el.innerHTML = `<div style="overflow-x:auto">
-      <table class="data-table">
-        <thead><tr><th>ออเดอร์</th><th>ลูกค้า</th><th>รายการ</th><th>ราคา</th><th>เลขพัสดุ</th><th>สถานะ</th><th>วันที่</th><th></th></tr></thead>
-        <tbody>${rows.join('')}</tbody>
-      </table></div>`;
+        <table class="data-table">
+          <thead><tr><th>ออเดอร์</th><th>ลูกค้า</th><th>รายการ</th><th>ราคา</th><th>เลขพัสดุ</th><th>สถานะ</th><th>วันที่</th><th></th></tr></thead>
+          <tbody id="orders-tbody">${page.docs.map(orderRowHtml).join('')}</tbody>
+        </table></div>
+      <div id="orders-more-wrap" style="text-align:center;margin-top:1rem">
+        ${page.canLoadMore
+          ? '<button class="btn btn-ghost btn-md" id="orders-more-btn" style="border-radius:var(--r-lg)">โหลดเพิ่ม ↓</button>'
+          : (page.clientSorted ? '<div style="font-size:.74rem;color:var(--text-3)">แสดง 150 ออเดอร์ล่าสุดของสถานะนี้ · สร้าง composite index (status + createdAt) เพื่อดูครบและโหลดเพิ่ม</div>' : '')}
+      </div>`;
+    document.getElementById('orders-more-btn')?.addEventListener('click', loadMoreOrders);
   } catch(e) { el.innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ: '+DMC.escapeHtml(e.message)+'</div>'; }
+}
+
+async function loadMoreOrders() {
+  if (_ordersPage.busy || !_ordersPage.cursor) return;
+  _ordersPage.busy = true;
+  const btn   = document.getElementById('orders-more-btn');
+  const tbody = document.getElementById('orders-tbody');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังโหลด...'; }
+  try {
+    const page = await fetchOrdersPage(_ordersPage.filter, _ordersPage.cursor);
+    if (tbody && page.docs.length) tbody.insertAdjacentHTML('beforeend', page.docs.map(orderRowHtml).join(''));
+    _ordersPage.cursor = page.cursor;
+    const wrap = document.getElementById('orders-more-wrap');
+    if (!page.canLoadMore) { if (wrap) wrap.innerHTML = '<div style="font-size:.74rem;color:var(--text-3)">แสดงครบทุกออเดอร์แล้ว ✅</div>'; }
+    else if (btn) { btn.disabled = false; btn.textContent = 'โหลดเพิ่ม ↓'; }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'โหลดเพิ่ม ↓'; }
+    DMC.toast('โหลดเพิ่มไม่สำเร็จ', 'error');
+  } finally { _ordersPage.busy = false; }
 }
 
 // V16: บันทึกเวลา "ส่งล่าสุด" ลง siteContent/main (public read) เพื่อโชว์บนหน้าแรก (coverflow badge)
@@ -108,7 +160,7 @@ window.openOrderModal = async function(orderId) {
     body.innerHTML = `
       <div class="modal-header">
         <div class="modal-title">📦 ออเดอร์ #${o.orderId||o.id.slice(-6).toUpperCase()}</div>
-        <button class="modal-close" data-act="closeModal">✕</button>
+        <button class="modal-close" data-act="closeModal" aria-label="ปิด">✕</button>
       </div>
 
       <div style="background:var(--bg-mid);border-radius:var(--r-lg);padding:1rem;margin-bottom:1rem">
@@ -247,6 +299,7 @@ window.openImageLightbox = function(url) {
     img.style.cssText = 'max-width:95vw;max-height:92vh;border-radius:12px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.5)';
     var closeBtn = document.createElement('button');
     closeBtn.textContent = '✕';
+    closeBtn.setAttribute('aria-label', 'ปิด');
     closeBtn.style.cssText = 'position:absolute;top:1rem;right:1rem;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center';
     closeBtn.addEventListener('click', function(){ lb.style.display = 'none'; });
     lb.appendChild(img);

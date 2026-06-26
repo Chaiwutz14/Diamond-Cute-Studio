@@ -46,6 +46,23 @@ async function loadProductFlow() {
   const errEl = document.getElementById('product-error');
   if (errEl) errEl.style.display = 'none';
 
+  // V17 (LOW-02): ลองหาในสแนปช็อต/แคชก่อน → ถ้าเจอ อ่าน Firestore = 0
+  try {
+    const list = await DMC.loadProducts();
+    const hit  = Array.isArray(list) ? list.find(p => String(p.id) === String(productId)) : null;
+    if (hit) {
+      product = hit;
+      DMC.getFirebaseReady().then(d => { db = d; }).catch(() => {});  // เผื่อรีวิว/ส่วนอื่นต้องใช้ db (ไม่บล็อก)
+      try { renderProduct(); loadRelated(); initReviews(); }
+      catch (e) {
+        console.error('Product render error:', e);
+        if (typeof Loading !== 'undefined') Loading.progressDone();
+        if (loadingEl) loadingEl.style.display = 'none';
+      }
+      return;
+    }
+  } catch (e) { /* สแนปช็อตมีปัญหา → อ่าน Firestore ต่อด้านล่าง */ }
+
   let doc;
   try {
     db = await DMC.getFirebaseReady();
@@ -435,17 +452,25 @@ function addToCart(goToCart) {
 // ══════════════════════════════════════════════
 async function loadRelated() {
   const grid = document.getElementById('related-products');
-  if (!grid || !db) return;
+  if (!grid) return;
   try {
-    const snap = await db.collection('products')
-      .where('active', '==', true)
-      .limit(20)
-      .get();
-    const items = [];
-    snap.forEach(doc => {
-      if (doc.id === productId) return;
-      items.push({ id: doc.id, ...doc.data() });
-    });
+    // V17 (LOW-02): ใช้สแนปช็อต/แคชแทนการอ่าน Firestore (อ่าน = 0 ถ้ามีสแนปช็อต)
+    let items = [];
+    try {
+      const list = await DMC.loadProducts();
+      if (Array.isArray(list)) items = list.filter(p => p && p.id !== productId).map(p => ({ ...p }));
+    } catch (e) {}
+    // fallback: แคชว่าง + มี db → อ่าน Firestore เหมือนเดิม
+    if (!items.length && db) {
+      const snap = await db.collection('products')
+        .where('active', '==', true)
+        .limit(20)
+        .get();
+      snap.forEach(doc => {
+        if (doc.id === productId) return;
+        items.push({ id: doc.id, ...doc.data() });
+      });
+    }
     // สินค้าหมวดเดียวกันก่อน
     items.sort((a, b) =>
       (b.category === product.category ? 1 : 0) - (a.category === product.category ? 1 : 0));

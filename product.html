@@ -39,11 +39,12 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
 </head>
 <body class="page-product">
+<a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
 
 <div id="navbar-mount"></div>
 
 <!-- Page Header -->
-<div class="page-header">
+<div class="page-header" id="main-content" tabindex="-1">
   <div class="page-header-inner">
     <nav class="breadcrumb" id="product-breadcrumb">
       <a href="index.html">หน้าแรก</a>
@@ -125,9 +126,9 @@
       <div class="options-group">
         <div class="options-label">🔢 จำนวน: <strong id="qty-display">1</strong> <span id="qty-unit" style="font-weight:400;color:var(--text-muted)">ชิ้น</span></div>
         <div class="qty-wrap">
-          <button class="qty-btn" id="qty-minus">−</button>
+          <button class="qty-btn" id="qty-minus" aria-label="ลดจำนวน">−</button>
           <span class="qty-val" id="qty-val">1</span>
-          <button class="qty-btn" id="qty-plus">+</button>
+          <button class="qty-btn" id="qty-plus" aria-label="เพิ่มจำนวน">+</button>
           <span class="qty-hint" id="qty-hint"></span>
         </div>
       </div>
@@ -239,20 +240,20 @@
 
 <div id="footer-mount"></div>
 <div id="toast-container"></div>
-<script src="js/loading.js"></script>
-<script src="js/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/cms.js"></script>
-<script src="js/reviews.js"></script>
-<script src="js/navbar.js"></script>
-<script src="js/canvas-preview.js"></script>
-<script src="js/product.js"></script>
-<script src="js/footer.js"></script>
-<script src="js/bottom-nav.js"></script>
-<script src="js/theme-switcher.js"></script>
-<script src="js/admin-access.js"></script>
-<script src="js/inline-editor.js"></script>
-<script src="js/sw-register.js"></script>
-<script src="js/pwa-install.js"></script>
+<script src="js/loading.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/cms.js" defer></script>
+<script src="js/reviews.js" defer></script>
+<script src="js/navbar.js" defer></script>
+<script src="js/canvas-preview.js" defer></script>
+<script src="js/product.js" defer></script>
+<script src="js/footer.js" defer></script>
+<script src="js/bottom-nav.js" defer></script>
+<script src="js/theme-switcher.js" defer></script>
+<script src="js/admin-access.js" defer></script>
+<script src="js/inline-editor.js" defer></script>
+<script src="js/sw-register.js" defer></script>
+<script src="js/pwa-install.js" defer></script>
 </body>
 </html>

@@ -88,37 +88,71 @@ async function loadKPIs() {
   }
   try {
     const now        = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    // V.upgrade1: ดึง orders ครั้งเดียวแล้วคำนวณในหน่วยความจำ (ลดจาก 3 query เหลือ 1 → ประหยัด Firestore reads)
-    const all = await db.collection('orders').get();
-    let active=0, done=0, revenue=0, todayCount=0;
-    all.forEach(d => {
-      const o = d.data();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const col        = db.collection('orders');
+    // BUG-02 fix: เดิมอ่าน "ออเดอร์ทั้งหมด" ทุกครั้งที่เปิดหน้า → ต้นทุนโตไม่จำกัดตามจำนวนออเดอร์ (ช้า + เผาโควต้า)
+    //   ใหม่:
+    //     • รายได้เดือนนี้ + ออเดอร์วันนี้ → อ่านเฉพาะ "ออเดอร์ตั้งแต่ต้นเดือน" (bounded ต่อเดือน ไม่โตไม่จำกัด)
+    //     • จำนวนกำลังดำเนินการ / ส่งสำเร็จ → ใช้ count() aggregation (อ่านถูกมาก ~1 read ต่อ 1,000 ใบ)
+    const Ts = firebase.firestore.Timestamp;
+    const [monthSnap, activeAgg, doneAgg] = await Promise.all([
+      col.where('createdAt', '>=', Ts.fromDate(monthStart)).get(),
+      col.where('status', 'in', ['pending','processing','shipping']).count().get(),
+      col.where('status', '==', 'done').count().get(),
+    ]);
+
+    let revenue = 0, todayCount = 0;
+    const todayMs = todayStart.getTime();
+    monthSnap.forEach(d => {
+      const o  = d.data();
       const ms = o.createdAt?.toDate ? o.createdAt.toDate().getTime() : 0;
-      if (ms >= todayStart) todayCount++;
-      if (o.status==='cancelled') return;
-      if (['pending','processing','shipping'].includes(o.status)) active++;
-      if (o.status==='done') done++;
-      if (ms >= monthStart) revenue += o.total||0;
+      if (ms >= todayMs) todayCount++;
+      if (o.status !== 'cancelled') revenue += o.total || 0;
     });
+    const active = activeAgg.data().count;
+    const done   = doneAgg.data().count;
+
     setAdminText('kpi-pending', active);
     setAdminText('kpi-revenue', DMC.formatPrice(revenue));
     setAdminText('kpi-done', done);
     setAdminText('kpi-today', todayCount);
     setAdminText('greeting-sub', active>0 ? `มี ${active} ออเดอร์กำลังดำเนินการ 🔔` : 'ทุกออเดอร์เรียบร้อยดี 🎉');
-  } catch(e) { ['pending','revenue','done','today'].forEach(k=>setAdminText(`kpi-${k}`,'—')); }
+  } catch(e) {
+    // fallback: ถ้า count() ไม่รองรับ/ติดปัญหา index → กลับไปใช้วิธีเดิม (อ่านทั้งคอลเลกชันครั้งเดียว) ให้ KPI ไม่พัง
+    try {
+      const now        = new Date();
+      const todayMs    = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const monthMs    = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+      const all = await db.collection('orders').get();
+      let active=0, done=0, revenue=0, todayCount=0;
+      all.forEach(d => {
+        const o = d.data();
+        const ms = o.createdAt?.toDate ? o.createdAt.toDate().getTime() : 0;
+        if (ms >= todayMs) todayCount++;
+        if (o.status==='cancelled') return;
+        if (['pending','processing','shipping'].includes(o.status)) active++;
+        if (o.status==='done') done++;
+        if (ms >= monthMs) revenue += o.total||0;
+      });
+      setAdminText('kpi-pending', active);
+      setAdminText('kpi-revenue', DMC.formatPrice(revenue));
+      setAdminText('kpi-done', done);
+      setAdminText('kpi-today', todayCount);
+      setAdminText('greeting-sub', active>0 ? `มี ${active} ออเดอร์กำลังดำเนินการ 🔔` : 'ทุกออเดอร์เรียบร้อยดี 🎉');
+    } catch(e2) { ['pending','revenue','done','today'].forEach(k=>setAdminText(`kpi-${k}`,'—')); }
+  }
 }
 
 async function loadRecentOrdersTable() {
   const el = document.getElementById('recent-orders-table');
   if (!el) return;
   try {
-    const snap = await db.collection('orders').limit(8).get();
+    // BUG-01 (จุดเดียวกับลิสต์ออเดอร์): เดิม .limit(8) ไม่มี orderBy → ได้ 8 ใบแรกตาม docId ไม่ใช่ล่าสุด
+    const snap = await db.collection('orders').orderBy('createdAt', 'desc').limit(8).get();
     if (snap.empty) { el.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--text-3)">ยังไม่มีออเดอร์</div>'; return; }
     const docs = [];
     snap.forEach(doc => docs.push({id:doc.id, ...doc.data()}));
-    docs.sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
     const rows = docs.map(o => `<tr>
       <td><span class="order-id-cell">#${o.orderId||o.id.slice(-6).toUpperCase()}</span></td>
       <td>${DMC.escapeHtml(o.customerName||'—')}</td>

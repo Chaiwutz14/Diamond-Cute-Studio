@@ -7,6 +7,13 @@
 // TODO: Replace with your actual Firebase project config
 const FIREBASE_CONFIG = (window.DMC_CONFIG || {}).FIREBASE_CONFIG || {};
 
+// V17: header ลับ (ออปชัน) ส่งไปกับทุก request ที่ยิง Cloudflare Worker
+//   ถ้าไม่ตั้ง CF_CLIENT_KEY ใน config.js → คืน {} (ไม่ส่ง header, Worker ไม่บังคับ)
+function dmcWorkerKeyHeader() {
+  const k = ((window.DMC_CONFIG || {}).CF_CLIENT_KEY || '').trim();
+  return k ? { 'X-DMC-Key': k } : {};
+}
+
 // ─── Firebase Ready Promise ───
 let _db = null;
 let _firebaseReady = null;
@@ -82,7 +89,7 @@ async function uploadToImgBB(file) {
     try {
       const fd = new FormData();
       fd.append('image', file);
-      const res = await fetch(proxy, { method: 'POST', body: fd });
+      const res = await fetch(proxy, { method: 'POST', body: fd, headers: dmcWorkerKeyHeader() });
       if (!res.ok) throw new Error('proxy ' + res.status);
       const data = await res.json();
       if (!data.url) throw new Error(data.error || 'no url');
@@ -165,7 +172,7 @@ async function sendLineNotify(payload) {
 
     const res = await fetch(`${CF_WORKER_URL}/notify`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...dmcWorkerKeyHeader() },
       body: JSON.stringify(body)
     });
     return res.ok;
@@ -313,9 +320,14 @@ function generateOrderId() {
   const ymd = d.getFullYear().toString().slice(2)
             + String(d.getMonth() + 1).padStart(2, '0')
             + String(d.getDate()).padStart(2, '0');
-  const rnd = String(Math.floor(Math.random() * 9000) + 1000);
-  const tail = (d.getHours() % 10).toString(36);   // กันชนภายในวันเดียวกันเพิ่มอีกชั้น
-  return `DCS-${ymd}-${rnd}${tail}`;                // เช่น DCS-260622-4815a
+  // BUG-05 fix: เดิมสุ่มแค่ 4 หลัก (9,000 ค่า) → ออเดอร์ในวัน/ชม.เดียวกันมีโอกาสซ้ำสูง
+  //   ใหม่: ส่วนเวลา = วินาทีในวันนั้น (สูงสุด ~86,400 ค่า, base36) + สุ่ม 3 ตัว (base36 ~46,656 ค่า)
+  //   → ชนกันต้อง "วินาทีเดียวกัน + สุ่มตรงกัน" ≈ 1 ใน 4 พันล้าน (แทบเป็นไปไม่ได้)
+  //   ยังเรียงตามเวลาภายในวันได้ (ส่วนเวลานำหน้า) และอ่านง่าย เช่น DCS-260622-LMN4QK
+  const secOfDay = d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+  const tpart    = secOfDay.toString(36).toUpperCase();              // 1–4 ตัว (เวลาในวัน)
+  const rnd      = Math.random().toString(36).slice(2, 5).toUpperCase(); // 3 ตัวสุ่ม
+  return `DCS-${ymd}-${tpart}${rnd}`;
 }
 
 // ─── Date / Time Helpers ───
@@ -665,12 +677,33 @@ async function loadGallery(opts) {
   });
 }
 
+// ─── PERF-03: โหลด "หมวดหมู่" แบบเดียวกับสินค้า (snapshot → cache → Firestore) ───
+// เดิมหน้าแรก + categories.js อ่าน Firestore ตรงทุกครั้ง → ตอนนี้อ่านครั้งเดียว/เซสชัน หรือ 0 (snapshot)
+// คืน array ของ raw category docs ({ id, ...fields }) ให้ผู้เรียกแปลงเอง
+async function loadCategoriesRaw(opts) {
+  opts = opts || {};
+  return cachedQuery('categories_all', opts.ttlMs || 300000, async () => {
+    const snap = await loadSnapshot('categories');
+    if (snap) return snap;
+    const db = await getFirebaseReady();
+    const qs = await db.collection('categories').get();
+    const items = [];
+    qs.forEach(d => {
+      const x = d.data();
+      if (x.createdAt && x.createdAt.seconds != null) x.createdAt = { seconds: x.createdAt.seconds }; // ให้ JSON cache ได้
+      items.push({ id: d.id, ...x });
+    });
+    return items;
+  });
+}
+
 window.DMC = {
   // Firebase
   getFirebaseReady,
   // V16: data layer (cache + snapshot)
   loadProducts,
   loadGallery,
+  loadCategoriesRaw,
   loadSnapshot,
   cachedQuery,
   cacheGet,

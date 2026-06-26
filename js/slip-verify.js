@@ -114,7 +114,9 @@
     const fd = new FormData();
     fd.append('image', file);
     fd.append('amount', String(orderTotal || 0));
-    const res = await fetch(base, { method: 'POST', body: fd });
+    const _k = (((window.DMC_CONFIG || {}).CF_CLIENT_KEY) || '').trim();
+    const _h = _k ? { 'X-DMC-Key': _k } : {};
+    const res = await fetch(base, { method: 'POST', body: fd, headers: _h });
     if (!res.ok) throw new Error('verify-slip ' + res.status);
     return await res.json();   // { ok, amount, ref, receiver, sender, reason }
   }
@@ -152,7 +154,7 @@
       } else if (await isDuplicate(refHash)) {
         result = { status: 'failed', reason: 'สลิปนี้ถูกใช้ไปแล้ว (อาจเป็นสลิปซ้ำ)', ref, refHash, provider: 'local', amount: null };
       } else {
-        result = { status: 'passed', reason: 'ตรวจสลิปอัตโนมัติผ่าน', ref, refHash, provider: 'local', amount: null };
+        result = { status: 'passed', reason: 'สลิปถูกต้อง (ยังไม่ยืนยันยอดเงิน — รอแอดมินตรวจยอด)', ref, refHash, provider: 'local', amount: null };
       }
     }
 

@@ -28,6 +28,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
 </head>
 <body>
+<a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
 
 <!-- Minimal admin navbar -->
 <nav class="navbar" style="z-index:800">
@@ -120,7 +121,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="admin-main">
+  <main class="admin-main" id="main-content" tabindex="-1">
     <div id="admin-content">
       <div style="text-align:center;padding:4rem;color:var(--text-muted)">
         <span class="spinner" style="display:block;margin:0 auto 0.75rem"></span>
@@ -138,24 +139,25 @@
 </div>
 
 <div id="toast-container"></div>
-<script src="js/loading.js"></script>
-<script src="js/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/cms.js"></script>
-<script src="js/categories.js"></script>
-<script src="js/custom-select.js"></script>
-<script src="js/admin-core.js"></script>
-<script src="js/admin-overview.js"></script>
-<script src="js/admin-orders.js"></script>
-<script src="js/admin-products.js"></script>
-<script src="js/admin-gallery.js"></script>
-<script src="js/admin-contacts.js"></script>
-<script src="js/admin-reviews.js"></script>
-<script src="js/admin-content.js"></script>
-<script src="js/admin-coupons.js"></script>
-<script src="js/admin-templates.js"></script>
-<script src="js/admin-settings.js"></script>
-<script src="js/admin-nav.js"></script>
-<script src="js/admin-page.js"></script>
+<script src="js/loading.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/cms.js" defer></script>
+<script src="js/categories.js" defer></script>
+<script src="js/custom-select.js" defer></script>
+<script src="js/admin-core.js" defer></script>
+<script src="js/admin-snapshot.js" defer></script>
+<script src="js/admin-overview.js" defer></script>
+<script src="js/admin-orders.js" defer></script>
+<script src="js/admin-products.js" defer></script>
+<script src="js/admin-gallery.js" defer></script>
+<script src="js/admin-contacts.js" defer></script>
+<script src="js/admin-reviews.js" defer></script>
+<script src="js/admin-content.js" defer></script>
+<script src="js/admin-coupons.js" defer></script>
+<script src="js/admin-templates.js" defer></script>
+<script src="js/admin-settings.js" defer></script>
+<script src="js/admin-nav.js" defer></script>
+<script src="js/admin-page.js" defer></script>
 </body>
 </html>

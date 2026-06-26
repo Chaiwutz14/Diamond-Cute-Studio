@@ -1,0 +1,14 @@
+{
+  "_comment": "Diamond Cute Studio - Firestore composite indexes. รองรับการกรองสถานะ + เรียงตามเวลาในหน้าแอดมิน (where status == X + orderBy createdAt desc). Deploy ด้วย: firebase deploy --only firestore:indexes  หรือสร้างผ่านลิงก์ใน error ของ Firestore Console. ถ้ายังไม่ deploy โค้ดจะ fallback ไปเรียงฝั่ง client โดยอัตโนมัติ (ไม่พัง แต่จะไม่แบ่งหน้าในมุมมองที่กรองสถานะ)",
+  "indexes": [
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

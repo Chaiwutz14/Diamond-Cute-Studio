@@ -55,9 +55,10 @@
   </style>
 </head>
 <body>
+<a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
 <div id="navbar-mount"></div>
 
-<div class="not-found">
+<div class="not-found" id="main-content" tabindex="-1">
   <div class="nf-emoji">😕</div>
   <div class="nf-code">404</div>
   <div class="nf-title">ไม่พบหน้าที่คุณต้องการ</div>
@@ -69,14 +70,14 @@
   </div>
 </div>
 
-<script src="js/loading.js"></script>
-<script src="js/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/cms.js"></script>
-<script src="js/navbar.js"></script>
-<script src="js/theme-switcher.js"></script>
+<script src="js/loading.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/cms.js" defer></script>
+<script src="js/navbar.js" defer></script>
+<script src="js/theme-switcher.js" defer></script>
 
-<script src="js/sw-register.js"></script>
-<script src="js/pwa-install.js"></script>
+<script src="js/sw-register.js" defer></script>
+<script src="js/pwa-install.js" defer></script>
 </body>
 </html>

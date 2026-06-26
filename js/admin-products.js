@@ -97,14 +97,14 @@ async function loadProductsTable() {
 }
 
 window.toggleProduct = async function(id, active) {
-  try { await db.collection('products').doc(id).update({active}); DMC.toast(`${active?'เปิด':'ปิด'}แสดงสินค้า`, 'success'); }
+  try { await db.collection('products').doc(id).update({active}); DMC.toast(`${active?'เปิด':'ปิด'}แสดงสินค้า`, 'success'); if (window.AdminSnapshot) AdminSnapshot.markDirty(); }
   catch(e) { DMC.toast('บันทึกไม่สำเร็จ','error'); }
 };
 
 async function deleteProduct(id, name) {
   if (!(await DMC.confirm('ลบสินค้า "' + name + '"?\nไม่สามารถย้อนกลับได้'))) return;
   db.collection('products').doc(id).delete()
-    .then(() => { DMC.toast('ลบสินค้าแล้ว','success'); loadProductsTable(); })
+    .then(() => { DMC.toast('ลบสินค้าแล้ว','success'); loadProductsTable(); if (window.AdminSnapshot) AdminSnapshot.markDirty(); })
     .catch(() => DMC.toast('ลบไม่สำเร็จ','error'));
 }
 
@@ -531,6 +531,7 @@ window.saveProduct = async function(productId) {
     }
     if (typeof Loading !== 'undefined') Loading.buttonDone(saveBtn);
     closeModal(); loadProductsTable();
+    if (window.AdminSnapshot) AdminSnapshot.markDirty();
   } catch(e) {
     if (typeof Loading !== 'undefined') Loading.buttonDone(saveBtn);
     DMC.toast('บันทึกไม่สำเร็จ: '+e.message,'error');

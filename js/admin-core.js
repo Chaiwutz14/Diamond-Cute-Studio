@@ -9,8 +9,8 @@
 ═══════════════════════════════════════════════ */
 'use strict';
 
-const ADMIN_HASH = "b454dc28df89029f894c5046920aec23d2bcceb2db61e1b2a354709c069f6ffc";
-const ADMIN_SALT = "dmc_diamond_studio_salt_v1";
+// V17: ลบทางสำรองแฮชแอดมินออกแล้ว — ยืนยันตัวตนด้วย Firebase Auth เท่านั้น (เซิร์ฟเวอร์ตรวจสอบ ปลอมไม่ได้)
+//      เปลี่ยนรหัสผ่านที่ Firebase Console → Authentication
 
 let db = null;
 
@@ -68,17 +68,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     try { db = await DMC.getFirebaseReady(); }
     catch (e) { DMC.toast('ไม่สามารถเชื่อมต่อ Firebase ได้', 'error'); return; }
 
-    // V3 Security: เมื่อตั้ง ADMIN_EMAIL แล้ว → "ตัวตน" ต้องพิสูจน์ด้วย Firebase Auth (เซิร์ฟเวอร์ตรวจสอบ)
-    // sessionStorage เป็นแค่ความสะดวก ไม่ใช่ขอบเขตความปลอดภัย (กันการปลอม session ใน Console)
+    // V17: ยืนยันตัวตนด้วย Firebase Auth เท่านั้น (sessionStorage เป็นแค่ความสะดวก ไม่ใช่ขอบเขตความปลอดภัย)
     const adminEmail = ((window.DMC_CONFIG || {}).ADMIN_EMAIL || '').trim();
-    if (adminEmail) {
-      const ok = await checkFirebaseAdmin();           // ← ตรวจสถานะ Firebase Auth จริง (ปลอมไม่ได้)
-      if (!ok) { DMC.clearSession(); window.location.href = 'admin-login.html'; return; }
-      DMC.createSession();                              // UX only
-    } else {
-      // โหมด hash เดิม (ยังไม่ตั้ง ADMIN_EMAIL — ไม่ปลอดภัยเท่า): ใช้ session gate
-      if (!DMC.isAdminAuthenticated()) { window.location.href = 'admin-login.html'; return; }
+    if (!adminEmail) {
+      DMC.toast('ยังไม่ได้ตั้งค่า ADMIN_EMAIL ใน config.js', 'error', 5000);
+      DMC.clearSession(); window.location.href = 'admin-login.html'; return;
     }
+    const ok = await checkFirebaseAdmin();             // ← ตรวจสถานะ Firebase Auth จริง (ปลอมไม่ได้)
+    if (!ok) { DMC.clearSession(); window.location.href = 'admin-login.html'; return; }
+    DMC.createSession();                                // UX only
     initDashboard();
   }
 });
@@ -143,27 +141,27 @@ function initLoginPage() {
       let success = false;
       const adminEmail = ((window.DMC_CONFIG || {}).ADMIN_EMAIL || '').trim();
 
-      if (adminEmail) {
-        // ⭐ โหมดลูกผสม: ยืนยันกับ Firebase Auth จริง (อีเมลฝังในระบบ พิมพ์แค่รหัส)
-        try {
-          await DMC.getFirebaseReady();
-          await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
-          success = true;
-        } catch (fbErr) {
-          const code = fbErr.code || '';
-          // Auth ยังไม่ได้เปิดใช้/config ผิด → ใช้ระบบ hash เดิมแทน (ระบบไม่ล่ม)
-          if (code === 'auth/operation-not-allowed' || code === 'auth/configuration-not-found'
-              || code === 'auth/invalid-api-key' || code === 'auth/network-request-failed') {
-            const hash = await DMC.pbkdf2Hash(password, ADMIN_SALT);
-            success = (hash === ADMIN_HASH);
-          } else {
-            success = false;  // รหัสผิดจริง (wrong-password / invalid-credential)
-          }
+      if (!adminEmail) {
+        // V17: ไม่มี ADMIN_EMAIL = ตั้งค่าระบบยังไม่ครบ (ไม่มีโหมด hash สำรองอีกแล้ว)
+        DMC.toast('ยังไม่ได้ตั้งค่า ADMIN_EMAIL ใน config.js — ตั้งค่าก่อนเข้าสู่ระบบ', 'error', 6000);
+        if (typeof Loading !== 'undefined') { Loading.buttonDone(btn); Loading.progressDone(); }
+        else btn.disabled = false;
+        return;
+      }
+
+      // ⭐ ยืนยันกับ Firebase Auth จริง (อีเมลฝังในระบบ พิมพ์แค่รหัส) — เซิร์ฟเวอร์ตรวจสอบ ปลอมไม่ได้
+      try {
+        await DMC.getFirebaseReady();
+        await firebase.auth().signInWithEmailAndPassword(adminEmail, password);
+        success = true;
+      } catch (fbErr) {
+        success = false;   // V17: ผิด/Auth ไม่พร้อม = ไม่ผ่าน (ไม่มีทางสำรองแฮชแล้ว)
+        const code = fbErr.code || '';
+        if (code === 'auth/operation-not-allowed' || code === 'auth/configuration-not-found' || code === 'auth/invalid-api-key') {
+          DMC.toast('ยังไม่ได้เปิด Email/Password ใน Firebase Console (Authentication → Sign-in method)', 'error', 6500);
+        } else if (code === 'auth/network-request-failed') {
+          DMC.toast('เชื่อมต่อเครือข่ายไม่ได้ ลองใหม่อีกครั้ง', 'error', 5000);
         }
-      } else {
-        // โหมดเดิม: เทียบ hash (ยังไม่ตั้งค่า ADMIN_EMAIL ใน config.js)
-        const hash = await DMC.pbkdf2Hash(password, ADMIN_SALT);
-        success = (hash === ADMIN_HASH);
       }
 
       if (success) {

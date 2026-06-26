@@ -753,9 +753,31 @@ async function submitOrder() {
       }
     }
 
-    // Save to Firestore
+    // Save order — V17: ถ้าเปิด SERVER_ORDER ให้ Worker คำนวณยอดจากราคาจริง+เขียน Firestore (ปิดช่องโหว่ CRIT-01)
+    //   ถ้าไม่เปิด / Worker ตอบ fallback / ผิดพลาด → เขียน Firestore ตรงแบบเดิม (เช็คเอาต์ไม่มีวันพัง)
     let savedDocId = null;
-    if (db) {
+    let serverOk = false;
+    const _SO = (window.DMC_CONFIG || {}).SERVER_ORDER || {};
+    if (_SO.enabled) {
+      try {
+        const _wk = (window.DMC_CONFIG || {}).CF_WORKER_URL || '';
+        const _res = await fetch(_wk + '/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(typeof dmcWorkerKeyHeader === 'function' ? dmcWorkerKeyHeader() : {}) },
+          body: JSON.stringify(orderData),
+        });
+        const _j = await _res.json().catch(() => ({}));
+        if (_j && _j.ok && _j.docId) {
+          savedDocId = _j.docId;
+          serverOk = true;
+          if (_j.total != null) orderData.total = _j.total;   // ใช้ยอดจากเซิร์ฟเวอร์ในการแจ้งเตือน/แสดงผล
+        }
+        // _j.fallback === true หรือ error → ไหลไปเขียนตรงด้านล่าง
+      } catch (e) { console.warn('server order failed, fallback to client write:', e.message); }
+    }
+
+    // เขียน Firestore ตรง (เมื่อไม่ได้ใช้เซิร์ฟเวอร์ หรือเซิร์ฟเวอร์ใช้ไม่ได้)
+    if (!serverOk && db) {
       const docRef = await db.collection('orders').add({
         ...orderData,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),

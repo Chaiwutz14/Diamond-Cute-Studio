@@ -15,7 +15,8 @@ service firebase.storage {
 
     // สลิปโอนเงิน + รูปงานลูกค้า: ลูกค้าอัปได้ (จำกัดขนาด/ชนิด) แต่ "อ่านได้เฉพาะแอดมิน"
     match /orders/{orderId}/{fileName} {
-      allow create: if request.resource.size < 8 * 1024 * 1024
+      allow create: if request.app != null                         // SEC-06: App Check — เฉพาะคำขอจากแอปจริง (กันสคริปต์ยิงอัปโหลดตรง)
+                    && request.resource.size < 8 * 1024 * 1024
                     && request.resource.contentType.matches('image/.*');
       allow read:   if isAdmin();           // ← สลิปไม่สาธารณะอีกต่อไป
       allow update, delete: if isAdmin();

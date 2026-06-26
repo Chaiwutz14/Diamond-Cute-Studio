@@ -27,16 +27,22 @@
     if (_allCache) return _allCache;
     var list = BUILTIN.slice();
     try {
-      var snap = await db.collection('categories').get();
-      snap.forEach(function(d){
-        var x = d.data();
-        var name = x.name || d.id;
+      // PERF-03: อ่าน custom categories ผ่าน snapshot/cache ร่วมกับทั้งระบบ (fallback อ่าน Firestore ตรง)
+      var custom = [];
+      if (window.DMC && DMC.loadCategoriesRaw) {
+        custom = await DMC.loadCategoriesRaw();
+      } else {
+        var snap = await db.collection('categories').get();
+        snap.forEach(function(d){ var data = d.data(); data.id = d.id; custom.push(data); });
+      }
+      custom.forEach(function(x){
+        var name = x.name || x.id;
         if (list.some(function(c){ return c.name === name; })) return;
         list.push({
-          slug:   x.slug || d.id,
+          slug:   x.slug || x.id,
           name:   name,
           emoji:  x.emoji || '🏷️',
-          match:  [String(name).toLowerCase(), String(x.slug || d.id).toLowerCase()],
+          match:  [String(name).toLowerCase(), String(x.slug || x.id).toLowerCase()],
           custom: true,
         });
       });

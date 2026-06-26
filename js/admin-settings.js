@@ -16,24 +16,11 @@ async function loadSettings(container) {
     <div class="settings-grid">
       <div class="admin-box">
         <div class="admin-box-header"><div class="admin-box-title">🔐 เปลี่ยนรหัสผ่าน Admin</div></div>
-        <div style="background:rgba(14,165,233,.06);border:1px solid var(--border);border-radius:var(--r-md);padding:.7rem .9rem;font-size:.78rem;color:var(--text-2);line-height:1.65;margin-bottom:.9rem">
-          💡 <strong>ถ้าเปิดใช้ Firebase Auth แล้ว</strong> (ตั้ง ADMIN_EMAIL ใน config) — เปลี่ยนรหัสผ่านได้ที่ Firebase Console → Authentication ไม่ต้องแก้โค้ด<br>
-          กล่องด้านล่างนี้สำหรับ <strong>โหมด hash เดิม</strong> (ยังไม่ตั้ง ADMIN_EMAIL) เท่านั้น
+        <div style="background:rgba(14,165,233,.06);border:1px solid var(--border);border-radius:var(--r-md);padding:.9rem 1rem;font-size:.84rem;color:var(--text-2);line-height:1.75">
+          🔑 ระบบยืนยันตัวตนด้วย <strong>Firebase Authentication</strong> แล้ว<br>
+          เปลี่ยนรหัสผ่านได้ที่ <strong>Firebase Console → Authentication → Users</strong> → เลือกอีเมลแอดมิน → Reset password<br>
+          <span style="color:var(--text-3);font-size:.78rem">ปลอดภัยกว่าเดิม · ไม่ต้องแก้โค้ดหรืออัปขึ้น GitHub อีกต่อไป</span>
         </div>
-        <div class="form-group">
-          <label class="form-label">รหัสผ่านใหม่</label>
-          <input class="form-input" type="password" id="new-pass" placeholder="••••••••" autocomplete="new-password">
-        </div>
-        <div class="form-group">
-          <label class="form-label">ยืนยันรหัสผ่านใหม่</label>
-          <input class="form-input" type="password" id="confirm-pass" placeholder="••••••••" autocomplete="new-password">
-        </div>
-        <div id="new-hash-output" style="display:none;background:var(--bg-mid);border-radius:var(--r-md);padding:.75rem;margin-bottom:.75rem;word-break:break-all">
-          <div style="font-size:.72rem;color:var(--text-3);margin-bottom:.3rem;font-family:var(--font-display)">นำไปแทนค่า ADMIN_HASH ใน js/admin.js แล้วอัปโหลดขึ้น GitHub:</div>
-          <code id="hash-value" style="font-size:.72rem;color:var(--accent)"></code>
-          <button class="btn btn-ghost btn-sm" id="copy-hash-btn" style="margin-top:.5rem;border-radius:var(--r-md)">📋 Copy</button>
-        </div>
-        <button class="btn btn-primary btn-md" id="gen-hash-btn">🔑 สร้าง Hash</button>
       </div>
 
       <div class="admin-box">
@@ -50,7 +37,6 @@ async function loadSettings(container) {
         <div class="admin-box-header"><div class="admin-box-title">🛡️ ความปลอดภัยของระบบ</div></div>
         <div class="security-status">
           ${securityRows()}
-          <div class="security-row" style="color:var(--text-3);font-size:.72rem;margin-top:.4rem">โหมด hash เดิม: PBKDF2-SHA256 100k (เลิกใช้เมื่อเปิด Firebase Auth)</div>
         </div>
       </div>
     </div>`;
@@ -74,26 +60,6 @@ async function loadSettings(container) {
       </div>`);
     initBackupBox();
   }
-
-  document.getElementById('gen-hash-btn')?.addEventListener('click', async () => {
-    const p1 = document.getElementById('new-pass')?.value;
-    const p2 = document.getElementById('confirm-pass')?.value;
-    if (!p1)            { DMC.toast('กรอกรหัสผ่านก่อน', 'error'); return; }
-    if (p1 !== p2)      { DMC.toast('รหัสผ่านไม่ตรงกัน', 'error'); return; }
-    if (p1.length < 6)  { DMC.toast('รหัสผ่านอย่างน้อย 6 ตัวอักษร', 'error'); return; }
-    const hash = await DMC.pbkdf2Hash(p1, ADMIN_SALT);
-    document.getElementById('hash-value').textContent = hash;
-    document.getElementById('new-hash-output').style.display = 'block';
-    DMC.toast('สร้าง Hash สำเร็จ — Copy ไปแทนใน admin.js', 'success', 5000);
-  });
-
-  document.getElementById('copy-hash-btn')?.addEventListener('click', async () => {
-    const hash = document.getElementById('hash-value')?.textContent;
-    if (!hash) return;
-    navigator.clipboard.writeText(hash)
-      .then(() => DMC.toast('Copy แล้ว ✅', 'success'))
-      .catch(() => DMC.toast('Copy ด้วยตนเองครับ', 'info'));
-  });
 
   document.getElementById('test-line-btn')?.addEventListener('click', async () => {
     const ok = await DMC.sendLineNotify({ orderId:'TEST', customerName:'ทดสอบระบบ', customerPhone:'-', itemsSummary:'ทดสอบการแจ้งเตือน', total:0, paymentMethod:'test' });

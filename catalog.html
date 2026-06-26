@@ -39,6 +39,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
 </head>
 <body>
+<a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
 
 <div id="navbar-mount"></div>
 
@@ -107,9 +108,9 @@
     <div class="filter-panel">
       <div class="filter-panel-title">💰 ช่วงราคา (฿)</div>
       <div class="price-inputs">
-        <input class="price-input form-input" type="number" id="price-min" placeholder="ต่ำสุด" min="0">
+        <input class="price-input form-input" type="number" id="price-min" placeholder="ต่ำสุด" min="0" aria-label="ราคาต่ำสุด">
         <span class="price-sep">—</span>
-        <input class="price-input form-input" type="number" id="price-max" placeholder="สูงสุด" min="0">
+        <input class="price-input form-input" type="number" id="price-max" placeholder="สูงสุด" min="0" aria-label="ราคาสูงสุด">
       </div>
     </div>
 
@@ -137,13 +138,13 @@
   </aside>
 
   <!-- Main -->
-  <main class="catalog-main">
+  <main class="catalog-main" id="main-content" tabindex="-1">
 
     <!-- Search + Sort toolbar -->
     <div class="catalog-toolbar">
       <div class="search-bar">
         <span class="search-bar-icon">🔍</span>
-        <input type="text" id="search-input" placeholder="ค้นหาสินค้า เช่น โพลารอยด์, นามบัตร...">
+        <input type="text" id="search-input" placeholder="ค้นหาสินค้า เช่น โพลารอยด์, นามบัตร..." aria-label="ค้นหาสินค้า">
       </div>
       <div class="catalog-controls">
         <span class="result-count">พบ <strong id="result-count">—</strong> รายการ</span>
@@ -179,20 +180,20 @@
 
 <div id="footer-mount"></div>
 <div id="toast-container"></div>
-<script src="js/loading.js"></script>
-<script src="js/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/custom-select.js"></script>
-<script src="js/cms.js"></script>
-<script src="js/categories.js"></script>
-<script src="js/navbar.js"></script>
-<script src="js/catalog.js"></script>
-<script src="js/footer.js"></script>
-<script src="js/bottom-nav.js"></script>
-<script src="js/theme-switcher.js"></script>
-<script src="js/admin-access.js"></script>
-<script src="js/inline-editor.js"></script>
-<script src="js/sw-register.js"></script>
-<script src="js/pwa-install.js"></script>
+<script src="js/loading.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/custom-select.js" defer></script>
+<script src="js/cms.js" defer></script>
+<script src="js/categories.js" defer></script>
+<script src="js/navbar.js" defer></script>
+<script src="js/catalog.js" defer></script>
+<script src="js/footer.js" defer></script>
+<script src="js/bottom-nav.js" defer></script>
+<script src="js/theme-switcher.js" defer></script>
+<script src="js/admin-access.js" defer></script>
+<script src="js/inline-editor.js" defer></script>
+<script src="js/sw-register.js" defer></script>
+<script src="js/pwa-install.js" defer></script>
 </body>
 </html>

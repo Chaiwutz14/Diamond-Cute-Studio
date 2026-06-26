@@ -3,16 +3,38 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ═══════════════════════════════════════════════════════════
-    //  Diamond Cute Studio 💎 — Firestore Security Rules (V16)
+    //  Diamond Cute Studio 💎 — Firestore Security Rules (V17)
     //  ★ ไฟล์ rules จริง "ไฟล์เดียว" ★
-    //  (รวม + แทนที่ firestore-open-legacy.rules และ
-    //   firestore-v15-secure.rules ที่ลบทิ้งแล้ว — ไม่ต้องสับสนอีก)
     //
     //  ใช้ Firebase Authentication (Email/Password) แล้ว
     //  อีเมลด้านล่างต้องตรงกับ:
     //   • บัญชีใน Firebase Console → Authentication
     //   • ADMIN_EMAIL ใน js/config.js   (ปัจจุบัน: peeza1482546@gmail.com)
     // ═══════════════════════════════════════════════════════════
+
+    // ───────────────────────────────────────────────────────────
+    //  V17 SECURITY HARDENING — บังคับ App Check ทุกการ "เขียน"
+    //  หลักการ: ทุก create/update/delete ต้องมาจาก "แอปจริง" (มี App Check token)
+    //    → ปิดช่องโหว่ยิง Firestore ตรงด้วย config สาธารณะ
+    //      (เผาโควต้าเขียน 20K/วัน หรือสร้างออเดอร์ปลอม)
+    //  หมายเหตุ: การ "อ่าน" (read/get/list) ไม่บังคับ App Check — หน้าเว็บลูกค้า
+    //            และแดชบอร์ดแอดมินจึงโหลดข้อมูลได้เสมอ
+    //
+    //  ⚠️ ก่อน deploy ตัวนี้ ต้องทำให้เสร็จก่อน:
+    //     1) Firebase Console → App Check → Apps → ลงทะเบียน reCAPTCHA v3
+    //        ด้วย site key เดียวกับ APP_CHECK_SITE_KEY ใน js/config.js
+    //     2) เปิดโหมด "Monitor" (ยังไม่บังคับ) ดูสัก 1 วัน ให้แน่ใจว่า
+    //        Verified requests ~100% (แปลว่าหน้าเว็บส่ง token ถูกต้อง)
+    //     แล้วค่อย deploy rules นี้ (ที่บังคับจริง)
+    //
+    //  🛟 ปุ่มฉุกเฉิน: ถ้าวันใด token มีปัญหาจนลูกค้าสั่งซื้อไม่ได้/แอดมินบันทึกไม่ได้
+    //     ให้แก้บรรทัดในฟังก์ชัน appCheckOk() ด้านล่างเป็น  return true;
+    //     แล้ว deploy ใหม่ → ระบบกลับมาทำงานทันที (ปิด App Check ชั่วคราว)
+    // ───────────────────────────────────────────────────────────
+    function appCheckOk() {
+      return request.app != null;
+    }
+
     function isAdmin() {
       return request.auth != null
         && request.auth.token.email == 'peeza1482546@gmail.com';
@@ -24,19 +46,21 @@ service cloud.firestore {
     }
 
     // ─── สินค้า / แกลเลอรี / เนื้อหา / เทมเพลต / หมวดหมู่ / ตั้งค่า ───
-    // ทุกคนอ่านได้ · เขียน-แก้-ลบ เฉพาะแอดมิน
-    match /products/{id}    { allow read: if true; allow write: if isAdmin(); }
-    match /gallery/{id}     { allow read: if true; allow write: if isAdmin(); }
-    match /siteContent/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /templates/{id}   { allow read: if true; allow write: if isAdmin(); }
-    match /categories/{id}  { allow read: if true; allow write: if isAdmin(); }
-    match /settings/{id}    { allow read: if true; allow write: if isAdmin(); }
+    // ทุกคนอ่านได้ · เขียน-แก้-ลบ เฉพาะแอดมิน (+ App Check)
+    match /products/{id}    { allow read: if true; allow write: if isAdmin() && appCheckOk(); }
+    match /gallery/{id}     { allow read: if true; allow write: if isAdmin() && appCheckOk(); }
+    match /siteContent/{id} { allow read: if true; allow write: if isAdmin() && appCheckOk(); }
+    match /templates/{id}   { allow read: if true; allow write: if isAdmin() && appCheckOk(); }
+    match /categories/{id}  { allow read: if true; allow write: if isAdmin() && appCheckOk(); }
+    match /settings/{id}    { allow read: if true; allow write: if isAdmin() && appCheckOk(); }
 
     // ─── ออเดอร์ ───
     match /orders/{id} {
-      // ลูกค้าสร้างได้ (ตรวจ field + ต้องเริ่ม pending)
+      // ลูกค้าสร้างได้ (ต้องมาจากแอปจริง + ตรวจ field + ต้องเริ่ม pending)
       // V16 ปิดช่องโหว่: total ต้อง >= 1 (กันส่ง ฿0) + ต้องมีรายการสินค้าอย่างน้อย 1 ชิ้น
+      // V17: + ต้องผ่าน App Check (กันยิงสร้างออเดอร์ปลอมตรงด้วย config สาธารณะ)
       allow create: if
+        appCheckOk() &&
         request.resource.data.keys().hasAll([
           'orderId','customerName','customerPhone',
           'address','total','status','createdAt'
@@ -60,15 +84,15 @@ service cloud.firestore {
             && (resource.data.phoneSearch == authPhoneLocal()
                 || resource.data.customerPhone == authPhoneLocal()));
 
-      // แก้สถานะ/เลขพัสดุ/ลบ — เฉพาะแอดมิน
-      allow update, delete: if isAdmin();
+      // แก้สถานะ/เลขพัสดุ/ลบ — เฉพาะแอดมิน (+ App Check)
+      allow update, delete: if isAdmin() && appCheckOk();
     }
 
     // ─── รีวิว ───
     match /reviews/{id} {
       allow read: if true;
-      // ลูกค้าส่งรีวิวได้ → ต้องเป็น pending เท่านั้น / แอดมินสร้าง approved ได้
-      allow create: if isAdmin() || (
+      // ลูกค้าส่งรีวิวได้ → ต้องมาจากแอปจริง + เป็น pending เท่านั้น / แอดมินสร้าง approved ได้
+      allow create: if appCheckOk() && (isAdmin() || (
         request.resource.data.keys().hasAll(['name','rating','text','status','createdAt']) &&
         request.resource.data.name is string &&
         request.resource.data.name.size() >= 2 &&
@@ -80,21 +104,25 @@ service cloud.firestore {
         request.resource.data.rating >= 1 &&
         request.resource.data.rating <= 5 &&
         request.resource.data.status == 'pending'
-      );
-      // อนุมัติ/ปฏิเสธ/ลบ — เฉพาะแอดมิน
-      allow update, delete: if isAdmin();
+      ));
+      // อนุมัติ/ปฏิเสธ/ลบ — เฉพาะแอดมิน (+ App Check)
+      allow update, delete: if isAdmin() && appCheckOk();
     }
 
     // ─── กล่องข้อความ (ฟอร์มติดต่อ) ───
     match /contacts/{id} {
       allow create: if
+        appCheckOk() &&
         request.resource.data.keys().hasAll(['name','message','createdAt']) &&
         request.resource.data.name is string &&
         request.resource.data.name.size() <= 120 &&
         request.resource.data.message is string &&
         request.resource.data.message.size() > 0 &&
         request.resource.data.message.size() <= 2000;
-      allow read, update, delete: if isAdmin();
+      // อ่าน = แอดมิน (ไม่บังคับ App Check ให้แดชบอร์ดโหลดได้เสมอ)
+      allow read: if isAdmin();
+      // แก้/ลบ = แอดมิน + App Check
+      allow update, delete: if isAdmin() && appCheckOk();
     }
 
     // ─── คูปองส่วนลด (doc id = โค้ด) ───
@@ -102,31 +130,48 @@ service cloud.firestore {
       // อ่านทีละโค้ดด้วย docId ได้ (validate โค้ดที่ลูกค้าพิมพ์) — แต่ห้าม list ดูทั้งหมด
       allow get:  if true;
       allow list: if isAdmin();
-      // สร้าง / ลบ — เฉพาะแอดมิน
-      allow create, delete: if isAdmin();
+      // สร้าง / ลบ — เฉพาะแอดมิน (+ App Check)
+      allow create, delete: if isAdmin() && appCheckOk();
       // อัปเดต: แอดมินแก้ได้ทุกอย่าง / ลูกค้าบวก usedCount ได้ทีละ 1 เท่านั้น (กันใช้เกินลิมิต)
-      allow update: if isAdmin() || (
+      //          ทั้งสองทางต้องมาจากแอปจริง (App Check)
+      allow update: if appCheckOk() && (isAdmin() || (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']) &&
         resource.data.usedCount is number &&
         request.resource.data.usedCount == resource.data.usedCount + 1 &&
         resource.data.active == true &&
         (resource.data.usageLimit == 0 || resource.data.usedCount < resource.data.usageLimit)
-      );
+      ));
     }
 
     // ─── marker เบอร์โทรสำหรับคูปอง "ลูกค้าใหม่" / "1 เบอร์ครั้งเดียว" ───
-    // doc id = "cust__<เบอร์>" หรือ "<CODE>__<เบอร์>" — เก็บแค่ timestamp ไม่มีข้อมูลส่วนตัว
+    // doc id = "cust__<เบอร์>" หรือ "<CODE>__<เบอร์>" — เก็บแค่ timestamp (+ code) ไม่มีข้อมูลส่วนตัว
+    // V17: validate ขนาด/ฟิลด์ + บังคับ App Check (กันยิงเขียนขยะเผาโควต้า)
     match /couponGuard/{id} {
-      allow get:            if true;        // เช็กได้ (ต้องรู้ id = โค้ด+เบอร์ ถึงเช็กได้)
-      allow create, update: if true;        // ลูกค้าบันทึก marker ได้ (existence = เคยใช้)
-      allow list, delete:   if isAdmin();   // ห้าม list ทั้งหมด / ลบได้เฉพาะแอดมิน (กันลูกค้าปลดล็อกเอง)
+      allow get: if true;                    // เช็กได้ (ต้องรู้ id = โค้ด+เบอร์ ถึงเช็กได้)
+      allow create, update: if
+        appCheckOk() &&
+        id.size() <= 80 &&
+        request.resource.data.keys().hasOnly(['at','code']) &&
+        request.resource.data.keys().hasAny(['at']) &&
+        (!('code' in request.resource.data) ||
+          (request.resource.data.code is string && request.resource.data.code.size() <= 40));
+      allow list: if isAdmin();              // ห้าม list ทั้งหมด
+      allow delete: if isAdmin() && appCheckOk();  // ลบได้เฉพาะแอดมิน (กันลูกค้าปลดล็อกเอง)
     }
 
-    // ─── กันสลิปซ้ำ (อ้างอิง QR ที่เคยใช้แล้ว) — V16 รวมเข้าไฟล์นี้ ───
-    // doc id = แฮชของ payload ใน QR สลิป — เก็บแค่ว่า "สลิปนี้ถูกใช้กับออเดอร์ไหนแล้ว"
+    // ─── กันสลิปซ้ำ (อ้างอิง QR ที่เคยใช้แล้ว) ───
+    // doc id = แฮชของ payload ใน QR สลิป — เก็บแค่ "สลิปนี้ถูกใช้กับออเดอร์ไหนแล้ว"
+    // V17: validate ขนาด/ฟิลด์ + บังคับ App Check
     match /slipGuard/{id} {
-      allow get, create:    if true;        // เช็ก/บันทึกสลิปที่ใช้แล้ว (กันแนบสลิปซ้ำ)
-      allow list, update, delete: if isAdmin();
+      allow get: if true;                    // เช็ก/บันทึกสลิปที่ใช้แล้ว (กันแนบสลิปซ้ำ)
+      allow create: if
+        appCheckOk() &&
+        id.size() <= 80 &&
+        request.resource.data.keys().hasOnly(['orderId','at']) &&
+        (!('orderId' in request.resource.data) ||
+          (request.resource.data.orderId is string && request.resource.data.orderId.size() <= 40));
+      allow list: if isAdmin();
+      allow update, delete: if isAdmin() && appCheckOk();
     }
   }
 }
