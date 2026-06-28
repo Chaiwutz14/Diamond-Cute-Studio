@@ -1,0 +1,509 @@
+/* ═══════════════════════════════════════════════
+   Diamond Cute Studio 💎 — Main CSS  (v2 Light)
+═══════════════════════════════════════════════ */
+
+/* V2: ฟอนต์ย้ายไปโหลดแบบ non-blocking ใน <head> ของแต่ละหน้า (preconnect + link) แทน @import ที่บล็อกการเรนเดอร์ */
+
+/* ─── Semantic aliases (read from theme vars) ─── */
+:root {
+  --font-display: 'Kanit', sans-serif;
+  --font-body:    'Sarabun', sans-serif;
+  /* V2: นิยามตัวแปร soft ที่เดิมเรียกผ่าน fallback — คุมจากที่เดียว ครบทุกธีม */
+  --rose-soft:#FFE9EF; --gold-soft:#FFF3E0; --gold-deep:#B8860B;
+  --danger:#EF4444; --gray-light:#E5E7EB;
+  --nav-h: 64px;
+  --r-sm:  6px;  --r-md: 10px; --r-lg: 14px;
+  --r-xl:  18px; --r-2xl:24px; --r-pill:9999px;
+  --t-fast: 0.15s ease;
+  --t-normal: 0.25s ease;
+  --t-slow: 0.4s ease;
+}
+
+/* ─── Reset ─── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--text-1);
+  overflow-x:hidden;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  transition: background 0.4s ease, color 0.3s ease;
+}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit;border:none;outline:none}
+input,select,textarea{font-family:inherit;outline:none}
+ul,ol{list-style:none}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg-mid)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:var(--r-pill)}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+/* ─── Typography helpers ─── */
+h1,h2,h3,h4,h5,h6{font-family:var(--font-display);line-height:1.25;color:var(--text-1)}
+.text-accent   {color:var(--accent)}
+.text-gold     {color:var(--gold)}
+.text-muted    {color:var(--text-3)}
+.text-emerald  {color:var(--emerald)}
+.text-rose     {color:var(--rose)}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--gold) 55%, var(--accent-light) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+/* ─── Buttons ─── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:0.4rem;
+  font-family:var(--font-display);font-weight:600;
+  border-radius:var(--r-pill);
+  transition:all var(--t-normal);
+  white-space:nowrap;border:none;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%);
+  color:#fff;box-shadow:var(--shadow);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+.btn-primary:active{transform:translateY(0)}
+
+.btn-secondary{
+  background:var(--glass);
+  border:1.5px solid var(--accent);
+  color:var(--accent);
+}
+.btn-secondary:hover{background:var(--glass-hover)}
+
+.btn-ghost{
+  background:transparent;
+  border:1.5px solid var(--border);
+  color:var(--text-2);
+}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+.btn-danger{background:rgba(251,113,133,.1);border:1.5px solid var(--rose);color:var(--rose)}
+.btn-danger:hover{background:rgba(251,113,133,.2)}
+
+.btn-line{background:#06C755;color:#fff}
+.btn-line:hover{background:#05b04c;transform:translateY(-1px)}
+
+.btn-sm {padding:.32rem .85rem;font-size:.8rem}
+.btn-md {padding:.52rem 1.2rem;font-size:.88rem}
+.btn-lg {padding:.72rem 1.7rem;font-size:1rem}
+.btn-xl {padding:.88rem 2.1rem;font-size:1.05rem}
+.btn-block{width:100%;border-radius:var(--r-lg)}
+
+/* ─── Cards ─── */
+.card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--r-xl);
+  transition:all var(--t-normal);
+}
+.card-hover:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:var(--shadow-hover)}
+
+/* ─── Form ─── */
+.form-group{margin-bottom:1rem}
+.form-label{display:block;font-family:var(--font-display);font-size:.84rem;font-weight:500;color:var(--text-2);margin-bottom:.4rem}
+.form-input{
+  width:100%;background:var(--bg-mid);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-md);padding:.62rem .88rem;
+  color:var(--text-1);font-size:.9rem;
+  transition:border-color var(--t-fast),box-shadow var(--t-fast);
+}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)}
+.form-input::placeholder{color:var(--text-3)}
+.form-input.error{border-color:var(--rose)}
+.form-textarea{resize:vertical;min-height:88px}
+.form-select{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394A3B8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right .88rem center;padding-right:2.5rem;
+}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.9rem}
+
+/* ─── Badges ─── */
+.badge{display:inline-flex;align-items:center;gap:.25rem;padding:.18rem .62rem;border-radius:var(--r-pill);font-family:var(--font-display);font-size:.7rem;font-weight:600}
+.badge-new  {background:var(--emerald);color:#fff}
+.badge-hot  {background:var(--rose);color:#fff}
+.badge-sale {background:var(--gold);color:#fff}
+.badge-accent{background:var(--glass);color:var(--accent);border:1px solid var(--border)}
+.badge-gold {background:rgba(245,158,11,.15);color:var(--gold)}
+.badge-green{background:rgba(16,185,129,.15);color:var(--emerald)}
+.badge-rose {background:rgba(251,113,133,.15);color:var(--rose)}
+
+/* ─── Status ─── */
+.status{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .7rem;border-radius:var(--r-pill);font-size:.75rem;font-family:var(--font-display);font-weight:600}
+.status::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.status-new, .status-pending      {color:var(--accent);background:var(--glass)}
+.status-process, .status-processing{color:var(--gold);background:rgba(245,158,11,.10)}
+.status-done                       {color:var(--emerald);background:rgba(16,185,129,.10)}
+.status-shipping                   {color:#7c3aed;background:rgba(124,58,237,.12)}
+.status-cancel, .status-cancelled  {color:var(--rose);background:rgba(251,113,133,.10)}
+
+/* ─── Divider ─── */
+.divider{border:none;border-top:1px solid var(--border);margin:1rem 0}
+
+/* ─── Toast ─── */
+#toast-container{
+  position:fixed;bottom:5.5rem;right:1.5rem;z-index:9999;
+  display:flex;flex-direction:column;gap:.5rem;pointer-events:none;
+}
+.toast{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:.72rem 1.1rem;
+  font-family:var(--font-display);font-size:.87rem;
+  box-shadow:var(--shadow-card);
+  display:flex;align-items:center;gap:.5rem;
+  animation:toastIn .3s ease forwards;
+  pointer-events:auto;min-width:230px;max-width:310px;
+}
+.toast.toast-success{border-color:var(--emerald)}
+.toast.toast-error  {border-color:var(--rose)}
+.toast.toast-info   {border-color:var(--accent)}
+.toast.toast-out    {animation:toastOut .3s ease forwards}
+
+@keyframes toastIn {from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(18px)}}
+
+/* ─── Spinner ─── */
+.spinner{
+  width:20px;height:20px;
+  border:2.5px solid var(--border);
+  border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── Section ─── */
+.section{padding:3.5rem 0}
+.section-inner{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.section-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:2rem;gap:1rem;flex-wrap:wrap}
+.section-title{font-size:clamp(1.35rem,3vw,1.75rem);font-weight:700}
+.section-sub  {color:var(--text-2);font-size:.88rem;margin-top:.25rem}
+.see-all-link{color:var(--accent);font-family:var(--font-display);font-size:.87rem;display:flex;align-items:center;gap:.3rem;white-space:nowrap;transition:gap var(--t-fast)}
+.see-all-link:hover{gap:.6rem}
+
+/* ─── Upload Zone ─── */
+.upload-zone{
+  border:2px dashed var(--border);border-radius:var(--r-xl);
+  padding:1.75rem;text-align:center;cursor:pointer;
+  transition:all var(--t-normal);background:var(--bg-mid);
+}
+.upload-zone:hover,.upload-zone.active{border-color:var(--accent);background:var(--glass)}
+
+/* ─── Overlay / Modal ─── */
+.overlay{position:fixed;inset:0;z-index:9400;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity var(--t-normal)}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-2xl);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:2rem;transform:scale(.95) translateY(10px);transition:transform var(--t-normal);box-shadow:var(--shadow-card)}
+.overlay.open .modal{transform:scale(1) translateY(0)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.modal-title{font-size:1.2rem;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--glass);border:1px solid var(--border);color:var(--text-2);font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all var(--t-fast)}
+.modal-close:hover{background:rgba(251,113,133,.15);border-color:var(--rose);color:var(--rose)}
+
+/* ─── Animations ─── */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn  {from{opacity:0}to{opacity:1}}
+@keyframes float   {0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-12px) rotate(4deg)}}
+@keyframes floatBadge{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--accent) 15%,transparent)}}
+
+.anim-fade-up {animation:fadeInUp .6s ease both}
+.anim-delay-1 {animation-delay:.1s}
+.anim-delay-2 {animation-delay:.2s}
+.anim-delay-3 {animation-delay:.3s}
+.anim-delay-4 {animation-delay:.4s}
+.anim-delay-5 {animation-delay:.5s}
+
+/* ─── Responsive ─── */
+.hide-mobile{display:block}
+.show-mobile{display:none}
+@media(max-width:768px){
+  .hide-mobile{display:none !important}
+  .show-mobile{display:block !important}
+  .form-row,.form-row-3{grid-template-columns:1fr}
+  :root{--nav-h:60px}
+}
+
+/* ════════════════════════════════
+   GLOBAL MOBILE IMPROVEMENTS
+════════════════════════════════ */
+
+/* Touch targets — min 44px */
+@media (max-width: 768px) {
+  .btn-sm  { padding: .5rem 1rem;  font-size: .85rem; }
+  .btn-md  { padding: .6rem 1.2rem; }
+  .btn-lg  { padding: .75rem 1.5rem; }
+  .btn-xl  { padding: .85rem 1.75rem; }
+
+  /* Larger tap targets */
+  .cat-card { min-height: 88px; }
+  .filter-item { padding: .6rem .7rem; min-height: 44px; }
+
+  /* V2: กัน iOS ซูมหน้าจอตอนแตะช่องกรอก — input ต้อง >= 16px */
+  .form-input, .search-bar input, input, textarea, select,
+  .coupon-input, .otp-code-input, .price-input { font-size: 16px; }
+
+  /* V2: touch target ขั้นต่ำ 44px สำหรับปุ่มไอคอนเล็ก */
+  .btn-add-cart { width: 44px; height: 44px; }
+  .product-wish { width: 40px; height: 40px; }
+  .qty-btn      { width: 44px; height: 44px; }
+
+  /* Full-screen sheet modal on mobile — เลื่อนสบาย ปุ่มเข้าถึงง่าย */
+  .modal {
+    padding: 1.25rem 1.1rem calc(1.25rem + env(safe-area-inset-bottom,0));
+    border-radius: var(--r-2xl) var(--r-2xl) 0 0;
+    max-width: 100%; width: 100%;
+    max-height: 92vh;
+    position: fixed; left: 0; right: 0; bottom: 0;
+    margin: 0;
+  }
+  .overlay { align-items: flex-end; }
+
+  /* Section padding reduce */
+  .section { padding: 2.5rem 0; }
+  .section-inner { padding: 0 1rem; }
+
+  /* Typography scale down slightly */
+  .section-title { font-size: 1.3rem; }
+}
+
+@media (max-width: 400px) {
+  .section-inner { padding: 0 .75rem; }
+  .product-grid  { grid-template-columns: 1fr 1fr; gap: .6rem; }
+}
+
+/* ─── Accessibility: Focus styles ─── */
+:focus-visible {
+  outline: 2.5px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+button:focus-visible, a:focus-visible {
+  outline: 2.5px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ─── Skip to content (a11y) ─── */
+.skip-link {
+  position: absolute; top: -999px; left: 0;
+  background: var(--accent); color: #fff;
+  padding: .5rem 1rem; border-radius: 0 0 var(--r-md) 0;
+  z-index: 9999; font-family: var(--font-display); font-size: .9rem;
+  text-decoration: none;
+}
+.skip-link:focus { top: 0; }
+
+/* ─── Print styles ─── */
+@media print {
+  .navbar, .theme-switcher, .nav-theme-wrap,
+  .btn, footer, .mobile-drawer, #toast-container { display: none !important; }
+  body { background: white !important; color: black !important; font-size: 12pt; }
+  .order-wrapper { display: block !important; }
+  .summary-panel { position: static !important; border: 1px solid #ccc !important; }
+  a { color: black !important; text-decoration: underline; }
+  .order-block { border: 1px solid #ccc !important; margin-bottom: 1rem !important; }
+}
+
+/* ─── Smooth scroll for older browsers ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ════════════════════════════════════════════
+   SKELETON LOADING SYSTEM
+════════════════════════════════════════════ */
+
+/* ── Core shimmer animation ── */
+@keyframes skeleton-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-mid)       25%,
+    var(--bg-card2)     50%,
+    var(--bg-mid)       75%
+  );
+  background-size: 600px 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  border-radius: var(--r-md);
+  display: block;
+}
+
+/* ── Product Card Skeleton ── */
+.skeleton-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+.skeleton-card-img {
+  aspect-ratio: 1/1;
+  width: 100%;
+}
+.skeleton-card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+.skeleton-line       { height: 14px; }
+.skeleton-line.sm    { height: 11px; width: 65%; }
+.skeleton-line.lg    { height: 20px; width: 50%; }
+.skeleton-line.full  { width: 100%; }
+.skeleton-line.w80   { width: 80%; }
+.skeleton-line.w60   { width: 60%; }
+.skeleton-line.w40   { width: 40%; }
+.skeleton-circle     { border-radius: 50%; }
+.skeleton-btn        { height: 36px; border-radius: var(--r-lg); }
+
+/* ── Hero Product Skeleton ── */
+.skeleton-hero {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-2xl);
+  padding: 1.75rem;
+}
+.skeleton-gallery-main {
+  aspect-ratio: 1/1;
+  width: 100%;
+  border-radius: var(--r-2xl);
+  margin-bottom: .75rem;
+}
+.skeleton-gallery-thumbs {
+  display: flex; gap: .55rem;
+}
+.skeleton-thumb {
+  width: 62px; height: 62px;
+  border-radius: var(--r-md);
+  flex-shrink: 0;
+}
+
+/* ── Category Card Skeleton ── */
+.skeleton-cat {
+  height: 80px;
+  border-radius: var(--r-xl);
+}
+
+/* ── Order Row Skeleton ── */
+.skeleton-order-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .85rem;
+  background: var(--bg-mid);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  margin-bottom: .65rem;
+}
+
+/* ── Admin KPI Skeleton ── */
+.skeleton-kpi {
+  height: 100px;
+  border-radius: var(--r-xl);
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background: var(--bg-mid); }
+}
+
+/* ══════════════════════════════════════════════
+   V12 — REVIEWS (หน้าแรก + หน้าสินค้า)
+══════════════════════════════════════════════ */
+.rv-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.rv-list { display: flex; flex-direction: column; gap: .9rem; }
+.rv-card {
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: var(--r-xl); padding: 1.1rem 1.2rem;
+  box-shadow: var(--shadow-card); transition: transform var(--t-fast), box-shadow var(--t-fast);
+}
+.rv-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.rv-card-head { display: flex; align-items: center; gap: .7rem; margin-bottom: .6rem; }
+.rv-avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light, var(--accent)));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 800; font-size: 1.05rem;
+}
+.rv-name { font-family: var(--font-display); font-weight: 700; font-size: .9rem; color: var(--text-1); display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.rv-sub  { display: flex; align-items: center; gap: .55rem; margin-top: .15rem; }
+.rv-date { font-size: .72rem; color: var(--text-3); }
+.rv-text { font-size: .87rem; color: var(--text-2); line-height: 1.7; }
+.rv-product { margin-top: .55rem; font-size: .74rem; color: var(--text-3); font-family: var(--font-display); }
+.rv-stars { display: inline-flex; gap: 1px; }
+.rv-star { color: var(--border); font-size: .9rem; }
+.rv-star.on { color: var(--gold, #f59e0b); }
+.rv-badge-verified, .rv-badge-shop {
+  font-size: .64rem; font-family: var(--font-display); font-weight: 700;
+  padding: .12rem .45rem; border-radius: var(--r-pill);
+}
+.rv-badge-verified { background: rgba(16,185,129,.12); color: var(--emerald); }
+.rv-badge-shop     { background: rgba(245,158,11,.14); color: var(--gold, #b45309); }
+
+.rv-avg { display: flex; align-items: center; gap: .5rem; margin-top: .4rem; }
+.rv-avg .rv-star { font-size: 1.05rem; }
+.rv-avg-num   { font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; color: var(--text-1); }
+.rv-avg-count { font-size: .8rem; color: var(--text-3); }
+
+/* ฟอร์มรีวิว */
+.rv-form-card {
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: var(--r-2xl); padding: 1.4rem; margin-top: 1.25rem;
+  box-shadow: var(--shadow-card); position: relative;
+}
+.rv-form-title { font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: var(--text-1); margin-bottom: .9rem; }
+.rv-star-input { display: flex; gap: .25rem; }
+.rv-star-btn {
+  background: none; border: none; font-size: 1.7rem; cursor: pointer;
+  color: var(--border); transition: transform .12s ease, color .12s ease; padding: 0 .1rem; line-height: 1;
+}
+.rv-star-btn:hover { transform: scale(1.18); }
+.rv-star-btn.on { color: var(--gold, #f59e0b); }
+.rv-char-count { text-align: right; font-size: .72rem; color: var(--text-3); margin-top: .25rem; }
+.rv-form-note { font-size: .74rem; color: var(--text-3); margin-top: .7rem; line-height: 1.6; }
+.home-reviews-section { padding-top: 0; }
+
+/* ══════════════════════════════════════════════
+   V12 — VISUAL POLISH
+══════════════════════════════════════════════ */
+/* การ์ดสินค้า: ลึกขึ้น มีชีวิตขึ้น */
+.product-card {
+  transition: transform .25s cubic-bezier(.2,.8,.3,1), box-shadow .25s ease, border-color .25s ease;
+}
+.product-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent);
+  box-shadow: 0 14px 34px rgba(var(--accent-rgb, 14,165,233), .16);
+}
+.product-card .product-name { letter-spacing: .01em; }
+.product-card .price-now { letter-spacing: -0.01em; }
+
+/* ปุ่มหลัก: gradient + press feedback */
+.btn-primary {
+  background-image: linear-gradient(135deg, var(--accent), var(--accent-dark, var(--accent)));
+  background-size: 130% 130%;
+  transition: transform .15s ease, box-shadow .2s ease, background-position .3s ease;
+}
+.btn-primary:hover  { background-position: 80% 20%; box-shadow: 0 8px 22px rgba(var(--accent-rgb, 14,165,233), .35); }
+.btn-primary:active { transform: scale(.97); }
+
+/* section title underline accent */
+.section-title { position: relative; }

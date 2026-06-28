@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="sky">
+<head>
+  <script src="js/theme-init.js"></script>
+  <!-- V2: ฟอนต์โหลดแบบ non-blocking (preconnect + link) แทน @import -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&family=Sarabun:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/core.css">
+  <meta charset="UTF-8">
+  <!-- V3 Security headers (meta). frame-ancestors/X-Frame-Options ทำงานเฉพาะผ่าน HTTP header — ใช้ frame-buster ใน theme-init.js เสริม -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com https://www.gstatic.com; frame-src https://www.google.com https://*.firebaseapp.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta property="og:title" content="ตะกร้าสินค้า — Diamond Cute Studio 💎">
+  <meta property="og:description" content="Diamond Cute Studio 💎 — ตะกร้าสินค้าและชำระเงิน">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
+  <meta name="description" content="Diamond Cute Studio 💎 — ตะกร้าสินค้าและชำระเงิน">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตะกร้าสินค้า & ชำระเงิน — Diamond Cute Studio 💎</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#7c5cff">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="DMC Studio">
+
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://i.ibb.co">
+  <link rel="dns-prefetch" href="https://promptpay.io">
+
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/order.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+</head>
+<body>
+<a href="#order-wrapper" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
+
+<div id="navbar-mount"></div>
+
+<!-- ═══ MAIN ORDER FLOW ═══ -->
+<div class="order-wrapper" id="order-wrapper" tabindex="-1">
+
+  <!-- LEFT: Form Area -->
+  <div>
+
+    <!-- Steps -->
+    <div class="order-steps">
+      <div class="step active" id="step-1">
+        <div class="step-num">1</div>
+        <span>ตะกร้า</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step" id="step-2">
+        <div class="step-num">2</div>
+        <span>ข้อมูลจัดส่ง</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step" id="step-3">
+        <div class="step-num">3</div>
+        <span>ชำระเงิน</span>
+      </div>
+    </div>
+
+    <!-- ── STEP 1: Cart Items ── -->
+    <div id="cart-section">
+      <div class="order-block">
+        <div class="order-block-title">🛒 รายการสินค้า</div>
+        <div class="cart-list" id="cart-list">
+          <!-- populated by order.js -->
+        </div>
+        <div id="cart-empty" style="display:none;text-align:center;padding:2rem;color:var(--text-muted)">
+          <div style="font-size:2.5rem;margin-bottom:0.5rem">🛒</div>
+          <p>ตะกร้าว่างอยู่</p>
+          <a href="catalog.html" class="btn btn-primary btn-md" style="margin-top:1rem;display:inline-flex">
+            🛍️ เลือกสินค้า
+          </a>
+        </div>
+      </div>
+
+      <!-- Upload files -->
+      <div class="order-block" id="upload-block">
+        <div class="order-block-title">📤 อัพโหลดไฟล์รูปภาพ <span style="font-weight:400;font-size:.8rem;color:var(--text-muted)">(ไม่บังคับ)</span></div>
+        <div class="upload-line-hint" style="background:rgba(6,199,85,.08);border:1px solid rgba(6,199,85,.25);border-radius:var(--r-md);padding:.7rem .9rem;margin-bottom:.85rem;font-size:.83rem;line-height:1.65;color:var(--text-2)">
+          💬 <strong>สะดวกกว่า:</strong> อัปโหลดรูปที่นี่ <u>หรือส่งรูปทาง LINE หลังสั่งซื้อก็ได้</u> เหมาะกับไฟล์เยอะ/ไฟล์ใหญ่ ไม่ต้องรออัปโหลดนาน
+        </div>
+        <div class="upload-zone upload-files-area" id="files-upload-zone">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">
+            <span>ลากหรือคลิกเพื่ออัพโหลดรูปภาพ</span><br>
+            <small style="font-size:0.72rem;color:var(--text-muted)">JPG, PNG, HEIC · สูงสุด 20 ไฟล์ · รวมไม่เกิน 50MB</small>
+          </div>
+          <input type="file" id="files-input" accept="image/*" multiple style="display:none">
+        </div>
+        <div class="file-preview-list" id="file-preview-list"></div>
+        <div id="upload-progress" style="display:none;margin-top:0.75rem">
+          <div style="font-family:var(--font-display);font-size:0.82rem;color:var(--text-muted);margin-bottom:0.4rem" id="upload-status">กำลังอัพโหลด...</div>
+          <div style="height:4px;background:var(--glass-border);border-radius:var(--r-pill);overflow:hidden">
+            <div id="upload-bar" style="height:100%;background:linear-gradient(90deg,var(--sky),var(--sky-light));width:0%;transition:width 0.3s"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:right">
+        <button class="btn btn-primary btn-lg" id="goto-step2-btn" style="border-radius:var(--r-lg)">
+          ถัดไป: ข้อมูลจัดส่ง →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Customer Info ── -->
+    <div id="info-section" style="display:none">
+      <div class="order-block">
+        <div class="order-block-title">📦 ข้อมูลผู้รับ</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="customer-name">ชื่อ-นามสกุล *</label>
+            <input class="form-input" id="customer-name" placeholder="กรอกชื่อ-นามสกุล" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="customer-phone">เบอร์โทรศัพท์ *</label>
+            <input class="form-input" id="customer-phone" type="tel" placeholder="0xx-xxx-xxxx" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="customer-address">ที่อยู่จัดส่ง *</label>
+          <input class="form-input" id="customer-address" placeholder="บ้านเลขที่ หมู่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="customer-line">LINE ID (ถ้ามี)</label>
+            <input class="form-input" id="customer-line" placeholder="@lineid">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="shipping-method">ขนส่งที่ต้องการ</label>
+            <select class="form-input form-select" id="shipping-method" data-custom data-title="วิธีจัดส่ง">
+              <option value="kerry">Kerry Express</option>
+              <option value="flash">Flash Express</option>
+              <option value="jandt">J&T Express</option>
+              <option value="thaipost">ไปรษณีย์ไทย</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="customer-note">หมายเหตุเพิ่มเติม</label>
+          <textarea class="form-input form-textarea" id="customer-note" placeholder="เช่น ต้องการกล่องพิเศษ, ห่อของขวัญ, งานด่วน..."></textarea>
+          <div style="font-size:.76rem;color:var(--text-3);margin-top:.4rem;line-height:1.6">💡 ส่งภาพและรายละเอียดส่วนตัว (เช่น ข้อความบนการ์ด) ทาง LINE โดยตรงได้เช่นกัน หลังกดสั่งซื้อ</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:0.75rem;justify-content:space-between">
+        <button class="btn btn-ghost btn-lg" id="back-to-step1" style="border-radius:var(--r-lg)">
+          ← กลับ
+        </button>
+        <button class="btn btn-primary btn-lg" id="goto-step3-btn" style="border-radius:var(--r-lg)">
+          ถัดไป: ชำระเงิน →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Payment ── -->
+    <div id="payment-section" style="display:none">
+      <div class="order-block">
+        <div class="order-block-title">💳 วิธีชำระเงิน</div>
+
+        <div class="payment-methods" id="payment-methods">
+          <!-- เติมโดย renderPaymentMethods() ตามที่แอดมินตั้งค่า -->
+        </div>
+
+        <!-- PromptPay QR Box -->
+        <div class="qr-pay-card visible" id="qr-box">
+          <div class="qr-pay-head">
+            <span class="qr-pay-logo">฿ Thai QR Payment</span>
+            <span class="qr-pay-promptpay">PromptPay</span>
+          </div>
+          <div class="qr-pay-body">
+            <div class="qr-img-wrap" id="qr-img-wrap"><span style="font-size:3rem;color:var(--text-3)">🔲</span></div>
+            <div class="qr-pay-amount-label">ยอดที่ต้องชำระ</div>
+            <div class="amount" id="qr-amount">฿0</div>
+            <div id="qr-account-name" class="qr-pay-name"></div>
+          </div>
+          <div class="qr-pay-foot">
+            <span>📱 สแกนด้วยแอปธนาคารใดก็ได้</span>
+            <button type="button" class="qr-save-btn" id="qr-save-btn">💾 บันทึกรูป QR</button>
+          </div>
+        </div>
+
+        <!-- Slip Upload -->
+        <div style="margin-top:1rem" id="slip-upload-wrap">
+          <div class="form-label" style="margin-bottom:0.5rem">📎 แนบสลิปโอนเงิน</div>
+          <div class="upload-zone" id="slip-zone" style="padding:1rem">
+            <div class="upload-icon" style="font-size:1.5rem">📎</div>
+            <div class="upload-text"><span>คลิกเพื่ออัพโหลดสลิป</span></div>
+            <input type="file" id="slip-input" accept="image/*" style="display:none">
+          </div>
+          <div id="slip-preview" style="display:none;margin-top:0.5rem">
+            <img id="slip-img" style="max-height:120px;border-radius:var(--r-md);border:1px solid var(--glass-border)" alt="slip">
+            <div style="font-size:0.78rem;color:var(--emerald-light);margin-top:0.3rem;font-family:var(--font-display)">✅ แนบสลิปแล้ว</div>
+            <div id="slip-verify-status" style="display:none;margin-top:0.4rem;font-size:0.78rem;line-height:1.4;font-family:var(--font-display)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:0.75rem;justify-content:space-between">
+        <button class="btn btn-ghost btn-lg" id="back-to-step2" style="border-radius:var(--r-lg)">
+          ← กลับ
+        </button>
+        <button class="btn btn-primary btn-lg" id="submit-order-btn" style="border-radius:var(--r-lg);flex:1">
+          ✅ ยืนยันออเดอร์
+        </button>
+      </div>
+    </div>
+
+  </div><!-- END LEFT -->
+
+  <!-- RIGHT: Summary Panel -->
+  <div>
+    <div class="summary-panel">
+      <div class="summary-title">📋 สรุปออเดอร์</div>
+
+      <div class="summary-rows" id="summary-rows">
+        <!-- populated by JS -->
+      </div>
+
+      <!-- Coupon -->
+      <div class="coupon-row">
+        <input class="form-input coupon-input" id="coupon-input" placeholder="โค้ดส่วนลด" aria-label="โค้ดส่วนลด">
+        <button class="btn btn-secondary btn-sm coupon-btn" id="apply-coupon-btn">ใช้โค้ด</button>
+      </div>
+
+      <hr class="summary-divider">
+
+      <div class="summary-total">
+        <span>รวมทั้งหมด</span>
+        <span id="grand-total">฿0</span>
+      </div>
+
+      <div class="secure-note">🔒 ข้อมูลของคุณได้รับการปกป้อง</div>
+    </div>
+  </div>
+
+</div><!-- END order-wrapper -->
+
+<!-- ═══ SUCCESS PAGE (hidden until order submitted) ═══ -->
+<div id="success-page" style="display:none;padding-top:var(--nav-h)">
+  <div class="order-success">
+    <div class="success-icon">✅</div>
+    <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:0.5rem">ยืนยันออเดอร์สำเร็จแล้ว!</h2>
+    <div class="success-order-id">หมายเลขออเดอร์: <span id="success-order-id">—</span></div>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin:1rem 0 1.5rem;line-height:1.7">
+      เราจะเริ่มดำเนินการทันที<br>
+      คุณจะได้รับการอัพเดทผ่าน LINE เมื่องานเสร็จ
+    </p>
+    <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap">
+      <a href="orders.html" class="btn btn-primary btn-lg">📦 ติดตามออเดอร์</a>
+          <a href="index.html" class="btn btn-ghost btn-lg">🏠 กลับหน้าแรก</a>
+      <a href="#" target="_blank" rel="noopener" id="success-line-btn" class="btn btn-line btn-lg">💬 แจ้งร้านทาง LINE</a>
+    </div>
+  </div>
+</div>
+
+<div id="footer-mount"></div>
+<div id="toast-container"></div>
+<script src="js/loading.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/utils.js" defer></script>
+<!-- V24/PERF-B: jsQR (256KB) โหลดแบบ lazy ใน slip-verify.js เฉพาะตอนสแกนสลิป (ไม่โหลดทุกครั้งที่เปิดตะกร้า) -->
+<script src="js/slip-verify.js" defer></script>
+<script src="js/custom-select.js" defer></script>
+<script src="js/cms.js" defer></script>
+<script src="js/navbar.js" defer></script>
+<script src="js/order.js" defer></script>
+<script src="js/footer.js" defer></script>
+<script src="js/bottom-nav.js" defer></script>
+<script src="js/theme-switcher.js" defer></script>
+<script src="js/admin-access.js" defer></script>
+<script src="js/inline-editor.js" defer></script>
+<script src="js/sw-register.js" defer></script>
+<script src="js/pwa-install.js" defer></script>
+</body>
+</html>

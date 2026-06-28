@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="sky">
+<head>
+  <script src="js/theme-init.js"></script>
+  <!-- V2: ฟอนต์โหลดแบบ non-blocking (preconnect + link) แทน @import -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&family=Sarabun:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/core.css">
+  <meta charset="UTF-8">
+  <!-- V3 Security headers (meta). frame-ancestors/X-Frame-Options ทำงานเฉพาะผ่าน HTTP header — ใช้ frame-buster ใน theme-init.js เสริม -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com https://www.gstatic.com; frame-src https://www.google.com https://*.firebaseapp.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta property="og:title" content="รายละเอียดสินค้า — Diamond Cute Studio 💎">
+  <meta property="og:description" content="Diamond Cute Studio 💎 — สินค้าพิมพ์ภาพคุณภาพสูง โพลารอยด์ นามบัตร บัตรแขวนคอ">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
+  <meta name="description" content="Diamond Cute Studio 💎 — สินค้าพิมพ์ภาพคุณภาพสูง โพลารอยด์ นามบัตร บัตรแขวนคอ">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายละเอียดสินค้า — Diamond Cute Studio 💎</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#7c5cff">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="DMC Studio">
+
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://i.ibb.co">
+  <link rel="dns-prefetch" href="https://promptpay.io">
+
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/product.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+</head>
+<body class="page-product">
+<a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
+
+<div id="navbar-mount"></div>
+
+<!-- Page Header -->
+<div class="page-header" id="main-content" tabindex="-1">
+  <div class="page-header-inner">
+    <nav class="breadcrumb" id="product-breadcrumb">
+      <a href="index.html">หน้าแรก</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="catalog.html">สินค้า</a>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current" id="breadcrumb-name">กำลังโหลด...</span>
+    </nav>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div id="product-loading" style="text-align:center;padding:4rem;color:var(--text-muted)">
+  <span class="spinner" style="display:block;margin:0 auto 0.75rem"></span>
+  กำลังโหลดสินค้า...
+</div>
+
+<!-- Product Detail (hidden until loaded) -->
+<div class="detail-wrapper" id="product-detail" style="display:none">
+  <div class="detail-layout">
+
+    <!-- Gallery -->
+    <div class="detail-gallery">
+      <div class="gallery-main" id="gallery-main">
+        <div class="gallery-main-overlay"></div>
+        <div class="gallery-badge" id="gallery-badge"></div>
+        <span id="gallery-emoji" style="font-size:5.5rem;position:relative;z-index:1">📦</span>
+      </div>
+      <div class="gallery-thumbs" id="gallery-thumbs"></div>
+    </div>
+
+    <!-- Info -->
+    <div class="detail-info">
+      <h1 class="detail-title" id="product-title">—</h1>
+
+      <div class="detail-meta">
+        <div class="detail-rating">
+          <span class="stars-display" id="stars-display">★★★★★</span>
+          <span class="rating-score" id="rating-score">4.9</span>
+        </div>
+        <span id="review-count" style="color:var(--text-muted)">— รีวิว</span>
+        <span>·</span>
+        <span id="order-count" style="color:var(--text-muted)">— ออเดอร์</span>
+      </div>
+
+      <!-- Price -->
+      <div class="detail-price-block">
+        <div class="price-row">
+          <div class="price-main" id="price-main">—</div>
+          <div class="price-unit" id="price-unit"></div>
+          <div class="price-old" id="price-old" style="display:none"></div>
+        </div>
+        <div class="price-tiers" id="price-tiers"></div>
+        <!-- V2: แจ้งค่าส่งตั้งแต่ต้น (ลดเซอร์ไพรส์ตอน checkout) -->
+        <div class="price-shipping-hint" id="price-shipping-hint">🚚 ค่าจัดส่งเริ่ม ฿50 · เก็บเงินปลายทาง ฿80</div>
+      </div>
+
+      <!-- Size Options -->
+      <div class="options-group" id="size-group" style="display:none">
+        <div class="options-label">📐 ขนาด: <strong id="size-selected">—</strong></div>
+        <div class="options-chips" id="size-chips"></div>
+      </div>
+
+      <!-- Material Options -->
+      <div class="options-group" id="material-group" style="display:none">
+        <div class="options-label">🗒️ วัสดุ/การเคลือบ: <strong id="material-selected">—</strong></div>
+        <div class="options-chips" id="material-chips"></div>
+      </div>
+
+      <!-- Canvas Preview Tool -->
+      <div class="preview-tool" id="preview-tool">
+        <div class="preview-tool-header">
+          <div class="preview-tool-title">🎨 ลองดูตัวอย่างก่อนสั่ง</div>
+        </div>
+        <div id="preview-tool-container"></div>
+      </div>
+
+      <!-- Quantity -->
+      <div class="options-group">
+        <div class="options-label">🔢 จำนวน: <strong id="qty-display">1</strong> <span id="qty-unit" style="font-weight:400;color:var(--text-muted)">ชิ้น</span></div>
+        <div class="qty-wrap">
+          <button class="qty-btn" id="qty-minus" aria-label="ลดจำนวน">−</button>
+          <span class="qty-val" id="qty-val">1</span>
+          <button class="qty-btn" id="qty-plus" aria-label="เพิ่มจำนวน">+</button>
+          <span class="qty-hint" id="qty-hint"></span>
+        </div>
+      </div>
+
+      <!-- Subtotal -->
+      <div class="subtotal-row">
+        <span class="subtotal-label">รวม</span>
+        <span class="subtotal-value" id="subtotal-display">—</span>
+      </div>
+
+      <!-- V4.6: รายละเอียดเพิ่มเติม (โลโก้/ชื่อ/ข้อมูลส่วนตัว) -->
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label" for="product-details" style="display:flex;align-items:center;gap:.4rem;font-size:.92rem">
+          📝 รายละเอียดเพิ่มเติม <span style="font-weight:400;color:var(--text-3);font-size:.78rem">(ไม่บังคับ)</span>
+        </label>
+        <textarea id="product-details" class="form-input" rows="3" maxlength="500"
+          style="resize:vertical;min-height:80px;font-family:inherit;line-height:1.55"
+          placeholder="ใส่ข้อมูลที่ต้องการ เช่น ชื่อ-ตำแหน่ง (นามบัตร), ชื่อเด็ก-ห้อง (บัตรนักเรียน), โลโก้ — หรือส่งไฟล์/ข้อมูลทาง LINE ภายหลังก็ได้ครับ"></textarea>
+        <div style="font-size:.72rem;color:var(--text-3);margin-top:.3rem;line-height:1.5">💡 สำหรับสินค้าที่ต้องระบุข้อมูลส่วนตัว (นามบัตร · บัตรแขวนคอ · บัตรนักเรียน) — ใส่ที่นี่หรือส่งผ่าน LINE ก็ได้</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="detail-actions">
+        <button class="btn btn-secondary btn-lg btn-to-cart" id="add-to-cart-btn" style="flex:1">
+          🛒 ใส่ตะกร้า
+        </button>
+        <a href="cart.html" class="btn btn-primary btn-lg btn-to-order" id="order-now-btn" style="flex:1">
+          ⚡ สั่งเลย
+        </a>
+      </div>
+
+      <!-- LINE contact -->
+      <div class="line-contact">
+        💬 มีคำถามเพิ่มเติม?
+        <a href="https://line.me/R/ti/p/YOUR_LINE_OA" target="_blank" rel="noopener">
+          ติดต่อผ่าน LINE ได้เลย →
+        </a>
+      </div>
+
+      <!-- Description -->
+      <div id="product-desc-section" style="margin-top:1.5rem;display:none">
+        <div style="font-family:var(--font-display);font-weight:600;font-size:0.9rem;margin-bottom:0.6rem;color:var(--text-secondary)">📋 รายละเอียดสินค้า</div>
+        <div id="product-desc-text" style="font-size:0.88rem;color:var(--text-muted);line-height:1.75"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  <div style="margin-top:3rem">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">สินค้า<span class="text-sky">ที่เกี่ยวข้อง</span></h2>
+      </div>
+    </div>
+    <div class="product-grid" id="related-products"></div>
+  </section>
+
+  <!-- ═══ รีวิวสินค้า ═══ -->
+  <section class="product-reviews-section" id="reviews-section">
+    <div class="rv-section-head">
+      <h2 class="rv-section-title">⭐ รีวิวจากลูกค้า</h2>
+      <div class="rv-summary" id="rv-summary"></div>
+    </div>
+    <div id="rv-list" class="rv-list"></div>
+
+    <!-- ฟอร์มรีวิว -->
+    <div class="rv-form-card" id="rv-form-card">
+      <div class="rv-form-title">✍️ เขียนรีวิวสินค้านี้</div>
+      <p class="rv-form-note">รีวิวจะแสดงหลังร้านตรวจสอบและอนุมัติ เพื่อความเหมาะสมของเนื้อหา</p>
+      <div class="form-row" style="margin-bottom:.85rem">
+        <div class="form-group" style="margin:0">
+          <label class="form-label" for="rv-name">ชื่อของคุณ</label>
+          <input class="form-input" id="rv-name" maxlength="40" placeholder="เช่น คุณมายด์">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">ให้คะแนน</label>
+          <div class="rv-star-input" id="rv-star-input" role="radiogroup" aria-label="ให้คะแนนดาว"></div>
+        </div>
+      </div>
+      <!-- honeypot: ซ่อนจากคนจริง bot จะกรอก -->
+      <input type="text" id="rv-website" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;height:0;opacity:0" aria-hidden="true">
+      <div class="form-group">
+        <label class="form-label" for="rv-text">รีวิวของคุณ <span style="font-weight:400;color:var(--text-3)">(10–500 ตัวอักษร)</span></label>
+        <textarea class="form-input form-textarea" id="rv-text" maxlength="500" placeholder="เล่าประสบการณ์การสั่งซื้อ คุณภาพงาน การจัดส่ง..."></textarea>
+        <div class="rv-char-count"><span id="rv-char">0</span>/500</div>
+      </div>
+      <button class="btn btn-primary btn-md" id="rv-submit-btn">📨 ส่งรีวิว</button>
+    </div>
+  </div>
+</div>
+
+<!-- Error State -->
+<div id="product-error" style="display:none;text-align:center;padding:4rem 1.5rem;color:var(--text-muted)">
+  <div style="font-size:3rem;margin-bottom:1rem">😕</div>
+  <h2 style="font-size:1.2rem;margin-bottom:0.5rem">ไม่พบสินค้านี้</h2>
+  <p style="margin-bottom:1.5rem">อาจถูกลบหรือ URL ไม่ถูกต้อง</p>
+  <a href="catalog.html" class="btn btn-primary btn-lg">← กลับดูสินค้าทั้งหมด</a>
+</div>
+
+<!-- V2: แถบปุ่มสั่งซื้อแบบลอยล่างจอ (มือถือ) — ปุ่มซื้อไม่หายตอนเลื่อนอ่านรายละเอียด -->
+<div class="sticky-buy-bar" id="sticky-buy-bar" aria-hidden="true">
+  <div class="sticky-buy-price">
+    <span class="sticky-buy-label">รวม</span>
+    <span class="sticky-buy-value" id="sticky-buy-value">—</span>
+  </div>
+  <button class="btn btn-secondary btn-md" id="sticky-add-cart">🛒 ใส่ตะกร้า</button>
+  <button class="btn btn-primary btn-md" id="sticky-order-now">⚡ สั่งเลย</button>
+</div>
+
+<div id="footer-mount"></div>
+<div id="toast-container"></div>
+<script src="js/loading.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/cms.js" defer></script>
+<script src="js/reviews.js" defer></script>
+<script src="js/navbar.js" defer></script>
+<script src="js/canvas-preview.js" defer></script>
+<script src="js/product.js" defer></script>
+<script src="js/footer.js" defer></script>
+<script src="js/bottom-nav.js" defer></script>
+<script src="js/theme-switcher.js" defer></script>
+<script src="js/admin-access.js" defer></script>
+<script src="js/inline-editor.js" defer></script>
+<script src="js/sw-register.js" defer></script>
+<script src="js/pwa-install.js" defer></script>
+</body>
+</html>

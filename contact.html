@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="sky">
+<head>
+  <meta charset="UTF-8">
+  <!-- V3 Security headers (meta). frame-ancestors/X-Frame-Options ทำงานเฉพาะผ่าน HTTP header — ใช้ frame-buster ใน theme-init.js เสริม -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com https://www.gstatic.com; frame-src https://www.google.com https://*.firebaseapp.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta property="og:title" content="ติดต่อเรา — Diamond Cute Studio 💎">
+  <meta property="og:description" content="Diamond Cute Studio 💎 — ติดต่อเราผ่าน LINE Facebook Instagram หรือส่งข้อความโดยตรง">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
+  <meta name="description" content="Diamond Cute Studio 💎 — ติดต่อเราผ่าน LINE Facebook Instagram หรือส่งข้อความโดยตรง">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ติดต่อเรา — Diamond Cute Studio 💎</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#7c5cff">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="DMC Studio">
+
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://i.ibb.co">
+  <link rel="dns-prefetch" href="https://promptpay.io">
+
+  <script src="js/theme-init.js"></script>
+  <!-- V2: ฟอนต์โหลดแบบ non-blocking (preconnect + link) แทน @import -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&family=Sarabun:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/core.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+  <style>
+    .contact-wrapper { max-width: 900px; margin: 0 auto; padding: calc(var(--nav-h) + 2rem) 1.5rem 4rem; }
+    .page-hero { text-align: center; margin-bottom: 2.5rem; }
+    .page-hero h1 { font-size: clamp(1.8rem,4vw,2.5rem); font-weight: 800; margin-bottom: .6rem; }
+    .page-hero p  { color: var(--text-2); }
+
+    .contact-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+
+    /* Channel cards */
+    .channel-list { display: flex; flex-direction: column; gap: .85rem; }
+    .channel-card {
+      background: var(--bg-card); border: 1.5px solid var(--border);
+      border-radius: var(--r-xl); padding: 1.25rem;
+      display: flex; align-items: center; gap: 1rem;
+      text-decoration: none; color: inherit;
+      transition: all .2s;
+    }
+    .channel-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+    .channel-icon { width: 52px; height: 52px; border-radius: var(--r-lg); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
+    .channel-icon.line { background: #06C755; }
+    .channel-icon.fb   { background: #1877F2; }
+    .channel-icon.ig   { background: linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); }
+    .channel-icon.tt   { background: #010101; }
+    .channel-icon.mail { background: var(--glass); border: 1.5px solid var(--border); }
+    .channel-info {}
+    .channel-name  { font-family: var(--font-display); font-weight: 700; font-size: 1rem; margin-bottom: .15rem; }
+    .channel-handle{ font-size: .83rem; color: var(--text-3); }
+    .channel-arrow { margin-left: auto; color: var(--text-3); font-size: .85rem; }
+
+    /* Hours */
+    .hours-card {
+      background: var(--bg-card); border: 1.5px solid var(--border);
+      border-radius: var(--r-xl); padding: 1.5rem; margin-top: .85rem;
+    }
+    .hours-title { font-family: var(--font-display); font-weight: 700; font-size: .95rem; margin-bottom: 1rem; display: flex; align-items: center; gap: .4rem; }
+    .hours-row   { display: flex; justify-content: space-between; padding: .4rem 0; font-size: .88rem; border-bottom: 1px solid var(--border); }
+    .hours-row:last-child { border: none; }
+    .hours-day { color: var(--text-2); }
+    .hours-time { font-family: var(--font-display); font-weight: 600; color: var(--text-1); }
+    .hours-time.closed { color: var(--rose); }
+
+    /* Form */
+    .contact-form-card {
+      background: var(--bg-card); border: 1.5px solid var(--border);
+      border-radius: var(--r-xl); padding: 1.75rem;
+    }
+    .contact-form-title { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: .4rem; }
+
+    .online-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); display: inline-block; animation: pulse-glow 2s infinite; }
+
+    @media(max-width:768px){ .contact-layout{ grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
+<div id="navbar-mount"></div>
+
+<div class="contact-wrapper" id="main-content" tabindex="-1">
+  <div class="page-hero anim-fade-up">
+    <div style="font-size:3rem;margin-bottom:.75rem">💬</div>
+    <h1>ติดต่อเรา</h1>
+    <p>ยินดีให้บริการทุกวัน ตอบเร็ว ใจดี ไม่มีค่าใช้จ่าย</p>
+  </div>
+
+  <div class="contact-layout">
+    <!-- Left: Channels + Hours -->
+    <div>
+      <div class="channel-list">
+        <a href="https://line.me/R/ti/p/YOUR_LINE_OA" target="_blank" rel="noopener" class="channel-card" id="ch-line">
+          <div class="channel-icon line">💬</div>
+          <div class="channel-info">
+            <div class="channel-name">LINE Official Account</div>
+            <div class="channel-handle"><span id="ch-line-label">ช่องทางหลัก ตอบเร็วที่สุด</span> <span class="online-dot"></span></div>
+          </div>
+          <span class="channel-arrow">→</span>
+        </a>
+        <a href="https://facebook.com/YOUR_PAGE" target="_blank" rel="noopener" class="channel-card" id="ch-fb">
+          <div class="channel-icon fb">📘</div>
+          <div class="channel-info">
+            <div class="channel-name">Facebook</div>
+            <div class="channel-handle">Diamond Cute Studio</div>
+          </div>
+          <span class="channel-arrow">→</span>
+        </a>
+        <a href="https://instagram.com/YOUR_ACCOUNT" target="_blank" rel="noopener" class="channel-card" id="ch-ig">
+          <div class="channel-icon ig">📸</div>
+          <div class="channel-info">
+            <div class="channel-name">Instagram</div>
+            <div class="channel-handle">@diamondcutestudio</div>
+          </div>
+          <span class="channel-arrow">→</span>
+        </a>
+        <a href="https://tiktok.com/@YOUR_ACCOUNT" target="_blank" rel="noopener" class="channel-card" id="ch-tt">
+          <div class="channel-icon tt">🎵</div>
+          <div class="channel-info">
+            <div class="channel-name">TikTok</div>
+            <div class="channel-handle">@diamondcutestudio</div>
+          </div>
+          <span class="channel-arrow">→</span>
+        </a>
+        <a href="mailto:YOUR_EMAIL@gmail.com" class="channel-card" id="ch-mail">
+          <div class="channel-icon mail">📧</div>
+          <div class="channel-info">
+            <div class="channel-name">อีเมล</div>
+            <div class="channel-handle" id="ch-mail-label">YOUR_EMAIL@gmail.com</div>
+          </div>
+          <span class="channel-arrow">→</span>
+        </a>
+      </div>
+
+      <div class="hours-card">
+        <div class="hours-title">🕐 เวลาทำการ</div>
+        <div class="hours-row"><span class="hours-day">จันทร์ – ศุกร์</span><span class="hours-time">09:00 – 20:00</span></div>
+        <div class="hours-row"><span class="hours-day">เสาร์</span><span class="hours-time">09:00 – 18:00</span></div>
+        <div class="hours-row"><span class="hours-day">อาทิตย์</span><span class="hours-time closed">หยุด</span></div>
+        <div style="margin-top:.85rem;padding:.65rem .85rem;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:var(--r-md);font-size:.82rem;color:var(--emerald)">
+          ✅ ตอบ LINE ภายใน 30 นาที ในเวลาทำการ
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Quick contact form -->
+    <div class="contact-form-card">
+      <div class="contact-form-title">✉️ ส่งข้อความถึงเรา</div>
+      <div class="form-group">
+        <label class="form-label" for="cf-name">ชื่อของคุณ</label>
+        <input class="form-input" id="cf-name" placeholder="กรอกชื่อของคุณ">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cf-contact">เบอร์โทร / LINE ID</label>
+        <input class="form-input" id="cf-contact" placeholder="เบอร์โทรหรือ LINE ID">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cf-topic">หัวข้อ</label>
+        <select class="form-input form-select" id="cf-topic" data-custom data-title="หัวข้อ">
+          <option>สอบถามสินค้า</option>
+          <option>สอบถามราคา</option>
+          <option>ติดตามออเดอร์</option>
+          <option>แจ้งปัญหา</option>
+          <option>อื่นๆ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cf-msg">ข้อความ</label>
+        <textarea class="form-input form-textarea" id="cf-msg" placeholder="พิมพ์ข้อความที่ต้องการสอบถาม..." style="min-height:110px"></textarea>
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" id="cf-submit">
+        💬 ส่งข้อความ
+      </button>
+      <div id="cf-result" style="display:none;margin-top:.75rem;text-align:center;font-family:var(--font-display);font-size:.88rem"></div>
+      <div style="text-align:center;margin-top:.85rem;font-size:.78rem;color:var(--text-3)">
+        หรือเพิ่มเพื่อน LINE เพื่อติดต่อโดยตรง ตอบเร็วกว่า 💬
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="footer-mount"></div>
+<div id="toast-container"></div>
+<script src="js/loading.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/custom-select.js" defer></script>
+<script src="js/cms.js" defer></script>
+<script src="js/navbar.js" defer></script>
+<script src="js/footer.js" defer></script>
+<script src="js/bottom-nav.js" defer></script>
+<script src="js/theme-switcher.js" defer></script>
+<script src="js/admin-access.js" defer></script>
+<script src="js/inline-editor.js" defer></script>
+
+
+<script src="js/sw-register.js" defer></script>
+<script src="js/pwa-install.js" defer></script>
+<script src="js/contact-page.js" defer></script>
+</body>
+</html>

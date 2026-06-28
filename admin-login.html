@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="sky">
+<head>
+  <script src="js/theme-init.js"></script>
+  <!-- V2: ฟอนต์โหลดแบบ non-blocking (preconnect + link) แทน @import -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&family=Sarabun:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/core.css">
+  <meta charset="UTF-8">
+  <!-- V3 Security headers (meta). frame-ancestors/X-Frame-Options ทำงานเฉพาะผ่าน HTTP header — ใช้ frame-buster ใน theme-init.js เสริม -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com https://www.gstatic.com; frame-src https://www.google.com https://*.firebaseapp.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="description" content="Diamond Cute Studio — Admin Login">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login — Diamond Cute Studio 💎</title>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://i.ibb.co">
+  <link rel="dns-prefetch" href="https://promptpay.io">
+
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+</head>
+<body>
+<a href="#admin-login-page" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
+
+<div class="admin-login-page" id="admin-login-page" tabindex="-1">
+  <div class="login-card">
+
+    <div class="login-logo">
+      <div class="login-logo-icon">💎</div>
+      <h2>Admin Login</h2>
+      <p>Diamond Cute Studio — เฉพาะผู้ดูแลระบบ</p>
+    </div>
+
+    <!-- Attempt Dots -->
+    <div class="login-attempts">
+      <span>ความพยายาม:</span>
+      <div class="attempt-dots">
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+      </div>
+    </div>
+
+    <!-- Error box -->
+    <div class="login-error" id="login-error"></div>
+
+    <!-- Locked box -->
+    <div class="login-locked" id="login-locked"></div>
+
+    <!-- Form -->
+    <div id="login-form">
+      <div class="form-group">
+        <label class="form-label">รหัสผ่าน Admin</label>
+        <div class="pass-wrap">
+          <input class="form-input" type="password" id="login-password"
+                 placeholder="••••••••" autocomplete="current-password" autofocus style="padding-right:3rem">
+          <button type="button" id="toggle-pass" class="pass-eye" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน">👁️</button>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" id="login-btn" style="margin-top:0.5rem">
+        🔓 เข้าสู่ระบบ
+      </button>
+    </div>
+
+    <div style="text-align:center;margin-top:1.25rem">
+      <a href="index.html" style="font-size:0.8rem;color:var(--text-muted);font-family:var(--font-display)">
+        ← กลับหน้าร้าน
+      </a>
+    </div>
+
+    <div style="text-align:center;margin-top:0.75rem;font-size:0.74rem;color:var(--text-muted);font-family:var(--font-display)">
+      🛡️ ระบบจะล็อคหลังพิมพ์ผิด 5 ครั้ง
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast-container"></div>
+
+<script src="js/loading.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/cms.js" defer></script>
+<script src="js/admin-core.js" defer></script>
+<script src="js/admin-login-page.js" defer></script>
+</body>
+</html>

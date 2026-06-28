@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="sky">
+<head>
+  <meta charset="UTF-8">
+  <!-- V3 Security headers (meta). frame-ancestors/X-Frame-Options ทำงานเฉพาะผ่าน HTTP header — ใช้ frame-buster ใน theme-init.js เสริม -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com https://www.gstatic.com; frame-src https://www.google.com https://*.firebaseapp.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="description" content="ติดตามออเดอร์ — Diamond Cute Studio 💎 ตรวจสอบสถานะการสั่งซื้อและเลขพัสดุ">
+  <meta property="og:title" content="ติดตามออเดอร์ — Diamond Cute Studio 💎">
+  <meta property="og:description" content="ตรวจสอบสถานะการสั่งซื้อ เลขพัสดุ และประวัติออเดอร์ของคุณ">
+  <meta property="og:type" content="website">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ติดตามออเดอร์ — Diamond Cute Studio 💎</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#7c5cff">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="DMC Studio">
+
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://i.ibb.co">
+  <link rel="dns-prefetch" href="https://promptpay.io">
+
+  <script src="js/theme-init.js"></script>
+  <!-- V2: ฟอนต์โหลดแบบ non-blocking (preconnect + link) แทน @import -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&family=Sarabun:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/core.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/order.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+</head>
+<body>
+<a class="skip-link" href="#main-content">ข้ามไปเนื้อหาหลัก</a>
+<div id="navbar-mount"></div>
+
+<main id="main-content" class="track-page" tabindex="-1">
+  <div class="track-container">
+
+    <div class="track-header">
+      <h1 class="track-title">📦 ติดตามออเดอร์</h1>
+      <p class="track-sub">ตรวจสอบสถานะการสั่งซื้อและเลขพัสดุของคุณ</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="track-tabs" role="tablist">
+      <button class="track-tab active" id="tab-device" role="tab" aria-selected="true">📱 ออเดอร์ในเครื่องนี้</button>
+      <button class="track-tab" id="tab-phone" role="tab" aria-selected="false">🔍 ค้นหาด้วยเบอร์โทร</button>
+    </div>
+
+    <!-- Panel 1: This device -->
+    <section id="panel-device" class="track-panel active">
+      <div id="device-orders-list"></div>
+    </section>
+
+    <!-- Panel 2: Phone + OTP -->
+    <section id="panel-phone" class="track-panel">
+
+      <!-- Step A: enter phone -->
+      <div id="otp-step-phone" class="otp-card">
+        <div class="otp-icon">📲</div>
+        <div class="otp-title">ค้นหาออเดอร์ด้วยเบอร์โทร</div>
+        <p class="otp-desc">กรอกเบอร์โทรที่ใช้สั่งซื้อ ระบบจะส่งรหัส OTP ไปยัง SMS ของคุณเพื่อยืนยันตัวตน</p>
+        <div class="form-group" style="text-align:left">
+          <label class="form-label" for="otp-phone">เบอร์โทรศัพท์</label>
+          <input class="form-input" type="tel" id="otp-phone" placeholder="08x-xxx-xxxx" inputmode="tel" autocomplete="tel">
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" id="otp-send-btn">📨 ส่งรหัส OTP</button>
+        <div id="otp-phone-error" class="otp-error" role="alert"></div>
+        <div class="otp-note">🔒 ข้อมูลออเดอร์เป็นความลับ — ดูได้เฉพาะเจ้าของเบอร์ที่ยืนยัน OTP แล้วเท่านั้น</div>
+      </div>
+
+      <!-- Step B: enter OTP code -->
+      <div id="otp-step-code" class="otp-card" style="display:none">
+        <div class="otp-icon">🔐</div>
+        <div class="otp-title">กรอกรหัส OTP</div>
+        <p class="otp-desc">รหัส 6 หลักถูกส่งไปที่ <strong id="otp-sent-to">—</strong></p>
+        <div class="form-group" style="text-align:left">
+          <label class="form-label" for="otp-code">รหัส OTP (6 หลัก)</label>
+          <input class="form-input otp-code-input" type="text" id="otp-code" placeholder="••••••" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" id="otp-verify-btn">✅ ยืนยันรหัส</button>
+        <div id="otp-code-error" class="otp-error" role="alert"></div>
+        <div class="otp-actions">
+          <button class="otp-link" id="otp-resend-btn" disabled>ส่งรหัสใหม่ (<span id="otp-countdown">60</span>s)</button>
+          <button class="otp-link" id="otp-back-btn">← เปลี่ยนเบอร์</button>
+        </div>
+      </div>
+
+      <!-- Step C: results -->
+      <div id="otp-step-results" style="display:none">
+        <div class="otp-verified-bar">
+          ✅ ยืนยันแล้ว: <strong id="verified-phone">—</strong>
+          <button class="otp-link" id="otp-logout-btn">ออก</button>
+        </div>
+        <div id="phone-orders-list"></div>
+      </div>
+
+    </section>
+
+  </div>
+</main>
+
+<div id="footer-mount"></div>
+
+<script src="js/loading.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/utils.js" defer></script>
+<script src="js/cms.js" defer></script>
+<script src="js/navbar.js" defer></script>
+<script src="js/footer.js" defer></script>
+<script src="js/bottom-nav.js" defer></script>
+<script src="js/theme-switcher.js" defer></script>
+<script src="js/order-history.js" defer></script>
+<script src="js/sw-register.js" defer></script>
+<script src="js/pwa-install.js" defer></script>
+</body>
+</html>
