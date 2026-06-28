@@ -182,5 +182,6 @@ async function setReviewStatus(id, status) {
     await db.collection('reviews').doc(id).update({ status, moderatedAt: firebase.firestore.FieldValue.serverTimestamp() });
     DMC.toast(status === 'approved' ? 'อนุมัติแล้ว ✅' : 'ปฏิเสธแล้ว', 'success');
     refreshReviewLists();
+    if (window.AdminSnapshot) AdminSnapshot.autoPublish();   // V24: รีวิวใหม่แสดงบนเว็บทันที
   } catch(e) { DMC.toast('อัพเดทไม่สำเร็จ', 'error'); }
 }

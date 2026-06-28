@@ -35,11 +35,22 @@
     const cSnap = await db.collection('categories').get();
     const categories = [];
     cSnap.forEach(d => categories.push(cleanTs({ id: d.id, ...d.data() })));
+    // V24/PERF-B: เผยแพร่รีวิว (อนุมัติแล้ว) + เนื้อหาเว็บ → หน้าแรกไม่ต้องโหลด Firebase
+    const rSnap = await db.collection('reviews').where('status', '==', 'approved').limit(100).get();
+    const reviews = [];
+    rSnap.forEach(d => reviews.push(cleanTs({ id: d.id, ...d.data() })));
+    let siteContent = {};
+    try {
+      const scDoc = await db.collection('siteContent').doc('main').get();
+      siteContent = scDoc.exists ? cleanTs(scDoc.data()) : {};
+    } catch (e) { siteContent = {}; }
     const now = new Date().toISOString();
     return {
-      'data/products.json':   { generatedAt: now, count: products.length,   items: products },
-      'data/gallery.json':    { generatedAt: now, count: gallery.length,    items: gallery },
-      'data/categories.json': { generatedAt: now, count: categories.length, items: categories },
+      'data/products.json':    { generatedAt: now, count: products.length,   items: products },
+      'data/gallery.json':     { generatedAt: now, count: gallery.length,    items: gallery },
+      'data/categories.json':  { generatedAt: now, count: categories.length, items: categories },
+      'data/reviews.json':     { generatedAt: now, count: reviews.length,    items: reviews },
+      'data/sitecontent.json': { generatedAt: now, data: siteContent },
     };
   }
 
@@ -76,16 +87,39 @@
         DMC.toast('✅ เผยแพร่ขึ้นเว็บแล้ว — หน้าลูกค้าจะอัปเดตภายใน 1–2 นาที', 'success', 6000);
       } else {
         download('products.json', files['data/products.json']);
-        setTimeout(() => download('gallery.json', files['data/gallery.json']), 400);
-        setTimeout(() => download('categories.json', files['data/categories.json']), 800);
+        setTimeout(() => download('gallery.json', files['data/gallery.json']), 300);
+        setTimeout(() => download('categories.json', files['data/categories.json']), 600);
+        setTimeout(() => download('reviews.json', files['data/reviews.json']), 900);
+        setTimeout(() => download('sitecontent.json', files['data/sitecontent.json']), 1200);
         DMC.toast('⬇️ ดาวน์โหลด snapshot แล้ว — อัปขึ้น GitHub โฟลเดอร์ /data/ เพื่อให้หน้าเว็บอัปเดต', 'info', 8000);
       }
       clearDirty();
+      markPublished();   // V24/BUG-A: บันทึกเวลาเผยแพร่ล่าสุด
     } catch (e) {
       DMC.toast('สร้าง snapshot ไม่สำเร็จ: ' + e.message, 'error', 6000);
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = orig || '📤 เผยแพร่ snapshot'; }
     }
+  }
+
+  // V24/BUG-A: บันทึก + แสดง "เผยแพร่ล่าสุดเมื่อ..."
+  const PUB_KEY = 'dmc_snapshot_published_at';
+  function markPublished() { try { localStorage.setItem(PUB_KEY, new Date().toISOString()); } catch (e) {} }
+  async function lastPublishedText() {
+    // อ่านจากไฟล์ที่ live อยู่จริง (data/products.json) เป็นหลัก — ตรงกับสิ่งที่ลูกค้าเห็น
+    let iso = '';
+    try {
+      const base = (window.DMC_CONFIG || {}).SNAPSHOT_BASE || './data/';
+      const res = await fetch(base + 'products.json', { cache: 'no-cache' });
+      if (res.ok) { const j = await res.json(); iso = (j && j.generatedAt) || ''; }
+    } catch (e) {}
+    if (!iso) { try { iso = localStorage.getItem(PUB_KEY) || ''; } catch (e) {} }
+    if (!iso) return 'ยังไม่เคยเผยแพร่';
+    try {
+      const d = new Date(iso);
+      const ago = DMC.timeAgo ? DMC.timeAgo(d) : '';
+      return 'เผยแพร่ล่าสุด: ' + d.toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) + (ago ? ' (' + ago + ')' : '');
+    } catch (e) { return 'เผยแพร่ล่าสุด: ' + iso; }
   }
 
   function banner() {
@@ -97,6 +131,11 @@
     const txt = document.createElement('span');
     txt.style.cssText = 'font-size:.86rem';
     txt.textContent = '📦 ข้อมูลสินค้า/แกลเลอรีเปลี่ยนแล้ว — กดเผยแพร่เพื่ออัปเดตหน้าเว็บลูกค้า';
+    const last = document.createElement('span');
+    last.id = 'dmc-snapshot-last';
+    last.style.cssText = 'font-size:.74rem;opacity:.85;width:100%;text-align:center;order:9';
+    last.textContent = '';
+    lastPublishedText().then(t => { last.textContent = '🕓 ' + t; });
     const pub = document.createElement('button');
     pub.textContent = '📤 เผยแพร่ snapshot';
     pub.style.cssText = 'background:#fff;color:#7c3aed;border:none;border-radius:10px;padding:.5rem .95rem;font-weight:700;font-size:.84rem;cursor:pointer;font-family:inherit';
@@ -105,13 +144,60 @@
     dim.textContent = '✕'; dim.title = 'ปิดแถบนี้';
     dim.style.cssText = 'background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:8px;padding:.45rem .7rem;font-weight:700;cursor:pointer;font-family:inherit';
     dim.addEventListener('click', clearDirty);
-    b.appendChild(txt); b.appendChild(pub); b.appendChild(dim);
+    b.appendChild(txt); b.appendChild(pub); b.appendChild(dim); b.appendChild(last);
     document.body.appendChild(b);
     return b;
   }
 
-  function markDirty() { dirty = true; banner().style.display = 'flex'; }
+  function markDirty() {
+    dirty = true;
+    const b = banner();
+    b.style.display = 'flex';
+    const last = document.getElementById('dmc-snapshot-last');
+    if (last) lastPublishedText().then(t => { last.textContent = '🕓 ' + t; });
+  }
   function clearDirty() { dirty = false; const b = document.getElementById('dmc-snapshot-banner'); if (b) b.style.display = 'none'; }
 
-  window.AdminSnapshot = { markDirty, clearDirty, publish, build };
+  // ─── V24: Auto-publish — เรียกหลังบันทึกข้อมูลทุกครั้ง (สินค้า/แกลเลอรี/CMS/รีวิว) ───
+  //   หลักการ: debounce 1.5 วิ (กันยิงซ้ำหลายครั้งติดกัน) → build → commit ขึ้น GitHub อัตโนมัติ
+  //   - ถ้าตั้ง GITHUB_TOKEN แล้ว: หน้าเว็บอัปเดตภายใน 1–2 นาทีโดยไม่ต้องทำอะไร
+  //   - ถ้ายังไม่ตั้ง: แจ้งเตือน (ไม่ดาวน์โหลดไฟล์ ไม่ทำให้งง)
+  //   - ถ้า Worker ล่ม/error: แจ้งเตือน + ขึ้นแถบเตือน (ไม่พัง)
+  let _autoTimer = null;
+  let _autoBusy  = false;
+  async function autoPublish() {
+    // debounce: รอ 1.5 วิ ถ้ามีการบันทึกซ้ำให้รีเซ็ตนับใหม่
+    clearTimeout(_autoTimer);
+    _autoTimer = setTimeout(_runAutoPublish, 1500);
+  }
+
+  async function _runAutoPublish() {
+    if (_autoBusy) { clearTimeout(_autoTimer); _autoTimer = setTimeout(_runAutoPublish, 2000); return; }
+    _autoBusy = true;
+    // แสดง toast "กำลังอัปเดต..." (toast สั้น ไม่ขวางการทำงาน)
+    const wk = (window.DMC_CONFIG || {}).CF_WORKER_URL || '';
+    if (!wk) { _autoBusy = false; markDirty(); return; }
+    try {
+      DMC.toast('🔄 กำลังอัปเดตหน้าเว็บ...', 'info', 2500);
+      const files = await build();
+      const r = await tryWorkerPublish(files);
+      if (r.ok) {
+        DMC.toast('✅ หน้าเว็บอัปเดตแล้ว — ลูกค้าเห็นข้อมูลใหม่ทันที', 'success', 4000);
+        clearDirty();
+        markPublished();
+      } else {
+        // Worker ไม่ได้ตั้ง GITHUB_TOKEN → แจ้งให้เจ้าของระบบรู้ (ไม่ดาวน์โหลดไฟล์)
+        DMC.toast('⚠️ อัปเดตอัตโนมัติยังไม่พร้อม — กรุณาตั้งค่า GITHUB_TOKEN ใน Worker (ดูคู่มือ HANDOVER.md)', 'warning', 7000);
+        markDirty();   // ขึ้นแถบสีม่วงให้กดเอง
+      }
+    } catch (e) {
+      console.warn('auto-publish error:', e.message);
+      DMC.toast('⚠️ อัปเดตหน้าเว็บไม่สำเร็จ — ' + e.message, 'warning', 5000);
+      markDirty();
+    } finally {
+      _autoBusy = false;
+    }
+  }
+
+  window.AdminSnapshot = { markDirty, clearDirty, publish, autoPublish, build, lastPublishedText };
 })();

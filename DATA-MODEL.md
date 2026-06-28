@@ -66,3 +66,22 @@ name · emoji · slug · createdAt  *(หมวด built-in 7 หมวดอย
 name · phone/email · topic · message · createdAt · read(bool)
 
 ## settings — ตั้งค่าอื่นๆ (เผื่ออนาคต)
+
+---
+
+## 📦 V24 — ไฟล์ Static Snapshot (โฟลเดอร์ /data/)
+
+หน้าเว็บลูกค้าอ่านจากไฟล์เหล่านี้ก่อน (ผ่าน CDN, อ่าน Firestore = 0) — สร้าง/อัปเดตด้วยปุ่ม "เผยแพร่ snapshot"
+
+| ไฟล์ | ที่มา (Firestore) | ใช้ที่ |
+|------|-------------------|--------|
+| `data/products.json` | `products` (active=true) | หน้าแรก, แคตตาล็อก, สินค้า, ตรวจราคาตะกร้า |
+| `data/gallery.json` | `gallery` (active≠false) | แกลเลอรี, hero showcase |
+| `data/categories.json` | `categories` | หมวดหมู่ |
+| `data/reviews.json` *(V24)* | `reviews` (status=approved, ≤100) | รีวิวหน้าแรก — ทำให้หน้าแรกไม่ต้องโหลด Firebase |
+| `data/sitecontent.json` *(V24)* | `siteContent/main` | เนื้อหา CMS (hero/promo/contact) — โครงสร้าง `{generatedAt, data:{...}}` |
+
+**โครงสร้างทั่วไป:** `{ "generatedAt": ISO8601, "count": N, "items": [...] }`
+(ยกเว้น `sitecontent.json` ใช้ `{ "generatedAt": ISO8601, "data": {...} }`)
+
+**Fallback:** ถ้าไฟล์ใดยังไม่มี (404) ระบบจะอ่าน Firestore แทนอัตโนมัติ (ไม่พัง) — รีวิว/CMS จะ fallback จนกว่าจะกดเผยแพร่ครั้งแรกหลัง V24

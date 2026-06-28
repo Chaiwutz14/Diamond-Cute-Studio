@@ -62,3 +62,18 @@ sw.js + manifest.webmanifest + assets/   PWA
 - ออเดอร์: `get` รายใบด้วย docId ได้ (docId สุ่ม = token) แต่ `list` ต้องเป็นแอดมินหรือเจ้าของเบอร์ที่ผ่าน OTP (Phone Auth)
 - Secrets ฝั่ง server ทั้งหมดอยู่ใน Cloudflare Worker
 - รหัสแอดมิน fallback เก็บเป็น PBKDF2-SHA256 hash (ไม่มี plaintext ในโค้ด)
+
+---
+
+## 🆕 V24 — Audit Remediation (สรุปสำหรับผู้ดูแล)
+
+**เปลี่ยนอะไร:** ปิดช่องราคา (Server Order), ลดน้ำหนักหน้าเว็บ (ฟอนต์ 10→7, รวม CSS เป็น `core.css`, jsQR lazy), หน้าแรกไม่โหลด Firebase (snapshot รีวิว/CMS), atomicity คูปอง, ขัดเงา UX
+
+**ต้องทำหลัง deploy (สำคัญ):**
+1. เข้าหลังบ้าน → กด **"เผยแพร่ snapshot" 1 ครั้ง** (สร้าง `data/reviews.json` + `data/sitecontent.json`)
+2. เปิด **Server Order** + **Rate Limiting** + (ออปชัน) **publish อัตโนมัติ** → ทำตาม **HANDOVER.md หัวข้อ 5**
+3. ยืนยัน composite index: `firebase deploy --only firestore:indexes`
+
+**ปลอดภัยถ้ายังไม่ตั้ง secret:** ทุกฟีเจอร์ใหม่ fallback ทำงานเหมือนเดิม (เช็คเอาต์/หน้าเว็บไม่พัง)
+
+**ไฟล์ที่ deploy ไม่เผยแพร่ (V24):** `_dev/`, `cloudflare-worker/`, `firebase-rules/`, `*.md` (อยู่ใน repo สำหรับดูแลเท่านั้น)

@@ -113,6 +113,49 @@ function renderCart() {
   });
 
   renderSummary();
+  checkCartPrices(cart);   // V24/SEC-A: เตือนถ้าราคาในตะกร้าต่างจากแคตตาล็อกล่าสุด
+}
+
+// ─── V24: ตรวจราคาตะกร้าเทียบแคตตาล็อกปัจจุบัน (กันราคาเก่าค้าง + เสริมความถูกต้องของยอด) ───
+async function checkCartPrices(cart) {
+  const host = document.getElementById('cart-list');
+  if (!host || !cart || !cart.length) return;
+  let current = [];
+  try { current = await DMC.loadProducts(); } catch (e) { return; }
+  if (!current || !current.length) return;
+  const priceOf = {};
+  current.forEach(p => { if (p && p.id != null) priceOf[String(p.id)] = Number(p.price); });
+
+  const changed = [];
+  cart.forEach(item => {
+    if (item.id == null) return;
+    const now = priceOf[String(item.id)];
+    if (now != null && Number(now) !== Number(item.price)) {
+      changed.push({ name: item.name, was: Number(item.price), now: Number(now) });
+    }
+  });
+
+  const old = document.getElementById('cart-price-warning');
+  if (old) old.remove();
+  if (!changed.length) return;
+
+  const box = document.createElement('div');
+  box.id = 'cart-price-warning';
+  box.style.cssText = 'background:var(--bg-card2,#fff7ed);border:1.5px solid #f59e0b;border-radius:12px;padding:.85rem 1rem;margin:0 0 1rem;font-size:.85rem;line-height:1.6;color:var(--text-1,#7c2d12)';
+  box.innerHTML = '⚠️ <strong>ราคาบางรายการมีการอัปเดต</strong><br>' +
+    changed.map(c => '• ' + DMC.escapeHtml(c.name) + ': ' + DMC.formatPrice(c.was) + ' → <strong>' + DMC.formatPrice(c.now) + '</strong>').join('<br>') +
+    '<br><button id="cart-sync-price" type="button" style="margin-top:.6rem;padding:.5rem 1rem;border:none;border-radius:9px;background:#f59e0b;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer;font-family:var(--font-display),sans-serif">อัปเดตราคาเป็นปัจจุบัน</button>';
+  host.parentElement.insertBefore(box, host);
+
+  document.getElementById('cart-sync-price')?.addEventListener('click', () => {
+    const fresh = DMC.getCart().map(item => {
+      const now = priceOf[String(item.id)];
+      return (now != null) ? { ...item, price: Number(now) } : item;
+    });
+    DMC.saveCart(fresh);
+    DMC.toast('อัปเดตราคาเรียบร้อยแล้ว ✓', 'success');
+    renderCart();
+  });
 }
 
 // ─── Summary Panel ───
@@ -729,6 +772,7 @@ async function submitOrder() {
     };
   }
 
+  let _couponReservedRef = null;   // V24/BUG-B: เก็บ ref ไว้ "คืนสิทธิ์" ถ้าสร้างออเดอร์ล้มเหลวภายหลัง
   try {
     // V16: จองสิทธิ์คูปอง "ก่อน" สร้างออเดอร์ (atomic) — ถ้าคูปองเต็มลิมิตให้ยกเลิกทันที
     //      (เดิม: นับหลังสร้างออเดอร์ + กลืน error → ลูกค้าใช้คูปองเกินลิมิตได้)
@@ -743,6 +787,7 @@ async function submitOrder() {
           if (limit > 0 && used >= limit) throw new Error('COUPON_EXHAUSTED');
           tx.update(ref, { usedCount: used + 1 });   // จองสิทธิ์ +1 (ตรงกับ rules)
         });
+        _couponReservedRef = ref;                    // จองสำเร็จ → ถ้าออเดอร์ล้มจะคืนสิทธิ์
       } catch (e) {
         if (String(e && e.message).indexOf('COUPON_EXHAUSTED') !== -1) {
           DMC.toast('ขออภัย คูปอง ' + appliedCoupon.code + ' ถูกใช้ครบจำนวนแล้ว 🙏 กรุณานำส่วนลดออกแล้วลองใหม่', 'error', 6000);
@@ -823,6 +868,18 @@ async function submitOrder() {
 
   } catch (err) {
     console.error('Order submit error:', err);
+    // V24/BUG-B: ออเดอร์ล้มเหลวหลังจองคูปองไปแล้ว → คืนสิทธิ์ usedCount -1 (กันคูปอง "หายฟรี")
+    if (_couponReservedRef) {
+      try {
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(_couponReservedRef);
+          if (!snap.exists) return;
+          const used = Number(snap.data().usedCount || 0);
+          if (used > 0) tx.update(_couponReservedRef, { usedCount: used - 1 });
+        });
+      } catch (e) { console.warn('coupon rollback skipped:', e.message); }
+      _couponReservedRef = null;
+    }
     DMC.toast('เกิดข้อผิดพลาด กรุณาลองใหม่หรือติดต่อ LINE', 'error');
     btn.disabled = false;
     btn.innerHTML = '✅ ยืนยันออเดอร์';

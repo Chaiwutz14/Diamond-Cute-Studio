@@ -135,7 +135,7 @@ async function saveGalleryItem() {
     document.getElementById('g-image').value = '';
     document.getElementById('g-upload-status').textContent = '';
     await loadGalleryItems();
-    if (window.AdminSnapshot) AdminSnapshot.markDirty();
+    if (window.AdminSnapshot) AdminSnapshot.autoPublish();
   } catch(e) {
     if (typeof Loading !== 'undefined') Loading.buttonDone(gBtn);
     console.error('Gallery save error:', e);
@@ -146,6 +146,6 @@ async function saveGalleryItem() {
 async function deleteGalleryItem(id) {
   if (!(await DMC.confirm('ลบรูปนี้?'))) return;
   db.collection('gallery').doc(id).delete()
-    .then(() => { DMC.toast('ลบแล้ว','success'); loadGalleryItems(); if (window.AdminSnapshot) AdminSnapshot.markDirty(); })
+    .then(() => { DMC.toast('ลบแล้ว','success'); loadGalleryItems(); if (window.AdminSnapshot) AdminSnapshot.autoPublish(); })
     .catch(() => DMC.toast('ลบไม่สำเร็จ','error'));
 }

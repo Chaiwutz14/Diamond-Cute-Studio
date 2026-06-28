@@ -113,7 +113,7 @@ window.CMS = (function(){
     return out;
   }
 
-  // ─── โหลดเนื้อหา (cache → Firestore → defaults) ───
+  // ─── โหลดเนื้อหา (cache → snapshot → Firestore → defaults) ───
   function get() {
     if (_promise) return _promise;
 
@@ -126,7 +126,19 @@ window.CMS = (function(){
         }
       } catch (e) { /* cache เสีย — ข้าม */ }
 
-      // 2) โหลดจาก Firestore
+      // 2) V24/PERF-B: ลอง snapshot (data/sitecontent.json) ก่อน → หน้าแรกไม่ต้องโหลด Firebase
+      try {
+        if (DMC.loadSnapshotObject) {
+          const snap = await DMC.loadSnapshotObject('sitecontent');
+          const data = (snap && snap.data) ? snap.data : (snap && !snap.generatedAt ? snap : null);
+          if (data) {
+            try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), data })); } catch (e) {}
+            return mergeDeep(DEFAULTS, data);
+          }
+        }
+      } catch (e) { /* ไม่มีไฟล์ snapshot — ข้ามไป Firestore */ }
+
+      // 3) โหลดจาก Firestore (fallback)
       try {
         const db   = await DMC.getFirebaseReady();
         const doc  = await db.collection('siteContent').doc('main').get();

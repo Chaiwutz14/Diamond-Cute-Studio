@@ -1,6 +1,42 @@
 # CHANGELOG — Diamond Cute Studio
 
-> เรียงจากใหม่ไปเก่า (V23 = ล่าสุด, V1 = เริ่มต้น)
+> เรียงจากใหม่ไปเก่า (V24 = ล่าสุด, V1 = เริ่มต้น)
+
+---
+
+## V24 — Audit Remediation (ปิดช่องราคา + ลดน้ำหนัก + ขัดเงา UX)
+
+ทำตามแผน Audit 2026 (P0→P3) — เน้น "เปิดสวิตช์ที่เตรียมไว้ + ลดน้ำหนักหน้าเว็บ + ขัดเงา UX" โดยไม่รื้อระบบ ทุกอย่างยังอยู่บนฟรีเทียร์ และมี fallback กันพังทุกจุด
+
+### ความปลอดภัย
+| รหัส | สิ่งที่ทำ | ระดับ | ไฟล์ |
+|------|-----------|-------|------|
+| **SEC-A** | เปิด `SERVER_ORDER:{enabled:true}` — ปิดช่องสั่ง ฿1. "ออกฤทธิ์จริง" เมื่อตั้ง secret `GCP_SERVICE_ACCOUNT`+`PRODUCTS_SNAPSHOT_URL` ใน Worker (ยังไม่ตั้ง = Worker ตอบ fallback หน้าเว็บเขียนตรงเหมือนเดิม ไม่พัง) | High | config.js |
+| **SEC-A+** | เสริมความถูกต้องราคาฝั่งลูกค้า: ตะกร้าเตือน + ปุ่ม "อัปเดตราคา" เมื่อราคาต่างจากแคตตาล็อกล่าสุด | High | order.js |
+| **SEC-B** | กันสแปม `/upload`: ลด rate limit 30→20/10นาที + เพิ่ม Turnstile แบบ flag-gated (ปิดไว้ ตั้ง `TURNSTILE_SECRET` เพื่อเปิด) | Med | cloudflare-worker/index.js, config.js |
+| **SEC-C** | กันซอร์สหลังบ้าน/เอกสารภายในหลุดเว็บ: deploy ลบ `cloudflare-worker/`, `firebase-rules/`, `*.md` | Med | .github/workflows/deploy.yml |
+
+### ประสิทธิภาพ / ความลื่นไหล
+| รหัส | สิ่งที่ทำ | ไฟล์ |
+|------|-----------|------|
+| **PERF-A** | ฟอนต์ 10→7 น้ำหนัก (Kanit 400;600;700;800 + Sarabun 400;600;700) · รวม themes+loading+main → `core.css` (ลด 3 คำขอ/หน้า) | ทุก *.html, css/core.css, sw.js |
+| **PERF-B** | หน้าแรกไม่บังคับโหลด Firebase: ตัด `await getFirebaseReady()` ก่อนสินค้า (อ่าน snapshot ตรง) + รีวิว/CMS อ่านจาก snapshot (`reviews.json`/`sitecontent.json`) fallback Firestore | home.js, utils.js, cms.js, admin-snapshot.js |
+| **PERF-B** | jsQR (256KB) โหลดแบบ lazy เฉพาะตอนสแกนสลิป (เดิมโหลดทุกครั้งที่เปิดตะกร้า) | slip-verify.js, cart.html, sw.js |
+
+### บั๊ก
+| รหัส | สิ่งที่แก้ | ไฟล์ |
+|------|-----------|------|
+| **BUG-A** | publish snapshot ปุ่มเดียว (มี path แล้ว) + เพิ่มป้าย "เผยแพร่ล่าสุดเมื่อ..." + snapshot ครอบ reviews/sitecontent | admin-snapshot.js |
+| **BUG-B/C** | atomicity คูปอง — ออเดอร์ล้มหลังจองคูปอง → คืน `usedCount -1` อัตโนมัติ (กันคูปองหายฟรี) | order.js |
+
+### UX (เล็กแต่ได้ใจ)
+- **ทางเข้าแอดมิน:** ยกเลิกแตะโลโก้ 5 ครั้ง + Ctrl+Shift+A (กดโดนเอง) — คงไอคอนเฟือง ⚙ ที่ Footer ไว้ตามเดิม (admin-access.js)
+- **คำในปุ่มสม่ำเสมอ:** ปุ่ม "ยืนยันออเดอร์" → หน้าสำเร็จ "ยืนยันออเดอร์สำเร็จแล้ว!" (cart.html)
+- **ความเชื่อมั่นเรื่องราคา:** Footer แสดง "อัปเดตแคตตาล็อกล่าสุด..." จากเวลา snapshot (footer.js)
+
+**ยังไม่เปิด (รอเจ้าของตั้ง secret/นโยบาย):** Server Order (ตั้ง GCP service account), Turnstile (ตั้ง keys), publish อัตโนมัติ (ตั้ง GITHUB_TOKEN), API ตรวจสลิป, Storage private — ดูขั้นตอนใน HANDOVER.md
+
+**ต้องทำหลัง deploy:** ① กด "เผยแพร่ snapshot" 1 ครั้งเพื่อสร้าง `reviews.json`/`sitecontent.json` (หน้าแรกถึงจะไม่โหลด Firebase) ② ตั้ง Cloudflare Rate Limiting Rules (ดู HANDOVER.md) ③ ยืนยัน composite index deploy แล้ว
 
 ---
 

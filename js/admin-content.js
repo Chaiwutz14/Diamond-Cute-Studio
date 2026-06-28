@@ -264,6 +264,7 @@ async function loadContentCMS(container) {
       await db.collection('siteContent').doc('main').set(data, { merge: true });
       if (typeof CMS !== 'undefined') CMS.clearCache();
       DMC.toast('บันทึกเนื้อหาแล้ว ✅ หน้าเว็บอัปเดตทันที', 'success', 3500);
+      if (window.AdminSnapshot) AdminSnapshot.autoPublish();
     } catch(e) {
       DMC.toast('บันทึกไม่สำเร็จ: ' + e.message, 'error');
     } finally {

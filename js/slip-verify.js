@@ -41,9 +41,26 @@
     }
   }
 
+  // ─── V24/PERF-B: โหลด jsQR (256KB) แบบ lazy เฉพาะตอนต้องสแกนสลิปจริง ───
+  let _jsqrPromise = null;
+  function ensureJsQR() {
+    if (typeof window.jsQR === 'function') return Promise.resolve(true);
+    if (_jsqrPromise) return _jsqrPromise;
+    _jsqrPromise = new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = 'js/vendor/jsqr.min.js';
+      s.async = true;
+      s.onload = () => resolve(typeof window.jsQR === 'function');
+      s.onerror = () => resolve(false);
+      document.head.appendChild(s);
+    });
+    return _jsqrPromise;
+  }
+
   // ─── อ่าน QR จากรูป (ลองหลายความละเอียด — QR ในสลิปมักเล็ก) ───
   async function decodeQR(file) {
-    if (typeof window.jsQR !== 'function') throw new Error('jsQR ยังไม่พร้อม');
+    const ready = await ensureJsQR();
+    if (!ready || typeof window.jsQR !== 'function') throw new Error('jsQR ยังไม่พร้อม');
     for (const dim of [1600, 2600]) {
       let id;
       try { id = await fileToImageData(file, dim); } catch (e) { continue; }

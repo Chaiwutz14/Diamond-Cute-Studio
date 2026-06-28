@@ -9,7 +9,7 @@
    - ไม่แตะ Firebase / ImgBB / API (ให้ผ่านตรงเสมอ)
 ═══════════════════════════════════════════════ */
 
-const CACHE_VERSION = 'dcs-v16-7-glow';
+const CACHE_VERSION = 'dcs-v24-core';
 const CACHE_NAME = 'dcs-cache-' + CACHE_VERSION;
 
 // ไฟล์หลักที่ pre-cache ตอนติดตั้ง (โหลดครั้งแรกเร็วขึ้น + ออฟไลน์ได้)
@@ -27,6 +27,7 @@ const PRECACHE = [
   './manifest.webmanifest',
   './assets/icon-192.png',
   './assets/icon-512.png',
+  './css/core.css',
   './css/themes.css',
   './css/loading.css',
   './css/main.css',
@@ -38,7 +39,6 @@ const PRECACHE = [
   './js/config.js',
   './js/loading.js',
   './js/utils.js',
-  './js/vendor/jsqr.min.js',
   './js/slip-verify.js',
   './js/cms.js',
   './js/categories.js',

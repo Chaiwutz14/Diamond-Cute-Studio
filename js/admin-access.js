@@ -27,36 +27,13 @@
     bottom.appendChild(link);
   }
 
-  // ── 2. Secret: tap/click logo 5× quickly ──────
-  function initLogoSecret(){
-    const logo = document.querySelector('.nav-logo');
-    if (!logo) return;
-    let taps = 0, timer;
-    logo.addEventListener('click', e => {
-      // Only trigger when NOT navigating (already on page, i.e. href = same page or #)
-      taps++;
-      clearTimeout(timer);
-      timer = setTimeout(() => { taps = 0; }, 2000);
-      if (taps >= 5) {
-        taps = 0;
-        clearTimeout(timer);
-        window.location.href = 'admin-login.html';
-      }
-    });
-  }
-
-  // ── 3. Secret keyboard shortcut: Ctrl+Shift+A ─
-  document.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-      e.preventDefault();
-      window.location.href = 'admin-login.html';
-    }
-  });
+  // ── 2. (ยกเลิกแล้ว V24) แตะโลโก้ 5 ครั้ง / Ctrl+Shift+A ──
+  //   เหตุผล: เสี่ยงกดโดนเองโดยไม่ตั้งใจ — ทางเข้าแอดมินใช้ "ไอคอนเฟือง ⚙ ที่ Footer" ได้เลย
+  //   (ด่านความปลอดภัยจริงคือ Firebase Auth ในหน้า admin-login.html อยู่แล้ว)
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { injectFooterLink(); initLogoSecret(); });
+    document.addEventListener('DOMContentLoaded', injectFooterLink);
   } else {
     injectFooterLink();
-    initLogoSecret();
   }
 })();

@@ -16,27 +16,23 @@ function homeCoverOf(p) {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-  applyCMSContent();    // เนื้อหาจากหลังบ้าน (hero/promo/stats)
-  loadHomeReviews();    // รีวิวจริงจากลูกค้า
+  applyCMSContent();    // เนื้อหาจากหลังบ้าน (hero/promo/stats) — V24: อ่าน snapshot ก่อน ไม่บังคับโหลด Firebase
+  loadHomeReviews();    // รีวิวจริง — V24: อ่าน snapshot (data/reviews.json) ไม่บังคับโหลด Firebase
   loadCategoryCounts(); // นับจำนวนสินค้าจริงต่อหมวด (เจ้าของ #categories-grid)
   loadHomeGallery();    // V4: แถบผลงานจริง (#home-gallery)
   initHeroShowcase();   // V16: coverflow ผลงานฝั่งขวา (เฉพาะเดสก์ท็อป)
 
-  // ─── Load Firebase + Products ───
-  try {
-    const db = await DMC.getFirebaseReady();
-    await loadFeaturedProducts(db);
-  } catch (e) {
-    console.warn('Firebase not configured yet, showing placeholder data');
-    renderPlaceholderProducts();
-  }
+  // ─── V24/PERF-B: โหลดสินค้าจาก snapshot โดยตรง (ไม่ await getFirebaseReady ก่อน) ──
+  //   loadFeaturedProducts ใช้ DMC.loadProducts() (snapshot → cache → Firestore) อยู่แล้ว
+  //   ผล: หน้าแรกเรนเดอร์สินค้าได้ทันทีจากไฟล์ CDN ไม่ต้องรอ Firebase SDK
+  loadFeaturedProducts().catch(() => renderPlaceholderProducts());
 
   // ─── Intersection Observer (scroll animations) ───
   initScrollAnimations();
 });
 
 // ─── Load Featured Products ───
-async function loadFeaturedProducts(db) {
+async function loadFeaturedProducts() {
   const container = document.getElementById('featured-products');
   if (!container) return;
 
@@ -242,8 +238,9 @@ async function loadHomeReviews() {
   const wrap = document.getElementById('home-reviews');
   if (!wrap || typeof Reviews === 'undefined') return;
   try {
-    const db   = await DMC.getFirebaseReady();
-    const list = await Reviews.fetchApproved(db, null, 6);
+    // V24/PERF-B: อ่านรีวิวจาก snapshot (data/reviews.json) → ไม่บังคับโหลด Firebase บนหน้าแรก
+    //   fallback อัตโนมัติไป Firestore ถ้ายังไม่มีไฟล์ (DMC.loadReviews จัดการให้)
+    const list = (await DMC.loadReviews({ limit: 6 })).slice(0, 6);
     const section = document.getElementById('home-reviews-section');
     if (!list.length) { if (section) section.style.display = 'none'; return; }
 

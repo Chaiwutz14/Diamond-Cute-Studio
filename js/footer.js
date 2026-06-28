@@ -112,16 +112,36 @@
       +   '</div>'
       +   '<div class="footer-bottom">'
       +     '<span>© 2026 Diamond Cute Studio 💎 — All rights reserved.</span>'
+      +     '<span id="footer-catalog-fresh" style="opacity:.8"></span>'
       +     '<span>Powered by Firebase + Cloudflare</span>'
       +   '</div>'
       + '</footer>';
   }
 
+  // V24: แสดง "อัปเดตแคตตาล็อกล่าสุด" จากเวลา generatedAt ของ snapshot (ความเชื่อมั่นเรื่องราคา)
+  function showCatalogFreshness() {
+    var el = document.getElementById('footer-catalog-fresh');
+    if (!el) return;
+    try {
+      var base = (window.DMC_CONFIG || {}).SNAPSHOT_BASE || './data/';
+      fetch(base + 'products.json', { cache: 'no-cache' })
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(j){
+          if (!j || !j.generatedAt) return;
+          var d = new Date(j.generatedAt);
+          var ago = (window.DMC && DMC.timeAgo) ? DMC.timeAgo(d) : '';
+          el.textContent = '🗓️ อัปเดตแคตตาล็อก' + (ago ? ' ' + ago : '');
+        })
+        .catch(function(){});
+    } catch (e) {}
+  }
+
   function boot() {
     if (typeof CMS !== 'undefined') {
-      CMS.get().then(function(c){ render(c.contact || null); }).catch(function(){ render(null); });
+      CMS.get().then(function(c){ render(c.contact || null); showCatalogFreshness(); }).catch(function(){ render(null); showCatalogFreshness(); });
     } else {
       render(null);
+      showCatalogFreshness();
     }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

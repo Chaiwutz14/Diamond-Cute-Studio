@@ -79,8 +79,15 @@ window.DMC_CONFIG = {
   //   → ส่งออเดอร์ ฿1 ไม่ได้อีกต่อไป
   //   ต้องตั้ง secret ใน Worker ก่อน: GCP_SERVICE_ACCOUNT + PRODUCTS_SNAPSHOT_URL (+ SHIP_* ให้ตรง CMS)
   //   ถ้า Worker ตอบ fallback/ผิดพลาด → หน้าเว็บเขียน Firestore ตรงเองอัตโนมัติ (เช็คเอาต์ไม่มีวันพัง)
-  // ปิดไว้ก่อน (false) จนกว่าจะตั้งค่า service account เสร็จและทดสอบแล้ว
-  SERVER_ORDER: { enabled: false },
+  // V24/SEC-A: เปิดแล้ว — แต่ "ออกฤทธิ์จริง" ต่อเมื่อตั้ง GCP_SERVICE_ACCOUNT + PRODUCTS_SNAPSHOT_URL ใน Worker
+  //   ถ้ายังไม่ตั้ง secret → Worker ตอบ {fallback:true} ทันที หน้าเว็บเขียน Firestore ตรงเหมือนเดิม (ไม่พัง)
+  //   วิธีตั้ง secret ดูใน HANDOVER.md หัวข้อ "เปิด Server Order (ปิดช่องราคา)"
+  SERVER_ORDER: { enabled: true },
+
+  // V24/SEC-B: Turnstile (CAPTCHA ฟรีของ Cloudflare) ป้องกันสแปม endpoint อัปรูป — ปิดไว้ก่อน
+  //   เปิดเมื่อพร้อม: ตั้ง siteKey ที่นี่ + ตั้ง secret TURNSTILE_SECRET ใน Worker (ดู HANDOVER.md)
+  //   ปิดอยู่ = ไม่มีผลใดๆ กับการอัปรูป (ทำงานเหมือนเดิมทุกอย่าง)
+  TURNSTILE: { enabled: false, siteKey: '' },
 
   // ── V16: Static Snapshot — ลดการอ่าน Firestore ฝั่งหน้าบ้านให้เหลือ ~0 ──
   // หลักการ: export สินค้า/แกลเลอรีเป็นไฟล์ JSON (ปุ่ม "เผยแพร่ snapshot" ในแอดมิน หรือ _dev/export-snapshot.html)

@@ -23,7 +23,8 @@ export default {
       try {
         if (!originAllowed(request, env)) return cors(JSON.stringify({ error: 'origin not allowed' }), 403);
         if (!clientSecretOk(request, env)) return cors(JSON.stringify({ error: 'unauthorized' }), 401);
-        if (!(await rateLimitOk(request, 'upload', 30, 600))) return cors(JSON.stringify({ error: 'rate limited, try again later' }), 429);
+        if (!(await turnstileOk(request, env))) return cors(JSON.stringify({ error: 'captcha failed' }), 403);
+        if (!(await rateLimitOk(request, 'upload', 20, 600))) return cors(JSON.stringify({ error: 'rate limited, try again later' }), 429);
         if (!env.IMGBB_KEY) {
           return cors(JSON.stringify({ error: 'IMGBB_KEY not set in Worker secrets' }), 500);
         }
@@ -431,6 +432,28 @@ function clientSecretOk(request, env) {
   return got === want;
 }
 
+// V24/SEC-B: Cloudflare Turnstile (CAPTCHA ฟรี) ป้องกันบอตยิง /upload
+//   ถ้ายังไม่ตั้ง secret TURNSTILE_SECRET ใน Worker → ข้ามการเช็ก (fail-open, ระบบไม่พังก่อนตั้งค่า)
+//   เปิดใช้: ตั้ง TURNSTILE_SECRET ใน Worker + TURNSTILE.siteKey ใน config.js (ฝั่งเว็บจะแนบ token มาเอง)
+async function turnstileOk(request, env) {
+  const secret = String(env.TURNSTILE_SECRET || '').trim();
+  if (!secret) return true;           // ยังไม่ตั้งค่า = ไม่บังคับ
+  try {
+    const token = request.headers.get('CF-Turnstile-Token') || '';
+    if (!token) return false;
+    const ip = request.headers.get('CF-Connecting-IP') || '';
+    const form = new FormData();
+    form.append('secret', secret);
+    form.append('response', token);
+    if (ip) form.append('remoteip', ip);
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form });
+    const j = await r.json().catch(() => ({}));
+    return !!(j && j.success);
+  } catch (e) {
+    return true;   // fail-open: ถ้า siteverify ล่ม ไม่บล็อกลูกค้าจริง
+  }
+}
+
 // V17: Rate limit ต่อ IP (กันยิงถล่ม /upload /notify เผาโควต้า)
 //   ใช้ Cache API (ฟรี ไม่ต้องตั้ง KV/Durable Object) — นับต่อ edge ต่อช่วงเวลา
 //   ⚠️ เป็นการนับ "ต่อ data center" (per-colo) จึงเป็นการ "ลดแรง" ไม่ใช่เพดานตายตัว
@@ -461,7 +484,7 @@ function cors(res, status = 200) {
   const headers = {
     'Access-Control-Allow-Origin':  '*',
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-DMC-Key',
+    'Access-Control-Allow-Headers': 'Content-Type, X-DMC-Key, CF-Turnstile-Token',
   };
   // bug-fix: ก่อนหน้านี้รองรับเฉพาะ Response object — แต่ทุก handler ส่ง string (JSON.stringify) เข้ามา
   // ทำให้ Response ที่คืนกลับไม่มี CORS header → browser แสดง error เป็น "CORS policy" แทนข้อความจริง

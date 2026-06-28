@@ -704,6 +704,40 @@ async function loadCategoriesRaw(opts) {
   });
 }
 
+// ─── V24/PERF-B: โหลดสแนปช็อตแบบ "อ็อบเจ็กต์" (ไม่ใช่ array) เช่น siteContent ───
+async function loadSnapshotObject(name) {
+  const cfg = window.DMC_CONFIG || {};
+  if (cfg.USE_SNAPSHOT === false) return null;
+  try {
+    const base = cfg.SNAPSHOT_BASE || './data/';
+    const res = await fetch(base + name + '.json', { cache: 'no-cache' });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data && typeof data === 'object') ? data : null;
+  } catch (e) { return null; }
+}
+
+// ─── V24/PERF-B: โหลด "รีวิวที่อนุมัติแล้ว" (snapshot → cache → Firestore) ───
+//   ทำให้หน้าแรกไม่ต้องโหลด Firebase SDK เพื่อแสดงรีวิว (อ่านจากไฟล์ data/reviews.json)
+//   fallback: ถ้าไม่มีไฟล์ → อ่าน Firestore (โหลด Firebase ตามเดิม) เพื่อไม่ให้รีวิวหาย
+async function loadReviews(opts) {
+  opts = opts || {};
+  const limit = opts.limit || 50;
+  return cachedQuery('reviews_approved', opts.ttlMs || 300000, async () => {
+    const snap = await loadSnapshot('reviews');
+    if (snap) return snap.filter(r => r && r.status === 'approved');
+    const db = await getFirebaseReady();
+    const qs = await db.collection('reviews').where('status', '==', 'approved').limit(limit).get();
+    const items = [];
+    qs.forEach(d => {
+      const x = d.data();
+      if (x.createdAt && x.createdAt.seconds != null) x.createdAt = { seconds: x.createdAt.seconds };
+      items.push({ id: d.id, ...x });
+    });
+    return items;
+  });
+}
+
 window.DMC = {
   // Firebase
   getFirebaseReady,
@@ -711,7 +745,9 @@ window.DMC = {
   loadProducts,
   loadGallery,
   loadCategoriesRaw,
+  loadReviews,
   loadSnapshot,
+  loadSnapshotObject,
   cachedQuery,
   cacheGet,
   cacheSet,
