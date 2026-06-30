@@ -29,7 +29,7 @@ function adminCoverOf(p) {
   if (Array.isArray(p.images) && p.images.length) {
     const ci = Number(p.coverIndex);
     const item = (!isNaN(ci) && p.images[ci]) ? p.images[ci] : p.images[0];
-    return typeof item === 'string' ? item : (item.url || '');
+    return item ? (typeof item === 'string' ? item : (item.url || '')) : '';   // V.fix(A4): guard null
   }
   return p.image || '';
 }
@@ -55,7 +55,7 @@ async function loadProductsTable() {
       return `<tr>
       <td>
         <div style="width:46px;height:46px;border-radius:var(--r-md);background:var(--bg-mid);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:1.3rem;position:relative">
-          ${cover?`<img src="${cover}" style="width:100%;height:100%;object-fit:contain;padding:2px">`:(p.emoji||'📦')}
+          ${cover?`<img src="${DMC.escapeHtml(cover)}" style="width:100%;height:100%;object-fit:contain;padding:2px">`:(p.emoji||'📦')}
           ${imgCount>1?`<span style="position:absolute;bottom:0;right:0;background:var(--accent);color:#fff;font-size:.55rem;padding:0 .25rem;border-radius:4px 0 0 0">${imgCount}</span>`:''}
         </div>
       </td>
@@ -193,7 +193,7 @@ window.openProductModal = async function(productId) {
       <div class="form-group" style="margin:0">
         <label class="form-label">หมวดหมู่ *</label>
         <select data-custom class="form-input form-select" id="p-category">
-          ${categories.map(c=>`<option ${product.category===c?'selected':''}>${c}</option>`).join('')}
+          ${categories.map(c=>`<option ${product.category===c?'selected':''}>${DMC.escapeHtml(c)}</option>`).join('')}
           <option value="__add__">➕ เพิ่มหมวดหมู่ใหม่...</option>
           ${customCats.length ? `<option value="__manage__">🗑️ จัดการหมวดหมู่ที่เพิ่มเอง...</option>` : ''}
         </select>

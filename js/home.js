@@ -9,7 +9,8 @@
 function homeCoverOf(p) {
   if (Array.isArray(p.images) && p.images.length) {
     const i = (typeof p.coverIndex === 'number' && p.images[p.coverIndex]) ? p.coverIndex : 0;
-    return p.images[i].url || p.images[i] || '';
+    const im = p.images[i];                                  // V.fix(A4): guard กัน null/undefined ใน array
+    return im ? (typeof im === 'string' ? im : (im.url || '')) : '';
   }
   return p.image || '';
 }
@@ -60,33 +61,8 @@ async function loadFeaturedProducts() {
   }
 }
 
-// ─── Load Categories ───
-async function loadCategories(db) {
-  const container = document.getElementById('categories-grid');
-  if (!container) return;
-
-  try {
-    // PERF-03: อ่านจาก snapshot/cache (อ่าน Firestore ครั้งเดียว/เซสชัน หรือ 0) แล้วเรียงตาม order ฝั่ง client
-    const list = (await DMC.loadCategoriesRaw()).slice()
-      .sort((a, b) => (a.order || 0) - (b.order || 0));
-
-    if (!list.length) return; // keep static HTML
-
-    container.innerHTML = '';
-    list.forEach(c => {
-      container.insertAdjacentHTML('beforeend', `
-        <a href="catalog.html?cat=${c.id}" class="cat-card">
-          <span class="cat-icon">${DMC.escapeHtml(c.icon || '📦')}</span>
-          <div class="cat-name">${DMC.escapeHtml(c.name)}</div>
-          <div class="cat-count">${c.count || 0} รายการ</div>
-        </a>
-      `);
-    });
-
-  } catch (e) {
-    console.warn('Categories load error:', e);
-  }
-}
+// V.fix(A5): ลบ loadCategories() ที่เป็น dead code ออก
+//   (เจ้าของ #categories-grid คือ loadCategoryCounts() — ตัวนี้ไม่เคยถูกเรียก)
 
 // ─── Build Product Card HTML ───
 function buildProductCard(p) {

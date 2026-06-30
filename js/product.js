@@ -499,7 +499,7 @@ function coverImageOf(p) {
   if (Array.isArray(p.images) && p.images.length) {
     const ci = Number(p.coverIndex);
     const item = (!isNaN(ci) && p.images[ci]) ? p.images[ci] : p.images[0];
-    return typeof item === 'string' ? item : (item.url || '');
+    return item ? (typeof item === 'string' ? item : (item.url || '')) : '';   // V.fix(A4): guard null
   }
   return p.image || '';
 }

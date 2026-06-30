@@ -8,7 +8,8 @@
 function catalogCoverOf(p) {
   if (Array.isArray(p.images) && p.images.length) {
     const i = (typeof p.coverIndex === 'number' && p.images[p.coverIndex]) ? p.coverIndex : 0;
-    return p.images[i].url || p.images[i] || '';
+    const im = p.images[i];                                  // V.fix(A4): guard กัน null/undefined ใน array
+    return im ? (typeof im === 'string' ? im : (im.url || '')) : '';
   }
   return p.image || '';
 }
