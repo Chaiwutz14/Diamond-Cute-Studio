@@ -483,6 +483,25 @@ function bindSlipUpload() {
     if (file) handleSlipFile(file);
   });
 
+  // ลบสลิป → กลับไปหน้าอัปโหลด (กันลูกค้าเลือกสลิปผิดแล้วแก้ไม่ได้)
+  document.getElementById('slip-remove-btn')?.addEventListener('click', resetSlip);
+  // เปลี่ยนรูปสลิป → เปิดเลือกไฟล์ใหม่ (handleSlipFile จะแทนค่าทั้งหมดให้เอง)
+  document.getElementById('slip-change-btn')?.addEventListener('click', () => {
+    if (input) { input.value = ''; input.click(); }
+  });
+
+  function resetSlip() {
+    window._slipFile = null;
+    window._slipVerify = null;
+    slipUrl = '';
+    if (previewImg)  previewImg.src = '';
+    if (previewWrap) previewWrap.style.display = 'none';
+    if (zone)        zone.style.display = '';
+    if (input)       input.value = '';            // ให้เลือกไฟล์เดิมซ้ำได้
+    const box = document.getElementById('slip-verify-status');
+    if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+  }
+
   function handleSlipFile(file) {
     // Store file reference for upload on submit (NOT base64)
     window._slipFile = file;

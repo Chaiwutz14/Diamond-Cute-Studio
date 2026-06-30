@@ -78,6 +78,13 @@
 .file-preview-item img { width: 100%; height: 100%; object-fit: cover; }
 .file-preview-remove { position: absolute; top: 2px; right: 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--rose); color: #fff; font-size: .55rem; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; }
 
+/* ─── Slip preview (ลบ/เปลี่ยนรูปสลิปได้ก่อนยืนยัน) ─── */
+.slip-img-wrap { position: relative; display: inline-block; }
+#slip-img { display: block; max-height: 120px; border-radius: var(--r-md); border: 1px solid var(--glass-border); }
+.slip-remove-btn { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: var(--rose); color: #fff; font-size: .8rem; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--bg-card); box-shadow: 0 2px 6px rgba(0,0,0,.25); padding: 0; }
+.slip-change-btn { background: var(--bg-mid); border: 1.5px solid var(--border); color: var(--text-2); border-radius: var(--r-md); padding: .32rem .7rem; font-family: var(--font-display), sans-serif; font-weight: 600; font-size: .76rem; cursor: pointer; }
+.slip-change-btn:hover { border-color: var(--accent); color: var(--accent); }
+
 /* ─── Payment Methods ─── */
 .payment-methods { display: flex; flex-direction: column; gap: .55rem; }
 .payment-method {

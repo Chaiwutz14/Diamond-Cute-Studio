@@ -200,8 +200,14 @@
             <input type="file" id="slip-input" accept="image/*" style="display:none">
           </div>
           <div id="slip-preview" style="display:none;margin-top:0.5rem">
-            <img id="slip-img" style="max-height:120px;border-radius:var(--r-md);border:1px solid var(--glass-border)" alt="slip">
-            <div style="font-size:0.78rem;color:var(--emerald-light);margin-top:0.3rem;font-family:var(--font-display)">✅ แนบสลิปแล้ว</div>
+            <div class="slip-img-wrap">
+              <img id="slip-img" alt="slip">
+              <button type="button" id="slip-remove-btn" class="slip-remove-btn" aria-label="ลบสลิป" title="ลบสลิป">✕</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-top:0.35rem">
+              <span style="font-size:0.78rem;color:var(--emerald-light);font-family:var(--font-display)">✅ แนบสลิปแล้ว</span>
+              <button type="button" id="slip-change-btn" class="slip-change-btn">🔄 เปลี่ยนรูปสลิป</button>
+            </div>
             <div id="slip-verify-status" style="display:none;margin-top:0.4rem;font-size:0.78rem;line-height:1.4;font-family:var(--font-display)"></div>
           </div>
         </div>
