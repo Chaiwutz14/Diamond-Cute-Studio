@@ -202,7 +202,13 @@ function toast(message, type = 'info', duration = 3500) {
 
   const el = document.createElement('div');
   el.className = `toast toast-${type}`;
-  el.innerHTML = `<span>${icons[type] || ''}</span><span>${message}</span>`;
+  // V.fix(A2): message ใช้ textContent (กัน HTML-injection / การแสดงผลเพี้ยนเมื่อข้อความมี < & ' " เช่น โค้ดคูปอง/ชื่อสินค้า)
+  const iconSpan = document.createElement('span');
+  iconSpan.textContent = icons[type] || '';
+  const msgSpan = document.createElement('span');
+  msgSpan.textContent = message;
+  el.appendChild(iconSpan);
+  el.appendChild(msgSpan);
   container.appendChild(el);
 
   setTimeout(() => {

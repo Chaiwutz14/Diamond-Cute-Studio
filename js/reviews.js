@@ -146,7 +146,10 @@ window.Reviews = (function(){
 
   // ─── การ์ดรีวิว ───
   function cardHtml(r) {
-    const date = r.createdAt?.toDate ? DMC.formatDate(r.createdAt) : '';
+    // V.fix(A3): รองรับ createdAt ทั้งแบบ Firestore Timestamp (.toDate) และ snapshot/cache ({seconds}) → วันที่ไม่หาย
+    let date = '';
+    if (r.createdAt?.toDate)       date = DMC.formatDate(r.createdAt);
+    else if (r.createdAt?.seconds) date = DMC.formatDate(new Date(r.createdAt.seconds * 1000));
     const badge = r.source === 'admin'
       ? '<span class="rv-badge-shop">🏪 รีวิวจากร้าน</span>'
       : '<span class="rv-badge-verified">✓ ลูกค้า</span>';

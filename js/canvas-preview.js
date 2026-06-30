@@ -190,9 +190,16 @@ window.CanvasPreview = (function(){
 
     function download(filename) {
       if (!userImage) return;
+      // V.fix(C1): กรอบ custom ที่โฮสต์ไม่ส่ง CORS ทำให้ canvas tainted → toDataURL โยน SecurityError
+      let dataUrl;
+      try { dataUrl = canvas.toDataURL('image/jpeg', 0.92); }
+      catch (e) {
+        if (typeof DMC !== 'undefined') DMC.toast('บันทึกภาพไม่ได้ (กรอบนี้มีข้อจำกัดด้านลิขสิทธิ์รูป) — ลองแบบอื่น หรือแคปหน้าจอแทนได้ครับ', 'error', 4500);
+        return;
+      }
       const link = document.createElement('a');
       link.download = filename || 'preview-diamond-cute-studio.jpg';
-      link.href = canvas.toDataURL('image/jpeg', 0.92);
+      link.href = dataUrl;
       link.click();
     }
 

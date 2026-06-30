@@ -87,7 +87,7 @@ function renderCart() {
 
   list.innerHTML = cart.map(item => `
     <div class="cart-item" data-cart-id="${item.cartItemId}">
-      <div class="cart-item-thumb">${item.image ? `<img src="${item.image}" alt="${DMC.escapeHtml(item.name||'')}" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${item.emoji||'📦'}'">` : (item.emoji || '📦')}</div>
+      <div class="cart-item-thumb">${item.image ? `<img src="${DMC.escapeHtml(item.image)}" alt="${DMC.escapeHtml(item.name||'')}" loading="lazy" data-emoji="${DMC.escapeHtml(item.emoji||'📦')}">` : DMC.escapeHtml(item.emoji || '📦')}</div>
       <div class="cart-item-body">
         <div class="cart-item-name">${DMC.escapeHtml(item.name)}</div>
         <div class="cart-item-spec">
