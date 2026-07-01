@@ -37,7 +37,7 @@ window.DMC_CONFIG = {
   // V3 Security: Firebase App Check — กันการยิง Firestore/Auth ตรงด้วย config สาธารณะ
   // ขอ site key (reCAPTCHA v3) ที่ Firebase Console → App Check → เว็บแอป → reCAPTCHA v3
   // เว้นว่าง = ปิด App Check (ระบบยังทำงานปกติ)
-  APP_CHECK_SITE_KEY: '6Ld3wD0tAAAAAL7ThNZ4k6WUU05PN5wjdAgjiS6Y',
+  APP_CHECK_SITE_KEY: '6LfrxD4tAAAAAOipzi5y89JFH4_Rb8nOpn6DNqvj',
 
   // V3 Security: เก็บสลิป/รูปลูกค้าใน Firebase Storage แบบ private (แทน ImgBB สาธารณะ)
   // V16: เปิดเป็น true แล้ว + มี "ระบบสำรองอัตโนมัติ" — ถ้ายังไม่ได้เปิด Firebase Storage
