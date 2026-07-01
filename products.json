@@ -1,0 +1,305 @@
+{
+  "generatedAt": "2026-07-01T04:50:32.886Z",
+  "count": 8,
+  "items": [
+    {
+      "id": "Q6DfuK8hxj6O65UYAP1f",
+      "emoji": "📦",
+      "isSale": false,
+      "active": true,
+      "featured": false,
+      "images": [
+        {
+          "label": "",
+          "url": "https://i.ibb.co/1fzhJbGb/1000041352.jpg"
+        }
+      ],
+      "name": "พวงกุญแจโพลารอยด์",
+      "videoUrl": "",
+      "oldPrice": null,
+      "orderCount": 0,
+      "hasPreview": true,
+      "isHot": false,
+      "sizes": [],
+      "createdAt": {
+        "seconds": 1781298738
+      },
+      "shortDesc": "",
+      "price": 39,
+      "minQty": 1,
+      "templates": [
+        "classic",
+        "minimal",
+        "dark",
+        "warm",
+        "cool",
+        "cute"
+      ],
+      "image": "https://i.ibb.co/1fzhJbGb/1000041352.jpg",
+      "coverIndex": 0,
+      "fullDesc": "",
+      "unit": "ชิ้น",
+      "updatedAt": {
+        "seconds": 1781298738
+      },
+      "category": "โพลารอยด์",
+      "materials": [],
+      "isNew": false,
+      "priceTiers": []
+    },
+    {
+      "id": "Rg9PE2EswNQs7O5evoS5",
+      "materials": [],
+      "isNew": false,
+      "priceTiers": [],
+      "minQty": 10,
+      "sizes": [],
+      "createdAt": {
+        "seconds": 1781015643
+      },
+      "category": "โพลารอยด์",
+      "price": 3,
+      "shortDesc": "ส่งภาพได้เลย",
+      "oldPrice": null,
+      "name": "โพลาลอยด์",
+      "isHot": false,
+      "updatedAt": {
+        "seconds": 1781084937
+      },
+      "orderCount": 0,
+      "hasPreview": false,
+      "isSale": false,
+      "templates": [],
+      "emoji": "📦",
+      "active": true,
+      "fullDesc": "ราคาคุ้มๆ",
+      "featured": false,
+      "unit": "ใบละ",
+      "image": "https://i.ibb.co/6c0xDZD0/1000068776.jpg"
+    },
+    {
+      "id": "TfU4JVXLN75qoS7Zy2Up",
+      "isNew": true,
+      "priceTiers": [],
+      "materials": [],
+      "category": "ความทรงจำ",
+      "updatedAt": {
+        "seconds": 1781259461
+      },
+      "image": "https://i.ibb.co/G3JJ82gd/1000041356.jpg",
+      "coverIndex": 0,
+      "fullDesc": "",
+      "unit": "ชิ้น",
+      "templates": [],
+      "minQty": 1,
+      "shortDesc": "",
+      "price": 129,
+      "sizes": [],
+      "createdAt": {
+        "seconds": 1781259461
+      },
+      "orderCount": 0,
+      "hasPreview": false,
+      "isHot": false,
+      "images": [
+        {
+          "url": "https://i.ibb.co/G3JJ82gd/1000041356.jpg",
+          "label": ""
+        }
+      ],
+      "name": "อัลบั้มหนูน้อย 1-12 เดือน",
+      "videoUrl": "",
+      "oldPrice": null,
+      "active": true,
+      "featured": false,
+      "emoji": "📦",
+      "isSale": false
+    },
+    {
+      "id": "VLdvVMN9uWtQl1zWt5sz",
+      "fullDesc": "",
+      "active": true,
+      "unit": "ใบ",
+      "featured": false,
+      "image": "https://i.ibb.co/jvgfGysD/1000068602.png",
+      "templates": [],
+      "isSale": false,
+      "emoji": "📦",
+      "isHot": true,
+      "orderCount": 0,
+      "updatedAt": {
+        "seconds": 1781085151
+      },
+      "hasPreview": false,
+      "oldPrice": null,
+      "name": "พวงกุญแจบัตรนักเรียน",
+      "category": "บัตรนักเรียน",
+      "price": 29,
+      "shortDesc": "",
+      "sizes": [],
+      "createdAt": {
+        "seconds": 1781085151
+      },
+      "isNew": false,
+      "minQty": 1,
+      "priceTiers": [],
+      "materials": []
+    },
+    {
+      "id": "aiDzz199c5wWbM97QHs6",
+      "shortDesc": "",
+      "price": 129,
+      "sizes": [],
+      "createdAt": {
+        "seconds": 1781181447
+      },
+      "minQty": 1,
+      "active": true,
+      "featured": false,
+      "emoji": "📦",
+      "isSale": false,
+      "orderCount": 0,
+      "hasPreview": true,
+      "isHot": false,
+      "images": [
+        {
+          "label": "ไดโนเสาร์",
+          "url": "https://i.ibb.co/JWfrYhXt/1000041354.jpg"
+        },
+        {
+          "label": "QR Code สแกนตุ๊กตาหิมะ",
+          "url": "https://i.ibb.co/svtqsxYh/1000041357.jpg"
+        }
+      ],
+      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก",
+      "videoUrl": "",
+      "oldPrice": null,
+      "category": "ป้ายตุ๊กตา",
+      "isNew": false,
+      "priceTiers": [],
+      "materials": [],
+      "image": "https://i.ibb.co/svtqsxYh/1000041357.jpg",
+      "coverIndex": 1,
+      "fullDesc": "",
+      "unit": "ใบ",
+      "templates": [
+        "classic",
+        "minimal",
+        "dark",
+        "warm",
+        "cool",
+        "cute"
+      ],
+      "updatedAt": {
+        "seconds": 1781181447
+      }
+    },
+    {
+      "id": "k6V9i9gFEhLmwn7zCyyL",
+      "unit": "ใบ",
+      "featured": false,
+      "active": true,
+      "fullDesc": "สวยงาม สีชัด ภาพชัดไม่แตก  ไม่ซีดจาง กระดาษคุณภาพสูง\nกรณีต้องการรูปแบบอื่นเพิ่มเติม ติดต่อทางไลน์",
+      "image": "https://i.ibb.co/HJz2bbJ/355620.jpg",
+      "isSale": false,
+      "emoji": "📦",
+      "isHot": true,
+      "hasPreview": false,
+      "orderCount": 0,
+      "updatedAt": {
+        "seconds": 1781067926
+      },
+      "oldPrice": null,
+      "name": "เซ็ตโพลารอยด์หัวใจ",
+      "category": "โพลารอยด์",
+      "shortDesc": "เซ็ตโพลารอยด์หัวใจ (20 รูป)",
+      "price": 29,
+      "createdAt": {
+        "seconds": 1781067461
+      },
+      "sizes": [
+        "2x3 นิ้ว",
+        "3x4 นิ้ว",
+        "4x6 นิ้ว"
+      ],
+      "priceTiers": [
+        "5เซ็ต แถม 1 เซ็๖"
+      ],
+      "minQty": 1,
+      "isNew": false,
+      "materials": [
+        "มันเงา(Glossy)",
+        "ด้าน(Matte)",
+        "เคลือบ"
+      ]
+    },
+    {
+      "id": "sJx9wZBN6zg2jrZrGARU",
+      "templates": [],
+      "isSale": false,
+      "emoji": "📦",
+      "fullDesc": "",
+      "active": true,
+      "unit": "ชิ้น",
+      "featured": false,
+      "image": "https://i.ibb.co/rftGWd7L/1000068870.jpg",
+      "oldPrice": null,
+      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก2หัว",
+      "isHot": false,
+      "orderCount": 0,
+      "updatedAt": {
+        "seconds": 1781085073
+      },
+      "hasPreview": false,
+      "sizes": [],
+      "createdAt": {
+        "seconds": 1781085073
+      },
+      "price": 179,
+      "shortDesc": "",
+      "category": "ป้ายตุ๊กตา",
+      "materials": [],
+      "isNew": true,
+      "priceTiers": [],
+      "minQty": 1
+    },
+    {
+      "id": "sUApJ4zdCBJCd9BlL8xY",
+      "materials": [],
+      "priceTiers": [],
+      "isNew": false,
+      "category": "บัตรนักเรียน",
+      "updatedAt": {
+        "seconds": 1781665592
+      },
+      "templates": [],
+      "coverIndex": 0,
+      "image": "https://i.ibb.co/tps0S6HR/1000064030.jpg",
+      "unit": "ชิ้น",
+      "fullDesc": "",
+      "minQty": 1,
+      "createdAt": {
+        "seconds": 1781085276
+      },
+      "sizes": [],
+      "shortDesc": "",
+      "price": 69,
+      "name": "พวงกุญแจพร้อมกรอบบัตรนักเรียน",
+      "images": [
+        {
+          "label": "",
+          "url": "https://i.ibb.co/tps0S6HR/1000064030.jpg"
+        }
+      ],
+      "oldPrice": null,
+      "videoUrl": "",
+      "hasPreview": false,
+      "orderCount": 0,
+      "isHot": true,
+      "emoji": "📦",
+      "isSale": false,
+      "featured": false,
+      "active": true
+    }
+  ]
+}
