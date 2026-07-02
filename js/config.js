@@ -27,12 +27,13 @@ window.DMC_CONFIG = {
   // เว้นว่าง = ใช้ระบบรหัสผ่านแบบเดิม (hash) ไปก่อน
   ADMIN_EMAIL: 'peeza1482546@gmail.com',
 
-  // ── อัปโหลดรูป ──
-  // V3 Security: อัปผ่าน Cloudflare Worker เท่านั้น (ImgBB key เป็น secret ฝั่ง Worker — ไม่เปิดในหน้าเว็บ)
-  // ⚠️ ต้องตั้ง secret IMGBB_KEY ใน Worker (Dashboard → Settings → Variables and Secrets)
+  // ── อัปโหลดรูป (รูปสินค้า/แกลเลอรี — สาธารณะ) ──
+  // อัปผ่าน Cloudflare Worker → Worker เก็บ Cloudinary key/secret ไว้ฝั่งเซิร์ฟเวอร์
+  //   → ไม่มี API key โผล่ในหน้าเว็บ (ปลอดภัยกว่า ImgBB ที่ต้องเปิด key)
+  // ⚙️ ตั้ง secret ใน Cloudflare Worker: CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
   UPLOAD_PROXY_URL: 'https://dmc-studio-notify.peeza1482546.workers.dev/upload',
-  // V3: ลบ key ออกจากฝั่ง client แล้ว (กัน quota/abuse) — เว้นว่างไว้
-  IMGBB_API_KEY: '',
+  IMGBB_API_KEY: '',   // เลิกใช้แล้ว (ย้ายไป Cloudinary ฝั่ง Worker) — เว้นว่างไว้
+
 
   // V3 Security: Firebase App Check — กันการยิง Firestore/Auth ตรงด้วย config สาธารณะ
   // ขอ site key (reCAPTCHA v3) ที่ Firebase Console → App Check → เว็บแอป → reCAPTCHA v3
@@ -84,10 +85,12 @@ window.DMC_CONFIG = {
   //   วิธีตั้ง secret ดูใน HANDOVER.md หัวข้อ "เปิด Server Order (ปิดช่องราคา)"
   SERVER_ORDER: { enabled: true },
 
-  // V24/SEC-B: Turnstile (CAPTCHA ฟรีของ Cloudflare) ป้องกันสแปม endpoint อัปรูป — ปิดไว้ก่อน
-  //   เปิดเมื่อพร้อม: ตั้ง siteKey ที่นี่ + ตั้ง secret TURNSTILE_SECRET ใน Worker (ดู HANDOVER.md)
-  //   ปิดอยู่ = ไม่มีผลใดๆ กับการอัปรูป (ทำงานเหมือนเดิมทุกอย่าง)
-  TURNSTILE: { enabled: false, siteKey: '' },
+  // Turnstile (CAPTCHA ฟรีของ Cloudflare) — กันบอตยิง endpoint อัปรูป (/upload)
+  //   วิธีเปิด (3 ขั้น): 1) Cloudflare → Turnstile → Add widget (โดเมน chaiwutz14.github.io) ได้ siteKey + secret
+  //                      2) เอา secret ใส่ Worker secret ชื่อ TURNSTILE_SECRET
+  //                      3) เอา siteKey ใส่ตรงนี้ + เปลี่ยน enabled เป็น true
+  //   ปิดอยู่ (ค่าเริ่มต้น) = อัปรูปทำงานปกติ ไม่ต้องผ่าน CAPTCHA (Worker fail-open จนกว่าจะตั้ง secret)
+  TURNSTILE: { enabled: false, siteKey: '0x4AAAAAADuTMNqo9MrOEVM6' },
 
   // ── V16: Static Snapshot — ลดการอ่าน Firestore ฝั่งหน้าบ้านให้เหลือ ~0 ──
   // หลักการ: export สินค้า/แกลเลอรีเป็นไฟล์ JSON (ปุ่ม "เผยแพร่ snapshot" ในแอดมิน หรือ _dev/export-snapshot.html)

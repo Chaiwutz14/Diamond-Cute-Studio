@@ -14,6 +14,63 @@ function dmcWorkerKeyHeader() {
   return k ? { 'X-DMC-Key': k } : {};
 }
 
+// ── Cloudflare Turnstile (CAPTCHA กันบอต) — ขอ token แบบ invisible ตอนจะอัปรูป ──
+//   เปิดใช้: ตั้ง TURNSTILE.enabled=true + siteKey ใน config.js + secret TURNSTILE_SECRET ใน Worker
+//   ถ้าไม่เปิด/โหลดไม่ได้ → คืน null (ไม่แนบ token) และ Worker จะ fail-open (ยังอัปได้) จนกว่าจะตั้ง secret
+let _tsWidgetId = null;
+async function dmcGetTurnstileToken() {
+  const cfg = (window.DMC_CONFIG || {}).TURNSTILE || {};
+  if (!cfg.enabled || !cfg.siteKey) return null;
+  try {
+    // โหลดสคริปต์ Turnstile ครั้งเดียว
+    if (!window.turnstile) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        s.async = true; s.defer = true;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('โหลด Turnstile ไม่สำเร็จ'));
+        document.head.appendChild(s);
+      });
+      for (let i = 0; i < 60 && !window.turnstile; i++) await new Promise(r => setTimeout(r, 50));
+    }
+    if (!window.turnstile) return null;
+
+    // container ซ่อนไว้ (render ครั้งเดียว, ครั้งถัด ๆ ไปใช้ reset)
+    let box = document.getElementById('dmc-turnstile-box');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'dmc-turnstile-box';
+      box.style.cssText = 'position:fixed;bottom:0;left:0;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none';
+      document.body.appendChild(box);
+    }
+
+    return await new Promise((resolve) => {
+      let done = false;
+      const finish = (v) => { if (!done) { done = true; resolve(v); } };
+      // กันค้าง: ถ้าเกิน 12 วิยังไม่ได้ token ให้ปล่อยผ่าน (null)
+      const timer = setTimeout(() => finish(null), 12000);
+      const opts = {
+        sitekey: cfg.siteKey,
+        size: 'invisible',
+        callback: (token) => { clearTimeout(timer); finish(token); },
+        'error-callback': () => { clearTimeout(timer); finish(null); },
+        'timeout-callback': () => { clearTimeout(timer); finish(null); },
+      };
+      try {
+        if (_tsWidgetId === null) {
+          _tsWidgetId = window.turnstile.render(box, opts);
+        } else {
+          window.turnstile.reset(_tsWidgetId);
+        }
+        window.turnstile.execute(_tsWidgetId, opts);
+      } catch (e) { clearTimeout(timer); finish(null); }
+    });
+  } catch (e) {
+    return null;   // fail-open
+  }
+}
+
 // ─── Firebase Ready Promise ───
 let _db = null;
 let _firebaseReady = null;
@@ -83,56 +140,30 @@ async function uploadToImgBB(file) {
   // บีบอัดอัตโนมัติ (ยกเว้น PNG เทมเพลตที่ส่ง compressImage มาก่อนแล้ว)
   try { if (file && file.type && file.type.startsWith('image/') && file.type !== 'image/png') file = await compressImage(file); } catch(e) {}
 
-  // ⭐ แนะนำ: อัปผ่าน Cloudflare Worker → API key ไม่หลุดสู่สาธารณะ
-  // V.upgrade1: ถ้า proxy ล้มเหลว → fallback ไป ImgBB ตรง (อัปไม่มีวันพังเพราะตั้ง proxy)
+  // อัปผ่าน Cloudflare Worker → Worker เก็บ Cloudinary key/secret ไว้ฝั่งเซิร์ฟเวอร์
+  //   → ไม่มี API key โผล่ในหน้าเว็บเลย (กันคนเอา key ไปอัปรูปไม่เหมาะสมเข้าบัญชีเรา)
+  //   Cloudinary ไม่บล็อกคำขอจาก Worker (ต่างจาก ImgBB)
   const proxy = (window.DMC_CONFIG || {}).UPLOAD_PROXY_URL || '';
-  // V3 Security: ไม่มี key ฝั่ง client แล้ว (ถอดออกกันหลุดสาธารณะ) — ปกติจะว่าง
-  const _key = (window.DMC_CONFIG || {}).IMGBB_API_KEY || (typeof IMGBB_API_KEY !== 'undefined' ? IMGBB_API_KEY : '');
-  if (proxy) {
-    try {
-      const fd = new FormData();
-      fd.append('image', file);
-      const res = await fetch(proxy, { method: 'POST', body: fd, headers: dmcWorkerKeyHeader() });
-      // ดึงสาเหตุจริงจาก body ของ Worker มาแสดง (เช่น imgbb failed / invalid key / captcha / origin)
-      if (!res.ok) {
-        let detail = 'HTTP ' + res.status;
-        try { const j = await res.json(); if (j && j.error) detail = j.error; } catch(e) {}
-        throw new Error(detail);
-      }
-      const data = await res.json();
-      if (!data.url) throw new Error(data.error || 'no url');
-      return { url: data.url, thumbUrl: data.url, deleteUrl: data.deleteUrl || '' };
-    } catch (e) {
-      // BUG-FIX: เดิมพอ proxy พัง จะไหลไปโยน "Worker ยังไม่ได้ตั้งค่า IMGBB_KEY" ซึ่งกลบสาเหตุจริง
-      //   เมื่อไม่มี client key (ปกติ) → โยน error จริงจาก Worker ออกไปเลย จะได้เห็นต้นตอ
-      if (!_key) {
-        throw new Error('อัปโหลดรูปไม่สำเร็จ — Worker /upload ตอบว่า: "' + e.message +
-          '"  (ให้ตรวจ: IMGBB_KEY ถูกต้อง + deploy โค้ด Worker ล่าสุดที่มี User-Agent fix)');
-      }
-      console.warn('Upload proxy failed, falling back to direct ImgBB:', e.message);
-      // ไหลต่อไปใช้ ImgBB ตรงด้านล่าง (กรณี legacy ที่ยังมี client key)
-    }
+  if (!proxy) throw new Error('อัปโหลดรูปไม่สำเร็จ (ยังไม่ได้ตั้ง UPLOAD_PROXY_URL ใน config.js) — รบกวนส่งรูปทาง LINE ครับ');
+
+  // ขอ Turnstile token ถ้าเปิดใช้ (กันบอท) — ถ้าไม่เปิด/ขอไม่ได้ จะคืน null และไม่แนบ header
+  const headers = { ...dmcWorkerKeyHeader() };
+  try {
+    const tk = (typeof dmcGetTurnstileToken === 'function') ? await dmcGetTurnstileToken() : null;
+    if (tk) headers['CF-Turnstile-Token'] = tk;
+  } catch (e) { /* ปล่อยผ่าน — Worker จะ fail-open ถ้ายังไม่ตั้ง secret */ }
+
+  const fd = new FormData();
+  fd.append('image', file);
+  const res = await fetch(proxy, { method: 'POST', body: fd, headers });
+  if (!res.ok) {
+    let detail = 'HTTP ' + res.status;
+    try { const j = await res.json(); if (j && j.error) detail = j.error; } catch(e) {}
+    throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + detail);
   }
-  const formData = new FormData();
-  formData.append('image', file);
-
-  if (!_key) {
-    throw new Error('อัปโหลดรูปไม่สำเร็จ (ยังไม่ได้ตั้ง UPLOAD_PROXY_URL หรือ IMGBB key) — รบกวนส่งรูปทาง LINE ครับ');
-  }
-
-  const response = await fetch(
-    `https://api.imgbb.com/1/upload?key=${_key}`,
-    { method: 'POST', body: formData }
-  );
-
-  if (!response.ok) throw new Error('ImgBB upload failed');
-  const data = await response.json();
-  return {
-    url:       data.data.url,
-    thumbUrl:  data.data.thumb?.url || data.data.url,
-    deleteUrl: data.data.delete_url,
-    id:        data.data.id
-  };
+  const data = await res.json();
+  if (!data.url) throw new Error(data.error || 'อัปโหลดรูปไม่สำเร็จ (ไม่ได้รับ URL กลับมา)');
+  return { url: data.url, thumbUrl: data.url, deleteUrl: data.deleteUrl || '', id: data.publicId || '' };
 }
 
 // ─── V3 Security: อัปไฟล์ "ลับ" (สลิป/รูปลูกค้า) ไป Firebase Storage แบบ private ───
