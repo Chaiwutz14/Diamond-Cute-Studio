@@ -90,7 +90,7 @@ window.DMC_CONFIG = {
   //                      2) เอา secret ใส่ Worker secret ชื่อ TURNSTILE_SECRET
   //                      3) เอา siteKey ใส่ตรงนี้ + เปลี่ยน enabled เป็น true
   //   ปิดอยู่ (ค่าเริ่มต้น) = อัปรูปทำงานปกติ ไม่ต้องผ่าน CAPTCHA (Worker fail-open จนกว่าจะตั้ง secret)
-  TURNSTILE: { enabled: false, siteKey: '0x4AAAAAADuTMNqo9MrOEVM6' },
+  TURNSTILE: { enabled: true, siteKey: '0x4AAAAAADuTMNqo9MrOEVM6' },
 
   // ── V16: Static Snapshot — ลดการอ่าน Firestore ฝั่งหน้าบ้านให้เหลือ ~0 ──
   // หลักการ: export สินค้า/แกลเลอรีเป็นไฟล์ JSON (ปุ่ม "เผยแพร่ snapshot" ในแอดมิน หรือ _dev/export-snapshot.html)
