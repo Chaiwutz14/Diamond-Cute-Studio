@@ -1,23 +1,20 @@
 {
-  "generatedAt": "2026-07-01T07:48:25.530Z",
-  "count": 8,
+  "generatedAt": "2026-07-02T07:02:12.161Z",
+  "count": 9,
   "items": [
     {
       "id": "Q6DfuK8hxj6O65UYAP1f",
-      "priceTiers": [],
-      "name": "พวงกุญแจโพลารอยด์",
-      "coverIndex": 0,
-      "isNew": false,
-      "orderCount": 0,
+      "unit": "ชิ้น",
+      "isHot": false,
       "isSale": false,
+      "coverIndex": 0,
+      "hasPreview": true,
+      "category": "โพลารอยด์",
+      "priceTiers": [],
       "image": "https://i.ibb.co/1fzhJbGb/1000041352.jpg",
-      "minQty": 1,
-      "updatedAt": {
-        "seconds": 1781298738
-      },
-      "createdAt": {
-        "seconds": 1781298738
-      },
+      "emoji": "📦",
+      "price": 39,
+      "featured": false,
       "active": true,
       "templates": [
         "classic",
@@ -27,162 +24,142 @@
         "cool",
         "cute"
       ],
-      "oldPrice": null,
-      "category": "โพลารอยด์",
-      "materials": [],
-      "unit": "ชิ้น",
-      "emoji": "📦",
+      "minQty": 1,
+      "fullDesc": "",
       "sizes": [],
-      "price": 39,
-      "isHot": false,
+      "shortDesc": "",
+      "createdAt": {
+        "seconds": 1781298738
+      },
+      "isNew": false,
+      "updatedAt": {
+        "seconds": 1781298738
+      },
+      "name": "พวงกุญแจโพลารอยด์",
+      "oldPrice": null,
+      "materials": [],
+      "videoUrl": "",
       "images": [
         {
           "label": "",
           "url": "https://i.ibb.co/1fzhJbGb/1000041352.jpg"
         }
       ],
-      "featured": false,
-      "hasPreview": true,
-      "fullDesc": "",
-      "videoUrl": "",
-      "shortDesc": ""
+      "orderCount": 0
     },
     {
       "id": "Rg9PE2EswNQs7O5evoS5",
-      "orderCount": 0,
       "emoji": "📦",
-      "isNew": false,
-      "unit": "ใบละ",
-      "name": "โพลาลอยด์",
-      "category": "โพลารอยด์",
-      "materials": [],
-      "priceTiers": [],
-      "fullDesc": "ราคาคุ้มๆ",
-      "featured": false,
-      "hasPreview": false,
-      "active": true,
-      "oldPrice": null,
-      "templates": [],
-      "shortDesc": "ส่งภาพได้เลย",
-      "minQty": 10,
-      "createdAt": {
-        "seconds": 1781015643
-      },
       "updatedAt": {
         "seconds": 1781084937
       },
-      "isHot": false,
-      "price": 3,
+      "name": "โพลาลอยด์",
       "image": "https://i.ibb.co/6c0xDZD0/1000068776.jpg",
+      "price": 3,
       "sizes": [],
-      "isSale": false
+      "shortDesc": "ส่งภาพได้เลย",
+      "createdAt": {
+        "seconds": 1781015643
+      },
+      "isNew": false,
+      "active": true,
+      "featured": false,
+      "orderCount": 0,
+      "oldPrice": null,
+      "materials": [],
+      "minQty": 10,
+      "isSale": false,
+      "unit": "ใบละ",
+      "isHot": false,
+      "templates": [],
+      "priceTiers": [],
+      "fullDesc": "ราคาคุ้มๆ",
+      "hasPreview": false,
+      "category": "โพลารอยด์"
     },
     {
       "id": "TfU4JVXLN75qoS7Zy2Up",
-      "isNew": true,
+      "price": 129,
+      "emoji": "📦",
+      "image": "https://i.ibb.co/G3JJ82gd/1000041356.jpg",
+      "featured": false,
+      "active": true,
+      "isHot": false,
+      "unit": "ชิ้น",
+      "isSale": false,
       "coverIndex": 0,
-      "orderCount": 0,
+      "category": "ความทรงจำ",
+      "hasPreview": false,
       "priceTiers": [],
+      "isNew": true,
+      "createdAt": {
+        "seconds": 1781259461
+      },
+      "shortDesc": "",
+      "sizes": [],
       "name": "อัลบั้มหนูน้อย 1-12 เดือน",
       "updatedAt": {
         "seconds": 1781259461
       },
-      "createdAt": {
-        "seconds": 1781259461
-      },
-      "minQty": 1,
-      "oldPrice": null,
-      "templates": [],
-      "active": true,
-      "isSale": false,
-      "image": "https://i.ibb.co/G3JJ82gd/1000041356.jpg",
-      "emoji": "📦",
+      "videoUrl": "",
       "materials": [],
-      "category": "ความทรงจำ",
-      "unit": "ชิ้น",
+      "oldPrice": null,
+      "orderCount": 0,
       "images": [
         {
           "label": "",
           "url": "https://i.ibb.co/G3JJ82gd/1000041356.jpg"
         }
       ],
-      "price": 129,
-      "isHot": false,
-      "videoUrl": "",
-      "shortDesc": "",
-      "featured": false,
-      "hasPreview": false,
-      "fullDesc": "",
-      "sizes": []
+      "templates": [],
+      "minQty": 1,
+      "fullDesc": ""
     },
     {
       "id": "VLdvVMN9uWtQl1zWt5sz",
-      "active": true,
-      "featured": false,
-      "hasPreview": false,
-      "fullDesc": "",
-      "templates": [],
-      "shortDesc": "",
-      "oldPrice": null,
+      "isSale": false,
       "minQty": 1,
-      "price": 29,
+      "unit": "ใบ",
+      "templates": [],
       "isHot": true,
+      "priceTiers": [],
+      "fullDesc": "",
+      "category": "บัตรนักเรียน",
+      "hasPreview": false,
+      "emoji": "📦",
+      "image": "https://i.ibb.co/jvgfGysD/1000068602.png",
       "updatedAt": {
         "seconds": 1781085151
       },
+      "name": "พวงกุญแจบัตรนักเรียน",
+      "price": 29,
+      "shortDesc": "",
+      "sizes": [],
+      "isNew": false,
       "createdAt": {
         "seconds": 1781085151
       },
-      "image": "https://i.ibb.co/jvgfGysD/1000068602.png",
-      "sizes": [],
-      "isSale": false,
+      "active": true,
+      "featured": false,
       "orderCount": 0,
-      "emoji": "📦",
-      "isNew": false,
-      "name": "พวงกุญแจบัตรนักเรียน",
-      "unit": "ใบ",
-      "category": "บัตรนักเรียน",
-      "materials": [],
-      "priceTiers": []
+      "oldPrice": null,
+      "materials": []
     },
     {
       "id": "aiDzz199c5wWbM97QHs6",
-      "emoji": "📦",
-      "category": "ป้ายตุ๊กตา",
-      "materials": [],
-      "unit": "ใบ",
-      "images": [
-        {
-          "label": "ไดโนเสาร์",
-          "url": "https://i.ibb.co/JWfrYhXt/1000041354.jpg"
-        },
-        {
-          "url": "https://i.ibb.co/svtqsxYh/1000041357.jpg",
-          "label": "QR Code สแกนตุ๊กตาหิมะ"
-        }
-      ],
-      "price": 129,
-      "isHot": false,
-      "fullDesc": "",
-      "featured": false,
       "hasPreview": true,
-      "videoUrl": "",
-      "shortDesc": "",
-      "sizes": [],
-      "coverIndex": 1,
-      "isNew": false,
-      "orderCount": 0,
+      "category": "ป้ายตุ๊กตา",
       "priceTiers": [],
-      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก",
-      "minQty": 1,
-      "updatedAt": {
-        "seconds": 1781181447
-      },
-      "createdAt": {
-        "seconds": 1781181447
-      },
+      "isHot": false,
+      "unit": "ใบ",
+      "isSale": false,
+      "coverIndex": 1,
       "active": true,
-      "oldPrice": null,
+      "featured": false,
+      "price": 129,
+      "image": "https://i.ibb.co/svtqsxYh/1000041357.jpg",
+      "emoji": "📦",
+      "fullDesc": "",
       "templates": [
         "classic",
         "minimal",
@@ -191,115 +168,187 @@
         "cool",
         "cute"
       ],
-      "isSale": false,
-      "image": "https://i.ibb.co/svtqsxYh/1000041357.jpg"
+      "minQty": 1,
+      "videoUrl": "",
+      "materials": [],
+      "oldPrice": null,
+      "orderCount": 0,
+      "images": [
+        {
+          "label": "ไดโนเสาร์",
+          "url": "https://i.ibb.co/JWfrYhXt/1000041354.jpg"
+        },
+        {
+          "label": "QR Code สแกนตุ๊กตาหิมะ",
+          "url": "https://i.ibb.co/svtqsxYh/1000041357.jpg"
+        }
+      ],
+      "isNew": false,
+      "createdAt": {
+        "seconds": 1781181447
+      },
+      "sizes": [],
+      "shortDesc": "",
+      "updatedAt": {
+        "seconds": 1781181447
+      },
+      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก"
     },
     {
       "id": "k6V9i9gFEhLmwn7zCyyL",
-      "isNew": false,
-      "emoji": "📦",
-      "orderCount": 0,
-      "materials": [
-        "มันเงา(Glossy)",
-        "ด้าน(Matte)",
-        "เคลือบ"
-      ],
+      "minQty": 1,
+      "isSale": false,
+      "unit": "ใบ",
+      "isHot": true,
       "priceTiers": [
         "5เซ็ต แถม 1 เซ็๖"
       ],
+      "fullDesc": "สวยงาม สีชัด ภาพชัดไม่แตก  ไม่ซีดจาง กระดาษคุณภาพสูง\nกรณีต้องการรูปแบบอื่นเพิ่มเติม ติดต่อทางไลน์",
+      "hasPreview": false,
       "category": "โพลารอยด์",
-      "name": "เซ็ตโพลารอยด์หัวใจ",
-      "unit": "ใบ",
-      "isHot": true,
-      "price": 29,
+      "image": "https://i.ibb.co/HJz2bbJ/355620.jpg",
+      "emoji": "📦",
       "updatedAt": {
         "seconds": 1781067926
       },
-      "createdAt": {
-        "seconds": 1781067461
-      },
-      "minQty": 1,
-      "shortDesc": "เซ็ตโพลารอยด์หัวใจ (20 รูป)",
-      "oldPrice": null,
-      "active": true,
-      "featured": false,
-      "fullDesc": "สวยงาม สีชัด ภาพชัดไม่แตก  ไม่ซีดจาง กระดาษคุณภาพสูง\nกรณีต้องการรูปแบบอื่นเพิ่มเติม ติดต่อทางไลน์",
-      "hasPreview": false,
+      "name": "เซ็ตโพลารอยด์หัวใจ",
+      "price": 29,
       "sizes": [
         "2x3 นิ้ว",
         "3x4 นิ้ว",
         "4x6 นิ้ว"
       ],
-      "isSale": false,
-      "image": "https://i.ibb.co/HJz2bbJ/355620.jpg"
+      "shortDesc": "เซ็ตโพลารอยด์หัวใจ (20 รูป)",
+      "isNew": false,
+      "createdAt": {
+        "seconds": 1781067461
+      },
+      "active": true,
+      "featured": false,
+      "orderCount": 0,
+      "oldPrice": null,
+      "materials": [
+        "มันเงา(Glossy)",
+        "ด้าน(Matte)",
+        "เคลือบ"
+      ]
     },
     {
       "id": "sJx9wZBN6zg2jrZrGARU",
-      "price": 179,
+      "hasPreview": false,
+      "category": "ป้ายตุ๊กตา",
+      "fullDesc": "",
+      "priceTiers": [],
+      "templates": [],
       "isHot": false,
+      "unit": "ชิ้น",
+      "minQty": 1,
+      "isSale": false,
+      "materials": [],
+      "oldPrice": null,
+      "orderCount": 0,
+      "active": true,
+      "featured": false,
+      "isNew": true,
       "createdAt": {
         "seconds": 1781085073
       },
+      "sizes": [],
+      "shortDesc": "",
+      "price": 179,
+      "emoji": "📦",
+      "image": "https://i.ibb.co/rftGWd7L/1000068870.jpg",
       "updatedAt": {
         "seconds": 1781085073
       },
-      "minQty": 1,
-      "templates": [],
-      "shortDesc": "",
-      "oldPrice": null,
-      "active": true,
-      "featured": false,
-      "hasPreview": false,
-      "fullDesc": "",
-      "sizes": [],
-      "isSale": false,
-      "image": "https://i.ibb.co/rftGWd7L/1000068870.jpg",
-      "isNew": true,
-      "emoji": "📦",
-      "orderCount": 0,
-      "materials": [],
-      "priceTiers": [],
-      "category": "ป้ายตุ๊กตา",
-      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก2หัว",
-      "unit": "ชิ้น"
+      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก2หัว"
     },
     {
       "id": "sUApJ4zdCBJCd9BlL8xY",
-      "priceTiers": [],
-      "name": "พวงกุญแจพร้อมกรอบบัตรนักเรียน",
-      "coverIndex": 0,
-      "isNew": false,
-      "orderCount": 0,
-      "isSale": false,
-      "image": "https://i.ibb.co/tps0S6HR/1000064030.jpg",
       "minQty": 1,
+      "templates": [],
+      "fullDesc": "",
       "updatedAt": {
         "seconds": 1781665592
       },
+      "name": "พวงกุญแจพร้อมกรอบบัตรนักเรียน",
       "createdAt": {
         "seconds": 1781085276
       },
-      "active": true,
-      "templates": [],
-      "oldPrice": null,
-      "category": "บัตรนักเรียน",
-      "materials": [],
-      "unit": "ชิ้น",
-      "emoji": "📦",
+      "isNew": false,
+      "shortDesc": "",
       "sizes": [],
-      "isHot": true,
-      "price": 69,
+      "orderCount": 0,
       "images": [
         {
           "label": "",
           "url": "https://i.ibb.co/tps0S6HR/1000064030.jpg"
         }
       ],
-      "fullDesc": "",
-      "featured": false,
-      "hasPreview": false,
       "videoUrl": "",
-      "shortDesc": ""
+      "materials": [],
+      "oldPrice": null,
+      "isSale": false,
+      "coverIndex": 0,
+      "isHot": true,
+      "unit": "ชิ้น",
+      "priceTiers": [],
+      "category": "บัตรนักเรียน",
+      "hasPreview": false,
+      "price": 69,
+      "image": "https://i.ibb.co/tps0S6HR/1000064030.jpg",
+      "emoji": "📦",
+      "featured": false,
+      "active": true
+    },
+    {
+      "id": "zLCHtJf7TEKx1BUe7e4a",
+      "fullDesc": "",
+      "minQty": 1,
+      "templates": [],
+      "orderCount": 0,
+      "images": [
+        {
+          "label": "",
+          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1782975508/dmc-studio/cbocqrqfm6gy7zirlyju.jpg"
+        },
+        {
+          "label": "",
+          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1782975518/dmc-studio/bf0cxiieuz55ddb89xzt.jpg"
+        }
+      ],
+      "videoUrl": "",
+      "materials": [
+        "มันเงาพรีเมี่ยม (Glossy Premium)"
+      ],
+      "oldPrice": 79,
+      "updatedAt": {
+        "seconds": 1782975730
+      },
+      "name": "QR Code แสกนรับชำระ",
+      "isNew": true,
+      "createdAt": {
+        "seconds": 1782975730
+      },
+      "shortDesc": "",
+      "sizes": [
+        "4×6 นิ้ว",
+        "5×7 นิ้ว",
+        "6×8นิ้ว",
+        "กำหนดเอง"
+      ],
+      "priceTiers": [],
+      "category": "QR Code",
+      "hasPreview": false,
+      "isSale": false,
+      "coverIndex": 0,
+      "isHot": false,
+      "unit": "ใบ",
+      "featured": false,
+      "active": true,
+      "price": 59,
+      "emoji": "📦",
+      "image": "https://res.cloudinary.com/yuonwywx/image/upload/v1782975508/dmc-studio/cbocqrqfm6gy7zirlyju.jpg"
     }
   ]
 }
