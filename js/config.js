@@ -40,13 +40,13 @@ window.DMC_CONFIG = {
   // เว้นว่าง = ปิด App Check (ระบบยังทำงานปกติ)
   APP_CHECK_SITE_KEY: '6LfrxD4tAAAAAOipzi5y89JFH4_Rb8nOpn6DNqvj',
 
-  // V3 Security: เก็บสลิป/รูปลูกค้าใน Firebase Storage แบบ private (แทน ImgBB สาธารณะ)
+  // V3 Security: เก็บสลิป/รูปลูกค้าใน Firebase Storage แบบ private (แทนที่เก็บสาธารณะ)
   // V16: เปิดเป็น true แล้ว + มี "ระบบสำรองอัตโนมัติ" — ถ้ายังไม่ได้เปิด Firebase Storage
-  //      ระบบจะ fallback ไปอัปแบบเดิม (ImgBB) ให้เอง ออเดอร์จึงไม่มีวันพังเพราะตั้งค่านี้
+  //      ระบบจะ fallback ไปอัปแบบเดิม (Cloudinary ผ่าน Worker) ให้เอง ออเดอร์จึงไม่มีวันพังเพราะตั้งค่านี้
   //      ✅ เมื่อเปิด Firebase Storage + deploy storage.rules เสร็จ → สลิปจะกลายเป็น private ทันที
   //      (เปิด Storage ที่ Firebase Console → Storage → Get started แล้ว deploy firebase-rules/storage.rules)
   //      ⚠️ ต้องตั้ง CORS ที่ bucket ด้วย (ไม่งั้น browser block) — ดู cors.json + คำสั่ง gsutil ใน HANDOVER.md
-  PRIVATE_UPLOADS: false,        // ⏸ ปิดไว้ก่อน — เปิด true เมื่อตั้ง Storage + CORS เสร็จ (สลิปจะ fallback ไป ImgBB อัตโนมัติ)
+  PRIVATE_UPLOADS: false,        // ⏸ ปิดไว้ก่อน — เปิด true เมื่อตั้ง Storage + CORS เสร็จ (สลิปจะ fallback ไป Cloudinary ผ่าน Worker อัตโนมัติ)
 
   // ── แจ้งเตือน LINE ผ่าน Cloudflare Worker ──
   CF_WORKER_URL: 'https://dmc-studio-notify.peeza1482546.workers.dev',

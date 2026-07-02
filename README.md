@@ -60,7 +60,7 @@ graph TD
     A -->|เข้าระบบแอดมิน| D[🔐 Authentication]
     A -->|อัปรูป แจ้งเตือน| E[☁️ Serverless Function<br/>Edge Worker]
     E -->|แจ้งเตือนออเดอร์| F[💬 LINE Notify]
-    E -->|เก็บรูป| G[🖼️ Image Hosting]
+    E -->|เก็บรูป| G[🖼️ Cloudinary]
     A -->|แสดงรูปย่อ| H[⚡ Image CDN<br/>WebP on-the-fly]
 
     style A fill:#E0F2FE,stroke:#0EA5E9
@@ -85,9 +85,9 @@ graph TD
 | **Database** | Google Firebase — Firestore |
 | **Authentication** | Firebase Authentication |
 | **Serverless** | Cloudflare Workers (Edge Functions) |
-| **Image Pipeline** | External image hosting + WebP CDN |
+| **Image Pipeline** | Cloudinary (อัปผ่าน Cloudflare Worker) + WebP CDN |
 | **PWA** | Service Worker + Web App Manifest |
-| **Security** | Firebase App Check (reCAPTCHA) |
+| **Security** | Firebase App Check (reCAPTCHA) + Cloudflare Turnstile (กันบอต) |
 | **Notifications** | LINE Messaging API |
 
 > 💡 เลือกใช้ **Vanilla JavaScript** โดยตั้งใจ เพื่อให้เว็บเบา โหลดเร็ว และไม่มี dependency ที่ต้องดูแลมาก
