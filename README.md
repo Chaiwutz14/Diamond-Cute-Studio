@@ -1,6 +1,6 @@
 <div align="center">
 
-# Diamond Cute Studio 💎
+# Diamond Cute Studio 💎💎
 
 ### ระบบร้านพิมพ์ภาพออนไลน์ครบวงจร — สั่งซื้อ ออกแบบ ชำระเงิน ติดตามงาน ในที่เดียว
 
