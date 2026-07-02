@@ -102,11 +102,27 @@
 .hp-btn-ghost{background:var(--bg-card);color:var(--text-1);border-color:var(--border)}
 .hp-btn-ghost:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
 
-.hp-trust{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:1.5rem}
-.hp-trust-item{display:flex;flex-direction:column;line-height:1.1}
-.hp-trust-val{font-family:var(--font-display);font-weight:800;font-size:1.18rem;color:var(--text-1)}
-.hp-trust-lbl{font-size:.72rem;color:var(--text-3);margin-top:1px}
-.hp-trust-sep{width:1px;height:26px;background:var(--border)}
+/* ── V6: stat cards — glassy background, gradient numbers, hover lift ── */
+.hp-trust{display:flex;align-items:stretch;gap:.55rem;flex-wrap:wrap;margin-top:1.6rem}
+.hp-trust-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-width:80px;padding:.62rem .9rem;
+  background:linear-gradient(155deg, var(--bg-card), color-mix(in srgb, var(--bg-card) 84%, var(--accent) 16%));
+  border:1px solid color-mix(in srgb, var(--border) 62%, var(--accent) 38%);
+  border-radius:var(--r-lg);
+  box-shadow:0 4px 14px rgba(var(--accent-rgb),.10), inset 0 1px 0 rgba(255,255,255,.55);
+  transition:transform var(--t-fast), box-shadow var(--t-fast);
+}
+.hp-trust-item:hover{transform:translateY(-3px);
+  box-shadow:0 10px 22px rgba(var(--accent-rgb),.20), inset 0 1px 0 rgba(255,255,255,.55)}
+.hp-trust-val{
+  font-family:var(--font-display);font-weight:800;font-size:1.42rem;line-height:1;letter-spacing:-.5px;
+  background:linear-gradient(135deg, var(--accent), var(--accent-dark));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  color:var(--accent);   /* fallback ถ้าเบราว์เซอร์ไม่รองรับ gradient text */
+}
+.hp-trust-lbl{font-size:.66rem;color:var(--text-2);margin-top:.3rem;font-weight:600;letter-spacing:.2px}
+.hp-trust-sep{display:none}   /* ใช้การ์ดแทนเส้นคั่นแล้ว */
 
 /* ══════════════════════════════════════════════
    SECTION shell + headers
@@ -267,7 +283,7 @@
 }
 @media(max-width:560px){
   .hp-hero{padding-top:calc(var(--nav-h) + .8rem);min-height:370px}
-  .gd{opacity:.26}
+  .gd{opacity:.52;filter:saturate(1.08)}   /* V6: เดิม .26 จางเกินไปบนมือถือ → เพิ่มให้เห็นพื้นหลังชัด (สกริมหลังข้อความยังคุมให้อ่านง่าย) */
   .gd-item:nth-child(6),.gd-item:nth-child(7){display:none}
   .gd-card{transform:scale(.82)}
   .hp-products{grid-template-columns:repeat(2,1fr);gap:.75rem}

@@ -86,33 +86,38 @@ async function uploadToImgBB(file) {
   // ⭐ แนะนำ: อัปผ่าน Cloudflare Worker → API key ไม่หลุดสู่สาธารณะ
   // V.upgrade1: ถ้า proxy ล้มเหลว → fallback ไป ImgBB ตรง (อัปไม่มีวันพังเพราะตั้ง proxy)
   const proxy = (window.DMC_CONFIG || {}).UPLOAD_PROXY_URL || '';
+  // V3 Security: ไม่มี key ฝั่ง client แล้ว (ถอดออกกันหลุดสาธารณะ) — ปกติจะว่าง
+  const _key = (window.DMC_CONFIG || {}).IMGBB_API_KEY || (typeof IMGBB_API_KEY !== 'undefined' ? IMGBB_API_KEY : '');
   if (proxy) {
     try {
       const fd = new FormData();
       fd.append('image', file);
       const res = await fetch(proxy, { method: 'POST', body: fd, headers: dmcWorkerKeyHeader() });
-      // bug-fix: เดิมโยน "proxy 500" — ปกปิดข้อความจริง · ใหม่: ดึง error จาก body มาแสดง
+      // ดึงสาเหตุจริงจาก body ของ Worker มาแสดง (เช่น imgbb failed / invalid key / captcha / origin)
       if (!res.ok) {
-        let detail = res.status;
+        let detail = 'HTTP ' + res.status;
         try { const j = await res.json(); if (j && j.error) detail = j.error; } catch(e) {}
-        throw new Error('proxy ' + detail);
+        throw new Error(detail);
       }
       const data = await res.json();
       if (!data.url) throw new Error(data.error || 'no url');
       return { url: data.url, thumbUrl: data.url, deleteUrl: data.deleteUrl || '' };
     } catch (e) {
+      // BUG-FIX: เดิมพอ proxy พัง จะไหลไปโยน "Worker ยังไม่ได้ตั้งค่า IMGBB_KEY" ซึ่งกลบสาเหตุจริง
+      //   เมื่อไม่มี client key (ปกติ) → โยน error จริงจาก Worker ออกไปเลย จะได้เห็นต้นตอ
+      if (!_key) {
+        throw new Error('อัปโหลดรูปไม่สำเร็จ — Worker /upload ตอบว่า: "' + e.message +
+          '"  (ให้ตรวจ: IMGBB_KEY ถูกต้อง + deploy โค้ด Worker ล่าสุดที่มี User-Agent fix)');
+      }
       console.warn('Upload proxy failed, falling back to direct ImgBB:', e.message);
-      // ไหลต่อไปใช้ ImgBB ตรงด้านล่าง
+      // ไหลต่อไปใช้ ImgBB ตรงด้านล่าง (กรณี legacy ที่ยังมี client key)
     }
   }
   const formData = new FormData();
   formData.append('image', file);
 
-  // V3 Security: ไม่มี key ฝั่ง client แล้ว — ถ้า proxy ใช้ไม่ได้ ให้ฟ้องชัด (ไม่เรียก ImgBB ด้วย key ว่าง)
-  const _key = (window.DMC_CONFIG || {}).IMGBB_API_KEY || (typeof IMGBB_API_KEY !== 'undefined' ? IMGBB_API_KEY : '');
   if (!_key) {
-    // ข้อความ user-friendly — บอกชัดว่าให้ส่งสลิป/รูปทาง LINE แทน
-    throw new Error('อัปโหลดรูปไม่สำเร็จ (Worker ยังไม่ได้ตั้งค่า IMGBB_KEY) — รบกวนส่งรูปทาง LINE หลังสั่งซื้อครับ');
+    throw new Error('อัปโหลดรูปไม่สำเร็จ (ยังไม่ได้ตั้ง UPLOAD_PROXY_URL หรือ IMGBB key) — รบกวนส่งรูปทาง LINE ครับ');
   }
 
   const response = await fetch(
@@ -327,20 +332,12 @@ function generateId(prefix = '') {
 }
 
 function generateOrderId() {
-  // V16: เดิมสุ่ม 1000–9999 (มีแค่ 9,000 ค่า → ชนกันแน่นอนเมื่อออเดอร์เยอะ ~112 ใบ มีโอกาสซ้ำ 50%)
-  // ใหม่: วันที่ + เลขสุ่ม 4 หลัก + เศษเวลา → โอกาสชนต่ำมาก และเรียงตามเวลาอ่านง่าย
-  const d   = new Date();
-  const ymd = d.getFullYear().toString().slice(2)
-            + String(d.getMonth() + 1).padStart(2, '0')
-            + String(d.getDate()).padStart(2, '0');
-  // BUG-05 fix: เดิมสุ่มแค่ 4 หลัก (9,000 ค่า) → ออเดอร์ในวัน/ชม.เดียวกันมีโอกาสซ้ำสูง
-  //   ใหม่: ส่วนเวลา = วินาทีในวันนั้น (สูงสุด ~86,400 ค่า, base36) + สุ่ม 3 ตัว (base36 ~46,656 ค่า)
-  //   → ชนกันต้อง "วินาทีเดียวกัน + สุ่มตรงกัน" ≈ 1 ใน 4 พันล้าน (แทบเป็นไปไม่ได้)
-  //   ยังเรียงตามเวลาภายในวันได้ (ส่วนเวลานำหน้า) และอ่านง่าย เช่น DCS-260622-LMN4QK
-  const secOfDay = d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
-  const tpart    = secOfDay.toString(36).toUpperCase();              // 1–4 ตัว (เวลาในวัน)
-  const rnd      = Math.random().toString(36).slice(2, 5).toUpperCase(); // 3 ตัวสุ่ม
-  return `DCS-${ymd}-${tpart}${rnd}`;
+  // รูปแบบสั้น จำง่าย: DCS + เลข 4 หลัก + ตัวอักษร A–Z 1 ตัว  (เช่น DCS4827K)
+  // พื้นที่รหัส = 10,000 (0000–9999) × 26 = 260,000 ค่า — เพียงพอสำหรับร้าน
+  // (ลูกค้าจำง่ายขึ้นมาก เทียบกับแบบเดิมที่มีวันที่+เวลา)
+  const num    = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+  const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));   // A–Z
+  return `DCS${num}${letter}`;
 }
 
 // ─── Date / Time Helpers ───

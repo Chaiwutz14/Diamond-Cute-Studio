@@ -169,7 +169,7 @@ window.openOrderModal = async function(orderId) {
           <div class="detail-field"><div class="detail-field-label">ชื่อ</div><div class="detail-field-value">${DMC.escapeHtml(o.customerName||'—')}</div></div>
           <div class="detail-field"><div class="detail-field-label">โทร</div><div class="detail-field-value">${DMC.escapeHtml(o.customerPhone||'—')}</div></div>
           <div class="detail-field" style="grid-column:1/-1"><div class="detail-field-label">ที่อยู่</div><div class="detail-field-value">${DMC.escapeHtml(o.address||'—')}</div></div>
-          <div class="detail-field"><div class="detail-field-label">ขนส่งที่เลือก</div><div class="detail-field-value">${DMC.escapeHtml(o.shippingMethod||'—')}</div></div>
+          <div class="detail-field"><div class="detail-field-label">ขนส่งที่เลือก</div><div class="detail-field-value">${DMC.escapeHtml(({any:'ขนส่งใดก็ได้ (ร้านเลือกให้)',kerry:'Kerry Express',flash:'Flash Express',jandt:'J&T Express',jt:'J&T Express',thaipost:'ไปรษณีย์ไทย'})[o.shippingMethod] || o.shippingMethod || '—')}</div></div>
           <div class="detail-field"><div class="detail-field-label">ชำระ</div><div class="detail-field-value">${o.paymentMethod==='promptpay'?'📱 PromptPay':'🚚 COD'}</div></div>
         </div>
         ${o.note?`<div style="margin-top:.6rem;padding:.5rem .75rem;background:rgba(245,158,11,.08);border-radius:var(--r-md);font-size:.82rem;color:var(--text-2)">💬 ${DMC.escapeHtml(o.note)}</div>`:''}
