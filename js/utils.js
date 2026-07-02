@@ -14,10 +14,12 @@ function dmcWorkerKeyHeader() {
   return k ? { 'X-DMC-Key': k } : {};
 }
 
-// ── Cloudflare Turnstile (CAPTCHA กันบอต) — ขอ token แบบ invisible ตอนจะอัปรูป ──
+// ── Cloudflare Turnstile (CAPTCHA กันบอต) — ขอ token ตอนจะอัปรูป ──
 //   เปิดใช้: ตั้ง TURNSTILE.enabled=true + siteKey ใน config.js + secret TURNSTILE_SECRET ใน Worker
+//   แนะนำตั้ง Widget Mode = "Invisible" ใน Cloudflare (จะทำงานเงียบ ไม่ต้องให้ลูกค้าคลิก)
 //   ถ้าไม่เปิด/โหลดไม่ได้ → คืน null (ไม่แนบ token) และ Worker จะ fail-open (ยังอัปได้) จนกว่าจะตั้ง secret
 let _tsWidgetId = null;
+let _tsPending  = null;   // ตัว resolve ของการเรียกครั้งปัจจุบัน (callback จะอ่านค่านี้)
 async function dmcGetTurnstileToken() {
   const cfg = (window.DMC_CONFIG || {}).TURNSTILE || {};
   if (!cfg.enabled || !cfg.siteKey) return null;
@@ -26,45 +28,45 @@ async function dmcGetTurnstileToken() {
     if (!window.turnstile) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
-        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
         s.async = true; s.defer = true;
         s.onload = resolve;
         s.onerror = () => reject(new Error('โหลด Turnstile ไม่สำเร็จ'));
         document.head.appendChild(s);
       });
-      for (let i = 0; i < 60 && !window.turnstile; i++) await new Promise(r => setTimeout(r, 50));
+      for (let i = 0; i < 80 && !window.turnstile; i++) await new Promise(r => setTimeout(r, 50));
     }
     if (!window.turnstile) return null;
 
-    // container ซ่อนไว้ (render ครั้งเดียว, ครั้งถัด ๆ ไปใช้ reset)
+    // container วางนอกจอ (ไม่ใช่ 0x0 — เผื่อโหมด Managed ต้อง render UI ก็ยัง render ได้นอกจอ)
     let box = document.getElementById('dmc-turnstile-box');
     if (!box) {
       box = document.createElement('div');
       box.id = 'dmc-turnstile-box';
-      box.style.cssText = 'position:fixed;bottom:0;left:0;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none';
+      box.style.cssText = 'position:fixed;left:-9999px;bottom:0;width:300px;height:65px;opacity:0;pointer-events:none;z-index:-1';
       document.body.appendChild(box);
     }
 
     return await new Promise((resolve) => {
       let done = false;
-      const finish = (v) => { if (!done) { done = true; resolve(v); } };
-      // กันค้าง: ถ้าเกิน 12 วิยังไม่ได้ token ให้ปล่อยผ่าน (null)
-      const timer = setTimeout(() => finish(null), 12000);
-      const opts = {
+      const finish = (v) => { if (done) return; done = true; _tsPending = null; resolve(v); };
+      const timer  = setTimeout(() => finish(null), 15000);   // กันค้าง → ปล่อยผ่าน (null)
+      // callback (ทั้ง render และ reset) จะเรียกตัวนี้ ซึ่งอ่าน _tsPending ของ "ครั้งปัจจุบัน" เสมอ
+      _tsPending = (tok) => { clearTimeout(timer); finish(tok || null); };
+      const params = {
         sitekey: cfg.siteKey,
-        size: 'invisible',
-        callback: (token) => { clearTimeout(timer); finish(token); },
-        'error-callback': () => { clearTimeout(timer); finish(null); },
-        'timeout-callback': () => { clearTimeout(timer); finish(null); },
+        callback: (t) => { if (_tsPending) _tsPending(t); },
+        'error-callback':   () => { if (_tsPending) _tsPending(null); },
+        'timeout-callback': () => { if (_tsPending) _tsPending(null); },
+        'expired-callback': () => { if (_tsPending) _tsPending(null); },
       };
       try {
         if (_tsWidgetId === null) {
-          _tsWidgetId = window.turnstile.render(box, opts);
+          _tsWidgetId = window.turnstile.render(box, params);   // render ครั้งแรก → รัน challenge → callback
         } else {
-          window.turnstile.reset(_tsWidgetId);
+          window.turnstile.reset(_tsWidgetId);                  // ครั้งถัดไป → reset → รัน challenge ใหม่ → callback
         }
-        window.turnstile.execute(_tsWidgetId, opts);
-      } catch (e) { clearTimeout(timer); finish(null); }
+      } catch (e) { finish(null); }
     });
   } catch (e) {
     return null;   // fail-open
