@@ -1,30 +1,70 @@
 {
-  "generatedAt": "2026-07-02T22:18:15.159Z",
+  "generatedAt": "2026-07-02T22:21:56.590Z",
   "data": {
-    "hero": {
-      "title2": "กลายเป็นของที่ระลึก",
-      "desc": "บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน\nป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย",
-      "title1": "ทำให้ทุกภาพ",
-      "title3": "ที่สวยงามที่สุด",
-      "badge": "งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ"
-    },
-    "contact": {
-      "hours": "จันทร์–เสาร์ 08:00–20:00 น.",
-      "facebook": "https://www.facebook.com/share/19CQvQxW6E/",
-      "lineLabel": "@913huiwn",
-      "email": "Peeza1482546@gmail.com",
-      "line": "https://line.me/R/ti/p/@913huiwn",
-      "tiktok": "https://tiktok.com",
-      "instagram": "https://instagram.com",
-      "phone": "096-1207907"
-    },
     "promo": {
-      "btnLink": "catalog.html",
-      "btnText": "สั่งเลย →",
       "desc": "สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย  เพียงกรอกโค้ด WELCOME15",
       "title": "ลูกค้าใหม่ ลดทันที 15%",
+      "btnText": "สั่งเลย →",
       "tag": "🎁 โปรโมชั่นพิเศษ",
+      "btnLink": "catalog.html",
       "active": true
+    },
+    "payment": {
+      "qrImageUrl": "",
+      "promptpayName": "นาย ชัยวุฒิ บุญชูวงศ์",
+      "methods": {
+        "cod": {
+          "ready": false,
+          "shown": true
+        },
+        "truemoney": {
+          "shown": true,
+          "ready": false
+        },
+        "credit": {
+          "shown": true,
+          "ready": false
+        },
+        "promptpay": {
+          "ready": true,
+          "shown": true
+        }
+      },
+      "promptpayId": "0809987611"
+    },
+    "announce": {
+      "text": "ลูกค้าใหม่ กรอกคูปอง WELCOME15 ลดทันที 15% ไม่มีขั้นต่ำ",
+      "active": true
+    },
+    "fees": {
+      "shipTransfer": 30,
+      "shipCod": 50,
+      "freeShipMin": 0,
+      "surchargePromptpay": 0,
+      "surchargeCod": 0
+    },
+    "contact": {
+      "line": "https://line.me/R/ti/p/@913huiwn",
+      "phone": "096-1207907",
+      "instagram": "https://instagram.com",
+      "email": "Peeza1482546@gmail.com",
+      "hours": "จันทร์–เสาร์ 08:00–20:00 น.",
+      "lineLabel": "@913huiwn",
+      "facebook": "https://www.facebook.com/share/19CQvQxW6E/",
+      "tiktok": "https://tiktok.com"
+    },
+    "lastDeliveredAt": {
+      "seconds": 1783015807
+    },
+    "updatedAt": {
+      "seconds": 1783017899
+    },
+    "hero": {
+      "badge": "งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ",
+      "desc": "บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน\nป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย",
+      "title3": "ที่สวยงามที่สุด",
+      "title1": "ทำให้ทุกภาพ",
+      "title2": "กลายเป็นของที่ระลึก"
     },
     "faq": [
       {
@@ -46,49 +86,9 @@
     ],
     "stats": {
       "rating": "4.9/5",
-      "days": "1-3",
-      "orders": "500+"
+      "orders": "500+",
+      "days": "1-3"
     },
-    "payment": {
-      "promptpayId": "0809987611",
-      "qrImageUrl": "",
-      "promptpayName": "นาย ชัยวุฒิ บุญชูวงศ์",
-      "methods": {
-        "truemoney": {
-          "ready": false,
-          "shown": true
-        },
-        "promptpay": {
-          "shown": true,
-          "ready": true
-        },
-        "cod": {
-          "shown": true,
-          "ready": false
-        },
-        "credit": {
-          "ready": false,
-          "shown": true
-        }
-      }
-    },
-    "lastDeliveredAt": {
-      "seconds": 1783015807
-    },
-    "fees": {
-      "surchargeCod": 0,
-      "surchargePromptpay": 0,
-      "shipTransfer": 30,
-      "freeShipMin": 0,
-      "shipCod": 50
-    },
-    "_test": 1782880037380,
-    "announce": {
-      "active": true,
-      "text": "ลูกค้าใหม่ กรอกคูปอง WELCOME15 ลดทันที 15% ไม่มีขั้นต่ำ"
-    },
-    "updatedAt": {
-      "seconds": 1783017899
-    }
+    "_test": 1782880037380
   }
 }
