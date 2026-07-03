@@ -9,15 +9,17 @@
   position:relative; max-width:1180px; margin:0 auto; overflow:hidden;
   padding:calc(var(--nav-h) + 1.5rem) 1.1rem 1.4rem;
   min-height:clamp(410px,56vh,510px); display:flex; align-items:center;
+  /* V25: ลดสีธีมให้จางลง — ยังเห็นโทนธีมบางๆ ตอนสลับธีม แต่ไม่กลบสายแขวนโพลารอยด์ */
   background:
-    radial-gradient(54% 46% at 82% 14%, rgba(var(--accent-rgb),.12), transparent 62%),
-    radial-gradient(44% 40% at 6% 94%, rgba(var(--accent-rgb),.07), transparent 60%),
-    color-mix(in srgb, var(--bg) 82%, var(--accent) 18%);
+    radial-gradient(54% 46% at 82% 14%, rgba(var(--accent-rgb),.07), transparent 62%),
+    radial-gradient(44% 40% at 6% 94%, rgba(var(--accent-rgb),.04), transparent 60%),
+    color-mix(in srgb, var(--bg) 92%, var(--accent) 8%);
 }
 
 /* ── faint hanging photo-garland (background layer) ── */
+/* V25: เดิม .32 จางเกิน โดนสีธีมกลบ → เพิ่มเป็น .58 + saturate ให้การ์ดโพลารอยด์เป็นจุดเด่นจริง */
 .gd{position:absolute;top:calc(var(--nav-h) + 6px);left:0;right:0;bottom:0;z-index:0;
-  opacity:.32;filter:saturate(.92);pointer-events:none}
+  opacity:.58;filter:saturate(1.04);pointer-events:none}
 .gd-string{position:absolute;top:0;left:0;width:100%;height:130px;overflow:visible}
 .gd-item{position:absolute;transform-origin:top center;transform:rotate(var(--rot));
   animation-name:gdSway;animation-timing-function:ease-in-out;animation-iteration-count:infinite}
@@ -39,9 +41,23 @@
   background:linear-gradient(105deg,transparent,rgba(255,255,255,.28) 50%,transparent);
   transform:translateX(-160%) rotate(8deg);animation:hpSheen 7s ease-in-out infinite}
 
-/* ── readability scrim behind text (lets faint garland show, keeps copy crisp) ── */
+/* ── readability scrim behind text (lets garland show, keeps copy crisp) ── */
+/* V25: ลดจาก 42% → 34% ให้พื้นหลังโชว์มากขึ้น แต่ตัวหนังสือยังอ่านชัด */
 .hp-scrim{position:absolute;inset:0;z-index:2;pointer-events:none;
-  background:radial-gradient(50% 46% at 22% 42%, color-mix(in srgb,var(--bg) 42%,transparent) 0%, transparent 68%)}
+  background:radial-gradient(50% 46% at 22% 42%, color-mix(in srgb,var(--bg) 34%,transparent) 0%, transparent 68%)}
+
+/* ── V25: bokeh แสงนวลลอยขึ้น — เพิ่มมิติ/ลูกเล่นพื้นหลัง (GPU-friendly, ไม่มี JS) ── */
+.hp-bokeh{position:absolute;bottom:-30px;z-index:1;pointer-events:none;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, rgba(255,255,255,.85), rgba(var(--accent-rgb),.25) 60%, transparent 72%);
+  filter:blur(1.5px);opacity:0;
+  animation:hpBokeh var(--bkd,11s) linear var(--bks,0s) infinite}
+.hp-bokeh.gold{background:radial-gradient(circle at 35% 35%, rgba(255,255,255,.9), color-mix(in srgb, var(--gold) 45%, transparent) 60%, transparent 72%)}
+.hp-bk1{left:8%;width:14px;height:14px;--bkd:12s;--bks:0s}
+.hp-bk2{left:26%;width:9px;height:9px;--bkd:15s;--bks:2.5s}
+.hp-bk3{left:47%;width:12px;height:12px;--bkd:13s;--bks:5s}
+.hp-bk4{left:66%;width:8px;height:8px;--bkd:16s;--bks:1.2s}
+.hp-bk5{left:82%;width:15px;height:15px;--bkd:12.5s;--bks:3.8s}
+.hp-bk6{left:93%;width:10px;height:10px;--bkd:14s;--bks:6.5s}
 
 /* ── original twinkling sparkles — kept ── */
 .hp-spark{position:absolute;z-index:3;color:var(--accent);opacity:0;pointer-events:none;
@@ -102,27 +118,31 @@
 .hp-btn-ghost{background:var(--bg-card);color:var(--text-1);border-color:var(--border)}
 .hp-btn-ghost:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
 
-/* ── V6: stat cards — glassy background, gradient numbers, hover lift ── */
-.hp-trust{display:flex;align-items:stretch;gap:.55rem;flex-wrap:wrap;margin-top:1.6rem}
-.hp-trust-item{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-width:80px;padding:.62rem .9rem;
-  background:linear-gradient(155deg, var(--bg-card), color-mix(in srgb, var(--bg-card) 84%, var(--accent) 16%));
-  border:1px solid color-mix(in srgb, var(--border) 62%, var(--accent) 38%);
-  border-radius:var(--r-lg);
-  box-shadow:0 4px 14px rgba(var(--accent-rgb),.10), inset 0 1px 0 rgba(255,255,255,.55);
-  transition:transform var(--t-fast), box-shadow var(--t-fast);
+/* ── V25: Typewriter trust line — แทนการ์ด stats เดิม (V6) ──
+   คอนเซปต์: "ลายมือเขียนใต้รูปโพลารอยด์" — ฟอนต์ Mali + caret กระพริบ
+   ประโยควนโดย js/home.js (initTypewriter) อ่านค่าจาก span[hidden] #stat-* */
+.hp-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.hp-type{margin-top:1.5rem;min-height:3.4rem}
+.hp-type-line{display:flex;align-items:baseline;gap:.5rem}
+.hp-type-prefix{color:var(--gold);font-size:1rem;line-height:1;transform:translateY(1px);
+  text-shadow:0 0 8px color-mix(in srgb, var(--gold) 55%, transparent)}
+.hp-type-text{
+  font-family:'Mali', var(--font-display), sans-serif;
+  font-weight:600;font-size:clamp(1.02rem, 2.9vw, 1.22rem);line-height:1.4;
+  color:var(--accent-dark);letter-spacing:.1px;
+  text-shadow:0 1px 8px var(--bg);
 }
-.hp-trust-item:hover{transform:translateY(-3px);
-  box-shadow:0 10px 22px rgba(var(--accent-rgb),.20), inset 0 1px 0 rgba(255,255,255,.55)}
-.hp-trust-val{
-  font-family:var(--font-display);font-weight:800;font-size:1.42rem;line-height:1;letter-spacing:-.5px;
-  background:linear-gradient(135deg, var(--accent), var(--accent-dark));
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-  color:var(--accent);   /* fallback ถ้าเบราว์เซอร์ไม่รองรับ gradient text */
+.hp-type-caret{width:2.5px;height:1.15em;border-radius:2px;background:var(--accent);
+  align-self:center;flex-shrink:0;box-shadow:0 0 6px rgba(var(--accent-rgb),.6);
+  animation:hpCaret 1s steps(1) infinite}
+.hp-type-note{
+  font-family:'Mali', var(--font-body), sans-serif;
+  font-size:.72rem;color:var(--text-3);margin-top:.22rem;padding-left:1.5rem;
+  min-height:1.1rem;               /* จองพื้นที่ไว้ → ข้อความโผล่/หายไม่ดันเลย์เอาต์ */
+  opacity:0;transition:opacity .45s ease;
 }
-.hp-trust-lbl{font-size:.66rem;color:var(--text-2);margin-top:.3rem;font-weight:600;letter-spacing:.2px}
-.hp-trust-sep{display:none}   /* ใช้การ์ดแทนเส้นคั่นแล้ว */
+.hp-type-note.show{opacity:1}
 
 /* ══════════════════════════════════════════════
    SECTION shell + headers
@@ -135,25 +155,70 @@
 .hp-see:hover{text-decoration:underline}
 
 /* ══════════════════════════════════════════════
-   SERVICE CHIPS (premium cards over .cat-card)
+   SERVICE CHIPS — V25 "ป้ายแท็กงานพิมพ์" (hang tags)
+   คอนเซปต์: หมวดสินค้า = ป้ายแท็กแขวนของร้านพิมพ์จริงๆ
+   • รูเจาะ + ห่วงเชือกด้านบน  • ขอบเส้นปรุ (แนวรอยตัดงานพิมพ์)
+   • สีสลับ 4 โทนจากตัวแปรธีม (accent/gold/rose/emerald) → เปลี่ยนธีมแล้วยังเข้ากัน
+   • การ์ดเอียงสลับซ้าย-ขวาเล็กน้อย + hover แกว่งเหมือนป้ายจริง
+   ⚠️ scoped ใต้ .hp-chips เท่านั้น — ไม่กระทบ .cat-card ที่อื่น
 ══════════════════════════════════════════════ */
-.hp-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem}
+.hp-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem .6rem;padding-top:.5rem}
 .hp-chips .cat-card{
-  background:var(--bg-card);border:1px solid var(--border);
-  border-radius:18px;padding:1rem .6rem;
+  --tag-c:var(--accent);
+  --tag-rot:-1.4deg;
+  position:relative;
+  background:
+    linear-gradient(168deg, color-mix(in srgb, var(--tag-c) 13%, var(--bg-card)) 0%, var(--bg-card) 62%);
+  border:1.5px dashed color-mix(in srgb, var(--tag-c) 52%, transparent);
+  border-radius:12px 12px 14px 14px;
+  padding:.95rem .35rem .7rem;
   text-align:center;text-decoration:none;display:block;
-  box-shadow:var(--shadow-card);
-  transition:transform var(--t-normal),box-shadow var(--t-normal),border-color var(--t-normal);
+  transform:rotate(var(--tag-rot));
+  transform-origin:top center;
+  box-shadow:0 5px 12px color-mix(in srgb, var(--tag-c) 16%, transparent);
+  transition:box-shadow var(--t-normal),border-color var(--t-normal);
 }
-.hp-chips .cat-card::before{display:none}
-.hp-chips .cat-card:hover{transform:translateY(-4px);border-color:var(--border-hover);box-shadow:var(--shadow-hover)}
+/* สีสลับ 4 โทน + เอียงสลับ */
+.hp-chips .cat-card:nth-child(4n+2){--tag-c:var(--gold);   --tag-rot:1.2deg}
+.hp-chips .cat-card:nth-child(4n+3){--tag-c:var(--rose);   --tag-rot:-1deg}
+.hp-chips .cat-card:nth-child(4n+4){--tag-c:var(--emerald);--tag-rot:1.5deg}
+/* รูเจาะป้ายแท็ก (วงกลมเจาะ + ขอบโลหะ) */
+.hp-chips .cat-card::before{
+  content:'';display:block;position:static;inset:auto;opacity:1;   /* override ::before เดิมของ .cat-card */
+  width:11px;height:11px;margin:0 auto .45rem;border-radius:50%;
+  background:var(--bg);
+  border:2.5px solid color-mix(in srgb, var(--tag-c) 60%, var(--bg-card));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.14);
+  transition:none;
+}
+/* เชือกร้อยจากรูขึ้นไปขอบบน */
+.hp-chips .cat-card::after{
+  content:'';position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(calc(var(--tag-rot) * -1));
+  width:2px;height:13px;border-radius:2px;
+  background:color-mix(in srgb, var(--text-3) 65%, transparent);
+}
+.hp-chips .cat-card:hover{
+  transform:rotate(var(--tag-rot));   /* กัน .cat-card:hover (base) ทับด้วย translateY จนความเอียงหาย */
+  animation:tagSwing .9s ease-in-out;
+  border-color:color-mix(in srgb, var(--tag-c) 85%, transparent);
+  box-shadow:0 10px 22px color-mix(in srgb, var(--tag-c) 30%, transparent);
+}
+.hp-chips .cat-card:focus-visible{
+  outline:2.5px solid var(--tag-c);outline-offset:3px;
+}
 .hp-chips .cat-icon{
-  width:48px;height:48px;margin:0 auto .55rem;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.5rem;border-radius:14px;background:var(--soft);
+  display:block;width:auto;height:auto;margin:0 auto .3rem;
+  font-size:1.6rem;line-height:1.25;background:none;border-radius:0;
+  filter:drop-shadow(0 2px 3px color-mix(in srgb, var(--tag-c) 32%, transparent));
 }
-.hp-chips .cat-name{font-family:var(--font-display);font-weight:600;font-size:.82rem;color:var(--text-1);margin-bottom:.12rem;line-height:1.25}
-.hp-chips .cat-count{font-size:.68rem;color:var(--text-3)}
+.hp-chips .cat-name{font-family:var(--font-display);font-weight:700;font-size:.8rem;color:var(--text-1);margin-bottom:.28rem;line-height:1.25}
+.hp-chips .cat-count{
+  display:inline-block;font-size:.63rem;font-weight:600;line-height:1;
+  color:color-mix(in srgb, var(--tag-c) 72%, var(--text-1));
+  background:color-mix(in srgb, var(--tag-c) 14%, var(--bg-card));
+  border:1px solid color-mix(in srgb, var(--tag-c) 30%, transparent);
+  padding:.24rem .5rem;border-radius:99px;
+}
 
 /* ══════════════════════════════════════════════
    FEATURED PRODUCTS grid (homepage)
@@ -283,16 +348,17 @@
 }
 @media(max-width:560px){
   .hp-hero{padding-top:calc(var(--nav-h) + .8rem);min-height:370px}
-  .gd{opacity:.52;filter:saturate(1.08)}   /* V6: เดิม .26 จางเกินไปบนมือถือ → เพิ่มให้เห็นพื้นหลังชัด (สกริมหลังข้อความยังคุมให้อ่านง่าย) */
+  .gd{opacity:.72;filter:saturate(1.1)}   /* V25: มือถือดันขึ้นอีก .52 → .72 ให้สายแขวนเด่นชัด (สกริมยังคุมความอ่านง่าย) */
   .gd-item:nth-child(6),.gd-item:nth-child(7){display:none}
   .gd-card{transform:scale(.82)}
   .hp-products{grid-template-columns:repeat(2,1fr);gap:.75rem}
   .hp-features{grid-template-columns:repeat(2,1fr);gap:.7rem}
 }
 @media(max-width:380px){
-  .hp-chips{gap:.5rem}
-  .hp-chips .cat-card{padding:.85rem .4rem}
-  .hp-chips .cat-icon{width:42px;height:42px;font-size:1.3rem}
+  .hp-chips{gap:.7rem .45rem}
+  .hp-chips .cat-card{padding:.8rem .25rem .6rem}
+  .hp-chips .cat-icon{font-size:1.35rem}
+  .hp-chips .cat-name{font-size:.73rem}
 }
 
 /* ══════════════════════════════════════════════
@@ -305,12 +371,26 @@
 @keyframes hpShimmer{0%{background-position:0% 50%}100%{background-position:220% 50%}}
 @keyframes hpBtnShine{0%{transform:translateX(-180%) skewX(-18deg)}55%,100%{transform:translateX(360%) skewX(-18deg)}}
 @keyframes gdSway{0%,100%{transform:rotate(calc(var(--rot) - 2.8deg))}50%{transform:rotate(calc(var(--rot) + 2.8deg))}}
+/* V25: bokeh ลอยขึ้นจากล่างจอ ค่อยๆ จางหาย */
+@keyframes hpBokeh{
+  0%{transform:translateY(0) translateX(0);opacity:0}
+  12%{opacity:.75}
+  55%{opacity:.55;transform:translateY(-46vh) translateX(10px)}
+  100%{transform:translateY(-88vh) translateX(-8px);opacity:0}
+}
+/* V25: caret กระพริบของ typewriter */
+@keyframes hpCaret{0%,45%{opacity:1}50%,100%{opacity:0}}
+/* V25: ป้ายแท็กแกว่งตอน hover */
+@keyframes tagSwing{0%{transform:rotate(var(--tag-rot,0deg))}30%{transform:rotate(calc(var(--tag-rot,0deg) + 3.2deg))}60%{transform:rotate(calc(var(--tag-rot,0deg) - 2.2deg))}100%{transform:rotate(var(--tag-rot,0deg))}}
 
 /* เคารพผู้ใช้ที่ตั้งค่าลดการเคลื่อนไหว — ปิดอนิเมชันทั้งหมด */
 @media (prefers-reduced-motion: reduce){
   .hp-hero{animation:none}
   .hp-deco1,.hp-deco2,.hp-deco3,.hp-sheen,.hp-btn-primary::after,.gd-item{animation:none}
   .hp-spark{display:none}
+  .hp-bokeh{display:none}
+  .hp-type-caret{animation:none;opacity:0}
+  .hp-chips .cat-card:hover{animation:none}
 }
 
 /* ══════════════════════════════════════════════

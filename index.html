@@ -38,7 +38,7 @@
   <!-- V2: ฟอนต์โหลดแบบ non-blocking (preconnect + link) แทน @import -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&family=Sarabun:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&family=Sarabun:wght@400;600;700&family=Mali:wght@500;600;700&display=swap">
   <link rel="stylesheet" href="css/core.css">
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/home.css">
@@ -84,6 +84,13 @@
   <span class="hp-spark hp-s2" aria-hidden="true">✦</span>
   <span class="hp-spark hp-s3" aria-hidden="true">✨</span>
   <span class="hp-spark hp-s4" aria-hidden="true">⭐</span>
+  <!-- V25: bokeh แสงนวลลอยขึ้น — เพิ่มมิติพื้นหลัง -->
+  <span class="hp-bokeh hp-bk1" aria-hidden="true"></span>
+  <span class="hp-bokeh hp-bk2 gold" aria-hidden="true"></span>
+  <span class="hp-bokeh hp-bk3" aria-hidden="true"></span>
+  <span class="hp-bokeh hp-bk4 gold" aria-hidden="true"></span>
+  <span class="hp-bokeh hp-bk5" aria-hidden="true"></span>
+  <span class="hp-bokeh hp-bk6" aria-hidden="true"></span>
   <div class="hp-hero-inner">
     <div class="hp-badge">
       <span class="hp-badge-dot"></span>
@@ -99,12 +106,18 @@
       <a href="catalog.html" class="hp-btn hp-btn-primary">เริ่มออกแบบ <span aria-hidden="true">✦</span></a>
       <a href="gallery.html" class="hp-btn hp-btn-ghost">ดูผลงาน</a>
     </div>
-    <div class="hp-trust">
-      <div class="hp-trust-item"><span class="hp-trust-val" id="stat-orders">500+</span><span class="hp-trust-lbl">ออเดอร์</span></div>
-      <div class="hp-trust-sep"></div>
-      <div class="hp-trust-item"><span class="hp-trust-val" id="stat-rating">4.9</span><span class="hp-trust-lbl">เรตติ้ง</span></div>
-      <div class="hp-trust-sep"></div>
-      <div class="hp-trust-item"><span class="hp-trust-val" id="stat-days">1-3</span><span class="hp-trust-lbl">วันได้รับ</span></div>
+    <!-- V25: Typewriter trust line — พิมพ์/ลบ วนประโยคจุดเด่นร้าน
+         หมายเหตุ: span[hidden] id="stat-*" คงไว้เป็นแหล่งข้อมูล → CMS หลังบ้าน (applyCMSContent) เขียนค่าลงที่เดิมได้ ไม่ต้องแก้ระบบ -->
+    <div class="hp-type" id="hp-type">
+      <span class="hp-sr" id="hp-type-sr">มากกว่า 500 ออเดอร์ · คะแนนรีวิวร้าน 4.9/5 · ได้รับสินค้าไม่เกิน 3 วัน</span>
+      <div class="hp-type-line" aria-hidden="true">
+        <span class="hp-type-prefix">✦</span>
+        <span class="hp-type-text" id="hp-type-text"></span><span class="hp-type-caret"></span>
+      </div>
+      <div class="hp-type-note" id="hp-type-note" aria-hidden="true">*ยกเว้นมีเหตุจำเป็น</div>
+      <span hidden id="stat-orders">500+</span>
+      <span hidden id="stat-rating">4.9/5</span>
+      <span hidden id="stat-days">1-3</span>
     </div>
   </div>
 

@@ -1,0 +1,47 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # V17/V24 (SEC-C): ไม่เผยแพร่ไฟล์ dev/เครื่องมือ/ซอร์สหลังบ้าน/เอกสารภายใน ขึ้นเว็บจริง
+      #      (ไฟล์ยังอยู่ใน repo สำหรับใช้ในเครื่อง — ลบเฉพาะตอน build artifact ที่จะ deploy)
+      - name: Strip non-public files from publish
+        run: |
+          rm -rf _dev
+          rm -rf cloudflare-worker firebase-rules
+          rm -f DMC_Studio_Audit_Report.html firestore.rules.bak
+          rm -f *.md
+          rm -f data/README.txt
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

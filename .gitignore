@@ -1,0 +1,7 @@
+# ระบบ/ชั่วคราว — ไม่ต้องอัปขึ้น GitHub
+.DS_Store
+Thumbs.db
+node_modules/
+*.log
+.env
+*.zip
