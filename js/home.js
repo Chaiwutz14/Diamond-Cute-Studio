@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadCategoryCounts(); // นับจำนวนสินค้าจริงต่อหมวด (เจ้าของ #categories-grid)
   loadHomeGallery();    // V4: แถบผลงานจริง (#home-gallery)
   initHeroShowcase();   // V16: coverflow ผลงานฝั่งขวา (เฉพาะเดสก์ท็อป)
+  initTypewriter();     // V25: ข้อความจุดเด่นแบบพิมพ์/ลบวนลูป (อ่านค่าจาก #stat-* ที่ CMS เขียนได้)
 
   // ─── V24/PERF-B: โหลดสินค้าจาก snapshot โดยตรง (ไม่ await getFirebaseReady ก่อน) ──
   //   loadFeaturedProducts ใช้ DMC.loadProducts() (snapshot → cache → Firestore) อยู่แล้ว
@@ -31,6 +32,98 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ─── Intersection Observer (scroll animations) ───
   initScrollAnimations();
 });
+
+// ─── V25: Typewriter trust line ─────────────────
+//   พิมพ์ทีละตัว → ค้าง → ลบ → ประโยคถัดไป (วนลูป)
+//   • อ่านค่าจาก span[hidden] #stat-orders / #stat-rating / #stat-days "ทุกรอบ"
+//     → แอดมินแก้ตัวเลขจาก CMS หลังบ้านแล้วเห็นผลทันทีรอบถัดไป ไม่ต้องแก้โค้ด
+//   • prefers-reduced-motion → แสดงข้อความนิ่งทั้งหมด ไม่มีอนิเมชัน
+//   • แท็บถูกซ่อน → หยุดพิมพ์ชั่วคราว (ประหยัดแบต/CPU)
+function initTypewriter() {
+  const textEl = document.getElementById('hp-type-text');
+  const noteEl = document.getElementById('hp-type-note');
+  const srEl   = document.getElementById('hp-type-sr');
+  if (!textEl) return;
+
+  const val = (id, fb) => {
+    const el = document.getElementById(id);
+    const t = el ? (el.textContent || '').trim() : '';
+    return t || fb;
+  };
+
+  // ประกอบ 3 ประโยคจากค่าปัจจุบัน (CMS เขียนทับ stat-* ได้)
+  function buildSentences() {
+    const orders = val('stat-orders', '500+');
+    let rating   = val('stat-rating', '4.9/5');
+    const days   = val('stat-days',   '1-3');
+
+    if (rating && rating.indexOf('/') === -1) rating += '/5';   // "4.9" → "4.9/5"
+    const ordersNum = orders.replace(/\+\s*$/, '');             // "500+" → "500"
+    const dayMatch  = days.match(/(\d+)\s*$/);                  // "1-3" → "3"
+    const maxDay    = dayMatch ? dayMatch[1] : days;
+
+    return [
+      { text: 'จำนวนมากกว่า ' + ordersNum + ' ออเดอร์', note: false },
+      { text: 'คะแนนรีวิวร้าน ' + rating,                note: false },
+      { text: 'ได้รับสินค้าไม่เกิน ' + maxDay + ' วัน',   note: true  },
+    ];
+  }
+
+  // screen reader: สรุปนิ่งอ่านครั้งเดียว
+  if (srEl) srEl.textContent = buildSentences().map(s => s.text).join(' · ');
+
+  // ลดการเคลื่อนไหว → ข้อความนิ่ง
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    textEl.textContent = buildSentences().map(s => s.text).join(' · ');
+    if (noteEl) noteEl.classList.add('show');
+    return;
+  }
+
+  const TYPE_MS = 58, DELETE_MS = 26, HOLD_MS = 1700, GAP_MS = 420;
+  let idx = 0, timer = null;
+
+  const wait = (ms) => new Promise(r => { timer = setTimeout(r, ms); });
+  const visible = () => !document.hidden;
+  async function waitVisible() {
+    while (!visible()) { await wait(600); }
+  }
+
+  async function loop() {
+    // เริ่มรอบใหม่ทุกครั้ง → อ่านค่าล่าสุด (รองรับ CMS อัปเดต)
+    for (;;) {
+      const sentences = buildSentences();
+      const s = sentences[idx % sentences.length];
+      await waitVisible();
+
+      // พิมพ์
+      for (let i = 1; i <= s.text.length; i++) {
+        textEl.textContent = s.text.slice(0, i);
+        await wait(TYPE_MS);
+        if (!visible()) await waitVisible();
+      }
+      if (noteEl) noteEl.classList.toggle('show', s.note);
+      await wait(HOLD_MS);
+
+      // ลบ
+      for (let i = s.text.length - 1; i >= 0; i--) {
+        textEl.textContent = s.text.slice(0, i);
+        await wait(DELETE_MS);
+        if (!visible()) await waitVisible();
+      }
+      if (noteEl) noteEl.classList.remove('show');
+      await wait(GAP_MS);
+      idx++;
+    }
+  }
+
+  loop().catch(() => {
+    // fallback สุดท้าย: อะไรพังก็แสดงข้อความนิ่ง ระบบอื่นไม่กระทบ
+    try {
+      clearTimeout(timer);
+      textEl.textContent = buildSentences().map(s => s.text).join(' · ');
+    } catch (e) { /* เงียบ */ }
+  });
+}
 
 // ─── Load Featured Products ───
 async function loadFeaturedProducts() {
@@ -161,7 +254,9 @@ function initScrollAnimations() {
     entries.forEach(e => {
       if (e.isIntersecting) {
         e.target.style.opacity = '1';
-        e.target.style.transform = 'translateY(0)';
+        // V25: เคลียร์ inline transform (แทนการตั้ง translateY(0) ค้างไว้)
+        //   → คืนค่า transform จาก CSS เช่น rotate ของป้ายแท็กหมวดหมู่ (.hp-chips .cat-card)
+        e.target.style.transform = '';
         obs.unobserve(e.target);
       }
     });
