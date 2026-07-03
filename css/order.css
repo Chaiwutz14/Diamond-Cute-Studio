@@ -371,3 +371,19 @@
 }
 .field-msg.ok  { color: var(--emerald); }
 .field-msg.err { color: var(--rose); }
+
+/* ── V26: รายละเอียดออเดอร์แบบเต็ม (กดดูได้) — หน้า "ติดตามออเดอร์" ── */
+.track-detail{margin-top:.7rem;border-top:1.5px dashed var(--border);padding-top:.55rem}
+.track-detail summary{cursor:pointer;font-weight:700;font-size:.85rem;color:var(--accent);list-style:none;display:flex;align-items:center;gap:.35rem;user-select:none}
+.track-detail summary::-webkit-details-marker{display:none}
+.track-detail summary::after{content:'▾';margin-left:auto;transition:transform .2s}
+.track-detail[open] summary::after{transform:rotate(180deg)}
+.track-detail-body{margin-top:.6rem;display:flex;flex-direction:column;gap:.32rem;font-size:.82rem}
+.track-detail-sec{font-weight:800;font-size:.74rem;color:var(--text-2);margin-top:.5rem;letter-spacing:.3px}
+.track-detail-item,.track-detail-row{display:flex;justify-content:space-between;gap:.8rem;align-items:baseline}
+.track-detail-item small{display:block;color:var(--text-3);font-size:.72rem;font-weight:400}
+.track-detail-item>span:first-child{min-width:0}
+.track-detail-row.discount span:last-child{color:var(--emerald,#10b981);font-weight:700}
+.track-detail-row.total{border-top:1px solid var(--border);padding-top:.35rem;font-weight:800}
+.track-detail-row.addr{flex-direction:column;gap:.15rem;align-items:flex-start}
+.track-detail-row.addr span:last-child{color:var(--text-2)}

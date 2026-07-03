@@ -25,10 +25,11 @@ const ORDER_STATUSES = [
 
 const CARRIER_OPTIONS = [
   { key:'',         name:'— เลือกขนส่ง —' },
-  { key:'kerry',    name:'Kerry Express' },
+  { key:'kerry',    name:'Kerry Express (KEX)' },
   { key:'flash',    name:'Flash Express' },
   { key:'jt',       name:'J&T Express' },
   { key:'thaipost', name:'ไปรษณีย์ไทย' },
+  { key:'other',    name:'อื่นๆ — พิมพ์ชื่อขนส่งเอง' },   // V26: ขนส่งนอกลิสต์ (Ninja Van, Best, DHL ฯลฯ)
 ];
 
 // Built-in canvas templates (ให้เลือกผูกกับสินค้า)

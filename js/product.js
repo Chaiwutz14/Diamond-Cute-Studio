@@ -264,24 +264,37 @@ function buildGalleryItems() {
 
   // วิดีโอ (YouTube/TikTok ลิงก์)
   const embed = toVideoEmbed(product.videoUrl);
-  if (embed) galleryItems.push({ type: 'video', embedUrl: embed });
+  if (embed) {
+    galleryItems.push({ type: 'video', embedUrl: embed, vertical: /tiktok\.com/.test(embed) });
+  } else if (isVideoLink(product.videoUrl)) {
+    // V26: ลิงก์วิดีโอที่ฝังไม่ได้ (เช่นลิงก์แชร์สั้น vt.tiktok.com / tiktok.com/t/)
+    //   → ยังโชว์เป็นรายการวิดีโอ กดแล้วเปิดดูบนแอป/เว็บต้นทาง (เดิมหายไปจากแกลเลอรีเลย)
+    galleryItems.push({ type: 'video-link', url: String(product.videoUrl).trim() });
+  }
 
   // เริ่มที่รูปปก
   const cover = Number(product.coverIndex);
   activeGalleryIndex = (!isNaN(cover) && cover >= 0 && cover < galleryItems.length) ? cover : 0;
 }
 
-// แปลงลิงก์ YouTube / TikTok → embed URL (คืน '' ถ้าไม่รองรับ)
+// แปลงลิงก์ YouTube / TikTok → embed URL (คืน '' ถ้าฝังไม่ได้)
 function toVideoEmbed(url) {
   if (!url) return '';
   const u = String(url).trim();
-  // YouTube: watch?v= | youtu.be/ | shorts/
-  let m = u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,15})/);
-  if (m) return 'https://www.youtube.com/embed/' + m[1];
-  // TikTok: /video/{id}
-  m = u.match(/tiktok\.com\/.*\/video\/(\d{8,25})/);
+  // YouTube: watch?v= | youtu.be/ | shorts/ | live/
+  //   ใช้โดเมน youtube-nocookie + rel=0 (ไม่แนะนำคลิปช่องอื่นตอนพัก) + playsinline (มือถือเล่นในหน้า)
+  //   หมายเหตุ: โลโก้/ชื่อช่องบนตัวเล่นเป็นข้อกำหนดของ YouTube ปิดไม่ได้ (ทุกเว็บเป็นเหมือนกัน)
+  let m = u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,15})/);
+  if (m) return 'https://www.youtube-nocookie.com/embed/' + m[1] + '?rel=0&playsinline=1&modestbranding=1';
+  // TikTok: ลิงก์เต็มแบบ /video/{id} หรือ /photo/{id}
+  m = u.match(/tiktok\.com\/.*(?:video|photo)\/(\d{8,25})/);
   if (m) return 'https://www.tiktok.com/embed/v2/' + m[1];
   return '';
+}
+
+// เป็นลิงก์วิดีโอที่รู้จักไหม (ใช้ทำ tile "เปิดดู" เมื่อฝังไม่ได้ เช่นลิงก์แชร์สั้นของ TikTok)
+function isVideoLink(url) {
+  return /(?:youtube\.com|youtu\.be|tiktok\.com)/i.test(String(url || ''));
 }
 
 function renderGallery() {
@@ -312,9 +325,17 @@ function renderGallery() {
     img.addEventListener('click', () => openProductLightbox(item.url));
     mainEl.appendChild(img);
     if (typeof Loading !== 'undefined') Loading.blurUpImage(img);
+  } else if (item.type === 'video-link') {
+    // V26: ลิงก์วิดีโอที่ฝังไม่ได้ → tile กดเปิดดูบนแอป/เว็บต้นทาง
+    const a = document.createElement('a');
+    a.className = 'gallery-media gallery-video-open';
+    a.href = item.url; a.target = '_blank'; a.rel = 'noopener';
+    const isTT = /tiktok/i.test(item.url);
+    a.innerHTML = '<span class="gvo-play">▶</span><span class="gvo-text">ดูวิดีโอบน ' + (isTT ? 'TikTok' : 'YouTube') + '</span><span class="gvo-sub">แตะเพื่อเปิดดูวิดีโอ</span>';
+    mainEl.appendChild(a);
   } else {
     const wrap = document.createElement('div');
-    wrap.className = 'gallery-media gallery-video-wrap';
+    wrap.className = 'gallery-media gallery-video-wrap' + (item.vertical ? ' vertical' : '');
     const iframe = document.createElement('iframe');
     iframe.src = item.embedUrl;
     iframe.setAttribute('allowfullscreen', '');

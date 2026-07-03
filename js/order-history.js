@@ -27,12 +27,15 @@ function statusIndex(status) {
   return i >= 0 ? i : 0;
 }
 
-// ─── ลิงก์ตรวจพัสดุของแต่ละขนส่ง ───
+// ─── ลิงก์ตรวจพัสดุของแต่ละขนส่ง (V26 · เช็คโดเมนจริงแล้ว 03/07/2026) ───
+//   kerry: Kerry Express รีแบรนด์เป็น "KEX" → โดเมนใหม่ th.kex-express.com (โดเมนเก่า th.kerryexpress.com ตายแล้ว)
+//   flash: โดเมนทางการไทยคือ .co.th (ตัว .com เป็นหน้า global/WAF)
+//   jt:    หน้า track ใหม่ /service/track ไม่มีพารามิเตอร์เลขพัสดุแบบเปิดเผย → พาเข้าหน้า track แล้วให้ลูกค้าวางเลข (มีปุ่มคัดลอก 📋 ให้แล้ว)
 const CARRIERS = {
-  kerry:    { name: 'Kerry Express',  track: no => 'https://th.kerryexpress.com/th/track/?track=' + encodeURIComponent(no) },
-  flash:    { name: 'Flash Express',  track: no => 'https://www.flashexpress.com/fle/tracking?se=' + encodeURIComponent(no) },
-  jt:       { name: 'J&T Express',    track: no => 'https://www.jtexpress.co.th/index/query/gzquery.html?bills=' + encodeURIComponent(no) },
-  thaipost: { name: 'ไปรษณีย์ไทย',    track: no => 'https://track.thailandpost.co.th/?trackNumber=' + encodeURIComponent(no) },
+  kerry:    { name: 'Kerry Express (KEX)', track: no => 'https://th.kex-express.com/th/track/?track=' + encodeURIComponent(no) },
+  flash:    { name: 'Flash Express',       track: no => 'https://www.flashexpress.co.th/fle/tracking?se=' + encodeURIComponent(no) },
+  jt:       { name: 'J&T Express',         track: () => 'https://www.jtexpress.co.th/service/track', paste: true },
+  thaipost: { name: 'ไปรษณีย์ไทย',          track: no => 'https://track.thailandpost.co.th/?trackNumber=' + encodeURIComponent(no) },
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -321,21 +324,63 @@ function buildOrderCard(o) {
   // Tracking number
   let trackingHtml = '';
   if (o.trackingNo && !isCancelled) {
-    const carrier = CARRIERS[o.carrier] || null;
+    const known = CARRIERS[o.carrier] || null;
+    // V26: ขนส่งที่ร้านพิมพ์ชื่อเอง (ไม่อยู่ในลิสต์) → โชว์ชื่อตามจริง + ปุ่มค้นหาเลขพัสดุใน Google
+    const label = known ? known.name : (o.carrier || 'ขนส่ง');
+    const url   = known
+      ? known.track(o.trackingNo)
+      : 'https://www.google.com/search?q=' + encodeURIComponent((o.carrier ? o.carrier + ' ' : '') + 'เช็คพัสดุ ' + o.trackingNo);
     trackingHtml = `
       <div class="track-shipping-box">
         <div class="track-shipping-row">
-          <span class="track-shipping-label">🚚 ${carrier ? carrier.name : 'ขนส่ง'}</span>
+          <span class="track-shipping-label">🚚 ${DMC.escapeHtml(label)}</span>
           <span class="track-shipping-no">${DMC.escapeHtml(o.trackingNo)}</span>
           <button class="track-copy-btn" data-copy="${DMC.escapeHtml(o.trackingNo)}" title="คัดลอก">📋</button>
         </div>
-        ${carrier ? `<a class="btn btn-secondary btn-sm" style="border-radius:var(--r-md);margin-top:.5rem" href="${carrier.track(o.trackingNo)}" target="_blank" rel="noopener">🔎 ตรวจสอบสถานะพัสดุ →</a>` : ''}
+        <a class="btn btn-secondary btn-sm" style="border-radius:var(--r-md);margin-top:.5rem" href="${url}" target="_blank" rel="noopener">🔎 ตรวจสอบสถานะพัสดุ →</a>
+        ${known && known.paste ? '<div style="font-size:.72rem;color:var(--text-3);margin-top:.35rem">💡 กดปุ่ม 📋 คัดลอกเลข แล้วไปวางในช่องค้นหาบนหน้าเช็คพัสดุได้เลย</div>' : ''}
       </div>`;
   }
 
   const items = (o.items || []).slice(0, 4).map(it =>
     `<div class="track-item-row"><span>${DMC.escapeHtml(it.name || '')} ×${it.qty || 1}</span><span>${DMC.formatPrice((it.price || 0) * (it.qty || 1))}</span></div>`
   ).join('') || `<div class="track-item-row"><span>${DMC.escapeHtml(o.itemsSummary || '—')}</span></div>`;
+
+  // ── V26: รายละเอียดออเดอร์แบบเต็ม (กดดูได้ — <details> พื้นฐานเบราว์เซอร์ ไม่พึ่ง JS) ──
+  const SHIP_LABELS = { any:'📦 ขนส่งใดก็ได้ (ให้ร้านเลือก)', kerry:'Kerry Express', flash:'Flash Express', jandt:'J&T Express', jt:'J&T Express', thaipost:'ไปรษณีย์ไทย' };
+  const payLabel  = o.paymentMethod === 'promptpay' ? '📱 โอนผ่าน PromptPay' : '🚚 เก็บเงินปลายทาง (COD)';
+  const shipLabel = SHIP_LABELS[o.shippingMethod] || (o.shippingMethod ? DMC.escapeHtml(o.shippingMethod) : '—');
+  const knownC       = CARRIERS[o.carrier] || null;
+  const carrierLabel = knownC ? knownC.name : (o.carrier || '');
+  const fullItems = (o.items || []).map(it => {
+    const qty = it.qty || 1, unit = it.price || 0;
+    return `<div class="track-detail-item">
+        <span>${DMC.escapeHtml(it.name || '')}${it.customDetails ? `<small>📝 ${DMC.escapeHtml(it.customDetails)}</small>` : ''}</span>
+        <span>${DMC.formatPrice(unit)} × ${qty} = <b>${DMC.formatPrice(unit * qty)}</b></span>
+      </div>`;
+  }).join('') || `<div class="track-detail-item"><span>${DMC.escapeHtml(o.itemsSummary || '—')}</span></div>`;
+  const moneyRow = (label, val) => (val == null) ? '' :
+    `<div class="track-detail-row"><span>${label}</span><span>${DMC.formatPrice(val)}</span></div>`;
+  const detailHtml = `
+    <details class="track-detail">
+      <summary>📋 ดูรายละเอียดออเดอร์ทั้งหมด</summary>
+      <div class="track-detail-body">
+        <div class="track-detail-sec">🛍️ รายการสินค้า</div>
+        ${fullItems}
+        ${moneyRow('ยอดสินค้า', o.subtotal)}
+        ${moneyRow('ค่าจัดส่ง', o.shipping)}
+        ${o.surcharge ? moneyRow('ค่าธรรมเนียมเก็บเงินปลายทาง', o.surcharge) : ''}
+        ${o.couponDiscount ? `<div class="track-detail-row discount"><span>ส่วนลดคูปอง${o.couponCode ? ' (' + DMC.escapeHtml(o.couponCode) + ')' : ''}</span><span>−${DMC.formatPrice(o.couponDiscount)}</span></div>` : ''}
+        <div class="track-detail-row total"><span>รวมทั้งหมด</span><span>${DMC.formatPrice(o.total || 0)}</span></div>
+        <div class="track-detail-sec">🚚 การจัดส่ง &amp; ชำระเงิน</div>
+        <div class="track-detail-row"><span>สั่งเมื่อ</span><span>${dateStr}</span></div>
+        <div class="track-detail-row"><span>ขนส่งที่เลือกตอนสั่ง</span><span>${shipLabel}</span></div>
+        ${carrierLabel ? `<div class="track-detail-row"><span>จัดส่งจริงโดย</span><span>${DMC.escapeHtml(carrierLabel)}${o.trackingNo ? ' · ' + DMC.escapeHtml(o.trackingNo) : ''}</span></div>` : ''}
+        <div class="track-detail-row"><span>ชำระเงิน</span><span>${payLabel}</span></div>
+        ${o.address ? `<div class="track-detail-row addr"><span>📍 ที่อยู่จัดส่ง</span><span>${DMC.escapeHtml(o.address)}</span></div>` : ''}
+        ${o.note ? `<div class="track-detail-row addr"><span>📝 หมายเหตุ</span><span>${DMC.escapeHtml(o.note)}</span></div>` : ''}
+      </div>
+    </details>`;
 
   return `
     <div class="track-order-card ${isCancelled ? 'cancelled' : ''}">
@@ -350,6 +395,7 @@ function buildOrderCard(o) {
       ${trackingHtml}
       <div class="track-items">${items}</div>
       <div class="track-total"><span>รวมทั้งหมด</span><span>${DMC.formatPrice(o.total || 0)}</span></div>
+      ${detailHtml}
     </div>`;
 }
 

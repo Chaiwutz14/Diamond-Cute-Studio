@@ -127,10 +127,44 @@ async function touchLastDelivered(status) {
   } catch (e) { /* ไม่บล็อกงานหลัก */ }
 }
 
+// ── V26: นับยอด "สั่งซื้อแล้ว X ครั้ง" ต่อสินค้า ──
+//   บวก orderCount ครั้งเดียวเมื่อออเดอร์ถูกยืนยัน (สถานะออกจาก pending และไม่ใช่ cancelled)
+//   ถ้ายกเลิกหลังนับแล้ว → คืนยอด · กันนับซ้ำด้วยธง soldCounted บนออเดอร์
+//   หมายเหตุ: ทำฝั่งแอดมิน (rules อนุญาต isAdmin เขียน products) — ฝั่งลูกค้าเขียนเองไม่ได้/ไม่ควร
+//   ตัวเลขบนหน้าเว็บลูกค้าอ่านจาก snapshot → เรียก autoPublish ให้อัตโนมัติหลังนับ
+async function syncOrderCount(id, newStatus) {
+  try {
+    const ref = db.collection('orders').doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return;
+    const o     = doc.data();
+    const items = Array.isArray(o.items) ? o.items : [];
+    const inc   = firebase.firestore.FieldValue.increment;
+    const apply = async (sign) => {
+      for (const it of items) {
+        if (!it || it.id == null) continue;
+        const qty = Math.max(1, Number(it.qty) || 1);
+        try { await db.collection('products').doc(String(it.id)).update({ orderCount: inc(sign * qty) }); }
+        catch (e) { /* สินค้าอาจถูกลบไปแล้ว — ข้ามรายการนี้ ไม่ให้งานทั้งก้อนล้ม */ }
+      }
+    };
+    if (!o.soldCounted && newStatus && newStatus !== 'pending' && newStatus !== 'cancelled') {
+      await apply(+1);
+      await ref.update({ soldCounted: true });
+      try { window.AdminSnapshot?.markDirty?.(); window.AdminSnapshot?.autoPublish?.(); } catch (e) {}
+    } else if (o.soldCounted && newStatus === 'cancelled') {
+      await apply(-1);
+      await ref.update({ soldCounted: false });
+      try { window.AdminSnapshot?.markDirty?.(); window.AdminSnapshot?.autoPublish?.(); } catch (e) {}
+    }
+  } catch (e) { console.warn('syncOrderCount:', e.message); }
+}
+
 window.quickUpdateStatus = async function(id, status) {
   try {
     await db.collection('orders').doc(id).update({ status, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
     touchLastDelivered(status);   // V16
+    syncOrderCount(id, status);   // V26: นับยอด "สั่งซื้อแล้ว" ต่อสินค้า
     DMC.toast('อัพเดทสถานะแล้ว ✅', 'success');
     if (status === 'shipping') {
       DMC.toast('💡 อย่าลืมใส่เลขพัสดุ — กด 📋 ดู เพื่อเพิ่ม', 'info', 4000);
@@ -226,9 +260,15 @@ window.openOrderModal = async function(orderId) {
         <div class="form-row">
           <div class="form-group" style="margin:0">
             <label class="form-label">ขนส่ง</label>
-            <select data-custom class="form-input form-select" id="modal-carrier-select">
-              ${CARRIER_OPTIONS.map(c=>`<option value="${c.key}" ${o.carrier===c.key?'selected':''}>${c.name}</option>`).join('')}
+            ${(() => {
+              // V26: ถ้า carrier ที่บันทึกไว้ไม่อยู่ในลิสต์ = ชื่อที่พิมพ์เอง → เลือก "อื่นๆ" และเติมชื่อในช่อง
+              const known = !o.carrier || CARRIER_OPTIONS.some(c => c.key === o.carrier);
+              const sel   = known ? (o.carrier || '') : 'other';
+              return `<select data-custom class="form-input form-select" id="modal-carrier-select">
+              ${CARRIER_OPTIONS.map(c=>`<option value="${c.key}" ${sel===c.key?'selected':''}>${c.name}</option>`).join('')}
             </select>
+            <input class="form-input" id="modal-carrier-custom" value="${known ? '' : DMC.escapeHtml(o.carrier)}" placeholder="พิมพ์ชื่อขนส่ง เช่น Ninja Van, Best Express" style="margin-top:.5rem;${sel==='other'?'':'display:none'}">`;
+            })()}
           </div>
           <div class="form-group" style="margin:0">
             <label class="form-label">เลขพัสดุ</label>
@@ -245,6 +285,11 @@ window.openOrderModal = async function(orderId) {
 
     // Wire image clicks — V3: resolve รองรับทั้ง ImgBB URL และ storage path (สลิป private)
     setTimeout(async () => {
+      // V26: โชว์ช่องพิมพ์ชื่อขนส่งเมื่อเลือก "อื่นๆ" (custom-select ยิง change มาที่ select จริง)
+      document.getElementById('modal-carrier-select')?.addEventListener('change', (ev) => {
+        const ci = document.getElementById('modal-carrier-custom');
+        if (ci) ci.style.display = (ev.target.value === 'other') ? '' : 'none';
+      });
       const slipImg = document.getElementById('slip-img-' + o.id);
       const slipLoad = document.getElementById('slip-loading-' + o.id);
       if (slipImg && o.slipUrl) {
@@ -273,8 +318,13 @@ window.openOrderModal = async function(orderId) {
 
 window.updateOrderStatus = async function(id) {
   const s        = document.getElementById('modal-status-select')?.value;
-  const carrier  = document.getElementById('modal-carrier-select')?.value || '';
+  let   carrier  = document.getElementById('modal-carrier-select')?.value || '';
   const tracking = document.getElementById('modal-tracking-input')?.value.trim() || '';
+  // V26: ขนส่ง "อื่นๆ" → บันทึกเป็นชื่อที่พิมพ์จริง (หน้า tracking ลูกค้าจะโชว์ชื่อนี้ + ปุ่มค้นหา Google)
+  if (carrier === 'other') {
+    carrier = (document.getElementById('modal-carrier-custom')?.value || '').trim();
+    if (!carrier) { DMC.toast('พิมพ์ชื่อขนส่งก่อนบันทึก', 'error'); return; }
+  }
   if (!s) return;
   try {
     await db.collection('orders').doc(id).update({
@@ -282,6 +332,7 @@ window.updateOrderStatus = async function(id) {
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     touchLastDelivered(s);   // V16
+    syncOrderCount(id, s);   // V26: นับยอด "สั่งซื้อแล้ว" ต่อสินค้า
     DMC.toast('บันทึกสำเร็จ ✅', 'success');
     closeModal(); loadOrdersTable(); loadKPIs();
   } catch(e) { DMC.toast('บันทึกไม่สำเร็จ', 'error'); }
