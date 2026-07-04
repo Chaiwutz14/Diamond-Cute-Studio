@@ -1,72 +1,8 @@
 {
-  "generatedAt": "2026-07-04T23:39:30.971Z",
+  "generatedAt": "2026-07-04T23:42:27.942Z",
   "data": {
-    "stats": {
-      "days": "1-3",
-      "rating": "4.9/5",
-      "orders": "500+"
-    },
-    "updatedAt": {
-      "seconds": 1783017899
-    },
-    "payment": {
-      "promptpayName": "นาย ชัยวุฒิ บุญชูวงศ์",
-      "promptpayId": "0809987611",
-      "methods": {
-        "cod": {
-          "shown": true,
-          "ready": false
-        },
-        "credit": {
-          "shown": true,
-          "ready": false
-        },
-        "truemoney": {
-          "ready": false,
-          "shown": true
-        },
-        "promptpay": {
-          "ready": true,
-          "shown": true
-        }
-      },
-      "qrImageUrl": ""
-    },
-    "fees": {
-      "surchargePromptpay": 0,
-      "freeShipMin": 0,
-      "shipTransfer": 30,
-      "surchargeCod": 0,
-      "shipCod": 50
-    },
-    "contact": {
-      "tiktok": "https://tiktok.com",
-      "instagram": "https://instagram.com",
-      "line": "https://line.me/R/ti/p/@913huiwn",
-      "hours": "จันทร์–เสาร์ 08:00–20:00 น.",
-      "facebook": "https://www.facebook.com/share/19CQvQxW6E/",
-      "lineLabel": "@913huiwn",
-      "phone": "096-1207907",
-      "email": "Peeza1482546@gmail.com"
-    },
-    "hero": {
-      "title1": "ทำให้ทุกภาพ",
-      "title2": "กลายเป็นของที่ระลึก",
-      "desc": "บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน\nป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย",
-      "badge": "งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ",
-      "title3": "ที่สวยงามที่สุด"
-    },
-    "_test": 1782880037380,
     "announce": {
-      "active": true,
-      "text": "ลูกค้าใหม่ กรอกคูปอง WELCOME15 ลดทันที 15% ไม่มีขั้นต่ำ"
-    },
-    "promo": {
-      "tag": "🎁 โปรโมชั่นพิเศษ",
-      "btnLink": "catalog.html",
-      "btnText": "สั่งเลย →",
-      "title": "ลูกค้าใหม่ ลดทันที 15%",
-      "desc": "สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย  เพียงกรอกโค้ด WELCOME15",
+      "text": "ลูกค้าใหม่ กรอกคูปอง WELCOME15 ลดทันที 15% ไม่มีขั้นต่ำ",
       "active": true
     },
     "lastDeliveredAt": {
@@ -89,6 +25,70 @@
         "a": "แก้ไขได้ฟรีก่อนเริ่มผลิต หลังผลิตแล้วขึ้นกับกรณีครับ",
         "q": "แก้ไขงานได้ไหม?"
       }
-    ]
+    ],
+    "promo": {
+      "desc": "สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย  เพียงกรอกโค้ด WELCOME15",
+      "active": true,
+      "title": "ลูกค้าใหม่ ลดทันที 15%",
+      "btnLink": "catalog.html",
+      "btnText": "สั่งเลย →",
+      "tag": "🎁 โปรโมชั่นพิเศษ"
+    },
+    "updatedAt": {
+      "seconds": 1783017899
+    },
+    "payment": {
+      "promptpayName": "นาย ชัยวุฒิ บุญชูวงศ์",
+      "promptpayId": "0809987611",
+      "methods": {
+        "cod": {
+          "shown": true,
+          "ready": false
+        },
+        "truemoney": {
+          "ready": false,
+          "shown": true
+        },
+        "credit": {
+          "ready": false,
+          "shown": true
+        },
+        "promptpay": {
+          "ready": true,
+          "shown": true
+        }
+      },
+      "qrImageUrl": ""
+    },
+    "stats": {
+      "days": "1-3",
+      "rating": "4.9/5",
+      "orders": "500+"
+    },
+    "hero": {
+      "title3": "ที่สวยงามที่สุด",
+      "badge": "งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ",
+      "desc": "บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน\nป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย",
+      "title2": "กลายเป็นของที่ระลึก",
+      "title1": "ทำให้ทุกภาพ"
+    },
+    "contact": {
+      "facebook": "https://www.facebook.com/share/19CQvQxW6E/",
+      "email": "Peeza1482546@gmail.com",
+      "phone": "096-1207907",
+      "lineLabel": "@913huiwn",
+      "tiktok": "https://tiktok.com",
+      "instagram": "https://instagram.com",
+      "hours": "จันทร์–เสาร์ 08:00–20:00 น.",
+      "line": "https://line.me/R/ti/p/@913huiwn"
+    },
+    "fees": {
+      "shipTransfer": 30,
+      "surchargeCod": 0,
+      "freeShipMin": 0,
+      "surchargePromptpay": 0,
+      "shipCod": 50
+    },
+    "_test": 1782880037380
   }
 }
