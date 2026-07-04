@@ -143,6 +143,35 @@
   cursor: zoom-in;
 }
 .gallery-main img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+
+/* V27: track ปัดซ้าย-ขวา (scroll-snap ลื่นแบบ native) */
+.gallery-track {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; overscroll-behavior-x: contain;
+}
+.gallery-track::-webkit-scrollbar { display: none; }
+.gallery-slide {
+  flex: 0 0 100%; width: 100%; height: 100%;
+  scroll-snap-align: center; scroll-snap-stop: always;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.gallery-slide img {
+  width: 100%; height: 100%; object-fit: contain; padding: 8px;
+  cursor: zoom-in; -webkit-user-drag: none; user-select: none;
+}
+.gallery-counter {
+  position: absolute; right: .7rem; bottom: .7rem; z-index: 2;
+  background: rgba(0,0,0,.55); color: #fff;
+  font-family: var(--font-display); font-size: .68rem; font-weight: 600;
+  padding: .18rem .55rem; border-radius: 99px; pointer-events: none;
+}
+.gallery-video-playbtn { border: none; background: transparent; font-family: inherit; width: 100%; height: 100%; cursor: pointer; }
+.gallery-slide .gallery-video-wrap { width: 100%; height: 100%; }
+.gallery-slide .gallery-video-wrap iframe { width: 100%; height: 100%; border: none; }
 .gallery-main-overlay {
   position: absolute; inset: 0;
   background: radial-gradient(ellipse at center, var(--glass), transparent 70%);
@@ -486,12 +515,87 @@
 
 /* ══════════════════════════════════════════════
    V13 — CANVAS PREVIEW ยกเครื่อง (Hi-DPI + เลเยอร์ข้อความ/โลโก้)
+   V14 — Designer เต็มจอ (แก้ canvas บล็อกการปัดเลื่อนเพจ)
 ══════════════════════════════════════════════ */
+
+/* การ์ดชวนออกแบบบนหน้าสินค้า — สะดุดตา แต่ปัดจอผ่านได้ปกติ */
+.pv-teaser {
+  position: relative; overflow: hidden; cursor: pointer;
+  display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 14%, var(--bg-card)), color-mix(in srgb, var(--gold, #F59E0B) 12%, var(--bg-card)));
+  border: 2px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  border-radius: var(--r-xl); padding: 1rem 1.1rem;
+  box-shadow: 0 6px 18px rgba(var(--accent-rgb), .14);
+}
+.pv-teaser-shine {
+  position: absolute; top: 0; bottom: 0; width: 55%;
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,.5) 50%, transparent 80%);
+  transform: skewX(-18deg); left: -70%;
+  animation: pvShine 3.6s ease-in-out infinite; pointer-events: none;
+}
+@keyframes pvShine { 0%,55% { left: -70%; } 90%,100% { left: 130%; } }
+.pv-teaser-emoji { font-size: 2.1rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,.15)); }
+.pv-teaser-body { flex: 1; min-width: 150px; }
+.pv-teaser-title {
+  font-family: var(--font-display); font-weight: 800; font-size: 1.02rem;
+  color: var(--text-1); margin-bottom: .15rem;
+}
+.pv-teaser-sub { font-size: .74rem; color: var(--text-2); line-height: 1.5; }
+.pv-teaser-btn {
+  border-radius: var(--r-pill, 99px); white-space: nowrap;
+  animation: pvPulse 2.4s ease-in-out infinite;
+}
+@keyframes pvPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+@media (prefers-reduced-motion: reduce) {
+  .pv-teaser-shine { animation: none; display: none; }
+  .pv-teaser-btn { animation: none; }
+}
+
+/* Designer modal เต็มจอ */
+#pv-designer-modal {
+  position: fixed; inset: 0; z-index: 9500; display: none;
+  background: rgba(10, 25, 20, .45); backdrop-filter: blur(3px);
+  align-items: flex-end; justify-content: center;
+  opacity: 0; transition: opacity .18s ease;
+}
+#pv-designer-modal.open { opacity: 1; }
+.pvd-sheet {
+  background: var(--bg-body, var(--bg-mid)); width: 100%; max-width: 560px;
+  height: 96dvh; max-height: 96dvh;
+  border-radius: var(--r-2xl) var(--r-2xl) 0 0;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.25);
+  transform: translateY(18px); transition: transform .18s ease;
+}
+#pv-designer-modal.open .pvd-sheet { transform: translateY(0); }
+@media (min-width: 720px) {
+  #pv-designer-modal { align-items: center; }
+  .pvd-sheet { height: auto; max-height: 92vh; border-radius: var(--r-2xl); }
+}
+.pvd-header {
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  padding: .8rem 1rem; border-bottom: 1.5px solid var(--border);
+  background: var(--bg-card); flex-shrink: 0;
+}
+.pvd-title {
+  font-family: var(--font-display); font-weight: 700; font-size: .92rem; color: var(--text-1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pvd-close {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  background: var(--bg-mid); border: 1.5px solid var(--border);
+  color: var(--text-2); font-size: 1rem; cursor: pointer;
+}
+.pvd-close:hover { border-color: var(--rose); color: var(--rose); }
+.pvd-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 1rem 1rem 0; }
+.pvd-canvas-wrap { text-align: center; margin-bottom: .5rem; }
+
 #preview-canvas {
   border-radius: var(--r-xl); border: 1.5px solid var(--border);
   box-shadow: var(--shadow-card);
-  max-width: 100%; height: auto; display: block; margin: 0 auto;
-  cursor: pointer; touch-action: none;   /* ให้ลากเลเยอร์บนมือถือได้ ไม่ชนกับ scroll */
+  max-width: 100%; max-height: 46dvh; width: auto; height: auto;
+  display: inline-block; margin: 0 auto;
+  cursor: pointer; touch-action: none;   /* อยู่ใน modal — ไม่ชนกับการเลื่อนเพจแล้ว */
   background: var(--bg-card);
 }
 .pv-zoom-row {
