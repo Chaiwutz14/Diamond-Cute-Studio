@@ -515,12 +515,16 @@ window.initPreviewTool = async function(options = {}) {
   containerEl.innerHTML = [
     '<div class="pv-teaser" id="pv-teaser" role="button" tabindex="0" aria-label="เปิดหน้าออกแบบ">',
       '<div class="pv-teaser-shine" aria-hidden="true"></div>',
-      '<div class="pv-teaser-emoji" aria-hidden="true">🎨</div>',
-      '<div class="pv-teaser-body">',
-        '<div class="pv-teaser-title">ออกแบบเองได้ก่อนสั่ง!</div>',
-        '<div class="pv-teaser-sub">อัปรูป · ใส่ข้อความ/โลโก้ · ลากวางเอง · เห็นตัวอย่างจริงทันที</div>',
+      '<span class="pv-teaser-ribbon">⭐ จุดเด่นของร้าน</span>',
+      '<span class="pv-teaser-free">ฟรี!</span>',
+      '<div class="pv-teaser-top">',
+        '<div class="pv-teaser-emoji" aria-hidden="true">🎨</div>',
+        '<div class="pv-teaser-body">',
+          '<div class="pv-teaser-title">สินค้านี้ออกแบบเองได้!</div>',
+          '<div class="pv-teaser-sub">อัปรูปของคุณ · ใส่ข้อความ/โลโก้ · ลากวางเอง<br>เห็นตัวอย่างจริงก่อนสั่ง <b>ไม่ต้องรอร้านทำแบบ</b></div>',
+        '</div>',
       '</div>',
-      '<button type="button" class="btn btn-primary pv-teaser-btn" id="pv-open-designer">✨ เริ่มออกแบบเลย — ฟรี</button>',
+      '<button type="button" class="pv-teaser-btn" id="pv-open-designer">👆 แตะเพื่อเริ่มออกแบบเลย <span class="pv-teaser-arrow">→</span></button>',
     '</div>'
   ].join('');
 
@@ -586,7 +590,7 @@ window.initPreviewTool = async function(options = {}) {
       : null;
 
     const fontOptions = (window.__PV_FONTS || []).map(f =>
-      '<option value="' + f.v + '" style="font-family:\'' + f.v + '\'">' + f.label + '</option>').join('');
+      '<option value="' + f.v + '" disabled data-label="' + f.label + '" style="font-family:\'' + f.v + '\'">⏳ ' + f.label + '</option>').join('');
 
     body.innerHTML = [
       '<div class="preview-tool-inner">',
@@ -663,15 +667,31 @@ window.initPreviewTool = async function(options = {}) {
       if (attachBtn && attachBtn.dataset.busy !== '1') attachBtn.disabled = !has;
     }
 
-    // โหลดฟอนต์ก่อนวาด — กัน canvas วาดด้วยฟอนต์ default ระหว่างไฟล์ฟอนต์ยังไม่มา
-    function ensureFont(fam, cb) {
+    // โหลดฟอนต์ก่อนใช้ — สำคัญ: ต้องส่งข้อความไทยเข้า fonts.load ด้วย
+    // (Google Fonts แยกไฟล์ subset ไทย/ละติน — ถ้าไม่ส่ง text ระบบโหลดเฉพาะละติน ตัวไทยเลยไม่เปลี่ยน)
+    const FONT_SAMPLE = 'อักษรไทย Aa Bb 0123 ๆฯ';
+    function loadFontFamily(fam) {
       try {
-        Promise.all([
-          document.fonts.load("400 20px '" + fam + "'"),
-          document.fonts.load("700 20px '" + fam + "'"),
-        ]).then(cb).catch(cb);
-      } catch (e) { cb(); }
+        return Promise.race([
+          Promise.all([
+            document.fonts.load("400 20px '" + fam + "'", FONT_SAMPLE),
+            document.fonts.load("700 20px '" + fam + "'", FONT_SAMPLE),
+          ]),
+          new Promise(res => setTimeout(res, 9000)),   // เน็ตช้ามาก → ปลดล็อกให้กดได้ (ฟอนต์ตามมาทีหลัง)
+        ]);
+      } catch (e) { return Promise.resolve(); }
     }
+    function ensureFont(fam, cb) { loadFontFamily(fam).then(cb).catch(cb); }
+
+    // โหลดฟอนต์ทั้งหมดทันทีที่เปิด Designer — option ไหนพร้อมแล้วค่อยกดได้ (User เห็นสถานะชัด)
+    (window.__PV_FONTS || []).forEach(f => {
+      loadFontFamily(f.v).then(() => {
+        const opt = fontSel?.querySelector('option[value="' + f.v + '"]');
+        if (opt) { opt.disabled = false; opt.textContent = opt.dataset.label; }
+        // ฟอนต์ที่เลเยอร์ใช้อยู่เพิ่งโหลดเสร็จ → วาดใหม่ให้เห็นผลทันที
+        try { api.render(); } catch (e) {}
+      });
+    });
 
     function syncToolbar(layer) {
       if (!layer) { layerBar.style.display = 'none'; return; }
@@ -805,7 +825,8 @@ window.initPreviewTool = async function(options = {}) {
     colorIn?.addEventListener('input', e => api.updateSelected({ color: e.target.value }));
     fontSel?.addEventListener('change', e => {
       const fam = e.target.value;
-      ensureFont(fam, () => api.updateSelected({ font: fam }));
+      api.updateSelected({ font: fam });                     // ใช้ทันที (ฟอนต์ที่เลือกได้ = โหลดแล้ว)
+      ensureFont(fam, () => { try { api.render(); } catch (err) {} });   // กันเคสปลดล็อกจาก timeout
     });
     sizeIn?.addEventListener('input',  e => {
       const l = api.getSelected(); if (!l) return;

@@ -85,23 +85,28 @@ function renderCart() {
   list.style.display = '';
   emptyEl.style.display = 'none';
 
-  list.innerHTML = cart.map(item => `
+  list.innerHTML = cart.map(item => {
+    const minQ = Math.max(1, Number(item.minQty) || 1);
+    return `
     <div class="cart-item" data-cart-id="${item.cartItemId}">
       <div class="cart-item-thumb">${item.image ? `<img src="${DMC.escapeHtml(item.image)}" alt="${DMC.escapeHtml(item.name||'')}" loading="lazy" data-emoji="${DMC.escapeHtml(item.emoji||'📦')}">` : DMC.escapeHtml(item.emoji || '📦')}</div>
       <div class="cart-item-body">
         <div class="cart-item-name">${DMC.escapeHtml(item.name)}</div>
-        <div class="cart-item-spec">
-          ${item.options ? DMC.escapeHtml(item.options) + ' · ' : ''}
-          จำนวน ${item.qty} ${item.unit || 'ชิ้น'}
-        </div>
+        <div class="cart-item-spec">${item.options ? DMC.escapeHtml(item.options) : ''}</div>
         ${item.customDetails ? `<div class="cart-item-spec" style="margin-top:.2rem;color:var(--accent);font-size:.8rem;line-height:1.45">📝 ${DMC.escapeHtml(item.customDetails)}</div>` : ''}
+        <div class="cart-qty-ctrl" data-cart-id="${item.cartItemId}">
+          <button type="button" class="cart-qty-btn" data-act="dec" aria-label="ลดจำนวน" ${item.qty <= minQ ? 'disabled' : ''}>−</button>
+          <span class="cart-qty-val">${item.qty}</span>
+          <button type="button" class="cart-qty-btn" data-act="inc" aria-label="เพิ่มจำนวน">+</button>
+          <span class="cart-qty-unit">${DMC.escapeHtml(item.unit || 'ชิ้น')}${minQ > 1 ? ` · ขั้นต่ำ ${minQ}` : ''}</span>
+        </div>
       </div>
       <div class="cart-item-right">
         <div class="cart-item-price">${DMC.formatPrice(item.price * item.qty)}</div>
         <button class="cart-item-remove" data-cart-id="${item.cartItemId}">🗑️ ลบ</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   // Bind remove buttons
   list.querySelectorAll('.cart-item-remove').forEach(btn => {
@@ -109,6 +114,26 @@ function renderCart() {
       DMC.removeFromCart(btn.dataset.cartId);
       renderCart();
       renderSummary();
+    });
+  });
+
+  // V28: ปุ่ม +/- จำนวน (เคารพขั้นต่ำของสินค้า)
+  list.querySelectorAll('.cart-qty-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const wrap = btn.closest('.cart-qty-ctrl');
+      const id = wrap?.dataset.cartId;
+      const fresh = DMC.getCart();
+      const it = fresh.find(i => i.cartItemId === id);
+      if (!it) return;
+      const minQ = Math.max(1, Number(it.minQty) || 1);
+      if (btn.dataset.act === 'inc') {
+        it.qty = Math.min(999, (it.qty || 1) + 1);
+      } else {
+        if ((it.qty || 1) <= minQ) { DMC.toast(minQ > 1 ? `สินค้านี้ขั้นต่ำ ${minQ} ${it.unit || 'ชิ้น'}` : 'ขั้นต่ำ 1 ชิ้น — ใช้ปุ่มลบหากไม่ต้องการ', 'info'); return; }
+        it.qty = (it.qty || 1) - 1;
+      }
+      DMC.saveCart(fresh);
+      renderCart();
     });
   });
 
@@ -408,10 +433,12 @@ function bindFileUpload() {
           <img src="${e.target.result}" alt="${DMC.escapeHtml(file.name)}">
           <button class="file-preview-remove" aria-label="ลบ">✕</button>
         `;
-        item.querySelector('.file-preview-remove').addEventListener('click', () => {
+        item.querySelector('.file-preview-remove').addEventListener('click', ev => {
+          ev.stopPropagation();
           window._orderFiles[idx] = null;            // mark ว่าลบแล้ว (คง index เดิมของไฟล์อื่น)
           item.remove();
         });
+        item.querySelector('img').addEventListener('click', () => openCartLightbox(e.target.result));  // V28: กดดูเต็มจอ
         preview?.appendChild(item);
       };
       reader.readAsDataURL(file);
@@ -421,46 +448,107 @@ function bindFileUpload() {
   }
 }
 
-// ─── V2: แบบที่ลูกค้าออกแบบจากหน้าสินค้า (แนบมาทาง localStorage เป็น URL) ───
+// ─── V2/V28: แบบที่ลูกค้าออกแบบจากหน้าสินค้า (แนบมาทาง localStorage เป็น URL) ───
+//   V28: re-render ทั้งส่วนได้จริง (ลบแล้วข้อความอัปเดตทันที) + ปุ่มเรียกคืนกรณีกดลบพลาด + กดรูปดูเต็มจอ
 window._attachedDesignUrls = [];
+let _lastRemovedDesign = null;
+
 function renderPendingDesigns() {
   let designs = [];
   try { designs = JSON.parse(localStorage.getItem('dmc_pending_designs') || '[]'); } catch(e){}
-  if (!designs.length) return;
   window._attachedDesignUrls = designs.map(d => d.url).filter(Boolean);
 
   const preview = document.getElementById('file-preview-list');
   const zone = document.getElementById('files-upload-zone');
-  // แถบแจ้งว่ามีแบบที่ออกแบบแนบมาแล้ว
-  if (zone && !document.getElementById('attached-design-note')) {
+
+  // ล้างของเดิมก่อน (note + thumbnail ชุดแบบที่ออกแบบ) — ไฟล์ที่ลูกค้าอัปเองไม่ถูกแตะ
+  document.getElementById('attached-design-note')?.remove();
+  preview?.querySelectorAll('.design-item').forEach(el => el.remove());
+
+  // แถบแจ้งจำนวนแบบที่แนบ (อัปเดตตามจริงเสมอ)
+  if (zone && designs.length) {
     const note = document.createElement('div');
     note.id = 'attached-design-note';
     note.style.cssText = 'background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.28);border-radius:var(--r-md);padding:.6rem .85rem;margin-bottom:.7rem;font-size:.82rem;color:var(--emerald);font-family:var(--font-display)';
-    note.innerHTML = '🎨 มีแบบที่คุณออกแบบไว้ ' + designs.length + ' รูป แนบไปกับออเดอร์นี้แล้ว';
+    note.innerHTML = '🎨 มีแบบที่คุณออกแบบไว้ ' + designs.length + ' รูป แนบไปกับออเดอร์นี้แล้ว <span style="color:var(--text-3);font-weight:400">(กดที่รูปเพื่อดูขนาดเต็ม)</span>';
     zone.parentNode.insertBefore(note, zone);
   }
-  // แสดง thumbnail ของแบบ (ลบได้)
-  designs.forEach((d, idx) => {
+
+  designs.forEach(d => {
     if (!preview) return;
     const item = document.createElement('div');
-    item.className = 'file-preview-item';
+    item.className = 'file-preview-item design-item';
     item.title = d.name || 'แบบที่ออกแบบ';
     item.innerHTML = `
-      <img src="${d.url}" alt="${DMC.escapeHtml(d.name || 'แบบที่ออกแบบ')}">
+      <img src="${d.url}" alt="${DMC.escapeHtml(d.name || 'แบบที่ออกแบบ')}" style="cursor:zoom-in">
       <span style="position:absolute;bottom:0;left:0;right:0;background:rgba(16,185,129,.85);color:#fff;font-size:.5rem;text-align:center;font-family:var(--font-display)">แบบที่ออกแบบ</span>
       <button class="file-preview-remove" aria-label="ลบ">✕</button>`;
-    item.querySelector('.file-preview-remove').addEventListener('click', () => {
-      window._attachedDesignUrls = window._attachedDesignUrls.filter(u => u !== d.url);
-      // อัปเดต localStorage
+    item.querySelector('img').addEventListener('click', () => openCartLightbox(d.url));
+    item.querySelector('.file-preview-remove').addEventListener('click', ev => {
+      ev.stopPropagation();
       try {
         let arr = JSON.parse(localStorage.getItem('dmc_pending_designs') || '[]');
         arr = arr.filter(x => x.url !== d.url);
         localStorage.setItem('dmc_pending_designs', JSON.stringify(arr));
       } catch(e){}
-      item.remove();
+      _lastRemovedDesign = d;
+      renderPendingDesigns();          // อัปเดตข้อความ/รายการทันที (เรียลไทม์)
+      showDesignUndoBar();
+      DMC.toast('ลบแบบที่ออกแบบออกจากออเดอร์แล้ว', 'info');
     });
     preview.appendChild(item);
   });
+}
+
+// แถบเรียกคืนแบบที่เพิ่งลบ (กันกดพลาด) — แสดง 12 วิ
+function showDesignUndoBar() {
+  const zone = document.getElementById('files-upload-zone');
+  if (!zone || !_lastRemovedDesign) return;
+  document.getElementById('design-undo-bar')?.remove();
+  const bar = document.createElement('div');
+  bar.id = 'design-undo-bar';
+  bar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:.6rem;background:var(--bg-card);border:1.5px dashed var(--border-hover,var(--border));border-radius:var(--r-md);padding:.55rem .85rem;margin-bottom:.7rem;font-size:.8rem;color:var(--text-2);font-family:var(--font-display)';
+  bar.innerHTML = '<span>🗑️ ลบ "' + DMC.escapeHtml((_lastRemovedDesign.name || 'แบบที่ออกแบบ')) + '" ออกแล้ว</span>' +
+    '<button type="button" id="design-undo-btn" style="flex-shrink:0;border:none;background:var(--accent);color:#fff;font-family:var(--font-display);font-weight:700;font-size:.78rem;padding:.4rem .9rem;border-radius:99px;cursor:pointer">↩️ เรียกคืน</button>';
+  zone.parentNode.insertBefore(bar, zone);
+  const timer = setTimeout(() => { bar.remove(); _lastRemovedDesign = null; }, 12000);
+  document.getElementById('design-undo-btn')?.addEventListener('click', () => {
+    clearTimeout(timer);
+    if (_lastRemovedDesign) {
+      try {
+        const arr = JSON.parse(localStorage.getItem('dmc_pending_designs') || '[]');
+        arr.push(_lastRemovedDesign);
+        localStorage.setItem('dmc_pending_designs', JSON.stringify(arr));
+      } catch(e){}
+      _lastRemovedDesign = null;
+    }
+    bar.remove();
+    renderPendingDesigns();
+    DMC.toast('เรียกคืนแบบเรียบร้อย ✓', 'success');
+  });
+}
+
+// Lightbox ดูรูปเต็มจอ (หน้าตะกร้า) — สร้างครั้งเดียว ใช้ซ้ำ
+function openCartLightbox(url) {
+  let lb = document.getElementById('cart-lightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'cart-lightbox';
+    lb.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;backdrop-filter:blur(4px)';
+    const img = document.createElement('img');
+    img.id = 'cart-lightbox-img';
+    img.style.cssText = 'max-width:95vw;max-height:92vh;border-radius:12px;object-fit:contain';
+    const close = document.createElement('button');
+    close.textContent = '✕';
+    close.style.cssText = 'position:absolute;top:1rem;right:1rem;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.3rem;cursor:pointer';
+    close.addEventListener('click', () => { lb.style.display = 'none'; });
+    lb.appendChild(img); lb.appendChild(close);
+    lb.addEventListener('click', e => { if (e.target === lb) lb.style.display = 'none'; });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') lb.style.display = 'none'; });
+    document.body.appendChild(lb);
+  }
+  document.getElementById('cart-lightbox-img').src = url;
+  lb.style.display = 'flex';
 }
 
 // ─── Slip Upload ───

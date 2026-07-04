@@ -518,37 +518,76 @@
    V14 — Designer เต็มจอ (แก้ canvas บล็อกการปัดเลื่อนเพจ)
 ══════════════════════════════════════════════ */
 
-/* การ์ดชวนออกแบบบนหน้าสินค้า — สะดุดตา แต่ปัดจอผ่านได้ปกติ */
+/* การ์ดชวนออกแบบ V28 — โทนเข้มตัดกับหน้า ชัดเจนว่าเป็นของพิเศษ ไม่กลืนกับรายละเอียดสินค้า */
 .pv-teaser {
   position: relative; overflow: hidden; cursor: pointer;
-  display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
-  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 14%, var(--bg-card)), color-mix(in srgb, var(--gold, #F59E0B) 12%, var(--bg-card)));
-  border: 2px solid color-mix(in srgb, var(--accent) 45%, var(--border));
-  border-radius: var(--r-xl); padding: 1rem 1.1rem;
-  box-shadow: 0 6px 18px rgba(var(--accent-rgb), .14);
+  display: block; margin-top: .35rem;
+  background: linear-gradient(135deg, #0E7A5F 0%, #14957A 45%, #0B6B54 100%);
+  border: none; border-radius: var(--r-xl);
+  padding: 1.55rem 1.15rem 1.15rem;
+  box-shadow: 0 10px 26px rgba(11, 107, 84, .35);
+  color: #fff;
+}
+.pv-teaser::after {                     /* ขอบประแบบตั๋ว/คูปอง — สื่อว่า "ของฟรี กดรับเลย" */
+  content: ''; position: absolute; inset: 7px;
+  border: 2px dashed rgba(255,255,255,.45); border-radius: calc(var(--r-xl) - 6px);
+  pointer-events: none;
 }
 .pv-teaser-shine {
   position: absolute; top: 0; bottom: 0; width: 55%;
-  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,.5) 50%, transparent 80%);
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,.28) 50%, transparent 80%);
   transform: skewX(-18deg); left: -70%;
-  animation: pvShine 3.6s ease-in-out infinite; pointer-events: none;
+  animation: pvShine 3.2s ease-in-out infinite; pointer-events: none;
 }
 @keyframes pvShine { 0%,55% { left: -70%; } 90%,100% { left: 130%; } }
-.pv-teaser-emoji { font-size: 2.1rem; filter: drop-shadow(0 3px 6px rgba(0,0,0,.15)); }
-.pv-teaser-body { flex: 1; min-width: 150px; }
+.pv-teaser-ribbon {
+  position: absolute; top: 0; left: 14px;
+  background: #F59E0B; color: #4A2800;
+  font-family: var(--font-display); font-weight: 800; font-size: .66rem;
+  padding: .28rem .6rem .34rem; border-radius: 0 0 9px 9px;
+  box-shadow: 0 3px 8px rgba(0,0,0,.2); letter-spacing: .2px;
+}
+.pv-teaser-free {
+  position: absolute; top: 12px; right: 12px;
+  background: #FF4D6D; color: #fff;
+  font-family: var(--font-display); font-weight: 800; font-size: .78rem;
+  width: 46px; height: 46px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transform: rotate(12deg);
+  box-shadow: 0 4px 10px rgba(255,77,109,.45);
+  animation: pvFreePop 2.2s ease-in-out infinite;
+}
+@keyframes pvFreePop { 0%,100% { transform: rotate(12deg) scale(1); } 50% { transform: rotate(12deg) scale(1.12); } }
+.pv-teaser-top { display: flex; align-items: center; gap: .85rem; margin-bottom: .9rem; }
+.pv-teaser-emoji {
+  font-size: 2.5rem; flex-shrink: 0;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.25));
+  animation: pvBob 2.8s ease-in-out infinite;
+}
+@keyframes pvBob { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-6px) rotate(6deg); } }
+.pv-teaser-body { flex: 1; min-width: 0; }
 .pv-teaser-title {
-  font-family: var(--font-display); font-weight: 800; font-size: 1.02rem;
-  color: var(--text-1); margin-bottom: .15rem;
+  font-family: var(--font-display); font-weight: 800; font-size: 1.12rem;
+  color: #fff; margin-bottom: .3rem; text-shadow: 0 1px 3px rgba(0,0,0,.18);
 }
-.pv-teaser-sub { font-size: .74rem; color: var(--text-2); line-height: 1.5; }
+.pv-teaser-sub { font-size: .76rem; color: rgba(255,255,255,.92); line-height: 1.6; }
+.pv-teaser-sub b { color: #FFE08A; font-weight: 700; }
 .pv-teaser-btn {
-  border-radius: var(--r-pill, 99px); white-space: nowrap;
-  animation: pvPulse 2.4s ease-in-out infinite;
+  position: relative; display: flex; width: 100%;
+  align-items: center; justify-content: center; gap: .4rem;
+  background: #fff; color: #0B6B54; border: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: 800; font-size: .95rem;
+  border-radius: 99px; padding: .8rem 1rem;
+  box-shadow: 0 5px 14px rgba(0,0,0,.22);
+  animation: pvPulse 2.2s ease-in-out infinite;
 }
-@keyframes pvPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+.pv-teaser-btn:active { transform: scale(.97); }
+.pv-teaser-arrow { display: inline-block; animation: pvArrow 1.1s ease-in-out infinite; }
+@keyframes pvArrow { 0%,100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+@keyframes pvPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 @media (prefers-reduced-motion: reduce) {
   .pv-teaser-shine { animation: none; display: none; }
-  .pv-teaser-btn { animation: none; }
+  .pv-teaser-btn, .pv-teaser-emoji, .pv-teaser-arrow, .pv-teaser-free { animation: none; }
 }
 
 /* Designer modal เต็มจอ */

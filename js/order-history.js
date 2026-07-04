@@ -299,6 +299,34 @@ function renderOrderCards(wrap, orders) {
         .catch(() => DMC.toast('คัดลอกไม่สำเร็จ', 'error'));
     });
   });
+
+  // V28: รูปแนบ/สลิป — กดดูขนาดเต็ม
+  wrap.querySelectorAll('.track-file-thumb').forEach(img => {
+    img.addEventListener('click', () => openTrackLightbox(img.getAttribute('data-full') || img.src));
+  });
+}
+
+// Lightbox ดูรูปเต็มจอ (หน้าออเดอร์) — สร้างครั้งเดียว ใช้ซ้ำ
+function openTrackLightbox(url) {
+  let lb = document.getElementById('track-lightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'track-lightbox';
+    lb.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;backdrop-filter:blur(4px)';
+    const img = document.createElement('img');
+    img.id = 'track-lightbox-img';
+    img.style.cssText = 'max-width:95vw;max-height:92vh;border-radius:12px;object-fit:contain';
+    const close = document.createElement('button');
+    close.textContent = '✕';
+    close.style.cssText = 'position:absolute;top:1rem;right:1rem;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.3rem;cursor:pointer';
+    close.addEventListener('click', () => { lb.style.display = 'none'; });
+    lb.appendChild(img); lb.appendChild(close);
+    lb.addEventListener('click', e => { if (e.target === lb) lb.style.display = 'none'; });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') lb.style.display = 'none'; });
+    document.body.appendChild(lb);
+  }
+  document.getElementById('track-lightbox-img').src = url;
+  lb.style.display = 'flex';
 }
 
 function buildOrderCard(o) {
@@ -361,6 +389,29 @@ function buildOrderCard(o) {
   }).join('') || `<div class="track-detail-item"><span>${DMC.escapeHtml(o.itemsSummary || '—')}</span></div>`;
   const moneyRow = (label, val) => (val == null) ? '' :
     `<div class="track-detail-row"><span>${label}</span><span>${DMC.formatPrice(val)}</span></div>`;
+
+  // ── V28: รูปที่ลูกค้าแนบมากับออเดอร์ (แบบที่ออกแบบ + รูปที่อัปโหลด) — กดดูขนาดเต็มได้ ──
+  const fileUrls = Array.isArray(o.fileUrls) ? o.fileUrls.filter(u => /^https?:\/\//.test(String(u || ''))) : [];
+  const attachedHtml = fileUrls.length ? `
+        <div class="track-detail-sec">🖼️ รูปที่แนบมากับออเดอร์ (${fileUrls.length})</div>
+        <div class="track-files-grid">
+          ${fileUrls.map((u, i) => `<img class="track-file-thumb" src="${DMC.escapeHtml(DMC.imgCDN ? DMC.imgCDN(u, 200) : u)}" data-full="${DMC.escapeHtml(u)}" alt="รูปแนบที่ ${i + 1}" loading="lazy">`).join('')}
+        </div>` : '';
+
+  // ── V28: สลิปการชำระเงิน — แยกส่วนจากรูปแนบเสมอ ──
+  //   พร้อมทำงานทันทีเมื่อระบบจัดเก็บสลิปแบบส่วนตัว (private storage) เปิดใช้:
+  //   ถ้า slipUrl เป็นลิงก์ที่เข้าถึงได้ → แสดงรูป · ยังไม่ได้ → แจ้งชั่วคราว
+  let slipHtml = '';
+  if (o.paymentMethod === 'promptpay') {
+    const slipOk = /^https?:\/\//.test(String(o.slipUrl || ''));
+    slipHtml = slipOk ? `
+        <div class="track-detail-sec">🧾 สลิปการชำระเงิน</div>
+        <div class="track-files-grid">
+          <img class="track-file-thumb" src="${DMC.escapeHtml(DMC.imgCDN ? DMC.imgCDN(o.slipUrl, 200) : o.slipUrl)}" data-full="${DMC.escapeHtml(o.slipUrl)}" alt="สลิปการชำระเงิน" loading="lazy">
+        </div>` : `
+        <div class="track-detail-sec">🧾 สลิปการชำระเงิน</div>
+        <div class="track-slip-pending">🔒 การแสดงสลิปยังไม่พร้อมใช้งานชั่วคราว — ร้านได้รับสลิปของคุณเรียบร้อยแล้ว (ระบบจัดเก็บแบบส่วนตัวกำลังจะเปิดใช้เร็วๆ นี้)</div>`;
+  }
   const detailHtml = `
     <details class="track-detail">
       <summary>📋 ดูรายละเอียดออเดอร์ทั้งหมด</summary>
@@ -379,6 +430,8 @@ function buildOrderCard(o) {
         <div class="track-detail-row"><span>ชำระเงิน</span><span>${payLabel}</span></div>
         ${o.address ? `<div class="track-detail-row addr"><span>📍 ที่อยู่จัดส่ง</span><span>${DMC.escapeHtml(o.address)}</span></div>` : ''}
         ${o.note ? `<div class="track-detail-row addr"><span>📝 หมายเหตุ</span><span>${DMC.escapeHtml(o.note)}</span></div>` : ''}
+        ${attachedHtml}
+        ${slipHtml}
       </div>
     </details>`;
 
