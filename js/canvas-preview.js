@@ -485,276 +485,371 @@ window.CanvasPreview = (function(){
 })();
 
 // ═══════════════════════════════════════════════
-//  PREVIEW TOOL UI (ฝังในหน้าสินค้า) — V13
-//  options: { containerId, size, templates: [id ที่สินค้าอนุญาต], lineUrl, productId, productName }
+//  PREVIEW TOOL UI — V14 "Designer เต็มจอ"
+//  แก้จุดตาย UX: canvas ใหญ่กลางหน้าสินค้าบล็อกการปัดเลื่อนเพจ
+//  → หน้าสินค้าแสดง "การ์ดชวนออกแบบ" (ปัดผ่านได้ปกติ)
+//  → กดแล้วเปิด Designer เต็มจอ (canvas ลากได้เต็มที่ ไม่ชนการเลื่อนเพจ)
+//  options เดิม: { containerId, size, templates, lineUrl, productId, productName }
 // ═══════════════════════════════════════════════
+
+// ฟอนต์สำหรับข้อความบนภาพ — Google Fonts สัญญาอนุญาต SIL OFL (ฟรี ใช้เชิงพาณิชย์ได้)
+// ทุกตัวรองรับไทย+อังกฤษ
+window.__PV_FONTS = [
+  { v:'Kanit',    label:'Kanit — ทันสมัย'   },
+  { v:'Sarabun',  label:'Sarabun — ทางการ'  },
+  { v:'Prompt',   label:'Prompt — สะอาดตา'  },
+  { v:'Mali',     label:'Mali — ลายมือน่ารัก' },
+  { v:'Mitr',     label:'Mitr — กลมมน'      },
+  { v:'Itim',     label:'Itim — เขียนเล่น'   },
+  { v:'Sriracha', label:'Sriracha — ลายมือเอียง' },
+  { v:'Charm',    label:'Charm — หวานพลิ้ว'  },
+  { v:'Pattaya',  label:'Pattaya — ป้ายร้าน' },
+  { v:'Chonburi', label:'Chonburi — หัวกลมหนา' },
+];
+
 window.initPreviewTool = async function(options = {}) {
   const containerEl = document.getElementById(options.containerId || 'preview-tool-container');
   if (!containerEl) return;
 
-  const allowed = (options.templates && options.templates.length)
-    ? options.templates.map(t => String(t).trim().toLowerCase())
-    : null;
-
+  // ─── 1) การ์ดชวนออกแบบบนหน้าสินค้า (แทน canvas เดิม — ไม่บล็อกการปัดจอ) ───
   containerEl.innerHTML = [
-    '<div class="preview-tool-inner">',
-      '<div class="preview-howto">💡 <strong>วิธีใช้:</strong> อัปโหลดรูป → เลือกแบบ → เพิ่มข้อความ/โลโก้แล้ว<strong>ลากวาง</strong>ได้เลย → กด 💾 บันทึก หรือ 📎 แนบเข้าออเดอร์</div>',
-      '<div style="position:relative;text-align:center;margin-bottom:.6rem">',
-        '<canvas id="preview-canvas" title="แตะเพื่ออัปโหลด/เลือกชิ้นงาน"></canvas>',
-        '<div id="preview-upload-hint" class="preview-hint">📌 แตะที่รูปเพื่ออัปโหลด · แตะข้อความเพื่อเลือกแล้วลากจัดตำแหน่ง</div>',
+    '<div class="pv-teaser" id="pv-teaser" role="button" tabindex="0" aria-label="เปิดหน้าออกแบบ">',
+      '<div class="pv-teaser-shine" aria-hidden="true"></div>',
+      '<div class="pv-teaser-emoji" aria-hidden="true">🎨</div>',
+      '<div class="pv-teaser-body">',
+        '<div class="pv-teaser-title">ออกแบบเองได้ก่อนสั่ง!</div>',
+        '<div class="pv-teaser-sub">อัปรูป · ใส่ข้อความ/โลโก้ · ลากวางเอง · เห็นตัวอย่างจริงทันที</div>',
       '</div>',
-
-      // ⑤ ซูมรูปหลัก (โผล่เมื่ออัปรูปแล้ว)
-      '<div class="pv-zoom-row" id="pv-zoom-row" style="display:none">',
-        '<span>🔍</span>',
-        '<input type="range" id="pv-zoom" min="1" max="3" step="0.02" value="1" aria-label="ซูมรูป">',
-        '<span class="pv-zoom-hint">ลากรูปเพื่อเลื่อนตำแหน่งได้</span>',
-      '</div>',
-
-      // ④ ปุ่มเพิ่มเลเยอร์
-      '<div class="pv-add-row">',
-        '<button type="button" class="pv-btn" id="pv-add-text">➕ ข้อความ</button>',
-        '<label class="pv-btn" style="cursor:pointer">➕ โลโก้/รูปเสริม<input type="file" id="pv-logo-input" accept="image/*" style="display:none"></label>',
-      '</div>',
-
-      // ④ Toolbar แก้ไขชิ้นที่เลือก (ซ่อนจนกว่าจะเลือก)
-      '<div class="pv-layer-bar" id="pv-layer-bar" style="display:none">',
-        '<div class="pv-layer-row" id="pv-text-row">',
-          '<input type="text" class="form-input pv-text-input" id="pv-text-input" maxlength="60" placeholder="พิมพ์ข้อความ...">',
-        '</div>',
-        '<div class="pv-layer-row">',
-          '<input type="range" id="pv-size" min="10" max="72" step="1" title="ขนาด" aria-label="ขนาด">',
-          '<input type="color" id="pv-color" value="#222222" title="สี" aria-label="สีข้อความ">',
-          '<button type="button" class="pv-mini-btn" id="pv-bold" title="ตัวหนา"><b>B</b></button>',
-          '<select id="pv-font" class="pv-font-sel" aria-label="ฟอนต์">',
-            '<option value="Kanit">Kanit</option>',
-            '<option value="Mali">Mali</option>',
-            '<option value="Sarabun">Sarabun</option>',
-          '</select>',
-          '<button type="button" class="pv-mini-btn pv-del" id="pv-del" title="ลบชิ้นนี้">🗑️</button>',
-        '</div>',
-      '</div>',
-
-      '<div style="display:flex;gap:.5rem;margin-bottom:.9rem">',
-        '<label class="btn btn-secondary btn-md" style="flex:1;border-radius:var(--r-lg);cursor:pointer;justify-content:center">📤 เลือกรูปจากเครื่อง<input type="file" id="preview-file-input" accept="image/*" style="display:none"></label>',
-        '<button class="btn btn-ghost btn-md" id="preview-download-btn" style="border-radius:var(--r-lg)" title="บันทึกภาพตัวอย่าง" disabled>💾</button>',
-      '</div>',
-      '<button class="btn btn-primary btn-md btn-block" id="preview-attach-btn" style="margin-bottom:.9rem" disabled>📎 ใช้แบบนี้ในออเดอร์</button>',
-      '<div style="margin-bottom:.9rem" id="pv-caption-row"><input class="form-input" id="preview-caption" maxlength="60" placeholder="ข้อความใต้รูป (ไม่บังคับ) เช่น Happy Birthday 🎂" style="font-size:.85rem"></div>',
-      '<div>',
-        '<div class="preview-tpl-label">🎨 เลือกแบบ</div>',
-        '<div class="template-scroll" id="template-chips-row"></div>',
-      '</div>',
+      '<button type="button" class="btn btn-primary pv-teaser-btn" id="pv-open-designer">✨ เริ่มออกแบบเลย — ฟรี</button>',
     '</div>'
   ].join('');
 
-  const api = CanvasPreview.create('preview-canvas', { size: options.size });
-  if (!api) return;
+  // ─── 2) Designer เต็มจอ (สร้างครั้งแรกเมื่อกดเปิด) ───
+  let modal = null, built = false, isOpen = false, prevOverflow = '';
 
-  // ─── refs ───
-  const row       = document.getElementById('template-chips-row');
-  const fileInput = document.getElementById('preview-file-input');
-  const dlBtn     = document.getElementById('preview-download-btn');
-  const attachBtn = document.getElementById('preview-attach-btn');
-  const hintEl    = document.getElementById('preview-upload-hint');
-  const zoomRow   = document.getElementById('pv-zoom-row');
-  const zoomIn    = document.getElementById('pv-zoom');
-  const layerBar  = document.getElementById('pv-layer-bar');
-  const textRow   = document.getElementById('pv-text-row');
-  const textIn    = document.getElementById('pv-text-input');
-  const sizeIn    = document.getElementById('pv-size');
-  const colorIn   = document.getElementById('pv-color');
-  const boldBtn   = document.getElementById('pv-bold');
-  const fontSel   = document.getElementById('pv-font');
-  const delBtn    = document.getElementById('pv-del');
-  const capRow    = document.getElementById('pv-caption-row');
-
-  function refreshActionButtons() {
-    const has = api.hasContent();
-    dlBtn.disabled = !has;
-    if (attachBtn && attachBtn.dataset.busy !== '1') attachBtn.disabled = !has;
+  function openDesigner() {
+    if (!modal) buildModalShell();
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => modal.classList.add('open'));
+    isOpen = true;
+    prevOverflow = document.body.style.overflow || '';
+    document.body.style.overflow = 'hidden';               // ล็อกเพจหลัง — ใน modal เลื่อนเองได้
+    try { history.pushState({ pvDesigner: 1 }, ''); } catch (e) {}
+    window.addEventListener('popstate', onPopState);
+    if (!built) { built = true; buildEditor().catch(err => console.warn('designer build failed', err)); }
   }
 
-  // ─── toolbar sync ───
-  function syncToolbar(layer) {
-    if (!layer) { layerBar.style.display = 'none'; return; }
-    layerBar.style.display = '';
-    const isText = layer.type === 'text';
-    textRow.style.display = isText ? '' : 'none';
-    colorIn.style.display = isText ? '' : 'none';
-    boldBtn.style.display = isText ? '' : 'none';
-    fontSel.style.display = isText ? '' : 'none';
-    if (isText) {
-      textIn.value  = layer.text;
-      sizeIn.min = 10; sizeIn.max = 72; sizeIn.value = layer.size;
-      colorIn.value = layer.color;
-      boldBtn.classList.toggle('active', !!layer.bold);
-      fontSel.value = layer.font || 'Kanit';
-    } else {
-      sizeIn.min = 24; sizeIn.max = 240; sizeIn.value = Math.round(layer.w);
+  function closeDesigner(fromPop) {
+    if (!isOpen) return;
+    isOpen = false;
+    modal.classList.remove('open');
+    setTimeout(() => { if (!isOpen) modal.style.display = 'none'; }, 180);
+    document.body.style.overflow = prevOverflow;
+    window.removeEventListener('popstate', onPopState);
+    // เปิดด้วย pushState → ปิดด้วยปุ่มต้อง back ทิ้ง state (กัน back ครั้งถัดไปเด้งกลับ)
+    if (!fromPop) { try { if (history.state && history.state.pvDesigner) history.back(); } catch (e) {} }
+  }
+  function onPopState() { closeDesigner(true); }
+
+  document.getElementById('pv-open-designer')?.addEventListener('click', e => { e.stopPropagation(); openDesigner(); });
+  document.getElementById('pv-teaser')?.addEventListener('click', openDesigner);
+  document.getElementById('pv-teaser')?.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDesigner(); } });
+
+  function buildModalShell() {
+    modal = document.getElementById('pv-designer-modal');
+    if (modal) return;
+    modal = document.createElement('div');
+    modal.id = 'pv-designer-modal';
+    modal.innerHTML = [
+      '<div class="pvd-sheet">',
+        '<div class="pvd-header">',
+          '<div class="pvd-title">🎨 ออกแบบ — ' + (options.productName ? String(options.productName).replace(/[<>&"]/g, '') : 'ตัวอย่างสินค้า') + '</div>',
+          '<button type="button" class="pvd-close" id="pvd-close" aria-label="ปิด">✕</button>',
+        '</div>',
+        '<div class="pvd-body" id="pvd-body">',
+          '<div style="text-align:center;padding:3rem 1rem"><span class="spinner" style="display:block;margin:0 auto"></span><div style="margin-top:.8rem;font-size:.85rem;color:var(--text-3)">กำลังเตรียมเครื่องมือออกแบบ...</div></div>',
+        '</div>',
+      '</div>'
+    ].join('');
+    document.body.appendChild(modal);
+    document.getElementById('pvd-close')?.addEventListener('click', () => closeDesigner(false));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen) closeDesigner(false); });
+  }
+
+  // ─── 3) ตัว editor (โครงเดิมจาก V13 — ย้ายเข้า modal + ฟอนต์ใหม่) ───
+  async function buildEditor() {
+    const body = document.getElementById('pvd-body');
+    if (!body) return;
+
+    const allowed = (options.templates && options.templates.length)
+      ? options.templates.map(t => String(t).trim().toLowerCase())
+      : null;
+
+    const fontOptions = (window.__PV_FONTS || []).map(f =>
+      '<option value="' + f.v + '" style="font-family:\'' + f.v + '\'">' + f.label + '</option>').join('');
+
+    body.innerHTML = [
+      '<div class="preview-tool-inner">',
+        '<div class="preview-howto">💡 อัปโหลดรูป → เลือกแบบ → เพิ่มข้อความ/โลโก้แล้ว<strong>ลากวาง</strong>บนภาพได้เลย</div>',
+        '<div class="pvd-canvas-wrap">',
+          '<canvas id="preview-canvas" title="แตะเพื่ออัปโหลด/เลือกชิ้นงาน"></canvas>',
+        '</div>',
+        '<div id="preview-upload-hint" class="preview-hint" style="text-align:center">📌 แตะที่รูปเพื่ออัปโหลด · แตะข้อความเพื่อเลือกแล้วลากจัดตำแหน่ง</div>',
+
+        '<div class="pv-zoom-row" id="pv-zoom-row" style="display:none">',
+          '<span>🔍</span>',
+          '<input type="range" id="pv-zoom" min="1" max="3" step="0.02" value="1" aria-label="ซูมรูป">',
+          '<span class="pv-zoom-hint">ลากรูปเพื่อเลื่อนตำแหน่งได้</span>',
+        '</div>',
+
+        '<div class="pv-add-row">',
+          '<button type="button" class="pv-btn" id="pv-add-text">➕ ข้อความ</button>',
+          '<label class="pv-btn" style="cursor:pointer">➕ โลโก้/รูปเสริม<input type="file" id="pv-logo-input" accept="image/*" style="display:none"></label>',
+        '</div>',
+
+        '<div class="pv-layer-bar" id="pv-layer-bar" style="display:none">',
+          '<div class="pv-layer-row" id="pv-text-row">',
+            '<input type="text" class="form-input pv-text-input" id="pv-text-input" maxlength="60" placeholder="พิมพ์ข้อความ...">',
+          '</div>',
+          '<div class="pv-layer-row">',
+            '<input type="range" id="pv-size" min="10" max="72" step="1" title="ขนาด" aria-label="ขนาด">',
+            '<input type="color" id="pv-color" value="#222222" title="สี" aria-label="สีข้อความ">',
+            '<button type="button" class="pv-mini-btn" id="pv-bold" title="ตัวหนา"><b>B</b></button>',
+            '<button type="button" class="pv-mini-btn pv-del" id="pv-del" title="ลบชิ้นนี้">🗑️</button>',
+          '</div>',
+          '<div class="pv-layer-row" id="pv-font-row">',
+            '<select id="pv-font" class="pv-font-sel" style="flex:1;max-width:none" aria-label="ฟอนต์">', fontOptions, '</select>',
+          '</div>',
+        '</div>',
+
+        '<div style="display:flex;gap:.5rem;margin-bottom:.9rem">',
+          '<label class="btn btn-secondary btn-md" style="flex:1;border-radius:var(--r-lg);cursor:pointer;justify-content:center">📤 เลือกรูปจากเครื่อง<input type="file" id="preview-file-input" accept="image/*" style="display:none"></label>',
+          '<button class="btn btn-ghost btn-md" id="preview-download-btn" style="border-radius:var(--r-lg)" title="บันทึกภาพตัวอย่าง" disabled>💾</button>',
+        '</div>',
+        '<button class="btn btn-primary btn-md btn-block" id="preview-attach-btn" style="margin-bottom:.9rem" disabled>📎 ใช้แบบนี้ในออเดอร์</button>',
+        '<div style="margin-bottom:.9rem" id="pv-caption-row"><input class="form-input" id="preview-caption" maxlength="60" placeholder="ข้อความใต้รูป (ไม่บังคับ) เช่น Happy Birthday 🎂" style="font-size:.85rem"></div>',
+        '<div style="padding-bottom:1.2rem">',
+          '<div class="preview-tpl-label">🎨 เลือกแบบ</div>',
+          '<div class="template-scroll" id="template-chips-row"></div>',
+        '</div>',
+      '</div>'
+    ].join('');
+
+    const api = CanvasPreview.create('preview-canvas', { size: options.size });
+    if (!api) return;
+
+    // ─── refs ───
+    const row       = document.getElementById('template-chips-row');
+    const fileInput = document.getElementById('preview-file-input');
+    const dlBtn     = document.getElementById('preview-download-btn');
+    const attachBtn = document.getElementById('preview-attach-btn');
+    const hintEl    = document.getElementById('preview-upload-hint');
+    const zoomRow   = document.getElementById('pv-zoom-row');
+    const zoomIn    = document.getElementById('pv-zoom');
+    const layerBar  = document.getElementById('pv-layer-bar');
+    const textRow   = document.getElementById('pv-text-row');
+    const fontRow   = document.getElementById('pv-font-row');
+    const textIn    = document.getElementById('pv-text-input');
+    const sizeIn    = document.getElementById('pv-size');
+    const colorIn   = document.getElementById('pv-color');
+    const boldBtn   = document.getElementById('pv-bold');
+    const fontSel   = document.getElementById('pv-font');
+    const delBtn    = document.getElementById('pv-del');
+    const capRow    = document.getElementById('pv-caption-row');
+
+    function refreshActionButtons() {
+      const has = api.hasContent();
+      dlBtn.disabled = !has;
+      if (attachBtn && attachBtn.dataset.busy !== '1') attachBtn.disabled = !has;
     }
-  }
 
-  api.attachInteraction({
-    onSelectionChange: syncToolbar,
-    onLayersChange: refreshActionButtons,
-    onEmptyTap: () => { if (!api.hasImage()) fileInput?.click(); },
-  });
-
-  // ─── template chips ───
-  function addChip(label, emojiOrImg, onClick, isImg, isCustomTpl) {
-    const chip = document.createElement('div');
-    chip.className = 'template-chip';
-    const icon = document.createElement('span');
-    icon.className = 'template-chip-icon';
-    if (isImg) {
-      const im = document.createElement('img');
-      im.src = emojiOrImg; im.alt = label; im.loading = 'lazy';
-      im.style.cssText = 'width:26px;height:26px;object-fit:contain;border-radius:4px';
-      icon.appendChild(im);
-    } else icon.textContent = emojiOrImg;
-    const name = document.createElement('span');
-    name.className = 'template-chip-name';
-    name.textContent = label;
-    chip.appendChild(icon); chip.appendChild(name);
-    chip.addEventListener('click', () => {
-      row.querySelectorAll('.template-chip').forEach(x => x.classList.remove('active'));
-      chip.classList.add('active');
-      onClick();
-      // caption strip มีเฉพาะแบบ built-in — แบบ custom ใช้ระบบข้อความลากวางแทน
-      capRow.style.display = isCustomTpl ? 'none' : '';
-    });
-    row.appendChild(chip);
-    return chip;
-  }
-
-  // ③ กรองเทมเพลตให้ตรงตามที่สินค้ากำหนดจริง:
-  //    - ไม่กำหนดเลย (allowed = null) → แสดง built-in ทั้ง 6 + custom ทั้งหมด (พฤติกรรมเดิม)
-  //    - กำหนดแล้ว → แสดง "เฉพาะ" ที่เลือกเท่านั้น (แก้บั๊กหลุดโชว์ทั้ง 6 เมื่อเลือกเฉพาะ custom)
-  const builtins = allowed === null
-    ? CanvasPreview.TEMPLATES
-    : CanvasPreview.TEMPLATES.filter(t => allowed.includes(t.id) || allowed.includes(t.name.toLowerCase()));
-
-  const chipActions = [];   // เก็บ onClick ของทุกชิป เพื่อ activate ชิปแรกหลังโหลด custom เสร็จ
-  builtins.forEach(t => {
-    const act = () => api.selectBuiltin(t.id);
-    const chip = addChip(t.name, t.emoji, act);
-    chip.title = t.description;
-    chipActions.push({ chip, act });
-  });
-
-  let frames = [];
-  try {
-    frames = await CanvasPreview.loadCustomFrames();
-  } catch (e) { frames = []; }
-  frames.forEach(f => {
-    if (allowed && !allowed.includes(f.id.toLowerCase()) && !allowed.includes((f.name || '').toLowerCase())) return;
-    const act = () => api.selectCustomFrame(f);
-    const chip = addChip(f.name, f.frameUrl, act, true, true);
-    chipActions.push({ chip, act });
-  });
-
-  // activate ชิปแรก (built-in หรือ custom ก็ได้ — แก้เคสสินค้าที่เลือกเฉพาะ custom)
-  if (chipActions.length) {
-    chipActions[0].chip.classList.add('active');
-    chipActions[0].act();
-    capRow.style.display = (builtins.length === 0) ? 'none' : '';   // ชิปแรกเป็น custom → ซ่อน caption
-  }
-
-  // ชิป "เพิ่มเติม" → LINE
-  const moreChip = addChip('เพิ่มเติม…', '✨', () => {
-    if (hintEl) hintEl.innerHTML = '💬 ร้านมีแบบมากกว่านี้! <a href="' + (options.lineUrl || '#') + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">ทักไลน์เพื่อดูแบบเพิ่มเติม →</a>';
-    if (typeof DMC !== 'undefined') DMC.toast('ทักไลน์ร้านเพื่อดูแบบเพิ่มเติมได้เลยครับ 💬', 'info');
-  });
-  moreChip.classList.add('template-chip-more');
-  moreChip.title = 'ติดต่อ LINE เพื่อดูแบบอื่นๆ นอกเหนือจากในเว็บ';
-
-  // ─── อัปโหลดรูปหลัก ───
-  async function handleFile(file) {
-    try {
-      await api.loadImage(file);
-      refreshActionButtons();
-      zoomRow.style.display = '';
-      zoomIn.value = 1;
-      hintEl.textContent = '✅ อัปโหลดแล้ว — ลากรูปเพื่อเลื่อน · เลื่อน 🔍 เพื่อซูม · เพิ่มข้อความได้เลย';
-    } catch (e) {
-      DMC.toast(e.message || 'โหลดรูปไม่สำเร็จ', 'error');
-    }
-  }
-  fileInput?.addEventListener('change', () => { if (fileInput.files[0]) { handleFile(fileInput.files[0]); fileInput.value = ''; } });
-
-  const canvasEl = document.getElementById('preview-canvas');
-  canvasEl?.addEventListener('dragover', e => { e.preventDefault(); canvasEl.style.opacity = '.7'; });
-  canvasEl?.addEventListener('dragleave', () => { canvasEl.style.opacity = ''; });
-  canvasEl?.addEventListener('drop', e => {
-    e.preventDefault(); canvasEl.style.opacity = '';
-    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-  });
-
-  zoomIn?.addEventListener('input', e => api.setPhotoZoom(e.target.value));
-
-  // ─── เลเยอร์: เพิ่ม/แก้ไข ───
-  document.getElementById('pv-add-text')?.addEventListener('click', () => {
-    api.addTextLayer('ข้อความ');
-    hintEl.textContent = '✍️ พิมพ์ข้อความในช่องด้านล่าง แล้วลากบนรูปเพื่อจัดตำแหน่ง';
-    textIn?.focus();
-    try { textIn.select(); } catch (e) {}
-  });
-
-  const logoInput = document.getElementById('pv-logo-input');
-  logoInput?.addEventListener('change', async () => {
-    const f = logoInput.files[0];
-    if (!f) return;
-    try {
-      await api.addImageLayerFromFile(f);
-      hintEl.textContent = '🖼️ ลากโลโก้เพื่อจัดตำแหน่ง · เลื่อนแถบขนาดเพื่อย่อ/ขยาย';
-    } catch (e) { DMC.toast(e.message || 'เพิ่มรูปไม่สำเร็จ', 'error'); }
-    logoInput.value = '';
-  });
-
-  textIn?.addEventListener('input',  e => api.updateSelected({ text: e.target.value || ' ' }));
-  colorIn?.addEventListener('input', e => api.updateSelected({ color: e.target.value }));
-  fontSel?.addEventListener('change', e => api.updateSelected({ font: e.target.value }));
-  sizeIn?.addEventListener('input',  e => {
-    const l = api.getSelected(); if (!l) return;
-    if (l.type === 'text') api.updateSelected({ size: parseInt(e.target.value, 10) || 16 });
-    else api.updateSelected({ w: parseInt(e.target.value, 10) || 60 });
-  });
-  boldBtn?.addEventListener('click', () => {
-    const l = api.getSelected(); if (!l || l.type !== 'text') return;
-    api.updateSelected({ bold: !l.bold });
-    boldBtn.classList.toggle('active', !!api.getSelected().bold);
-  });
-  delBtn?.addEventListener('click', () => { api.deleteSelected(); refreshActionButtons(); });
-
-  // ─── caption (เฉพาะ built-in) / download ───
-  dlBtn?.addEventListener('click', () => api.download());
-  document.getElementById('preview-caption')?.addEventListener('input', e => api.setCaption(e.target.value));
-
-  // ─── แนบแบบเข้าออเดอร์ (flow เดิม — order.js อ่าน dmc_pending_designs เหมือนเดิม) ───
-  attachBtn?.addEventListener('click', () => {
-    if (!api.hasContent()) { DMC.toast('กรุณาอัปโหลดรูปหรือใส่ข้อความก่อนครับ', 'warning'); return; }
-    const original = attachBtn.innerHTML;
-    attachBtn.disabled = true; attachBtn.dataset.busy = '1';
-    attachBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> กำลังแนบ...';
-    api.getBlob(async (blob) => {
+    // โหลดฟอนต์ก่อนวาด — กัน canvas วาดด้วยฟอนต์ default ระหว่างไฟล์ฟอนต์ยังไม่มา
+    function ensureFont(fam, cb) {
       try {
-        if (!blob) throw new Error('no blob');
-        const f = new File([blob], 'design-' + Date.now() + '.jpg', { type: 'image/jpeg' });
-        const up = await DMC.uploadToImgBB(f);
-        if (!up || !up.url) throw new Error('upload failed');
-        let designs = [];
-        try { designs = JSON.parse(localStorage.getItem('dmc_pending_designs') || '[]'); } catch (e) {}
-        designs.push({ productId: options.productId || '', name: options.productName || 'แบบที่ออกแบบ', url: up.url, at: Date.now() });
-        localStorage.setItem('dmc_pending_designs', JSON.stringify(designs));
-        attachBtn.innerHTML = '✅ แนบเข้าออเดอร์แล้ว';
-        DMC.toast('แนบแบบเข้าออเดอร์แล้ว — จะแสดงในหน้าสั่งซื้อ 🛒', 'success', 4000);
-        setTimeout(() => { attachBtn.innerHTML = original; attachBtn.disabled = false; attachBtn.dataset.busy = ''; }, 2200);
-      } catch (e) {
-        console.warn('attach design failed', e);
-        attachBtn.innerHTML = original; attachBtn.disabled = false; attachBtn.dataset.busy = '';
-        DMC.toast('แนบแบบไม่สำเร็จ ลองใหม่ หรือส่งรูปทาง LINE ได้ครับ', 'error', 4500);
+        Promise.all([
+          document.fonts.load("400 20px '" + fam + "'"),
+          document.fonts.load("700 20px '" + fam + "'"),
+        ]).then(cb).catch(cb);
+      } catch (e) { cb(); }
+    }
+
+    function syncToolbar(layer) {
+      if (!layer) { layerBar.style.display = 'none'; return; }
+      layerBar.style.display = '';
+      const isText = layer.type === 'text';
+      textRow.style.display = isText ? '' : 'none';
+      fontRow.style.display = isText ? '' : 'none';
+      colorIn.style.display = isText ? '' : 'none';
+      boldBtn.style.display = isText ? '' : 'none';
+      if (isText) {
+        textIn.value = layer.text;
+        sizeIn.min = 10; sizeIn.max = 72; sizeIn.value = layer.size;
+        colorIn.value = layer.color;
+        boldBtn.classList.toggle('active', !!layer.bold);
+        fontSel.value = layer.font || 'Kanit';
+      } else {
+        sizeIn.min = 24; sizeIn.max = 240; sizeIn.value = Math.round(layer.w);
       }
+    }
+
+    api.attachInteraction({
+      onSelectionChange: syncToolbar,
+      onLayersChange: refreshActionButtons,
+      onEmptyTap: () => { if (!api.hasImage()) fileInput?.click(); },
     });
-  });
+
+    // ─── template chips ───
+    function addChip(label, emojiOrImg, onClick, isImg, isCustomTpl) {
+      const chip = document.createElement('div');
+      chip.className = 'template-chip';
+      const icon = document.createElement('span');
+      icon.className = 'template-chip-icon';
+      if (isImg) {
+        const im = document.createElement('img');
+        im.src = emojiOrImg; im.alt = label; im.loading = 'lazy';
+        im.style.cssText = 'width:26px;height:26px;object-fit:contain;border-radius:4px';
+        icon.appendChild(im);
+      } else icon.textContent = emojiOrImg;
+      const name = document.createElement('span');
+      name.className = 'template-chip-name';
+      name.textContent = label;
+      chip.appendChild(icon); chip.appendChild(name);
+      chip.addEventListener('click', () => {
+        row.querySelectorAll('.template-chip').forEach(x => x.classList.remove('active'));
+        chip.classList.add('active');
+        onClick();
+        capRow.style.display = isCustomTpl ? 'none' : '';
+      });
+      row.appendChild(chip);
+      return chip;
+    }
+
+    const builtins = allowed === null
+      ? CanvasPreview.TEMPLATES
+      : CanvasPreview.TEMPLATES.filter(t => allowed.includes(t.id) || allowed.includes(t.name.toLowerCase()));
+
+    const chipActions = [];
+    builtins.forEach(t => {
+      const act = () => api.selectBuiltin(t.id);
+      const chip = addChip(t.name, t.emoji, act);
+      chip.title = t.description;
+      chipActions.push({ chip, act });
+    });
+
+    let frames = [];
+    try { frames = await CanvasPreview.loadCustomFrames(); } catch (e) { frames = []; }
+    frames.forEach(f => {
+      if (allowed && !allowed.includes(f.id.toLowerCase()) && !allowed.includes((f.name || '').toLowerCase())) return;
+      const act = () => api.selectCustomFrame(f);
+      const chip = addChip(f.name, f.frameUrl, act, true, true);
+      chipActions.push({ chip, act });
+    });
+
+    if (chipActions.length) {
+      chipActions[0].chip.classList.add('active');
+      chipActions[0].act();
+      capRow.style.display = (builtins.length === 0) ? 'none' : '';
+    }
+
+    const moreChip = addChip('เพิ่มเติม…', '✨', () => {
+      if (hintEl) hintEl.innerHTML = '💬 ร้านมีแบบมากกว่านี้! <a href="' + (options.lineUrl || '#') + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">ทักไลน์เพื่อดูแบบเพิ่มเติม →</a>';
+      if (typeof DMC !== 'undefined') DMC.toast('ทักไลน์ร้านเพื่อดูแบบเพิ่มเติมได้เลยครับ 💬', 'info');
+    });
+    moreChip.classList.add('template-chip-more');
+    moreChip.title = 'ติดต่อ LINE เพื่อดูแบบอื่นๆ นอกเหนือจากในเว็บ';
+
+    // ─── อัปโหลดรูปหลัก ───
+    async function handleFile(file) {
+      try {
+        await api.loadImage(file);
+        refreshActionButtons();
+        zoomRow.style.display = '';
+        zoomIn.value = 1;
+        hintEl.textContent = '✅ อัปโหลดแล้ว — ลากรูปเพื่อเลื่อน · เลื่อน 🔍 เพื่อซูม · เพิ่มข้อความได้เลย';
+      } catch (e) {
+        DMC.toast(e.message || 'โหลดรูปไม่สำเร็จ', 'error');
+      }
+    }
+    fileInput?.addEventListener('change', () => { if (fileInput.files[0]) { handleFile(fileInput.files[0]); fileInput.value = ''; } });
+
+    const canvasEl = document.getElementById('preview-canvas');
+    canvasEl?.addEventListener('dragover', e => { e.preventDefault(); canvasEl.style.opacity = '.7'; });
+    canvasEl?.addEventListener('dragleave', () => { canvasEl.style.opacity = ''; });
+    canvasEl?.addEventListener('drop', e => {
+      e.preventDefault(); canvasEl.style.opacity = '';
+      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+
+    zoomIn?.addEventListener('input', e => api.setPhotoZoom(e.target.value));
+
+    // ─── เลเยอร์ ───
+    document.getElementById('pv-add-text')?.addEventListener('click', () => {
+      api.addTextLayer('ข้อความ');
+      hintEl.textContent = '✍️ พิมพ์ข้อความในช่องด้านล่าง แล้วลากบนรูปเพื่อจัดตำแหน่ง';
+      textIn?.focus();
+      try { textIn.select(); } catch (e) {}
+    });
+
+    const logoInput = document.getElementById('pv-logo-input');
+    logoInput?.addEventListener('change', async () => {
+      const f = logoInput.files[0];
+      if (!f) return;
+      try {
+        await api.addImageLayerFromFile(f);
+        hintEl.textContent = '🖼️ ลากโลโก้เพื่อจัดตำแหน่ง · เลื่อนแถบขนาดเพื่อย่อ/ขยาย';
+      } catch (e) { DMC.toast(e.message || 'เพิ่มรูปไม่สำเร็จ', 'error'); }
+      logoInput.value = '';
+    });
+
+    textIn?.addEventListener('input',  e => api.updateSelected({ text: e.target.value || ' ' }));
+    colorIn?.addEventListener('input', e => api.updateSelected({ color: e.target.value }));
+    fontSel?.addEventListener('change', e => {
+      const fam = e.target.value;
+      ensureFont(fam, () => api.updateSelected({ font: fam }));
+    });
+    sizeIn?.addEventListener('input',  e => {
+      const l = api.getSelected(); if (!l) return;
+      if (l.type === 'text') api.updateSelected({ size: parseInt(e.target.value, 10) || 16 });
+      else api.updateSelected({ w: parseInt(e.target.value, 10) || 60 });
+    });
+    boldBtn?.addEventListener('click', () => {
+      const l = api.getSelected(); if (!l || l.type !== 'text') return;
+      api.updateSelected({ bold: !l.bold });
+      boldBtn.classList.toggle('active', !!api.getSelected().bold);
+    });
+    delBtn?.addEventListener('click', () => { api.deleteSelected(); refreshActionButtons(); });
+
+    dlBtn?.addEventListener('click', () => api.download());
+    document.getElementById('preview-caption')?.addEventListener('input', e => api.setCaption(e.target.value));
+
+    // ─── แนบเข้าออเดอร์ (flow เดิม) — สำเร็จแล้วปิด Designer ให้เลย ───
+    attachBtn?.addEventListener('click', () => {
+      if (!api.hasContent()) { DMC.toast('กรุณาอัปโหลดรูปหรือใส่ข้อความก่อนครับ', 'warning'); return; }
+      const original = attachBtn.innerHTML;
+      attachBtn.disabled = true; attachBtn.dataset.busy = '1';
+      attachBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> กำลังแนบ...';
+      api.getBlob(async (blob) => {
+        try {
+          if (!blob) throw new Error('no blob');
+          const f = new File([blob], 'design-' + Date.now() + '.jpg', { type: 'image/jpeg' });
+          const up = await DMC.uploadToImgBB(f);
+          if (!up || !up.url) throw new Error('upload failed');
+          let designs = [];
+          try { designs = JSON.parse(localStorage.getItem('dmc_pending_designs') || '[]'); } catch (e) {}
+          designs.push({ productId: options.productId || '', name: options.productName || 'แบบที่ออกแบบ', url: up.url, at: Date.now() });
+          localStorage.setItem('dmc_pending_designs', JSON.stringify(designs));
+          attachBtn.innerHTML = '✅ แนบเข้าออเดอร์แล้ว';
+          DMC.toast('แนบแบบเข้าออเดอร์แล้ว — จะแสดงในหน้าสั่งซื้อ 🛒', 'success', 4000);
+          setTimeout(() => {
+            attachBtn.innerHTML = original; attachBtn.disabled = false; attachBtn.dataset.busy = '';
+            closeDesigner(false);           // ปิดกลับหน้าสินค้าให้กดสั่งซื้อต่อ
+          }, 1400);
+        } catch (e) {
+          console.warn('attach design failed', e);
+          attachBtn.innerHTML = original; attachBtn.disabled = false; attachBtn.dataset.busy = '';
+          DMC.toast('แนบแบบไม่สำเร็จ ลองใหม่ หรือส่งรูปทาง LINE ได้ครับ', 'error', 4500);
+        }
+      });
+    });
+  }
 };

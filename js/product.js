@@ -303,8 +303,8 @@ function renderGallery() {
   const emojiEl  = document.getElementById('gallery-emoji');
   if (!mainEl) return;
 
-  // เคลียร์ media เดิม (เก็บ badge + emoji ไว้)
-  mainEl.querySelectorAll('.gallery-media').forEach(el => el.remove());
+  // เคลียร์ media เดิม (เก็บ badge + emoji + overlay ไว้)
+  mainEl.querySelectorAll('.gallery-media, .gallery-track, .gallery-counter').forEach(el => el.remove());
 
   if (!galleryItems.length) {
     if (emojiEl) { emojiEl.style.display = ''; emojiEl.textContent = product.emoji || '📦'; }
@@ -313,40 +313,66 @@ function renderGallery() {
   }
   if (emojiEl) emojiEl.style.display = 'none';
 
-  const item = galleryItems[Math.min(activeGalleryIndex, galleryItems.length - 1)];
+  // ── V27: track ปัดซ้าย-ขวาได้ (scroll-snap = ลื่นแบบ native เหมือน Shopee) ──
+  const track = document.createElement('div');
+  track.className = 'gallery-track';
+  track.setAttribute('aria-label', 'รูปสินค้า ปัดซ้ายขวาเพื่อดูรูปถัดไป');
 
-  if (item.type === 'image') {
-    const img = document.createElement('img');
-    img.src = DMC.imgCDN(item.url, 900);          // V16: ย่อรูปสำหรับแสดง (zoom ยังใช้ต้นฉบับ)
-    img.setAttribute('data-full', item.url);      // fallback ถ้า CDN ล่ม
-    img.alt = product.name + (item.label ? ' — ' + item.label : '');
-    img.className = 'gallery-media';
-    img.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:var(--r-xl);position:relative;z-index:1;cursor:zoom-in';
-    img.addEventListener('click', () => openProductLightbox(item.url));
-    mainEl.appendChild(img);
-    if (typeof Loading !== 'undefined') Loading.blurUpImage(img);
-  } else if (item.type === 'video-link') {
-    // V26: ลิงก์วิดีโอที่ฝังไม่ได้ → tile กดเปิดดูบนแอป/เว็บต้นทาง
-    const a = document.createElement('a');
-    a.className = 'gallery-media gallery-video-open';
-    a.href = item.url; a.target = '_blank'; a.rel = 'noopener';
-    const isTT = /tiktok/i.test(item.url);
-    a.innerHTML = '<span class="gvo-play">▶</span><span class="gvo-text">ดูวิดีโอบน ' + (isTT ? 'TikTok' : 'YouTube') + '</span><span class="gvo-sub">แตะเพื่อเปิดดูวิดีโอ</span>';
-    mainEl.appendChild(a);
-  } else {
-    const wrap = document.createElement('div');
-    wrap.className = 'gallery-media gallery-video-wrap' + (item.vertical ? ' vertical' : '');
-    const iframe = document.createElement('iframe');
-    iframe.src = item.embedUrl;
-    iframe.setAttribute('allowfullscreen', '');
-    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-    iframe.setAttribute('loading', 'lazy');
-    iframe.title = 'วิดีโอสินค้า ' + product.name;
-    wrap.appendChild(iframe);
-    mainEl.appendChild(wrap);
+  galleryItems.forEach((item, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'gallery-slide';
+
+    if (item.type === 'image') {
+      const img = document.createElement('img');
+      img.src = DMC.imgCDN(item.url, 900);
+      img.setAttribute('data-full', item.url);
+      img.alt = product.name + (item.label ? ' — ' + item.label : '');
+      img.loading = i === activeGalleryIndex ? 'eager' : 'lazy';
+      img.draggable = false;
+      img.addEventListener('click', () => openProductLightbox(item.url));
+      slide.appendChild(img);
+      if (typeof Loading !== 'undefined') Loading.blurUpImage(img);
+    } else if (item.type === 'video-link') {
+      const a = document.createElement('a');
+      a.className = 'gallery-video-open';
+      a.href = item.url; a.target = '_blank'; a.rel = 'noopener';
+      const isTT = /tiktok/i.test(item.url);
+      a.innerHTML = '<span class="gvo-play">▶</span><span class="gvo-text">ดูวิดีโอบน ' + (isTT ? 'TikTok' : 'YouTube') + '</span><span class="gvo-sub">แตะเพื่อเปิดดูวิดีโอ</span>';
+      slide.appendChild(a);
+    } else {
+      // วิดีโอฝัง: แสดง tile กดเล่นก่อน (iframe กิน gesture ปัด) → กดแล้วค่อยใส่ iframe
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'gallery-video-open gallery-video-playbtn';
+      btn.innerHTML = '<span class="gvo-play">▶</span><span class="gvo-text">เล่นวิดีโอ</span><span class="gvo-sub">แตะเพื่อเล่นตรงนี้</span>';
+      btn.addEventListener('click', () => {
+        const wrap = document.createElement('div');
+        wrap.className = 'gallery-video-wrap' + (item.vertical ? ' vertical' : '');
+        const iframe = document.createElement('iframe');
+        iframe.src = item.embedUrl + (item.embedUrl.includes('?') ? '&' : '?') + 'autoplay=1';
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+        iframe.title = 'วิดีโอสินค้า ' + product.name;
+        wrap.appendChild(iframe);
+        slide.innerHTML = '';
+        slide.appendChild(wrap);
+      });
+      slide.appendChild(btn);
+    }
+    track.appendChild(slide);
+  });
+  mainEl.appendChild(track);
+
+  // ตัวนับ "1/3" มุมขวาล่าง
+  let counter = null;
+  if (galleryItems.length > 1) {
+    counter = document.createElement('div');
+    counter.className = 'gallery-counter';
+    mainEl.appendChild(counter);
   }
 
-  // Thumbnails
+  // ── Thumbnails ──
+  const thumbEls = [];
   if (thumbsEl) {
     thumbsEl.innerHTML = '';
     if (galleryItems.length > 1) {
@@ -355,7 +381,7 @@ function renderGallery() {
         t.className = 'gallery-thumb' + (i === activeGalleryIndex ? ' active' : '');
         if (g.type === 'image') {
           const im = document.createElement('img');
-          im.src = DMC.imgCDN(g.url, 160);          // V16: thumbnail เล็ก โหลดไว
+          im.src = DMC.imgCDN(g.url, 160);
           im.setAttribute('data-full', g.url);
           im.alt = g.label || ('รูปที่ ' + (i + 1));
           im.loading = 'lazy';
@@ -366,10 +392,46 @@ function renderGallery() {
           t.innerHTML = '<span class="gallery-thumb-video">▶</span>';
           t.title = 'วิดีโอ';
         }
-        t.addEventListener('click', () => { activeGalleryIndex = i; renderGallery(); });
+        t.addEventListener('click', () => goToSlide(i, true));
         thumbsEl.appendChild(t);
+        thumbEls.push(t);
       });
     }
+  }
+
+  // ── sync สองทาง: ปัด track → thumbs/counter ตาม · กด thumb → เลื่อน track ──
+  function setActive(i) {
+    if (i === activeGalleryIndex) return;
+    activeGalleryIndex = i;
+    thumbEls.forEach((t, k) => t.classList.toggle('active', k === i));
+    if (counter) counter.textContent = (i + 1) + '/' + galleryItems.length;
+    // เลื่อน thumb ที่ active มาให้เห็นในแถบ
+    const th = thumbEls[i];
+    if (th && th.scrollIntoView) { try { th.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' }); } catch (e) {} }
+  }
+  if (counter) counter.textContent = (activeGalleryIndex + 1) + '/' + galleryItems.length;
+
+  window.__goToGallerySlide = goToSlide;   // ให้ switchImageByLabel เรียกใช้
+  function goToSlide(i, smooth) {
+    i = Math.max(0, Math.min(galleryItems.length - 1, i));
+    track.scrollTo({ left: i * track.clientWidth, behavior: smooth ? 'smooth' : 'auto' });
+    setActive(i);
+  }
+
+  let scrollRAF = 0;
+  track.addEventListener('scroll', () => {
+    if (scrollRAF) return;
+    scrollRAF = requestAnimationFrame(() => {
+      scrollRAF = 0;
+      const w = track.clientWidth || 1;
+      const i = Math.round(track.scrollLeft / w);
+      if (i >= 0 && i < galleryItems.length) setActive(i);
+    });
+  }, { passive: true });
+
+  // เริ่มที่รูปปก (ไม่ animate)
+  if (activeGalleryIndex > 0) {
+    requestAnimationFrame(() => { track.scrollTo({ left: activeGalleryIndex * track.clientWidth, behavior: 'auto' }); });
   }
 }
 
@@ -434,8 +496,8 @@ function switchImageByLabel(label) {
   const idx = galleryItems.findIndex(g =>
     g.type === 'image' && g.label && g.label.toLowerCase() === want);
   if (idx >= 0 && idx !== activeGalleryIndex) {
-    activeGalleryIndex = idx;
-    renderGallery();
+    if (typeof window.__goToGallerySlide === 'function') window.__goToGallerySlide(idx, true);
+    else { activeGalleryIndex = idx; renderGallery(); }
   }
 }
 
