@@ -485,6 +485,58 @@
 }
 
 /* ══════════════════════════════════════════════
+   V13 — CANVAS PREVIEW ยกเครื่อง (Hi-DPI + เลเยอร์ข้อความ/โลโก้)
+══════════════════════════════════════════════ */
+#preview-canvas {
+  border-radius: var(--r-xl); border: 1.5px solid var(--border);
+  box-shadow: var(--shadow-card);
+  max-width: 100%; height: auto; display: block; margin: 0 auto;
+  cursor: pointer; touch-action: none;   /* ให้ลากเลเยอร์บนมือถือได้ ไม่ชนกับ scroll */
+  background: var(--bg-card);
+}
+.pv-zoom-row {
+  display: flex; align-items: center; gap: .55rem;
+  margin: 0 auto .65rem; max-width: 340px;
+}
+.pv-zoom-row input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0; }
+.pv-zoom-hint { font-size: .64rem; color: var(--text-3); white-space: nowrap; }
+.pv-add-row { display: flex; gap: .5rem; justify-content: center; margin-bottom: .65rem; flex-wrap: wrap; }
+.pv-btn {
+  display: inline-flex; align-items: center; gap: .3rem;
+  background: var(--bg-card); border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--border));
+  color: var(--accent-dark); font-family: var(--font-display); font-weight: 600; font-size: .78rem;
+  border-radius: var(--r-pill, 99px); padding: .42rem .85rem; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.pv-btn:hover { border-color: var(--accent); background: var(--glass); }
+.pv-layer-bar {
+  background: var(--bg-card); border: 1.5px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: var(--r-lg); padding: .6rem .65rem; margin-bottom: .8rem;
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), .08);
+}
+.pv-layer-row { display: flex; align-items: center; gap: .45rem; }
+.pv-layer-row + .pv-layer-row { margin-top: .5rem; }
+.pv-text-input { font-size: .85rem; flex: 1; }
+.pv-layer-row input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0; }
+.pv-layer-row input[type=color] {
+  width: 34px; height: 30px; padding: 2px; border: 1.5px solid var(--border);
+  border-radius: var(--r-sm, 8px); background: var(--bg-card); cursor: pointer; flex-shrink: 0;
+}
+.pv-mini-btn {
+  width: 32px; height: 30px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg-mid); border: 1.5px solid var(--border); border-radius: var(--r-sm, 8px);
+  color: var(--text-2); font-size: .85rem; cursor: pointer; transition: all .15s;
+}
+.pv-mini-btn.active { background: var(--glass); border-color: var(--accent); color: var(--accent); }
+.pv-mini-btn.pv-del:hover { border-color: var(--rose); color: var(--rose); }
+.pv-font-sel {
+  flex-shrink: 0; max-width: 92px; font-size: .72rem; padding: .3rem .35rem;
+  border: 1.5px solid var(--border); border-radius: var(--r-sm, 8px);
+  background: var(--bg-card); color: var(--text-1); font-family: var(--font-display);
+}
+
+/* ══════════════════════════════════════════════
    V14 — Mobile Responsive Polish
 ══════════════════════════════════════════════ */
 @media(max-width:640px){
