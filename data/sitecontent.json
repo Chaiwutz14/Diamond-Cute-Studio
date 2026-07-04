@@ -1,94 +1,94 @@
 {
-  "generatedAt": "2026-07-03T22:34:30.622Z",
+  "generatedAt": "2026-07-04T03:04:08.818Z",
   "data": {
-    "updatedAt": {
-      "seconds": 1783017899
-    },
-    "fees": {
-      "surchargePromptpay": 0,
-      "shipCod": 50,
-      "shipTransfer": 30,
-      "surchargeCod": 0,
-      "freeShipMin": 0
+    "contact": {
+      "facebook": "https://www.facebook.com/share/19CQvQxW6E/",
+      "hours": "จันทร์–เสาร์ 08:00–20:00 น.",
+      "email": "Peeza1482546@gmail.com",
+      "instagram": "https://instagram.com",
+      "lineLabel": "@913huiwn",
+      "phone": "096-1207907",
+      "line": "https://line.me/R/ti/p/@913huiwn",
+      "tiktok": "https://tiktok.com"
     },
     "payment": {
+      "promptpayName": "นาย ชัยวุฒิ บุญชูวงศ์",
       "qrImageUrl": "",
-      "promptpayId": "0809987611",
       "methods": {
-        "promptpay": {
-          "ready": true,
-          "shown": true
-        },
         "truemoney": {
-          "shown": true,
-          "ready": false
-        },
-        "credit": {
           "shown": true,
           "ready": false
         },
         "cod": {
           "ready": false,
           "shown": true
+        },
+        "promptpay": {
+          "ready": true,
+          "shown": true
+        },
+        "credit": {
+          "shown": true,
+          "ready": false
         }
       },
-      "promptpayName": "นาย ชัยวุฒิ บุญชูวงศ์"
+      "promptpayId": "0809987611"
     },
-    "promo": {
-      "btnText": "สั่งเลย →",
-      "btnLink": "catalog.html",
-      "active": true,
-      "title": "ลูกค้าใหม่ ลดทันที 15%",
-      "tag": "🎁 โปรโมชั่นพิเศษ",
-      "desc": "สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย  เพียงกรอกโค้ด WELCOME15"
+    "stats": {
+      "days": "1-3",
+      "orders": "500+",
+      "rating": "4.9/5"
     },
     "lastDeliveredAt": {
       "seconds": 1783015807
     },
-    "announce": {
+    "fees": {
+      "shipTransfer": 30,
+      "shipCod": 50,
+      "surchargeCod": 0,
+      "surchargePromptpay": 0,
+      "freeShipMin": 0
+    },
+    "promo": {
       "active": true,
-      "text": "ลูกค้าใหม่ กรอกคูปอง WELCOME15 ลดทันที 15% ไม่มีขั้นต่ำ"
+      "tag": "🎁 โปรโมชั่นพิเศษ",
+      "btnLink": "catalog.html",
+      "title": "ลูกค้าใหม่ ลดทันที 15%",
+      "desc": "สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย  เพียงกรอกโค้ด WELCOME15",
+      "btnText": "สั่งเลย →"
     },
-    "stats": {
-      "rating": "4.9/5",
-      "orders": "500+",
-      "days": "1-3"
-    },
-    "contact": {
-      "facebook": "https://www.facebook.com/share/19CQvQxW6E/",
-      "line": "https://line.me/R/ti/p/@913huiwn",
-      "lineLabel": "@913huiwn",
-      "hours": "จันทร์–เสาร์ 08:00–20:00 น.",
-      "phone": "096-1207907",
-      "tiktok": "https://tiktok.com",
-      "email": "Peeza1482546@gmail.com",
-      "instagram": "https://instagram.com"
+    "updatedAt": {
+      "seconds": 1783017899
     },
     "faq": [
       {
-        "q": "ใช้เวลาผลิตกี่วัน?",
-        "a": "ส่วนใหญ่ 1-3 วันทำการ ขึ้นกับจำนวนและประเภทงาน หากเร่งด่วนแจ้งทาง LINE ได้เลยครับ"
+        "a": "ส่วนใหญ่ 1-3 วันทำการ ขึ้นกับจำนวนและประเภทงาน หากเร่งด่วนแจ้งทาง LINE ได้เลยครับ",
+        "q": "ใช้เวลาผลิตกี่วัน?"
       },
       {
         "q": "ส่งไฟล์รูปทางไหน?",
         "a": "แนบไฟล์ตอนสั่งซื้อได้เลย หรือส่งทาง LINE หลังสั่งซื้อก็ได้ครับ"
       },
       {
-        "q": "ชำระเงินยังไงได้บ้าง?",
-        "a": "โอนผ่าน PromptPay,เก็บเงินปลายทาง (COD) \nTrue money(พร้อมเปิดใช้งานเร็วๆนี้) บัตรเครดิต(พร้อมเปิดใช้งานเร็วๆนี้) ครับ"
+        "a": "โอนผ่าน PromptPay,เก็บเงินปลายทาง (COD) \nTrue money(พร้อมเปิดใช้งานเร็วๆนี้) บัตรเครดิต(พร้อมเปิดใช้งานเร็วๆนี้) ครับ",
+        "q": "ชำระเงินยังไงได้บ้าง?"
       },
       {
-        "q": "แก้ไขงานได้ไหม?",
-        "a": "แก้ไขได้ฟรีก่อนเริ่มผลิต หลังผลิตแล้วขึ้นกับกรณีครับ"
+        "a": "แก้ไขได้ฟรีก่อนเริ่มผลิต หลังผลิตแล้วขึ้นกับกรณีครับ",
+        "q": "แก้ไขงานได้ไหม?"
       }
     ],
+    "announce": {
+      "active": true,
+      "text": "ลูกค้าใหม่ กรอกคูปอง WELCOME15 ลดทันที 15% ไม่มีขั้นต่ำ"
+    },
     "_test": 1782880037380,
     "hero": {
-      "title2": "กลายเป็นของที่ระลึก",
       "title1": "ทำให้ทุกภาพ",
       "title3": "ที่สวยงามที่สุด",
-      "desc": "บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน\nป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย",
-      "badge": "งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ"
+      "badge": "งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ",
+      "title2": "กลายเป็นของที่ระลึก",
+      "desc": "บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน\nป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย"
     }
   }
 }
