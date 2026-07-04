@@ -35,6 +35,11 @@ async function loadTemplatesAdmin(container) {
         </div>
       </div>
       <input class="form-input" id="tpl-url" placeholder="หรือวาง URL รูปกรอบ PNG" style="margin-bottom:1rem">
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">✍️ ช่องข้อความอัตโนมัติ <span style="font-weight:400;color:var(--text-3)">(ไม่บังคับ — คั่นด้วย ,)</span></label>
+        <input class="form-input" id="tpl-texts" maxlength="120" placeholder="เช่น ชื่อ-นามสกุล, ตำแหน่ง, เบอร์โทร">
+        <div style="font-size:.72rem;color:var(--text-3);margin-top:.35rem;line-height:1.55">ลูกค้าเลือกเทมเพลตนี้แล้วช่องข้อความจะโผล่ให้กรอก+ลากจัดตำแหน่งบนภาพทันที (เหมาะกับนามบัตร บัตรพนักงาน ป้ายร้าน) · กรอบใช้ได้ทุกทรง แนวตั้ง/แนวนอน/จัตุรัส ระบบปรับสัดส่วนตามไฟล์จริง</div>
+      </div>
       <div id="tpl-preview" style="margin-bottom:1rem"></div>
       <button class="btn btn-primary btn-md" id="tpl-save-btn">💾 บันทึกเทมเพลต</button>
     </div>
@@ -73,11 +78,14 @@ async function loadTemplatesAdmin(container) {
     try {
       await db.collection('templates').add({
         name, frameUrl: url, active: true,
+        defaultTexts: (document.getElementById('tpl-texts')?.value || '').trim(),
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
       DMC.toast('เพิ่มเทมเพลตแล้ว ✅', 'success');
       document.getElementById('tpl-name').value = '';
       document.getElementById('tpl-url').value = '';
+      const tplTextsEl = document.getElementById('tpl-texts');
+      if (tplTextsEl) tplTextsEl.value = '';
       document.getElementById('tpl-preview').innerHTML = '';
       document.getElementById('tpl-upload-status').textContent = '';
       await loadTplList();
@@ -111,6 +119,7 @@ async function loadTplList() {
         </div>
         <div style="padding:.55rem .65rem">
           <div style="font-family:var(--font-display);font-size:.8rem;font-weight:600;margin-bottom:.4rem">${DMC.escapeHtml(t.name||'—')}</div>
+          ${t.defaultTexts?`<div style="font-size:.66rem;color:var(--text-3);margin:-.15rem 0 .4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${DMC.escapeHtml(t.defaultTexts)}">✍️ ${DMC.escapeHtml(t.defaultTexts)}</div>`:''}
           <div style="display:flex;align-items:center;justify-content:space-between;gap:.4rem">
             <label class="toggle-switch" title="เปิด/ปิดใช้งาน">
               <input type="checkbox" class="tpl-toggle" data-id="${t.id}" ${t.active ? 'checked' : ''}>

@@ -243,19 +243,36 @@ window.openProductModal = async function(productId) {
       <div style="font-size:.76rem;color:var(--text-3);margin-bottom:.65rem">เปิดแล้วลูกค้าจะอัปโหลดรูปตัวเองเพื่อดูตัวอย่างกับเทมเพลตได้ในหน้าสินค้านี้</div>
       <div id="p-templates-wrap" style="display:${product.hasPreview?'':'none'}">
         <div style="font-size:.8rem;font-family:var(--font-display);font-weight:600;margin-bottom:.4rem">เลือกแบบที่ให้ลูกค้าใช้ <span style="font-weight:400;color:var(--text-3)">(ไม่เลือกเลย = แสดงแบบมาตรฐานทั้ง 6)</span></div>
-        <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem" id="p-tpl-chips">
           ${BUILTIN_TEMPLATES.map(t=>`
             <label class="tpl-check-chip">
               <input type="checkbox" class="p-tpl-check" value="${t.id}" ${selectedTpls.includes(t.id)?'checked':''}>
               <span>${t.emoji} ${t.name}</span>
             </label>`).join('')}
           ${customTpls.map(t=>`
-            <label class="tpl-check-chip tpl-custom">
+            <label class="tpl-check-chip tpl-custom" title="${t.defaultTexts?('ช่องข้อความ: '+DMC.escapeHtml(t.defaultTexts)):''}">
               <input type="checkbox" class="p-tpl-check" value="${t.id}" ${selectedTpls.includes(t.id.toLowerCase())?'checked':''}>
               <span>🖼️ ${DMC.escapeHtml(t.name||'Custom')}</span>
             </label>`).join('')}
         </div>
-        ${customTpls.length===0?'<div style="font-size:.74rem;color:var(--text-3);margin-top:.4rem">💡 อัปโหลดกรอบของร้านเองได้ที่เมนู "เทมเพลต"</div>':''}
+        ${customTpls.length===0?'<div style="font-size:.74rem;color:var(--text-3);margin-top:.4rem">💡 อัปโหลดกรอบของร้านเองได้ที่เมนู "เทมเพลต" หรือกดเพิ่มด้านล่างนี้ได้เลย</div>':''}
+
+        <!-- V26: เพิ่มเทมเพลตใหม่จากหน้าสินค้าได้เลย (เซฟเข้าคลังเดิม + ติ๊กใช้กับสินค้านี้อัตโนมัติ) -->
+        <details style="margin-top:.75rem;background:var(--bg-card);border:1.5px dashed var(--border);border-radius:var(--r-md);padding:.6rem .8rem">
+          <summary style="cursor:pointer;font-size:.82rem;font-family:var(--font-display);font-weight:600;color:var(--accent)">➕ เพิ่มเทมเพลตใหม่จากตรงนี้</summary>
+          <div style="margin-top:.7rem;display:grid;gap:.55rem">
+            <input class="form-input" id="pq-tpl-name" maxlength="30" placeholder="ชื่อเทมเพลต เช่น บัตรพนักงานเขียว, ป้ายร้านแนวนอน" style="font-size:.85rem">
+            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+              <input type="file" id="pq-tpl-file" accept="image/png" style="display:none">
+              <button type="button" class="btn btn-ghost btn-sm" id="pq-tpl-upload" style="border-radius:var(--r-md)">📤 เลือกไฟล์ PNG (กลางโปร่งใส)</button>
+              <span id="pq-tpl-status" style="font-size:.74rem;color:var(--text-3)"></span>
+            </div>
+            <div id="pq-tpl-preview"></div>
+            <input class="form-input" id="pq-tpl-texts" maxlength="120" placeholder="ช่องข้อความอัตโนมัติ (ไม่บังคับ) เช่น ชื่อ-นามสกุล, ตำแหน่ง, โทร" style="font-size:.85rem">
+            <div style="font-size:.71rem;color:var(--text-3);line-height:1.55">💡 คั่นด้วย , — ลูกค้าเลือกเทมเพลตนี้แล้วช่องข้อความจะโผล่ให้กรอกและลากจัดตำแหน่งบนภาพได้ทันที (เหมาะกับนามบัตร/บัตรพนักงาน) · ทุกทรงใช้ได้: แนวตั้ง แนวนอน จัตุรัส ระบบปรับตามไฟล์จริง</div>
+            <button type="button" class="btn btn-primary btn-sm" id="pq-tpl-save" style="justify-self:start">💾 บันทึก & เลือกใช้กับสินค้านี้</button>
+          </div>
+        </details>
       </div>
     </div>
 
@@ -296,6 +313,61 @@ window.openProductModal = async function(productId) {
   // toggle templates section
   document.getElementById('p-preview')?.addEventListener('change', e => {
     document.getElementById('p-templates-wrap').style.display = e.target.checked ? '' : 'none';
+  });
+
+  // ── V26: เพิ่มเทมเพลตใหม่จากหน้าสินค้า (เขียนเข้า collection 'templates' เดิม) ──
+  const pqFile = document.getElementById('pq-tpl-file');
+  document.getElementById('pq-tpl-upload')?.addEventListener('click', () => pqFile?.click());
+  pqFile?.addEventListener('change', async () => {
+    const f = pqFile.files[0];
+    if (!f) return;
+    if (f.type !== 'image/png') { DMC.toast('ต้องเป็นไฟล์ PNG เท่านั้น (เพื่อให้กลางโปร่งใส)', 'error'); pqFile.value=''; return; }
+    const st = document.getElementById('pq-tpl-status');
+    st.textContent = '⏳ กำลังอัปโหลด...';
+    try {
+      const res = await DMC.uploadToImgBB(f);
+      st.textContent = '✅ อัปโหลดแล้ว';
+      st.dataset.url = res.url;
+      document.getElementById('pq-tpl-preview').innerHTML =
+        '<img src="' + res.url + '" alt="preview" style="max-height:110px;border-radius:var(--r-md);border:1px solid var(--border);background:repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/14px 14px">';
+    } catch(e) { st.textContent = '❌ อัปโหลดไม่สำเร็จ'; st.dataset.url = ''; }
+  });
+  document.getElementById('pq-tpl-save')?.addEventListener('click', async () => {
+    const name  = document.getElementById('pq-tpl-name')?.value.trim();
+    const url   = document.getElementById('pq-tpl-status')?.dataset.url || '';
+    const texts = document.getElementById('pq-tpl-texts')?.value.trim() || '';
+    if (!name) { DMC.toast('กรอกชื่อเทมเพลต', 'error'); return; }
+    if (!url)  { DMC.toast('อัปโหลดไฟล์กรอบ PNG ก่อน', 'error'); return; }
+    const btn = document.getElementById('pq-tpl-save');
+    btn.disabled = true;
+    try {
+      const ref = await db.collection('templates').add({
+        name, frameUrl: url, defaultTexts: texts, active: true,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      _customTplCache = null;   // ล้าง cache ให้โมดัลรอบถัดไปเห็นตัวใหม่
+      // ต่อชิป checkbox (ติ๊กแล้ว) เข้าแถวทันที → กดบันทึกสินค้าก็ผูกเทมเพลตนี้เลย
+      const chipWrap = document.getElementById('p-tpl-chips');
+      if (chipWrap) {
+        const label = document.createElement('label');
+        label.className = 'tpl-check-chip tpl-custom';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.className = 'p-tpl-check'; cb.value = ref.id; cb.checked = true;
+        const span = document.createElement('span');
+        span.textContent = '🖼️ ' + name;
+        label.appendChild(cb); label.appendChild(span);
+        chipWrap.appendChild(label);
+      }
+      // เคลียร์ฟอร์มย่อย
+      document.getElementById('pq-tpl-name').value = '';
+      document.getElementById('pq-tpl-texts').value = '';
+      document.getElementById('pq-tpl-status').textContent = '';
+      document.getElementById('pq-tpl-status').dataset.url = '';
+      document.getElementById('pq-tpl-preview').innerHTML = '';
+      DMC.toast('เพิ่มเทมเพลต "' + name + '" แล้ว ✅ (ติ๊กเลือกให้อัตโนมัติ — อย่าลืมกดบันทึกสินค้า)', 'success', 4500);
+    } catch(e) {
+      DMC.toast('บันทึกเทมเพลตไม่สำเร็จ: ' + e.message, 'error');
+    } finally { btn.disabled = false; }
   });
   document.getElementById('p-add-image-btn')?.addEventListener('click', async () => {
     _modalImages.push({url:'', label:''});
