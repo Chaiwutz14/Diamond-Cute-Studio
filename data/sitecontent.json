@@ -1,61 +1,12 @@
 {
-  "generatedAt": "2026-07-04T23:34:36.334Z",
+  "generatedAt": "2026-07-04T23:35:17.088Z",
   "data": {
-    "stats": {
-      "rating": "4.9/5",
-      "orders": "500+",
-      "days": "1-3"
-    },
-    "lastDeliveredAt": {
-      "seconds": 1783015807
-    },
-    "promo": {
-      "active": true,
-      "btnText": "สั่งเลย →",
-      "btnLink": "catalog.html",
-      "tag": "🎁 โปรโมชั่นพิเศษ",
-      "desc": "สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย  เพียงกรอกโค้ด WELCOME15",
-      "title": "ลูกค้าใหม่ ลดทันที 15%"
-    },
-    "updatedAt": {
-      "seconds": 1783017899
-    },
-    "payment": {
-      "promptpayId": "0809987611",
-      "promptpayName": "นาย ชัยวุฒิ บุญชูวงศ์",
-      "qrImageUrl": "",
-      "methods": {
-        "promptpay": {
-          "shown": true,
-          "ready": true
-        },
-        "cod": {
-          "ready": false,
-          "shown": true
-        },
-        "credit": {
-          "ready": false,
-          "shown": true
-        },
-        "truemoney": {
-          "ready": false,
-          "shown": true
-        }
-      }
-    },
-    "announce": {
-      "text": "ลูกค้าใหม่ กรอกคูปอง WELCOME15 ลดทันที 15% ไม่มีขั้นต่ำ",
-      "active": true
-    },
-    "contact": {
-      "line": "https://line.me/R/ti/p/@913huiwn",
-      "hours": "จันทร์–เสาร์ 08:00–20:00 น.",
-      "tiktok": "https://tiktok.com",
-      "phone": "096-1207907",
-      "lineLabel": "@913huiwn",
-      "email": "Peeza1482546@gmail.com",
-      "instagram": "https://instagram.com",
-      "facebook": "https://www.facebook.com/share/19CQvQxW6E/"
+    "hero": {
+      "title2": "กลายเป็นของที่ระลึก",
+      "desc": "บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน\nป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย",
+      "badge": "งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ",
+      "title1": "ทำให้ทุกภาพ",
+      "title3": "ที่สวยงามที่สุด"
     },
     "faq": [
       {
@@ -75,20 +26,69 @@
         "q": "แก้ไขงานได้ไหม?"
       }
     ],
-    "hero": {
-      "title1": "ทำให้ทุกภาพ",
-      "title3": "ที่สวยงามที่สุด",
-      "desc": "บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน\nป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย",
-      "badge": "งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ",
-      "title2": "กลายเป็นของที่ระลึก"
-    },
     "_test": 1782880037380,
     "fees": {
-      "shipCod": 50,
-      "surchargePromptpay": 0,
-      "shipTransfer": 30,
       "freeShipMin": 0,
-      "surchargeCod": 0
+      "surchargeCod": 0,
+      "surchargePromptpay": 0,
+      "shipCod": 50,
+      "shipTransfer": 30
+    },
+    "stats": {
+      "rating": "4.9/5",
+      "days": "1-3",
+      "orders": "500+"
+    },
+    "lastDeliveredAt": {
+      "seconds": 1783015807
+    },
+    "contact": {
+      "lineLabel": "@913huiwn",
+      "email": "Peeza1482546@gmail.com",
+      "hours": "จันทร์–เสาร์ 08:00–20:00 น.",
+      "line": "https://line.me/R/ti/p/@913huiwn",
+      "phone": "096-1207907",
+      "tiktok": "https://tiktok.com",
+      "facebook": "https://www.facebook.com/share/19CQvQxW6E/",
+      "instagram": "https://instagram.com"
+    },
+    "announce": {
+      "text": "ลูกค้าใหม่ กรอกคูปอง WELCOME15 ลดทันที 15% ไม่มีขั้นต่ำ",
+      "active": true
+    },
+    "updatedAt": {
+      "seconds": 1783017899
+    },
+    "promo": {
+      "desc": "สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย  เพียงกรอกโค้ด WELCOME15",
+      "tag": "🎁 โปรโมชั่นพิเศษ",
+      "btnLink": "catalog.html",
+      "btnText": "สั่งเลย →",
+      "active": true,
+      "title": "ลูกค้าใหม่ ลดทันที 15%"
+    },
+    "payment": {
+      "methods": {
+        "truemoney": {
+          "shown": true,
+          "ready": false
+        },
+        "credit": {
+          "ready": false,
+          "shown": true
+        },
+        "cod": {
+          "shown": true,
+          "ready": false
+        },
+        "promptpay": {
+          "ready": true,
+          "shown": true
+        }
+      },
+      "qrImageUrl": "",
+      "promptpayName": "นาย ชัยวุฒิ บุญชูวงศ์",
+      "promptpayId": "0809987611"
     }
   }
 }
