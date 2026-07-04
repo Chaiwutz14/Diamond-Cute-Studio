@@ -521,6 +521,7 @@ function addToCart(goToCart) {
     price: product.price || 0,
     qty,
     unit: product.unit || 'ชิ้น',
+    minQty: Math.max(1, product.minQty || 1),   // V28: ให้ตะกร้าเคารพขั้นต่ำตอนกด +/-
     options,
     customDetails,                                                                          // V4.6: เก็บใน cart
     emoji: product.emoji || '📦',

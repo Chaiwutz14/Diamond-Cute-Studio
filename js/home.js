@@ -163,6 +163,7 @@ function buildProductCard(p) {
   if (p.isNew)  badges.push('<span class="badge badge-new">✨ ใหม่</span>');
   if (p.isHot)  badges.push('<span class="badge badge-hot">🔥 ขายดี</span>');
   if (p.isSale) badges.push('<span class="badge badge-sale">💰 ลด</span>');
+  if (p.hasPreview) badges.push('<span class="badge badge-design">🎨 ออกแบบได้</span>');   // V28: ลูกค้าเห็นทันทีว่าสินค้าไหนมีเทมเพลต
 
   const oldPrice = p.oldPrice
     ? `<span class="product-price-old">${DMC.formatPrice(p.oldPrice)}</span>`

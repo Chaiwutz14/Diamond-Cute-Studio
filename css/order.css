@@ -387,3 +387,32 @@
 .track-detail-row.total{border-top:1px solid var(--border);padding-top:.35rem;font-weight:800}
 .track-detail-row.addr{flex-direction:column;gap:.15rem;align-items:flex-start}
 .track-detail-row.addr span:last-child{color:var(--text-2)}
+
+/* ══ V28: ปุ่ม +/- จำนวนในตะกร้า ══ */
+.cart-qty-ctrl { display: flex; align-items: center; gap: .45rem; margin-top: .45rem; }
+.cart-qty-btn {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  border: 1.5px solid var(--border); background: var(--bg-mid);
+  color: var(--text-1); font-size: 1rem; font-weight: 700; line-height: 1;
+  cursor: pointer; transition: all .15s;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.cart-qty-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--glass); }
+.cart-qty-btn:disabled { opacity: .38; cursor: not-allowed; }
+.cart-qty-val { min-width: 26px; text-align: center; font-family: var(--font-display); font-weight: 700; font-size: .92rem; }
+.cart-qty-unit { font-size: .68rem; color: var(--text-3); }
+
+/* ══ V28: รูปแนบ/สลิปในรายละเอียดออเดอร์ ══ */
+.track-files-grid { display: flex; flex-wrap: wrap; gap: .5rem; padding: .35rem 0 .55rem; }
+.track-file-thumb {
+  width: 64px; height: 64px; object-fit: cover;
+  border-radius: var(--r-md); border: 1.5px solid var(--border);
+  cursor: zoom-in; background: var(--bg-mid);
+  transition: transform .15s, border-color .15s;
+}
+.track-file-thumb:hover { transform: scale(1.05); border-color: var(--accent); }
+.track-slip-pending {
+  font-size: .76rem; color: var(--text-3); line-height: 1.6;
+  background: var(--bg-mid); border: 1px dashed var(--border);
+  border-radius: var(--r-md); padding: .6rem .8rem; margin: .3rem 0 .5rem;
+}
