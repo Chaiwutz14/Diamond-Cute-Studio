@@ -702,20 +702,59 @@
   background: conic-gradient(#E11D48, #F59E0B, #10B981, #0EA5E9, #7C3AED, #E11D48);
   border: 2px solid rgba(0,0,0,.12);
 }
-.pv-swatch-custom input[type=color] {
-  position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: none; padding: 0;
+.pv-swatch-custom.open { box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--accent); }
+
+/* ── V30: แท็บแผงปรับแต่ง (มินิมอล) ── */
+.pv-tabs { display: flex; gap: .35rem; margin: .55rem 0 .5rem; }
+.pv-tab {
+  flex: 1; border: 1.5px solid var(--border); background: var(--bg-mid);
+  color: var(--text-2); font-family: var(--font-display); font-weight: 600; font-size: .74rem;
+  padding: .42rem .3rem; border-radius: var(--r-md); cursor: pointer; transition: all .15s;
+}
+.pv-tab.active { background: var(--glass); border-color: var(--accent); color: var(--accent-dark, var(--accent)); }
+.pv-pane { padding-top: .1rem; }
+
+/* โหมดสี + เป้าไล่เฉด */
+.pv-mode-row, .pv-ab { display: flex; gap: .3rem; }
+.pv-mode-row { margin-bottom: .55rem; }
+.pv-mode, .pv-ab-btn {
+  border: 1.5px solid var(--border); background: var(--bg-card);
+  color: var(--text-2); font-family: var(--font-display); font-size: .7rem; font-weight: 600;
+  padding: .3rem .6rem; border-radius: 99px; cursor: pointer; transition: all .15s;
+}
+.pv-mode.active, .pv-ab-btn.active { border-color: var(--accent); color: var(--accent); background: var(--glass); }
+.pv-grad-row { display: flex; justify-content: space-between; gap: .5rem; margin-bottom: .55rem; flex-wrap: wrap; }
+
+/* HSL picker ของระบบเอง — ไร้ dialog ระบบ */
+.pv-hsl { display: grid; gap: .55rem; padding: .6rem .15rem .25rem; }
+.pv-hsl input[type=range] { -webkit-appearance: none; appearance: none; height: 14px; border-radius: 99px; outline: none; width: 100%; }
+.pv-hue { background: linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); }
+.pv-light { background: linear-gradient(90deg, #000, hsl(var(--h,160), 90%, 50%), #fff); }
+.pv-hsl input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; border: 2.5px solid var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer;
+}
+.pv-hsl input[type=range]::-moz-range-thumb {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; border: 2.5px solid var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer;
 }
 
-/* ── V29: ตัวเลือกฟอนต์ — แต่ละแบบแสดงด้วยฟอนต์ของตัวเอง ── */
-.pv-font-btn {
-  display: flex; align-items: center; justify-content: space-between; gap: .5rem;
-  width: 100%; background: var(--bg-mid); cursor: pointer;
-  border: 1.5px solid var(--border); border-radius: var(--r-md);
-  padding: .55rem .8rem; color: var(--text-1); text-align: left;
+/* เอฟเฟกต์ */
+.pv-preset-row { display: flex; gap: .35rem; overflow-x: auto; padding-bottom: .45rem; scrollbar-width: none; }
+.pv-preset-row::-webkit-scrollbar { display: none; }
+.pv-preset {
+  flex-shrink: 0; border: 1.5px dashed var(--border); background: var(--bg-card);
+  color: var(--text-2); font-family: var(--font-display); font-size: .7rem; font-weight: 600;
+  padding: .32rem .65rem; border-radius: 99px; cursor: pointer;
 }
-.pv-font-btn:hover { border-color: var(--accent); }
-.pv-font-btn-label { font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pv-caret { color: var(--text-3); font-size: .75rem; flex-shrink: 0; }
+.pv-preset.active { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--glass); }
+.pv-fx-row { display: flex; align-items: center; gap: .5rem; margin-top: .45rem; }
+.pv-fx-row input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0; }
+.pv-fx-label { flex-shrink: 0; font-size: .68rem; color: var(--text-3); font-family: var(--font-display); width: 3.2rem; }
+.pv-strokecolors { display: flex; gap: .28rem; flex-shrink: 0; }
+.pv-swatch-sm { width: 20px !important; height: 20px !important; }
+
+.pv-font-inline { margin-top: 0; }
 .pv-font-menu {
   margin-top: .45rem; max-height: 236px; overflow-y: auto;
   border: 1.5px solid var(--border); border-radius: var(--r-md);
