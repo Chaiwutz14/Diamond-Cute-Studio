@@ -163,7 +163,7 @@ function buildProductCard(p) {
   if (p.isNew)  badges.push('<span class="badge badge-new">✨ ใหม่</span>');
   if (p.isHot)  badges.push('<span class="badge badge-hot">🔥 ขายดี</span>');
   if (p.isSale) badges.push('<span class="badge badge-sale">💰 ลด</span>');
-  if (p.hasPreview) badges.push('<span class="badge badge-design">🎨 ออกแบบได้</span>');   // V28: ลูกค้าเห็นทันทีว่าสินค้าไหนมีเทมเพลต
+  // V29: ป้าย "ออกแบบได้" ย้ายเป็นแถบทึบชิดขอบล่างรูป (design-strip) — อ่านออกชัดบนภาพทุกโทนสี
 
   const oldPrice = p.oldPrice
     ? `<span class="product-price-old">${DMC.formatPrice(p.oldPrice)}</span>`
@@ -178,6 +178,7 @@ function buildProductCard(p) {
         }
         <div class="product-img-overlay"></div>
         ${badges.length ? `<div class="product-badges">${badges.join('')}</div>` : ''}
+        ${p.hasPreview ? '<div class="design-strip"><span class="design-strip-ico">🎨</span> ออกแบบเองได้ · ฟรี</div>' : ''}
         <button class="product-wish" data-id="${p.id}" title="บันทึก" aria-label="Wishlist">♡</button>
       </div>
       <div class="product-info">
