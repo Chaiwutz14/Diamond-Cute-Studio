@@ -673,11 +673,71 @@
 }
 .pv-mini-btn.active { background: var(--glass); border-color: var(--accent); color: var(--accent); }
 .pv-mini-btn.pv-del:hover { border-color: var(--rose); color: var(--rose); }
-.pv-font-sel {
-  flex-shrink: 0; max-width: 92px; font-size: .72rem; padding: .3rem .35rem;
-  border: 1.5px solid var(--border); border-radius: var(--r-sm, 8px);
-  background: var(--bg-card); color: var(--text-1); font-family: var(--font-display);
+.pv-row-ico { flex-shrink: 0; font-size: .85rem; opacity: .75; }
+
+/* ── V29: จานสี — แตะปุ๊บเห็นผลทันที ── */
+.pv-swatch-row { align-items: center; }
+.pv-swatches {
+  display: flex; gap: .42rem; flex: 1; min-width: 0;
+  overflow-x: auto; padding: .15rem 2px .3rem;
+  scrollbar-width: none;
 }
+.pv-swatches::-webkit-scrollbar { display: none; }
+.pv-swatch {
+  width: 27px; height: 27px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid rgba(0,0,0,.12); cursor: pointer; padding: 0;
+  transition: transform .12s, box-shadow .12s;
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.55);
+}
+.pv-swatch:active { transform: scale(.9); }
+.pv-swatch.active {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--accent);
+  border-color: transparent;
+}
+.pv-swatch-custom {
+  position: relative; width: 27px; height: 27px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: .8rem; cursor: pointer;
+  background: conic-gradient(#E11D48, #F59E0B, #10B981, #0EA5E9, #7C3AED, #E11D48);
+  border: 2px solid rgba(0,0,0,.12);
+}
+.pv-swatch-custom input[type=color] {
+  position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: none; padding: 0;
+}
+
+/* ── V29: ตัวเลือกฟอนต์ — แต่ละแบบแสดงด้วยฟอนต์ของตัวเอง ── */
+.pv-font-btn {
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+  width: 100%; background: var(--bg-mid); cursor: pointer;
+  border: 1.5px solid var(--border); border-radius: var(--r-md);
+  padding: .55rem .8rem; color: var(--text-1); text-align: left;
+}
+.pv-font-btn:hover { border-color: var(--accent); }
+.pv-font-btn-label { font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pv-caret { color: var(--text-3); font-size: .75rem; flex-shrink: 0; }
+.pv-font-menu {
+  margin-top: .45rem; max-height: 236px; overflow-y: auto;
+  border: 1.5px solid var(--border); border-radius: var(--r-md);
+  background: var(--bg-card); box-shadow: 0 8px 22px rgba(0,0,0,.12);
+}
+.pv-font-item {
+  display: flex; align-items: center; gap: .65rem; width: 100%;
+  background: none; border: none; cursor: pointer; text-align: left;
+  padding: .55rem .8rem; border-bottom: 1px solid var(--border);
+  color: var(--text-1); transition: background .12s;
+}
+.pv-font-item:last-child { border-bottom: none; }
+.pv-font-item:hover:not(:disabled) { background: var(--glass); }
+.pv-font-item:disabled { opacity: .45; cursor: wait; }
+.pv-font-item.active { background: var(--glass); box-shadow: inset 3px 0 0 var(--accent); }
+.pv-font-sample {
+  font-size: 1.06rem; line-height: 1.2; flex-shrink: 0; min-width: 74px;
+  color: var(--text-1);
+}
+.pv-font-name { flex: 1; font-size: .72rem; color: var(--text-3); font-family: var(--font-display); }
+.pv-font-state { flex-shrink: 0; font-size: .72rem; }
+.pv-font-item.active .pv-font-state::after { content: '✓'; color: var(--accent); font-weight: 800; }
 
 /* ══════════════════════════════════════════════
    V14 — Mobile Responsive Polish

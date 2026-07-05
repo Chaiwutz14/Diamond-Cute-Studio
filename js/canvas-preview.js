@@ -589,8 +589,12 @@ window.initPreviewTool = async function(options = {}) {
       ? options.templates.map(t => String(t).trim().toLowerCase())
       : null;
 
-    const fontOptions = (window.__PV_FONTS || []).map(f =>
-      '<option value="' + f.v + '" disabled data-label="' + f.label + '" style="font-family:\'' + f.v + '\'">⏳ ' + f.label + '</option>').join('');
+    const fontMenuItems = (window.__PV_FONTS || []).map(f =>
+      '<button type="button" class="pv-font-item" data-font="' + f.v + '" data-label="' + f.label + '" role="option" disabled>' +
+        '<span class="pv-font-sample" style="font-family:\'' + f.v + '\'">สวัสดี Aa</span>' +
+        '<span class="pv-font-name">' + f.label + '</span>' +
+        '<span class="pv-font-state">⏳</span>' +
+      '</button>').join('');
 
     body.innerHTML = [
       '<div class="preview-tool-inner">',
@@ -616,13 +620,23 @@ window.initPreviewTool = async function(options = {}) {
             '<input type="text" class="form-input pv-text-input" id="pv-text-input" maxlength="60" placeholder="พิมพ์ข้อความ...">',
           '</div>',
           '<div class="pv-layer-row">',
+            '<span class="pv-row-ico" title="ขนาด">🔠</span>',
             '<input type="range" id="pv-size" min="10" max="72" step="1" title="ขนาด" aria-label="ขนาด">',
-            '<input type="color" id="pv-color" value="#222222" title="สี" aria-label="สีข้อความ">',
             '<button type="button" class="pv-mini-btn" id="pv-bold" title="ตัวหนา"><b>B</b></button>',
             '<button type="button" class="pv-mini-btn pv-del" id="pv-del" title="ลบชิ้นนี้">🗑️</button>',
           '</div>',
-          '<div class="pv-layer-row" id="pv-font-row">',
-            '<select id="pv-font" class="pv-font-sel" style="flex:1;max-width:none" aria-label="ฟอนต์">', fontOptions, '</select>',
+          // V29: จานสีแบบแตะปุ๊บเห็นผลบนภาพทันที (แทน dialog สีของระบบที่ใช้ยาก)
+          '<div class="pv-layer-row pv-swatch-row" id="pv-color-row">',
+            '<div class="pv-swatches" id="pv-swatches"></div>',
+            '<label class="pv-swatch pv-swatch-custom" title="เลือกสีเอง">🎨<input type="color" id="pv-color" value="#222222" aria-label="สีกำหนดเอง"></label>',
+          '</div>',
+          // V29: ตัวเลือกฟอนต์ใหม่ — แต่ละแบบแสดงด้วยฟอนต์ของตัวเอง เห็นหน้าตาก่อนเลือก
+          '<div class="pv-layer-row" id="pv-font-row" style="display:block">',
+            '<button type="button" class="pv-font-btn" id="pv-font-btn" aria-haspopup="listbox">',
+              '<span class="pv-font-btn-label" id="pv-font-btn-label" style="font-family:\'Kanit\'">Kanit — ทันสมัย</span>',
+              '<span class="pv-caret" id="pv-font-caret">▾</span>',
+            '</button>',
+            '<div class="pv-font-menu" id="pv-font-menu" style="display:none" role="listbox">', fontMenuItems, '</div>',
           '</div>',
         '</div>',
 
@@ -652,14 +666,43 @@ window.initPreviewTool = async function(options = {}) {
     const zoomIn    = document.getElementById('pv-zoom');
     const layerBar  = document.getElementById('pv-layer-bar');
     const textRow   = document.getElementById('pv-text-row');
-    const fontRow   = document.getElementById('pv-font-row');
     const textIn    = document.getElementById('pv-text-input');
     const sizeIn    = document.getElementById('pv-size');
     const colorIn   = document.getElementById('pv-color');
+    const colorRow  = document.getElementById('pv-color-row');
+    const swatchBox = document.getElementById('pv-swatches');
     const boldBtn   = document.getElementById('pv-bold');
-    const fontSel   = document.getElementById('pv-font');
+    const fontRow   = document.getElementById('pv-font-row');
+    const fontBtn   = document.getElementById('pv-font-btn');
+    const fontLbl   = document.getElementById('pv-font-btn-label');
+    const fontMenu  = document.getElementById('pv-font-menu');
     const delBtn    = document.getElementById('pv-del');
     const capRow    = document.getElementById('pv-caption-row');
+
+    // ── V29: จานสีสำเร็จ 14 สี — แตะแล้วเห็นผลบนภาพทันที ──
+    const SWATCHES = ['#111111','#FFFFFF','#6B7280','#E11D48','#F97316','#F59E0B','#FFD84D','#10B981','#0B6B54','#0EA5E9','#2563EB','#7C3AED','#EC4899','#92400E'];
+    let currentColor = '#222222';
+    function markActiveSwatch(color) {
+      currentColor = color;
+      swatchBox?.querySelectorAll('.pv-swatch').forEach(el => {
+        el.classList.toggle('active', (el.dataset.color || '').toLowerCase() === String(color).toLowerCase());
+      });
+      const custom = document.querySelector('.pv-swatch-custom');
+      if (custom) custom.style.setProperty('--cur', color);
+    }
+    if (swatchBox) {
+      SWATCHES.forEach(c => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pv-swatch';
+        b.dataset.color = c;
+        b.style.background = c;
+        b.title = c;
+        b.setAttribute('aria-label', 'สี ' + c);
+        b.addEventListener('click', () => { api.updateSelected({ color: c }); markActiveSwatch(c); });
+        swatchBox.appendChild(b);
+      });
+    }
 
     function refreshActionButtons() {
       const has = api.hasContent();
@@ -683,32 +726,73 @@ window.initPreviewTool = async function(options = {}) {
     }
     function ensureFont(fam, cb) { loadFontFamily(fam).then(cb).catch(cb); }
 
-    // โหลดฟอนต์ทั้งหมดทันทีที่เปิด Designer — option ไหนพร้อมแล้วค่อยกดได้ (User เห็นสถานะชัด)
+    // โหลดฟอนต์ทั้งหมดทันทีที่เปิด Designer — แถวไหนพร้อมแล้วค่อยกดได้ (User เห็นสถานะ ⏳→✓ ชัด)
     (window.__PV_FONTS || []).forEach(f => {
       loadFontFamily(f.v).then(() => {
-        const opt = fontSel?.querySelector('option[value="' + f.v + '"]');
-        if (opt) { opt.disabled = false; opt.textContent = opt.dataset.label; }
+        const it = fontMenu?.querySelector('.pv-font-item[data-font="' + f.v + '"]');
+        if (it) {
+          it.disabled = false;
+          const st = it.querySelector('.pv-font-state');
+          if (st) st.textContent = '';
+          const sample = it.querySelector('.pv-font-sample');
+          if (sample) sample.style.fontFamily = "'" + f.v + "', sans-serif";   // ตอกย้ำหลังไฟล์ฟอนต์มาแล้ว
+        }
         // ฟอนต์ที่เลเยอร์ใช้อยู่เพิ่งโหลดเสร็จ → วาดใหม่ให้เห็นผลทันที
         try { api.render(); } catch (e) {}
       });
     });
 
+    // ── V29: เมนูฟอนต์ (เปิด/ปิด + เลือก) ──
+    fontBtn?.addEventListener('click', () => {
+      if (!fontMenu) return;
+      const opening = fontMenu.style.display === 'none';
+      fontMenu.style.display = opening ? '' : 'none';
+      const caret = document.getElementById('pv-font-caret');
+      if (caret) caret.textContent = opening ? '▴' : '▾';
+    });
+    fontMenu?.querySelectorAll('.pv-font-item').forEach(it => {
+      it.addEventListener('click', () => {
+        const fam = it.dataset.font;
+        api.updateSelected({ font: fam });
+        setFontButtonLabel(fam);
+        closeFontMenu();
+        ensureFont(fam, () => { try { api.render(); } catch (err) {} });
+      });
+    });
+
+    function setFontButtonLabel(fam) {
+      const f = (window.__PV_FONTS || []).find(x => x.v === fam);
+      if (fontLbl) {
+        fontLbl.textContent = f ? f.label : fam;
+        fontLbl.style.fontFamily = "'" + fam + "', sans-serif";
+      }
+      fontMenu?.querySelectorAll('.pv-font-item').forEach(it => {
+        it.classList.toggle('active', it.dataset.font === fam);
+      });
+    }
+    function closeFontMenu() {
+      if (fontMenu) fontMenu.style.display = 'none';
+      const caret = document.getElementById('pv-font-caret');
+      if (caret) caret.textContent = '▾';
+    }
     function syncToolbar(layer) {
-      if (!layer) { layerBar.style.display = 'none'; return; }
+      if (!layer) { layerBar.style.display = 'none'; closeFontMenu(); return; }
       layerBar.style.display = '';
       const isText = layer.type === 'text';
-      textRow.style.display = isText ? '' : 'none';
-      fontRow.style.display = isText ? '' : 'none';
-      colorIn.style.display = isText ? '' : 'none';
-      boldBtn.style.display = isText ? '' : 'none';
+      textRow.style.display  = isText ? '' : 'none';
+      fontRow.style.display  = isText ? 'block' : 'none';
+      colorRow.style.display = isText ? '' : 'none';
+      boldBtn.style.display  = isText ? '' : 'none';
       if (isText) {
         textIn.value = layer.text;
         sizeIn.min = 10; sizeIn.max = 72; sizeIn.value = layer.size;
         colorIn.value = layer.color;
+        markActiveSwatch(layer.color);
         boldBtn.classList.toggle('active', !!layer.bold);
-        fontSel.value = layer.font || 'Kanit';
+        setFontButtonLabel(layer.font || 'Kanit');
       } else {
         sizeIn.min = 24; sizeIn.max = 240; sizeIn.value = Math.round(layer.w);
+        closeFontMenu();
       }
     }
 
@@ -822,12 +906,8 @@ window.initPreviewTool = async function(options = {}) {
     });
 
     textIn?.addEventListener('input',  e => api.updateSelected({ text: e.target.value || ' ' }));
-    colorIn?.addEventListener('input', e => api.updateSelected({ color: e.target.value }));
-    fontSel?.addEventListener('change', e => {
-      const fam = e.target.value;
-      api.updateSelected({ font: fam });                     // ใช้ทันที (ฟอนต์ที่เลือกได้ = โหลดแล้ว)
-      ensureFont(fam, () => { try { api.render(); } catch (err) {} });   // กันเคสปลดล็อกจาก timeout
-    });
+    colorIn?.addEventListener('input', e => { api.updateSelected({ color: e.target.value }); markActiveSwatch(e.target.value); });
+    // (V29: การเลือกฟอนต์ย้ายไปที่เมนู .pv-font-item ด้านบน)
     sizeIn?.addEventListener('input',  e => {
       const l = api.getSelected(); if (!l) return;
       if (l.type === 'text') api.updateSelected({ size: parseInt(e.target.value, 10) || 16 });
