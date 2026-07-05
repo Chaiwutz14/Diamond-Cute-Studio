@@ -132,6 +132,15 @@ window.CanvasPreview = (function(){
         bold : opts.bold !== undefined ? opts.bold : true,
         font : opts.font  || 'Kanit',
         auto : !!opts.auto,           // มาจาก defaultTexts ของเทมเพลต
+        // V30: เอฟเฟกต์อิสระแบบ Canva (ทุกค่า export เป็นภาพนิ่งได้จริง)
+        colorMode  : opts.colorMode  || 'solid',      // solid | gradient | rainbow
+        color2     : opts.color2     || '#F59E0B',    // สีปลายของไล่เฉด
+        gradientDir: opts.gradientDir|| 'h',          // h | v
+        strokeW    : opts.strokeW    || 0,            // ขอบตัวอักษร 0 = ไม่มี
+        strokeColor: opts.strokeColor|| '#FFFFFF',
+        shadow     : opts.shadow     || 0,            // เงา 0 = ไม่มี (ระดับ blur)
+        shadowColor: opts.shadowColor|| 'rgba(0,0,0,.45)',
+        curve      : opts.curve      || 0,            // -100..100 (ลบ=โค้งคว่ำ บวก=โค้งหงาย)
       };
       l.y = clamp(l.y, 14, logicalH - 10);
       layers.push(l);
@@ -302,9 +311,84 @@ window.CanvasPreview = (function(){
         return { x: l.x - l.w / 2, y: l.y - h / 2, w: l.w, h };
       }
       ctx.font = layerFont(l);
-      const w = Math.max(24, ctx.measureText(l.text).width);
-      const h = l.size * 1.3;
+      const w = Math.max(24, ctx.measureText(l.text).width) + (l.strokeW || 0) * 2;
+      let h = l.size * 1.3 + (l.strokeW || 0) * 2;
+      if (l.curve) {                              // เผื่อความสูงส่วนโค้ง (sagitta โดยประมาณ)
+        const R = Math.max(w * 0.65, 5200 / Math.abs(l.curve));
+        const sag = R - Math.sqrt(Math.max(0, R * R - (w / 2) * (w / 2)));
+        h += Math.min(sag, l.size * 2.2);
+      }
       return { x: l.x - w / 2, y: l.y - h / 2, w, h };
+    }
+
+    // V30: fillStyle ตามโหมดสี (สีเดียว / ไล่เฉด 2 สี / รุ้ง)
+    const RAINBOW = ['#FF3B30', '#FF9500', '#FFCC00', '#34C759', '#0A84FF', '#AF52DE'];
+    function buildTextFill(l, b) {
+      if (l.colorMode === 'gradient' || l.colorMode === 'rainbow') {
+        const g = (l.gradientDir === 'v' && l.colorMode === 'gradient')
+          ? ctx.createLinearGradient(0, b.y, 0, b.y + b.h)
+          : ctx.createLinearGradient(b.x, 0, b.x + b.w, 0);
+        if (l.colorMode === 'rainbow') {
+          RAINBOW.forEach((c, i) => g.addColorStop(i / (RAINBOW.length - 1), c));
+        } else {
+          g.addColorStop(0, l.color);
+          g.addColorStop(1, l.color2 || '#F59E0B');
+        }
+        return g;
+      }
+      return l.color;
+    }
+
+    // V30: ข้อความโค้ง — วาดทีละตัวอักษรตามส่วนโค้งวงกลม (แบบ Canva)
+    function drawCurvedText(l, fill) {
+      const text = l.text || '';
+      if (!text) return;
+      ctx.font = layerFont(l);
+      const widths = [...text].map(ch => ctx.measureText(ch).width);
+      const total = widths.reduce((a, b) => a + b, 0);
+      const R = Math.max(total * 0.65, 5200 / Math.abs(l.curve));   // โค้งมาก = รัศมีสั้น
+      const up = l.curve > 0;                                        // บวก = โค้งหงาย (ยิ้ม)
+      const cy = up ? l.y + R : l.y - R;
+      let ang = -(total / 2) / R;                                    // เริ่มจากซ้ายของ arc
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      [...text].forEach((ch, i) => {
+        const half = widths[i] / 2;
+        const a = ang + half / R;
+        ctx.save();
+        const px = l.x + Math.sin(a) * R;
+        const py = cy + (up ? -Math.cos(a) * R : Math.cos(a) * R);
+        ctx.translate(px, py);
+        ctx.rotate(up ? a : -a);
+        if (l.strokeW > 0) {
+          ctx.lineWidth = l.strokeW; ctx.lineJoin = 'round';
+          ctx.strokeStyle = l.strokeColor || '#FFFFFF';
+          ctx.strokeText(ch, 0, 0);
+        }
+        ctx.fillStyle = fill;
+        ctx.fillText(ch, 0, 0);
+        ctx.restore();
+        ang = a + half / R;
+      });
+    }
+
+    function drawTextLayer(l) {
+      ctx.font = layerFont(l);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const b = layerBox(l);
+      const fill = buildTextFill(l, b);
+      if (l.shadow > 0) {
+        ctx.shadowColor = l.shadowColor || 'rgba(0,0,0,.45)';
+        ctx.shadowBlur = l.shadow;
+        ctx.shadowOffsetY = Math.round(l.shadow * 0.22);
+      }
+      if (l.curve) { drawCurvedText(l, fill); return; }
+      if (l.strokeW > 0) {
+        ctx.lineWidth = l.strokeW; ctx.lineJoin = 'round';
+        ctx.strokeStyle = l.strokeColor || '#FFFFFF';
+        ctx.strokeText(l.text, l.x, l.y);
+      }
+      ctx.fillStyle = fill;
+      ctx.fillText(l.text, l.x, l.y);
     }
 
     function drawLayers() {
@@ -314,10 +398,7 @@ window.CanvasPreview = (function(){
           const b = layerBox(l);
           ctx.drawImage(l.img, b.x, b.y, b.w, b.h);
         } else {
-          ctx.font = layerFont(l);
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillStyle = l.color;
-          ctx.fillText(l.text, l.x, l.y);
+          drawTextLayer(l);
         }
         ctx.restore();
         if (i === selectedIdx) {
@@ -495,16 +576,22 @@ window.CanvasPreview = (function(){
 // ฟอนต์สำหรับข้อความบนภาพ — Google Fonts สัญญาอนุญาต SIL OFL (ฟรี ใช้เชิงพาณิชย์ได้)
 // ทุกตัวรองรับไทย+อังกฤษ
 window.__PV_FONTS = [
-  { v:'Kanit',    label:'Kanit — ทันสมัย'   },
-  { v:'Sarabun',  label:'Sarabun — ทางการ'  },
-  { v:'Prompt',   label:'Prompt — สะอาดตา'  },
-  { v:'Mali',     label:'Mali — ลายมือน่ารัก' },
-  { v:'Mitr',     label:'Mitr — กลมมน'      },
-  { v:'Itim',     label:'Itim — เขียนเล่น'   },
-  { v:'Sriracha', label:'Sriracha — ลายมือเอียง' },
-  { v:'Charm',    label:'Charm — หวานพลิ้ว'  },
-  { v:'Pattaya',  label:'Pattaya — ป้ายร้าน' },
-  { v:'Chonburi', label:'Chonburi — หัวกลมหนา' },
+  { v:'Kanit',        label:'Kanit — ทันสมัย'   },
+  { v:'Sarabun',      label:'Sarabun — ทางการ'  },
+  { v:'Prompt',       label:'Prompt — สะอาดตา'  },
+  { v:'Mali',         label:'Mali — ลายมือน่ารัก' },
+  { v:'Mitr',         label:'Mitr — กลมมน'      },
+  { v:'Itim',         label:'Itim — เขียนเล่น'   },
+  { v:'Sriracha',     label:'Sriracha — ลายมือเอียง' },
+  { v:'Charm',        label:'Charm — หวานพลิ้ว'  },
+  { v:'Pattaya',      label:'Pattaya — ป้ายร้าน' },
+  { v:'Chonburi',     label:'Chonburi — หัวกลมหนา' },
+  { v:'Pridi',        label:'Pridi — คลาสสิก'    },
+  { v:'Taviraj',      label:'Taviraj — หนังสือพิมพ์' },
+  { v:'Athiti',       label:'Athiti — บางเฉียบ'  },
+  { v:'Bai Jamjuree', label:'Bai Jamjuree — เหลี่ยมสมัยใหม่' },
+  { v:'Krub',         label:'Krub — โมโนสไตล์'   },
+  { v:'Chakra Petch', label:'Chakra Petch — เกม/เทค' },
 ];
 
 window.initPreviewTool = async function(options = {}) {
@@ -625,18 +712,58 @@ window.initPreviewTool = async function(options = {}) {
             '<button type="button" class="pv-mini-btn" id="pv-bold" title="ตัวหนา"><b>B</b></button>',
             '<button type="button" class="pv-mini-btn pv-del" id="pv-del" title="ลบชิ้นนี้">🗑️</button>',
           '</div>',
-          // V29: จานสีแบบแตะปุ๊บเห็นผลบนภาพทันที (แทน dialog สีของระบบที่ใช้ยาก)
-          '<div class="pv-layer-row pv-swatch-row" id="pv-color-row">',
-            '<div class="pv-swatches" id="pv-swatches"></div>',
-            '<label class="pv-swatch pv-swatch-custom" title="เลือกสีเอง">🎨<input type="color" id="pv-color" value="#222222" aria-label="สีกำหนดเอง"></label>',
+          // V30: แผงปรับแต่งแบบแท็บ — มินิมอล ครบเครื่องแบบ Canva
+          '<div class="pv-tabs" id="pv-tabs">',
+            '<button type="button" class="pv-tab active" data-tab="color">🎨 สี</button>',
+            '<button type="button" class="pv-tab" data-tab="fx">✨ เอฟเฟกต์</button>',
+            '<button type="button" class="pv-tab" data-tab="font">🔤 ฟอนต์</button>',
           '</div>',
-          // V29: ตัวเลือกฟอนต์ใหม่ — แต่ละแบบแสดงด้วยฟอนต์ของตัวเอง เห็นหน้าตาก่อนเลือก
-          '<div class="pv-layer-row" id="pv-font-row" style="display:block">',
-            '<button type="button" class="pv-font-btn" id="pv-font-btn" aria-haspopup="listbox">',
-              '<span class="pv-font-btn-label" id="pv-font-btn-label" style="font-family:\'Kanit\'">Kanit — ทันสมัย</span>',
-              '<span class="pv-caret" id="pv-font-caret">▾</span>',
-            '</button>',
-            '<div class="pv-font-menu" id="pv-font-menu" style="display:none" role="listbox">', fontMenuItems, '</div>',
+
+          // ── แท็บสี: โหมดสีเดียว/ไล่เฉด/รุ้ง + จานสี + ปรับสีเอง (ไม่มี dialog ระบบอีกต่อไป) ──
+          '<div class="pv-pane" id="pv-pane-color">',
+            '<div class="pv-mode-row" id="pv-color-modes">',
+              '<button type="button" class="pv-mode active" data-mode="solid">สีเดียว</button>',
+              '<button type="button" class="pv-mode" data-mode="gradient">ไล่เฉด</button>',
+              '<button type="button" class="pv-mode" data-mode="rainbow">🌈 รุ้ง</button>',
+            '</div>',
+            '<div class="pv-grad-row" id="pv-grad-row" style="display:none">',
+              '<div class="pv-ab" id="pv-grad-target">',
+                '<button type="button" class="pv-ab-btn active" data-t="color">สีต้น</button>',
+                '<button type="button" class="pv-ab-btn" data-t="color2">สีปลาย</button>',
+              '</div>',
+              '<div class="pv-ab" id="pv-grad-dir">',
+                '<button type="button" class="pv-ab-btn active" data-d="h">↔︎</button>',
+                '<button type="button" class="pv-ab-btn" data-d="v">↕︎</button>',
+              '</div>',
+            '</div>',
+            '<div class="pv-swatch-row" id="pv-color-row">',
+              '<div class="pv-swatches" id="pv-swatches"></div>',
+              '<button type="button" class="pv-swatch pv-swatch-custom" id="pv-custom-toggle" title="ปรับสีเอง">🎨</button>',
+            '</div>',
+            '<div class="pv-hsl" id="pv-hsl" style="display:none">',
+              '<input type="range" id="pv-hue" class="pv-hue" min="0" max="360" step="1" value="160" aria-label="เฉดสี">',
+              '<input type="range" id="pv-light" class="pv-light" min="8" max="95" step="1" value="45" aria-label="ความสว่าง">',
+            '</div>',
+          '</div>',
+
+          // ── แท็บเอฟเฟกต์: preset สำเร็จ + สไลเดอร์ละเอียด (ขอบ/เงา/โค้ง) ──
+          '<div class="pv-pane" id="pv-pane-fx" style="display:none">',
+            '<div class="pv-preset-row" id="pv-presets">',
+              '<button type="button" class="pv-preset" data-p="none">ธรรมดา</button>',
+              '<button type="button" class="pv-preset" data-p="soft">เงานุ่ม</button>',
+              '<button type="button" class="pv-preset" data-p="white">ขอบขาว</button>',
+              '<button type="button" class="pv-preset" data-p="black">ขอบดำ</button>',
+              '<button type="button" class="pv-preset" data-p="neon">นีออน</button>',
+              '<button type="button" class="pv-preset" data-p="poster">โปสเตอร์</button>',
+            '</div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🖊️ ขอบ</span><input type="range" id="pv-stroke" min="0" max="12" step="1" value="0"><div class="pv-strokecolors" id="pv-strokecolors"></div></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🌫️ เงา</span><input type="range" id="pv-shadow" min="0" max="30" step="1" value="0"></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🌈 โค้ง</span><input type="range" id="pv-curve" min="-100" max="100" step="2" value="0"><button type="button" class="pv-mini-btn" id="pv-curve-reset" title="คืนตรง">↺</button></div>',
+          '</div>',
+
+          // ── แท็บฟอนต์ (16 แบบ แสดงด้วยฟอนต์ตัวเอง) ──
+          '<div class="pv-pane" id="pv-pane-font" style="display:none">',
+            '<div class="pv-font-menu pv-font-inline" id="pv-font-menu" role="listbox">', fontMenuItems, '</div>',
           '</div>',
         '</div>',
 
@@ -668,41 +795,144 @@ window.initPreviewTool = async function(options = {}) {
     const textRow   = document.getElementById('pv-text-row');
     const textIn    = document.getElementById('pv-text-input');
     const sizeIn    = document.getElementById('pv-size');
-    const colorIn   = document.getElementById('pv-color');
-    const colorRow  = document.getElementById('pv-color-row');
-    const swatchBox = document.getElementById('pv-swatches');
     const boldBtn   = document.getElementById('pv-bold');
-    const fontRow   = document.getElementById('pv-font-row');
-    const fontBtn   = document.getElementById('pv-font-btn');
-    const fontLbl   = document.getElementById('pv-font-btn-label');
-    const fontMenu  = document.getElementById('pv-font-menu');
     const delBtn    = document.getElementById('pv-del');
     const capRow    = document.getElementById('pv-caption-row');
+    const tabsEl    = document.getElementById('pv-tabs');
+    const panes     = { color: document.getElementById('pv-pane-color'), fx: document.getElementById('pv-pane-fx'), font: document.getElementById('pv-pane-font') };
+    const swatchBox = document.getElementById('pv-swatches');
+    const modesEl   = document.getElementById('pv-color-modes');
+    const gradRow   = document.getElementById('pv-grad-row');
+    const hslBox    = document.getElementById('pv-hsl');
+    const hueIn     = document.getElementById('pv-hue');
+    const lightIn   = document.getElementById('pv-light');
+    const strokeIn  = document.getElementById('pv-stroke');
+    const shadowIn  = document.getElementById('pv-shadow');
+    const curveIn   = document.getElementById('pv-curve');
+    const fontMenu  = document.getElementById('pv-font-menu');
+    const gradTargetEl = document.getElementById('pv-grad-target');
+    const gradDirEl    = document.getElementById('pv-grad-dir');
+    const presetsEl    = document.getElementById('pv-presets');
 
-    // ── V29: จานสีสำเร็จ 14 สี — แตะแล้วเห็นผลบนภาพทันที ──
+    // ── V30: ระบบสีหนึ่งเดียว (ไร้ dialog ระบบ) ──
     const SWATCHES = ['#111111','#FFFFFF','#6B7280','#E11D48','#F97316','#F59E0B','#FFD84D','#10B981','#0B6B54','#0EA5E9','#2563EB','#7C3AED','#EC4899','#92400E'];
-    let currentColor = '#222222';
+    let colorTarget = 'color';                       // color | color2 (สีต้น/สีปลายของไล่เฉด)
+    const hslToHex = (h, sPct, lPct) => {
+      const l = lPct / 100, sat = sPct / 100;
+      const a = sat * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; const c = l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1))); return Math.round(255 * c).toString(16).padStart(2, '0'); };
+      return '#' + f(0) + f(8) + f(4);
+    };
     function markActiveSwatch(color) {
-      currentColor = color;
       swatchBox?.querySelectorAll('.pv-swatch').forEach(el => {
-        el.classList.toggle('active', (el.dataset.color || '').toLowerCase() === String(color).toLowerCase());
+        el.classList.toggle('active', (el.dataset.color || '').toLowerCase() === String(color || '').toLowerCase());
       });
-      const custom = document.querySelector('.pv-swatch-custom');
-      if (custom) custom.style.setProperty('--cur', color);
+    }
+    function applyColor(c) {
+      const l = api.getSelected(); if (!l) return;
+      const props = {}; props[colorTarget] = c;
+      api.updateSelected(props);
+      markActiveSwatch(c);
     }
     if (swatchBox) {
       SWATCHES.forEach(c => {
         const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'pv-swatch';
-        b.dataset.color = c;
-        b.style.background = c;
-        b.title = c;
+        b.type = 'button'; b.className = 'pv-swatch';
+        b.dataset.color = c; b.style.background = c; b.title = c;
         b.setAttribute('aria-label', 'สี ' + c);
-        b.addEventListener('click', () => { api.updateSelected({ color: c }); markActiveSwatch(c); });
+        b.addEventListener('click', () => applyColor(c));
         swatchBox.appendChild(b);
       });
     }
+    document.getElementById('pv-custom-toggle')?.addEventListener('click', e => {
+      if (!hslBox) return;
+      const open = hslBox.style.display === 'none';
+      hslBox.style.display = open ? '' : 'none';
+      e.currentTarget.classList.toggle('open', open);
+    });
+    function hslApply() {
+      const c = hslToHex(Number(hueIn.value), 90, Number(lightIn.value));
+      lightIn.style.setProperty('--h', hueIn.value);
+      applyColor(c);
+    }
+    hueIn?.addEventListener('input', hslApply);
+    lightIn?.addEventListener('input', hslApply);
+
+    // โหมดสี: solid / gradient / rainbow
+    modesEl?.querySelectorAll('.pv-mode').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        modesEl.querySelectorAll('.pv-mode').forEach(x => x.classList.toggle('active', x === btn));
+        gradRow.style.display = mode === 'gradient' ? '' : 'none';
+        const showPalette = mode !== 'rainbow';
+        document.getElementById('pv-color-row').style.display = showPalette ? '' : 'none';
+        if (mode !== 'gradient') { colorTarget = 'color'; syncGradTarget(); }
+        api.updateSelected({ colorMode: mode });
+      });
+    });
+    function syncGradTarget() {
+      gradTargetEl?.querySelectorAll('.pv-ab-btn').forEach(b => b.classList.toggle('active', b.dataset.t === colorTarget));
+    }
+    gradTargetEl?.querySelectorAll('.pv-ab-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        colorTarget = b.dataset.t; syncGradTarget();
+        const l = api.getSelected(); if (l) markActiveSwatch(l[colorTarget]);
+      });
+    });
+    gradDirEl?.querySelectorAll('.pv-ab-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        gradDirEl.querySelectorAll('.pv-ab-btn').forEach(x => x.classList.toggle('active', x === b));
+        api.updateSelected({ gradientDir: b.dataset.d });
+      });
+    });
+
+    // ── V30: เอฟเฟกต์ — สีขอบย่อ + preset สำเร็จ ──
+    const STROKE_COLORS = ['#FFFFFF','#111111','#E11D48','#F59E0B','#10B981','#2563EB'];
+    const strokeBox = document.getElementById('pv-strokecolors');
+    if (strokeBox) {
+      STROKE_COLORS.forEach(c => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'pv-swatch pv-swatch-sm';
+        b.dataset.color = c; b.style.background = c; b.title = 'สีขอบ ' + c;
+        b.addEventListener('click', () => {
+          api.updateSelected({ strokeColor: c });
+          strokeBox.querySelectorAll('.pv-swatch').forEach(x => x.classList.toggle('active', x === b));
+        });
+        strokeBox.appendChild(b);
+      });
+    }
+    function markStroke(color) {
+      strokeBox?.querySelectorAll('.pv-swatch').forEach(x => x.classList.toggle('active', (x.dataset.color || '').toLowerCase() === String(color || '').toLowerCase()));
+    }
+    const PRESETS = {
+      none:  { strokeW: 0, shadow: 0 },
+      soft:  { strokeW: 0, shadow: 12, shadowColor: 'rgba(0,0,0,.45)' },
+      white: { strokeW: 4, strokeColor: '#FFFFFF', shadow: 6, shadowColor: 'rgba(0,0,0,.35)' },
+      black: { strokeW: 4, strokeColor: '#111111', shadow: 0 },
+      neon:  { strokeW: 0, shadow: 22, shadowColor: '#22E4AC' },
+      poster:{ strokeW: 7, strokeColor: '#111111', shadow: 10, shadowColor: 'rgba(0,0,0,.5)' },
+    };
+    presetsEl?.querySelectorAll('.pv-preset').forEach(b => {
+      b.addEventListener('click', () => {
+        const pr = PRESETS[b.dataset.p]; if (!pr) return;
+        api.updateSelected(pr);
+        presetsEl.querySelectorAll('.pv-preset').forEach(x => x.classList.toggle('active', x === b));
+        const l = api.getSelected();
+        if (l) { strokeIn.value = l.strokeW || 0; shadowIn.value = l.shadow || 0; markStroke(l.strokeColor); }
+      });
+    });
+    strokeIn?.addEventListener('input', e => api.updateSelected({ strokeW: parseInt(e.target.value, 10) || 0 }));
+    shadowIn?.addEventListener('input', e => api.updateSelected({ shadow: parseInt(e.target.value, 10) || 0 }));
+    curveIn?.addEventListener('input', e => api.updateSelected({ curve: parseInt(e.target.value, 10) || 0 }));
+    document.getElementById('pv-curve-reset')?.addEventListener('click', () => { curveIn.value = 0; api.updateSelected({ curve: 0 }); });
+
+    // ── V30: แท็บ ──
+    tabsEl?.querySelectorAll('.pv-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        tabsEl.querySelectorAll('.pv-tab').forEach(x => x.classList.toggle('active', x === t));
+        Object.keys(panes).forEach(k => { if (panes[k]) panes[k].style.display = (k === t.dataset.tab) ? '' : 'none'; });
+      });
+    });
 
     function refreshActionButtons() {
       const has = api.hasContent();
@@ -742,57 +972,55 @@ window.initPreviewTool = async function(options = {}) {
       });
     });
 
-    // ── V29: เมนูฟอนต์ (เปิด/ปิด + เลือก) ──
-    fontBtn?.addEventListener('click', () => {
-      if (!fontMenu) return;
-      const opening = fontMenu.style.display === 'none';
-      fontMenu.style.display = opening ? '' : 'none';
-      const caret = document.getElementById('pv-font-caret');
-      if (caret) caret.textContent = opening ? '▴' : '▾';
-    });
-    fontMenu?.querySelectorAll('.pv-font-item').forEach(it => {
-      it.addEventListener('click', () => {
-        const fam = it.dataset.font;
-        api.updateSelected({ font: fam });
-        setFontButtonLabel(fam);
-        closeFontMenu();
-        ensureFont(fam, () => { try { api.render(); } catch (err) {} });
-      });
-    });
-
-    function setFontButtonLabel(fam) {
-      const f = (window.__PV_FONTS || []).find(x => x.v === fam);
-      if (fontLbl) {
-        fontLbl.textContent = f ? f.label : fam;
-        fontLbl.style.fontFamily = "'" + fam + "', sans-serif";
-      }
+    // ── V30: เลือกฟอนต์ (แถวในแท็บฟอนต์) ──
+    function markActiveFont(fam) {
       fontMenu?.querySelectorAll('.pv-font-item').forEach(it => {
         it.classList.toggle('active', it.dataset.font === fam);
       });
     }
-    function closeFontMenu() {
-      if (fontMenu) fontMenu.style.display = 'none';
-      const caret = document.getElementById('pv-font-caret');
-      if (caret) caret.textContent = '▾';
-    }
+    fontMenu?.querySelectorAll('.pv-font-item').forEach(it => {
+      it.addEventListener('click', () => {
+        const fam = it.dataset.font;
+        api.updateSelected({ font: fam });
+        markActiveFont(fam);
+        ensureFont(fam, () => { try { api.render(); } catch (err) {} });
+      });
+    });
+
+    // ── V30: sync แผงทั้งหมดให้ตรงกับชิ้นที่เลือก ──
     function syncToolbar(layer) {
-      if (!layer) { layerBar.style.display = 'none'; closeFontMenu(); return; }
+      if (!layer) { layerBar.style.display = 'none'; return; }
       layerBar.style.display = '';
       const isText = layer.type === 'text';
-      textRow.style.display  = isText ? '' : 'none';
-      fontRow.style.display  = isText ? 'block' : 'none';
-      colorRow.style.display = isText ? '' : 'none';
-      boldBtn.style.display  = isText ? '' : 'none';
+      textRow.style.display = isText ? '' : 'none';
+      tabsEl.style.display  = isText ? '' : 'none';
+      boldBtn.style.display = isText ? '' : 'none';
+      Object.keys(panes).forEach(k => { if (panes[k]) panes[k].style.display = 'none'; });
       if (isText) {
+        // เปิดแท็บสีเป็นค่าเริ่ม
+        tabsEl.querySelectorAll('.pv-tab').forEach(x => x.classList.toggle('active', x.dataset.tab === 'color'));
+        if (panes.color) panes.color.style.display = '';
         textIn.value = layer.text;
         sizeIn.min = 10; sizeIn.max = 72; sizeIn.value = layer.size;
-        colorIn.value = layer.color;
-        markActiveSwatch(layer.color);
         boldBtn.classList.toggle('active', !!layer.bold);
-        setFontButtonLabel(layer.font || 'Kanit');
+        // สี: โหมด + จานสี + เป้า A/B + ทิศ
+        colorTarget = 'color'; syncGradTarget();
+        const mode = layer.colorMode || 'solid';
+        modesEl?.querySelectorAll('.pv-mode').forEach(x => x.classList.toggle('active', x.dataset.mode === mode));
+        gradRow.style.display = mode === 'gradient' ? '' : 'none';
+        document.getElementById('pv-color-row').style.display = mode === 'rainbow' ? 'none' : '';
+        gradDirEl?.querySelectorAll('.pv-ab-btn').forEach(x => x.classList.toggle('active', x.dataset.d === (layer.gradientDir || 'h')));
+        markActiveSwatch(layer.color);
+        // เอฟเฟกต์
+        strokeIn.value = layer.strokeW || 0;
+        shadowIn.value = layer.shadow || 0;
+        curveIn.value  = layer.curve || 0;
+        markStroke(layer.strokeColor);
+        presetsEl?.querySelectorAll('.pv-preset').forEach(x => x.classList.remove('active'));
+        // ฟอนต์
+        markActiveFont(layer.font || 'Kanit');
       } else {
         sizeIn.min = 24; sizeIn.max = 240; sizeIn.value = Math.round(layer.w);
-        closeFontMenu();
       }
     }
 
@@ -906,7 +1134,7 @@ window.initPreviewTool = async function(options = {}) {
     });
 
     textIn?.addEventListener('input',  e => api.updateSelected({ text: e.target.value || ' ' }));
-    colorIn?.addEventListener('input', e => { api.updateSelected({ color: e.target.value }); markActiveSwatch(e.target.value); });
+    // (V30: สีย้ายไปแท็บสี — จานสี + HSL picker ของระบบเราเอง)
     // (V29: การเลือกฟอนต์ย้ายไปที่เมนู .pv-font-item ด้านบน)
     sizeIn?.addEventListener('input',  e => {
       const l = api.getSelected(); if (!l) return;
