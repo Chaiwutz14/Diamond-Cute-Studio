@@ -883,3 +883,19 @@
 .gallery-video-open .gvo-text{font-weight:800;font-size:1rem}
 .gallery-video-open .gvo-sub{font-size:.74rem;color:var(--text-3)}
 .gallery-video-open:hover .gvo-play{transform:scale(1.06)}
+
+/* V31: แผงเลเยอร์รูป */
+.pv-fx-hint { flex-shrink: 0; font-size: .66rem; color: var(--text-3); min-width: 1.6rem; text-align: right; }
+.pv-btn.active { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--glass); }
+
+/* ══ V31: Template Studio (admin) ══ */
+#ts-modal .pvd-sheet { height: 94dvh; max-height: 94dvh; border-radius: var(--r-2xl); }
+.ts-bar { padding: .7rem 1rem .55rem; border-bottom: 1.5px solid var(--border); background: var(--bg-card); display: grid; gap: .55rem; flex-shrink: 0; }
+.ts-bar-row { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.ts-bgs { display: flex; gap: .3rem; flex-wrap: wrap; }
+.ts-foot { padding: .7rem 1rem; border-top: 1.5px solid var(--border); background: var(--bg-card); flex-shrink: 0; }
+.tpl-check-chip .p-tpl-edit {
+  border: none; background: transparent; cursor: pointer; font-size: .8rem;
+  padding: 0 .1rem; opacity: .75;
+}
+.tpl-check-chip .p-tpl-edit:hover { opacity: 1; transform: scale(1.15); }
