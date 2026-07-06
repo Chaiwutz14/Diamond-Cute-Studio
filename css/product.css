@@ -899,3 +899,22 @@
   padding: 0 .1rem; opacity: .75;
 }
 .tpl-check-chip .p-tpl-edit:hover { opacity: 1; transform: scale(1.15); }
+
+/* ══ V32: Studio bar — ชิปขนาดรูปทรงจริง + พื้นหลัง ══ */
+.ts-row-label { font-family: var(--font-display); font-weight: 700; font-size: .72rem; color: var(--text-2); }
+.ts-row-label span { font-weight: 400; color: var(--text-3); font-size: .66rem; }
+.ts-sizes { display: flex; gap: .45rem; overflow-x: auto; padding-bottom: .25rem; scrollbar-width: none; }
+.ts-sizes::-webkit-scrollbar { display: none; }
+.ts-size-chip {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: .28rem;
+  background: var(--bg-mid); border: 1.5px solid var(--border); border-radius: var(--r-md);
+  padding: .45rem .6rem .4rem; cursor: pointer; min-width: 62px; transition: all .15s;
+}
+.ts-size-chip .ts-shape {
+  height: 30px; width: auto; background: var(--bg-card);
+  border: 1.5px solid var(--text-3); border-radius: 3px; display: block;
+}
+.ts-size-chip .ts-size-name { font-family: var(--font-display); font-size: .62rem; font-weight: 600; color: var(--text-2); }
+.ts-size-chip.active { border-color: var(--accent); background: var(--glass); }
+.ts-size-chip.active .ts-shape { border-color: var(--accent); }
+.ts-size-chip.active .ts-size-name { color: var(--accent); }
