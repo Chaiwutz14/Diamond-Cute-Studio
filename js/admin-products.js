@@ -250,12 +250,17 @@ window.openProductModal = async function(productId) {
               <span>${t.emoji} ${t.name}</span>
             </label>`).join('')}
           ${customTpls.map(t=>`
-            <label class="tpl-check-chip tpl-custom" title="${t.defaultTexts?('ช่องข้อความ: '+DMC.escapeHtml(t.defaultTexts)):''}">
+            <label class="tpl-check-chip tpl-custom" title="${t.kind==='design'?'เทมเพลตดีไซน์ (แก้ไขได้ที่ปุ่ม ✏️)':(t.defaultTexts?('ช่องข้อความ: '+DMC.escapeHtml(t.defaultTexts)):'')}">
               <input type="checkbox" class="p-tpl-check" value="${t.id}" ${selectedTpls.includes(t.id.toLowerCase())?'checked':''}>
-              <span>🖼️ ${DMC.escapeHtml(t.name||'Custom')}</span>
+              <span>${t.kind==='design'?'🎨':'🖼️'} ${DMC.escapeHtml(t.name||'Custom')}</span>
+              ${t.kind==='design'?`<button type="button" class="p-tpl-edit" data-tpl-id="${t.id}" title="แก้ไขเทมเพลตนี้ใน Studio">✏️</button>`:''}
             </label>`).join('')}
         </div>
         ${customTpls.length===0?'<div style="font-size:.74rem;color:var(--text-3);margin-top:.4rem">💡 อัปโหลดกรอบของร้านเองได้ที่เมนู "เทมเพลต" หรือกดเพิ่มด้านล่างนี้ได้เลย</div>':''}
+
+        <!-- V31: Template Studio — สร้างเทมเพลตแบบดีไซน์ (แนะนำ ไม่ต้องทำ PNG เจาะรูอีกต่อไป) -->
+        <button type="button" class="btn btn-primary btn-sm" id="p-open-studio" style="margin-top:.75rem;width:100%;border-radius:var(--r-md)">🎨 สร้างเทมเพลตดีไซน์ใหม่ (แบบ Canva — ไม่ต้องทำ PNG)</button>
+        <div style="font-size:.71rem;color:var(--text-3);margin-top:.35rem;line-height:1.55">จัดวางข้อความ/รูป/สีพื้นเป็นเบสในสตูดิโอได้เลย เครื่องมือเดียวกับที่ลูกค้าใช้ · ลูกค้าเปิดมาเห็นตามที่จัดไว้ แล้วแก้ข้อความ/เปลี่ยนรูป/ครอป/ปรับต่อได้เต็มที่</div>
 
         <!-- V26: เพิ่มเทมเพลตใหม่จากหน้าสินค้าได้เลย (เซฟเข้าคลังเดิม + ติ๊กใช้กับสินค้านี้อัตโนมัติ) -->
         <details style="margin-top:.75rem;background:var(--bg-card);border:1.5px dashed var(--border);border-radius:var(--r-md);padding:.6rem .8rem">
@@ -313,6 +318,34 @@ window.openProductModal = async function(productId) {
   // toggle templates section
   document.getElementById('p-preview')?.addEventListener('change', e => {
     document.getElementById('p-templates-wrap').style.display = e.target.checked ? '' : 'none';
+  });
+
+  // ── V31: Template Studio ──
+  function appendTplChip(id, name) {
+    const chipWrap = document.getElementById('p-tpl-chips');
+    if (!chipWrap) return;
+    // ถ้ามีชิปเดิม (แก้ไข) → อัปเดตชื่อ, ไม่สร้างซ้ำ
+    const existing = chipWrap.querySelector('input.p-tpl-check[value="' + id + '"]');
+    if (existing) { const sp = existing.parentElement.querySelector('span'); if (sp) sp.textContent = '🎨 ' + name; return; }
+    const label = document.createElement('label');
+    label.className = 'tpl-check-chip tpl-custom';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.className = 'p-tpl-check'; cb.value = id; cb.checked = true;
+    const span = document.createElement('span');
+    span.textContent = '🎨 ' + name;
+    label.appendChild(cb); label.appendChild(span);
+    chipWrap.appendChild(label);
+  }
+  document.getElementById('p-open-studio')?.addEventListener('click', () => {
+    if (!window.TemplateStudio) { DMC.toast('Studio ยังโหลดไม่เสร็จ ลองอีกครั้ง', 'error'); return; }
+    TemplateStudio.open({ onSaved: (id, name) => { _customTplCache = null; appendTplChip(id, name); DMC.toast('ติ๊กเลือกให้สินค้านี้แล้ว — อย่าลืมกดบันทึกสินค้า', 'info', 4000); } });
+  });
+  document.querySelectorAll('.p-tpl-edit').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      if (!window.TemplateStudio) return;
+      TemplateStudio.open({ docId: btn.dataset.tplId, onSaved: (id, name) => { _customTplCache = null; appendTplChip(id, name); } });
+    });
   });
 
   // ── V26: เพิ่มเทมเพลตใหม่จากหน้าสินค้า (เขียนเข้า collection 'templates' เดิม) ──
