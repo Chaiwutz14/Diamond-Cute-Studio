@@ -123,6 +123,8 @@ window.CanvasPreview = (function(){
     let currentTpl  = TEMPLATES[0];
     let captionText = '';
     let baseBg      = '#FFFFFF';       // V31: สีพื้นหลัง (เทมเพลตดีไซน์/สตูดิโอ)
+    let bgImage     = null;            // V32: รูปพื้นหลังของเทมเพลต (แทนระบบ PNG เจาะรูเดิม)
+    let bgImageUrl  = '';
     let imgOff  = { x: 0, y: 0 };   // ⑤ ตำแหน่งรูปหลัก (ลากเลื่อนได้)
     let imgZoom = 1;                //    ซูมรูปหลัก 1–3 เท่า
     let layers  = [];               // ④ เลเยอร์ข้อความ/รูปเสริม (วาดทับบนสุด)
@@ -177,6 +179,11 @@ window.CanvasPreview = (function(){
         imgX: opts.imgX || 0,                         //       เลื่อนรูปในกรอบ (โหมดครอป)
         imgY: opts.imgY || 0,
         radius: opts.radius || 0,                     // V31: มุมมน 0–100 (100 = วงกลม/แคปซูล)
+        // V32: เครื่องมือปรับภาพ (วาดผ่าน ctx.filter — ติดไปกับงานพิมพ์จริง)
+        brP: opts.brP != null ? opts.brP : 100,       // ความสว่าง %
+        ctP: opts.ctP != null ? opts.ctP : 100,       // คมชัด (contrast) %
+        saP: opts.saP != null ? opts.saP : 100,       // สีสด %
+        blP: opts.blP || 0,                           // เบลอ px
         auto: !!opts.auto,
       };
       layers.push(l);
@@ -474,6 +481,12 @@ window.CanvasPreview = (function(){
       ctx.save();
       roundRectPath(b, r);
       ctx.clip();
+      // V32: ฟิลเตอร์ปรับภาพ
+      const br = l.brP != null ? l.brP : 100, ct = l.ctP != null ? l.ctP : 100,
+            sa = l.saP != null ? l.saP : 100, bl = l.blP || 0;
+      if (br !== 100 || ct !== 100 || sa !== 100 || bl > 0) {
+        ctx.filter = 'brightness(' + br + '%) contrast(' + ct + '%) saturate(' + sa + '%)' + (bl > 0 ? ' blur(' + bl + 'px)' : '');
+      }
       // ครอปใน: cover เต็มกรอบ × ซูม + เลื่อน (เหมือนรูปหลัก แต่ต่อเลเยอร์)
       const cover = Math.max(b.w / l.img.width, b.h / l.img.height);
       const sc = cover * (l.imgZ || 1);
@@ -512,10 +525,24 @@ window.CanvasPreview = (function(){
       if (!hasContent && !currentTpl.custom && !currentTpl.design) { drawPlaceholder(); return; }
 
       if (currentTpl.design) {
-        // V31: เทมเพลตดีไซน์ — พื้นสี + รูปหลัก (ถ้ามี) + เลเยอร์ทั้งหมด
+        // V31/32: เทมเพลตดีไซน์ — พื้นสี → รูปพื้นหลัง → รูปหลัก → เลเยอร์
         ctx.fillStyle = baseBg || '#FFFFFF';
         ctx.fillRect(0, 0, logicalW, logicalH);
-        if (userImage) drawPhoto(photoArea());
+        if (bgImage) ctx.drawImage(bgImage, 0, 0, logicalW, logicalH);   // สัดส่วน canvas ตรงกับรูปอยู่แล้ว
+        else if (userImage) drawPhoto(photoArea());
+        if (!layers.length && !bgImage && !userImage) {
+          // V32: คำชวนบน canvas ว่าง — user ใหม่รู้ทันทีว่าทำอะไรต่อ
+          ctx.save();
+          ctx.strokeStyle = 'rgba(100,116,139,.4)'; ctx.setLineDash([7, 6]); ctx.lineWidth = 1.5;
+          ctx.strokeRect(10, 10, logicalW - 20, logicalH - 20);
+          ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.font = "600 13px 'Kanit', sans-serif";
+          ctx.fillText('ผืนผ้าใบว่าง — เริ่มได้เลย!', logicalW / 2, logicalH / 2 - 22);
+          ctx.font = "12px 'Kanit', sans-serif";
+          ctx.fillText('กด ➕ ข้อความ / ➕ โลโก้ ด้านล่าง', logicalW / 2, logicalH / 2 + 2);
+          ctx.fillText('หรือเลือก 🖼️ รูปพื้นหลัง ด้านบน', logicalW / 2, logicalH / 2 + 24);
+          ctx.restore();
+        }
       } else if (currentTpl.custom) {
         // พื้นหลัง (โชว์ผ่านช่องโปร่งใสของกรอบเมื่อยังไม่มีรูป)
         ctx.fillStyle = '#EDF2F7';
@@ -625,13 +652,23 @@ window.CanvasPreview = (function(){
         ev.preventDefault();
       });
 
+      let lastTap = { t: 0, idx: -1 };
       const endDrag = ev => {
         if (!drag) return;
         const wasTap = !drag.moved;
         const kind = drag.kind;
+        const idx = drag.idx;
         drag = null;
         // แตะเฉยๆ (ไม่ลาก) บนที่ว่างตอนยังไม่มีรูป → เปิดเลือกไฟล์ (พฤติกรรมเดิม)
         if (wasTap && kind === 'none' && callbacks.onEmptyTap) callbacks.onEmptyTap();
+        // V32: แตะสองครั้งบนชิ้นงาน → แก้ไขทันที (Canva-style)
+        if (wasTap && kind === 'layer') {
+          const now = Date.now();
+          if (idx === lastTap.idx && now - lastTap.t < 400) {
+            if (callbacks.onLayerDoubleTap) callbacks.onLayerDoubleTap(layers[idx]);
+            lastTap = { t: 0, idx: -1 };
+          } else lastTap = { t: now, idx };
+        } else lastTap = { t: 0, idx: -1 };
       };
       canvas.addEventListener('pointerup', endDrag);
       canvas.addEventListener('pointercancel', endDrag);
@@ -662,10 +699,11 @@ window.CanvasPreview = (function(){
           TEXT_FIELDS.forEach(k => { t[k] = l[k]; });
           out.push(t);
         } else if (l.type === 'image' && l.url) {   // เก็บเฉพาะรูปที่มี URL (อัปโหลดแล้ว)
-          out.push({ type: 'image', url: l.url, x: l.x, y: l.y, w: l.w, h: l.h, imgZ: l.imgZ || 1, imgX: l.imgX || 0, imgY: l.imgY || 0, radius: l.radius || 0 });
+          out.push({ type: 'image', url: l.url, x: l.x, y: l.y, w: l.w, h: l.h, imgZ: l.imgZ || 1, imgX: l.imgX || 0, imgY: l.imgY || 0, radius: l.radius || 0,
+            brP: l.brP != null ? l.brP : 100, ctP: l.ctP != null ? l.ctP : 100, saP: l.saP != null ? l.saP : 100, blP: l.blP || 0 });
         }
       });
-      return { canvas: { w: logicalW, h: logicalH, bg: baseBg }, layers: out };
+      return { canvas: { w: logicalW, h: logicalH, bg: baseBg, bgImageUrl: bgImageUrl || '' }, layers: out };
     }
 
     async function loadTemplateData(tpl) {
@@ -677,6 +715,10 @@ window.CanvasPreview = (function(){
       applySize(fit.w, fit.h);
       const sc = fit.w / cw;                                       // สเกลพิกัดจากขนาดต้นฉบับ
       baseBg = (data.canvas && data.canvas.bg) || '#FFFFFF';
+      bgImage = null; bgImageUrl = '';
+      if (data.canvas && data.canvas.bgImageUrl) {
+        try { await setBgImageFromUrl(data.canvas.bgImageUrl); } catch (e) { console.warn('bg image load failed', e); }
+      }
       imgOff = { x: 0, y: 0 };
       // เคลียร์เลเยอร์ของเทมเพลตก่อนหน้า (ที่ลูกค้ายังไม่ได้แก้) — เก็บงานของลูกค้าไว้
       layers = layers.filter(l => !l.auto);
@@ -697,6 +739,7 @@ window.CanvasPreview = (function(){
               w: d.w * sc, h: d.h * sc,
               imgZ: d.imgZ, imgX: (d.imgX || 0) * sc, imgY: (d.imgY || 0) * sc,
               radius: d.radius,
+              brP: d.brP, ctP: d.ctP, saP: d.saP, blP: d.blP,
             });
           } catch (e) { console.warn('tpl image load failed', e); }
         }
@@ -705,9 +748,28 @@ window.CanvasPreview = (function(){
       render(); notifySel(); notifyLayers();
     }
 
+    function setBgImageFromUrl(url) {                // V32: รูปพื้นหลัง — canvas ปรับสัดส่วนตามรูปจริง
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          bgImage = img; bgImageUrl = url;
+          currentTpl = { design: true, name: currentTpl.name || 'studio' };
+          const fit = fitSize(img.width / Math.max(1, img.height));
+          applySize(fit.w, fit.h);
+          render(); resolve(img);
+        };
+        img.onerror = () => reject(new Error('โหลดรูปพื้นหลังไม่สำเร็จ'));
+        img.src = url;
+      });
+    }
+    function clearBgImage() { bgImage = null; bgImageUrl = ''; render(); }
+    function hasBgImage() { return !!bgImage; }
+
     function setBase(opts = {}) {                    // สตูดิโอ: ตั้งขนาด/พื้นหลัง
       if (opts.w && opts.h) {
         currentTpl = { design: true, name: 'studio' };
+        bgImage = null; bgImageUrl = '';             // เปลี่ยนขนาด = เริ่มผืนใหม่
         const fit = fitSize(opts.w / opts.h);
         applySize(fit.w, fit.h);
       }
@@ -729,6 +791,7 @@ window.CanvasPreview = (function(){
       // V31 Template Studio API
       addImageLayerFromUrl, replaceSelectedImage, moveSelected,
       getTemplateData, loadTemplateData, setBase, getLayers,
+      setBgImageFromUrl, clearBgImage, hasBgImage,
     };
   }
 
@@ -782,7 +845,7 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
 
     body.innerHTML = [
       '<div class="preview-tool-inner">',
-        '<div class="preview-howto">💡 อัปโหลดรูป → เลือกแบบ → เพิ่มข้อความ/โลโก้แล้ว<strong>ลากวาง</strong>บนภาพได้เลย</div>',
+        '<div class="preview-howto">💡 <b>① เลือกแบบด้านล่าง</b> → <b>② แตะข้อความเพื่อแก้</b> (แตะ 2 ครั้ง = พิมพ์ทันที) → <b>③ ลากเพื่อย้าย</b> · เพิ่มข้อความ/รูปได้ไม่จำกัด</div>',
         '<div class="pvd-canvas-wrap">',
           '<canvas id="preview-canvas" title="แตะเพื่ออัปโหลด/เลือกชิ้นงาน"></canvas>',
         '</div>',
@@ -879,6 +942,11 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
               '<button type="button" class="pv-btn" id="pv-to-back">⬇️ ไปหลังสุด</button>',
               '<button type="button" class="pv-btn" id="pv-to-front">⬆️ มาหน้าสุด</button>',
             '</div>',
+            // V32: เครื่องมือปรับภาพ
+            '<div class="pv-fx-row"><span class="pv-fx-label">☀️ สว่าง</span><input type="range" id="pv-flt-br" min="40" max="160" step="2" value="100"></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">◐ คมชัด</span><input type="range" id="pv-flt-ct" min="40" max="160" step="2" value="100"></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🌈 สีสด</span><input type="range" id="pv-flt-sa" min="0" max="200" step="4" value="100"></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">💧 เบลอ</span><input type="range" id="pv-flt-bl" min="0" max="6" step="0.2" value="0"><button type="button" class="pv-mini-btn" id="pv-flt-reset" title="คืนค่าเดิม">↺</button></div>',
           '</div>',
 
           // ── แท็บฟอนต์ (16 แบบ แสดงด้วยฟอนต์ตัวเอง) ──
@@ -1089,6 +1157,21 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     document.getElementById('pv-to-back')?.addEventListener('click', () => api.moveSelected('back'));
     document.getElementById('pv-to-front')?.addEventListener('click', () => api.moveSelected('front'));
 
+    // V32: เครื่องมือปรับภาพ
+    const fltBr = document.getElementById('pv-flt-br');
+    const fltCt = document.getElementById('pv-flt-ct');
+    const fltSa = document.getElementById('pv-flt-sa');
+    const fltBl = document.getElementById('pv-flt-bl');
+    fltBr?.addEventListener('input', e => api.updateSelected({ brP: parseInt(e.target.value, 10) }));
+    fltCt?.addEventListener('input', e => api.updateSelected({ ctP: parseInt(e.target.value, 10) }));
+    fltSa?.addEventListener('input', e => api.updateSelected({ saP: parseInt(e.target.value, 10) }));
+    fltBl?.addEventListener('input', e => api.updateSelected({ blP: parseFloat(e.target.value) }));
+    document.getElementById('pv-flt-reset')?.addEventListener('click', () => {
+      api.updateSelected({ brP: 100, ctP: 100, saP: 100, blP: 0 });
+      if (fltBr) fltBr.value = 100; if (fltCt) fltCt.value = 100;
+      if (fltSa) fltSa.value = 100; if (fltBl) fltBl.value = 0;
+    });
+
     // ── V30: แท็บ ──
     tabsEl?.querySelectorAll('.pv-tab').forEach(t => {
       t.addEventListener('click', () => {
@@ -1189,6 +1272,10 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
         if (radiusIn) radiusIn.value = layer.radius || 0;
         if (cropBtn) cropBtn.classList.toggle('active', !!layer._crop);
         if (imgZoomIn) { imgZoomIn.style.display = layer._crop ? '' : 'none'; imgZoomIn.value = layer.imgZ || 1; }
+        if (fltBr) fltBr.value = layer.brP != null ? layer.brP : 100;
+        if (fltCt) fltCt.value = layer.ctP != null ? layer.ctP : 100;
+        if (fltSa) fltSa.value = layer.saP != null ? layer.saP : 100;
+        if (fltBl) fltBl.value = layer.blP || 0;
       }
     }
 
@@ -1196,6 +1283,15 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       onSelectionChange: syncToolbar,
       onLayersChange: refreshActionButtons,
       onEmptyTap: () => { if (!IS_ADMIN && !api.hasImage()) fileInput?.click(); },
+      onLayerDoubleTap: (l) => {                                  // V32: แตะสองครั้ง = แก้ทันที
+        if (l.type === 'text') {
+          textIn?.focus();
+          try { textIn.select(); } catch (e) {}
+          if (hintEl) hintEl.textContent = '✍️ พิมพ์แก้ข้อความได้เลย — เสร็จแล้วแตะที่อื่นเพื่อวาง';
+        } else {
+          document.getElementById('pv-replace-input')?.click();   // รูป: เปลี่ยนรูปทันที
+        }
+      },
     });
 
     // ─── template chips ───
@@ -1467,11 +1563,11 @@ window.initPreviewTool = async function(options = {}) {
 // ═══════════════════════════════════════════════
 window.TemplateStudio = (function () {
   const SIZES = [
-    { v: '280x390', label: '📸 โพลารอยด์ (ตั้ง)' },
-    { v: '215x340', label: '🪪 บัตรแนวตั้ง' },
-    { v: '320x200', label: '💳 บัตรแนวนอน' },
-    { v: '300x300', label: '⬜ จัตุรัส' },
-    { v: '320x110', label: '🏷️ ป้ายกว้าง' },
+    { v: '280x390', label: 'โพลารอยด์' },
+    { v: '215x340', label: 'บัตรตั้ง' },
+    { v: '320x200', label: 'บัตรนอน' },
+    { v: '300x300', label: 'จัตุรัส' },
+    { v: '320x110', label: 'ป้ายกว้าง' },
   ];
   const BGS = ['#FFFFFF', '#FFF8EE', '#F3F7F5', '#111111', '#0B6B54', '#DFF3EA', '#EAF2FF', '#FDE8EF', '#FFF3C9', '#F1E8FF'];
   let modal = null, api = null, editingId = null, savedCb = null;
@@ -1496,11 +1592,27 @@ window.TemplateStudio = (function () {
           '</div>',
           '<div class="ts-bar">',
             '<input class="form-input" id="ts-name" maxlength="30" placeholder="ชื่อเทมเพลต เช่น บัตรพนักงานเขียว" style="font-size:.85rem">',
+            // V32: ชิปขนาดแบบเห็นรูปทรงจริง (ไม่มี dialog ระบบ)
+            '<div class="ts-row-label">📐 ขนาดผืนงาน <span>(แตะเพื่อเลือก)</span></div>',
+            '<div class="ts-sizes" id="ts-sizes">',
+              SIZES.map((z, i) => {
+                const p2 = z.v.split('x');
+                return '<button type="button" class="ts-size-chip' + (i === 0 ? ' active' : '') + '" data-v="' + z.v + '">' +
+                  '<span class="ts-shape" style="aspect-ratio:' + p2[0] + '/' + p2[1] + '"></span>' +
+                  '<span class="ts-size-name">' + z.label + '</span></button>';
+              }).join(''),
+            '</div>',
+            // V32: พื้นหลัง — สีสำเร็จ + สีกำหนดเอง + อัปรูปพื้นหลัง
+            '<div class="ts-row-label">🖼️ พื้นหลัง <span>(สีพื้น หรืออัปรูปดีไซน์ของร้าน)</span></div>',
             '<div class="ts-bar-row">',
-              '<select id="ts-size" class="form-input" style="flex:1;font-size:.8rem">',
-                SIZES.map(z => '<option value="' + z.v + '">' + z.label + '</option>').join(''),
-              '</select>',
               '<div class="ts-bgs" id="ts-bgs"></div>',
+              '<button type="button" class="pv-swatch pv-swatch-sm pv-swatch-custom" id="ts-bg-custom" title="เลือกสีเอง">🎨</button>',
+              '<label class="pv-btn" style="cursor:pointer;font-size:.7rem;padding:.3rem .65rem">🖼️ รูปพื้นหลัง<input type="file" id="ts-bg-file" accept="image/*" style="display:none"></label>',
+              '<button type="button" class="pv-btn" id="ts-bg-clear" style="display:none;font-size:.7rem;padding:.3rem .65rem">✕ ล้างรูปพื้น</button>',
+            '</div>',
+            '<div class="pv-hsl" id="ts-hsl" style="display:none">',
+              '<input type="range" id="ts-hue" class="pv-hue" min="0" max="360" step="1" value="160" aria-label="เฉดสีพื้น">',
+              '<input type="range" id="ts-light" class="pv-light" min="8" max="97" step="1" value="90" aria-label="ความสว่างพื้น">',
             '</div>',
           '</div>',
           '<div class="pvd-body" id="ts-body"></div>',
@@ -1526,10 +1638,54 @@ window.TemplateStudio = (function () {
         bgWrap.appendChild(b);
       });
 
-      document.getElementById('ts-size').addEventListener('change', e => {
-        const [w, h] = e.target.value.split('x').map(Number);
-        api?.setBase({ w, h });
+      // V32: ชิปขนาด — เห็นรูปทรงก่อนเลือก
+      document.getElementById('ts-sizes').querySelectorAll('.ts-size-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const [w, h] = chip.dataset.v.split('x').map(Number);
+          api?.setBase({ w, h });
+          document.getElementById('ts-sizes').querySelectorAll('.ts-size-chip').forEach(x => x.classList.toggle('active', x === chip));
+          syncBgClear();
+        });
       });
+
+      // V32: สีพื้นกำหนดเอง (HSL ระบบเราเอง)
+      const tsHsl = document.getElementById('ts-hsl');
+      const tsHue = document.getElementById('ts-hue');
+      const tsLight = document.getElementById('ts-light');
+      document.getElementById('ts-bg-custom').addEventListener('click', () => {
+        tsHsl.style.display = tsHsl.style.display === 'none' ? '' : 'none';
+      });
+      const hsl2hex = (h, sPct, lPct) => {
+        const l = lPct / 100, sat = sPct / 100;
+        const a = sat * Math.min(l, 1 - l);
+        const f = n => { const k = (n + h / 30) % 12; const c = l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1))); return Math.round(255 * c).toString(16).padStart(2, '0'); };
+        return '#' + f(0) + f(8) + f(4);
+      };
+      function tsHslApply() {
+        tsLight.style.setProperty('--h', tsHue.value);
+        api?.setBase({ bg: hsl2hex(Number(tsHue.value), 85, Number(tsLight.value)) });
+        document.getElementById('ts-bgs').querySelectorAll('.pv-swatch').forEach(x => x.classList.remove('active'));
+      }
+      tsHue.addEventListener('input', tsHslApply);
+      tsLight.addEventListener('input', tsHslApply);
+
+      // V32: รูปพื้นหลัง — อัปโหลดเป็น URL ถาวร แล้ว canvas ปรับสัดส่วนตามรูปจริง
+      const bgClearBtn = document.getElementById('ts-bg-clear');
+      function syncBgClear() { bgClearBtn.style.display = api && api.hasBgImage() ? '' : 'none'; }
+      document.getElementById('ts-bg-file').addEventListener('change', async e => {
+        const f = e.target.files[0]; if (!f) return;
+        try {
+          DMC.toast('⏳ กำลังอัปโหลดรูปพื้นหลัง...', 'info');
+          const up = await DMC.uploadToImgBB(f);
+          if (!up || !up.url) throw new Error('อัปโหลดไม่สำเร็จ');
+          await api.setBgImageFromUrl(up.url);
+          document.getElementById('ts-sizes').querySelectorAll('.ts-size-chip').forEach(x => x.classList.remove('active'));
+          syncBgClear();
+          DMC.toast('ตั้งรูปพื้นหลังแล้ว — ผืนงานปรับตามสัดส่วนรูปอัตโนมัติ ✓', 'success', 3500);
+        } catch (err) { DMC.toast(err.message || 'ตั้งพื้นหลังไม่สำเร็จ', 'error'); }
+        e.target.value = '';
+      });
+      bgClearBtn.addEventListener('click', () => { api?.clearBgImage(); syncBgClear(); });
 
       document.getElementById('ts-save').addEventListener('click', save);
     }
@@ -1543,6 +1699,10 @@ window.TemplateStudio = (function () {
     api = await window.__PV_mountDesigner(document.getElementById('ts-body'), { mode: 'admin', size: { w: 280, h: 390 } });
     if (!api) { DMC.toast('เปิดสตูดิโอไม่สำเร็จ', 'error'); return; }
     api.setBase({ w: 280, h: 390, bg: '#FFFFFF' });
+    const szWrap = document.getElementById('ts-sizes');
+    szWrap.querySelectorAll('.ts-size-chip').forEach((x, i) => x.classList.toggle('active', i === 0));
+    document.getElementById('ts-bg-clear').style.display = 'none';
+    document.getElementById('ts-hsl').style.display = 'none';
 
     // โหมดแก้ไขเทมเพลตเดิม
     if (editingId) {
@@ -1552,7 +1712,10 @@ window.TemplateStudio = (function () {
         if (doc.exists) {
           const t = doc.data();
           document.getElementById('ts-name').value = t.name || '';
-          if (t.kind === 'design') await api.loadTemplateData(t);
+          if (t.kind === 'design') {
+            await api.loadTemplateData(t);
+            document.getElementById('ts-bg-clear').style.display = api.hasBgImage() ? '' : 'none';
+          }
         }
       } catch (e) { DMC.toast('โหลดเทมเพลตเดิมไม่สำเร็จ: ' + e.message, 'error'); }
     }
