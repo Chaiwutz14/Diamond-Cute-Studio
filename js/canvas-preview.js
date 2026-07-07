@@ -740,8 +740,11 @@ window.CanvasPreview = (function(){
         const kind = drag.kind;
         const idx = drag.idx;
         drag = null;
-        // แตะเฉยๆ (ไม่ลาก) บนที่ว่างตอนยังไม่มีรูป → เปิดเลือกไฟล์ (พฤติกรรมเดิม)
-        if (wasTap && kind === 'none' && callbacks.onEmptyTap) callbacks.onEmptyTap();
+        // V34: แตะพื้นที่ว่าง — ถ้ามีชิ้นเลือกอยู่ → ยกเลิกเลือก · ถ้าไม่มี → เปิดเลือกไฟล์ (เดิม)
+        if (wasTap && kind === 'none') {
+          if (selectedIdx >= 0) { selectLayer(-1); }
+          else if (callbacks.onEmptyTap) callbacks.onEmptyTap();
+        }
         // V32: แตะสองครั้งบนชิ้นงาน → แก้ไขทันที (Canva-style)
         if (wasTap && kind === 'layer') {
           const now = Date.now();
@@ -981,9 +984,9 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
               '<button type="button" class="pv-preset" data-p="neon">นีออน</button>',
               '<button type="button" class="pv-preset" data-p="poster">โปสเตอร์</button>',
             '</div>',
-            '<div class="pv-fx-row"><span class="pv-fx-label">🖊️ ขอบ</span><input type="range" id="pv-stroke" min="0" max="12" step="1" value="0"><div class="pv-strokecolors" id="pv-strokecolors"></div></div>',
-            '<div class="pv-fx-row"><span class="pv-fx-label">🌫️ เงา</span><input type="range" id="pv-shadow" min="0" max="30" step="1" value="0"></div>',
-            '<div class="pv-fx-row"><span class="pv-fx-label">🌈 โค้ง</span><input type="range" id="pv-curve" min="-100" max="100" step="2" value="0"><button type="button" class="pv-mini-btn" id="pv-curve-reset" title="คืนตรง">↺</button></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🖊️ ขอบ</span><input type="range" id="pv-stroke" min="0" max="12" step="1" value="0"><span class="pv-val" id="pv-stroke-val">0</span><div class="pv-strokecolors" id="pv-strokecolors"></div></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🌫️ เงา</span><input type="range" id="pv-shadow" min="0" max="30" step="1" value="0"><span class="pv-val" id="pv-shadow-val">0</span></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🌈 โค้ง</span><input type="range" id="pv-curve" min="-100" max="100" step="2" value="0"><span class="pv-val" id="pv-curve-val">0</span><button type="button" class="pv-mini-btn" id="pv-curve-reset" title="คืนตรง">↺</button></div>',
           '</div>',
 
           '<div class="pv-pane" id="pv-pane-font" style="display:none">',
@@ -993,11 +996,11 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
           // รูป: ครอป / รูปทรง / ปรับภาพ
           '<div class="pv-pane" id="pv-panel-crop" style="display:none">',
             '<div class="pvd-panel-tip">✂️ ลากบนรูป = เลื่อนรูปในกรอบ · ส่วนจาง = ถูกตัดทิ้ง</div>',
-            '<div class="pv-fx-row"><span class="pv-fx-label">🔍 ซูมใน</span><input type="range" id="pv-imgzoom" min="1" max="3" step="0.02" value="1" aria-label="ซูมรูปในกรอบ"></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🔍 ซูมใน</span><input type="range" id="pv-imgzoom" min="1" max="3" step="0.02" value="1" aria-label="ซูมรูปในกรอบ"><span class="pv-val" id="pv-imgzoom-val">1.0×</span></div>',
             '<button type="button" class="pv-btn" id="pv-crop-toggle" style="width:100%;justify-content:center">✅ เสร็จสิ้นการครอป</button>',
           '</div>',
           '<div class="pv-pane" id="pv-panel-shape" style="display:none">',
-            '<div class="pv-fx-row"><span class="pv-fx-label">🔠 ขนาด</span><input type="range" id="pv-size-img" min="24" max="240" step="1" aria-label="ขนาดรูป"></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🔠 ขนาด</span><input type="range" id="pv-size-img" min="24" max="240" step="1" aria-label="ขนาดรูป"><span class="pv-val" id="pv-size-img-val">0</span></div>',
             '<div class="pv-fx-row">',
               '<span class="pv-fx-label">📐 สัดส่วน</span>',
               '<div class="pv-preset-row" id="pv-aspects" style="padding-bottom:0">',
@@ -1007,13 +1010,13 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
                 '<button type="button" class="pv-preset" data-a="1.7778">16:9</button>',
               '</div>',
             '</div>',
-            '<div class="pv-fx-row"><span class="pv-fx-label">⭕ มุมมน</span><input type="range" id="pv-radius" min="0" max="100" step="1" value="0"><span class="pv-fx-hint" id="pv-radius-hint"></span></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">⭕ มุมมน</span><input type="range" id="pv-radius" min="0" max="100" step="1" value="0"><span class="pv-val" id="pv-radius-val">0</span></div>',
           '</div>',
           '<div class="pv-pane" id="pv-panel-adjust" style="display:none">',
-            '<div class="pv-fx-row"><span class="pv-fx-label">☀️ สว่าง</span><input type="range" id="pv-flt-br" min="40" max="160" step="2" value="100"></div>',
-            '<div class="pv-fx-row"><span class="pv-fx-label">◐ คมชัด</span><input type="range" id="pv-flt-ct" min="40" max="160" step="2" value="100"></div>',
-            '<div class="pv-fx-row"><span class="pv-fx-label">🌈 สีสด</span><input type="range" id="pv-flt-sa" min="0" max="200" step="4" value="100"></div>',
-            '<div class="pv-fx-row"><span class="pv-fx-label">💧 เบลอ</span><input type="range" id="pv-flt-bl" min="0" max="6" step="0.2" value="0"><button type="button" class="pv-mini-btn" id="pv-flt-reset" title="คืนค่าเดิม">↺</button></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">☀️ สว่าง</span><input type="range" id="pv-flt-br" min="40" max="160" step="2" value="100"><span class="pv-val" id="pv-flt-br-val">100%</span></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">◐ คมชัด</span><input type="range" id="pv-flt-ct" min="40" max="160" step="2" value="100"><span class="pv-val" id="pv-flt-ct-val">100%</span></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🌈 สีสด</span><input type="range" id="pv-flt-sa" min="0" max="200" step="4" value="100"><span class="pv-val" id="pv-flt-sa-val">100%</span></div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">💧 เบลอ</span><input type="range" id="pv-flt-bl" min="0" max="6" step="0.2" value="0"><span class="pv-val" id="pv-flt-bl-val">0</span><button type="button" class="pv-mini-btn" id="pv-flt-reset" title="คืนค่าเดิม">↺</button></div>',
           '</div>',
           '<div class="pv-pane" id="pv-panel-order" style="display:none">',
             '<div class="pv-add-row" style="margin:0">',
@@ -1022,6 +1025,15 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
             '</div>',
           '</div>',
 
+          // V34: สติกเกอร์ + อิโมจิ (วางเป็นเลเยอร์ข้อความ emoji)
+          '<div class="pv-pane" id="pv-panel-sticker" style="display:none">',
+            '<div class="pvd-panel-tip">แตะสติกเกอร์เพื่อวางบนภาพ แล้วลาก/ปรับขนาดได้</div>',
+            '<div class="pv-emoji-grid" id="pv-sticker-grid"></div>',
+          '</div>',
+          '<div class="pv-pane" id="pv-panel-emoji" style="display:none">',
+            '<div class="pvd-panel-tip">แตะอิโมจิเพื่อวางบนภาพ</div>',
+            '<div class="pv-emoji-grid" id="pv-emoji-grid"></div>',
+          '</div>',
           // ซูม/เลื่อนรูปพื้น (ลูกค้า)
           '<div class="pv-pane" id="pv-panel-zoom" style="display:none">',
             '<div class="pv-zoom-row" id="pv-zoom-row" style="margin:0;max-width:none">',
@@ -1043,9 +1055,9 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
 
         // ── แถวปุ่มหลัก (ลูกค้า) ──
         '<div class="pvd-foot" id="pv-upload-row">',
-          '<label class="pv-dock-item" style="cursor:pointer" title="อัปโหลดรูปหลัก"><span class="pv-dock-ico">📤</span><span class="pv-dock-txt">อัปรูป</span><input type="file" id="preview-file-input" accept="image/*" style="display:none"></label>',
-          '<button class="pv-dock-item" id="preview-download-btn" disabled title="บันทึกภาพ"><span class="pv-dock-ico">💾</span><span class="pv-dock-txt">บันทึก</span></button>',
-          '<button class="btn btn-primary btn-md" id="preview-attach-btn" style="flex:1;border-radius:var(--r-lg)" disabled>📎 ใช้แบบนี้ในออเดอร์</button>',
+          '<button class="btn btn-primary pvd-cta" id="preview-attach-btn" disabled>📎 ใช้แบบนี้ในออเดอร์</button>',
+          '<input type="file" id="preview-file-input" accept="image/*" style="display:none">',
+          '<button id="preview-download-btn" class="pvd-cta-mini" disabled title="บันทึกภาพลงเครื่อง">💾</button>',
         '</div>',
 
         // input แฝง (เลเยอร์รูป)
@@ -1077,7 +1089,8 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     const dockEl  = document.getElementById('pv-dock');
     const PANES = {};
     ['pv-panel-edit','pv-pane-color','pv-pane-fx','pv-pane-font','pv-panel-crop','pv-panel-shape',
-     'pv-panel-adjust','pv-panel-order','pv-panel-zoom','pv-tpl-section'].forEach(id => { PANES[id] = document.getElementById(id); });
+     'pv-panel-adjust','pv-panel-order','pv-panel-zoom','pv-tpl-section',
+     'pv-panel-sticker','pv-panel-emoji'].forEach(id => { PANES[id] = document.getElementById(id); });
     let openPane = null;
     function openPanel(id) {
       openPane = id;
@@ -1205,13 +1218,16 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
         api.updateSelected(pr);
         presetsEl.querySelectorAll('.pv-preset').forEach(x => x.classList.toggle('active', x === b));
         const l = api.getSelected();
-        if (l) { strokeIn.value = l.strokeW || 0; shadowIn.value = l.shadow || 0; markStroke(l.strokeColor); }
+        if (l) { strokeIn.value = l.strokeW || 0; shadowIn.value = l.shadow || 0; setVal('pv-stroke-val', l.strokeW || 0); setVal('pv-shadow-val', l.shadow || 0); markStroke(l.strokeColor); }
       });
     });
-    strokeIn?.addEventListener('input', e => api.updateSelected({ strokeW: parseInt(e.target.value, 10) || 0 }));
-    shadowIn?.addEventListener('input', e => api.updateSelected({ shadow: parseInt(e.target.value, 10) || 0 }));
-    curveIn?.addEventListener('input', e => api.updateSelected({ curve: parseInt(e.target.value, 10) || 0 }));
-    document.getElementById('pv-curve-reset')?.addEventListener('click', () => { curveIn.value = 0; api.updateSelected({ curve: 0 }); });
+    // V34: badge ตัวเลขระดับ (sync ทุกครั้งที่เลื่อน)
+    function setVal(id, txt) { const el = document.getElementById(id); if (el) el.textContent = txt; }
+    function curveTxt(v) { v = parseInt(v, 10) || 0; return v === 0 ? '0 (ตรง)' : (v > 0 ? '+' + v : String(v)); }
+    strokeIn?.addEventListener('input', e => { const v = parseInt(e.target.value, 10) || 0; api.updateSelected({ strokeW: v }); setVal('pv-stroke-val', v); });
+    shadowIn?.addEventListener('input', e => { const v = parseInt(e.target.value, 10) || 0; api.updateSelected({ shadow: v }); setVal('pv-shadow-val', v); });
+    curveIn?.addEventListener('input', e => { const v = parseInt(e.target.value, 10) || 0; api.updateSelected({ curve: v }); setVal('pv-curve-val', curveTxt(v)); });
+    document.getElementById('pv-curve-reset')?.addEventListener('click', () => { curveIn.value = 0; api.updateSelected({ curve: 0 }); setVal('pv-curve-val', curveTxt(0)); });
 
     // ── V31/33: เครื่องมือเลเยอร์รูป ──
     const radiusIn  = document.getElementById('pv-radius');
@@ -1229,12 +1245,12 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     }
 
     radiusIn?.addEventListener('input', e => {
-      api.updateSelected({ radius: parseInt(e.target.value, 10) || 0 });
-      const hint = document.getElementById('pv-radius-hint');
-      if (hint) hint.textContent = e.target.value >= 100 ? '⭕' : (e.target.value > 0 ? e.target.value + '%' : '');
+      const v = parseInt(e.target.value, 10) || 0;
+      api.updateSelected({ radius: v });
+      setVal('pv-radius-val', v >= 100 ? '⭕ วงกลม' : v + '%');
     });
     cropBtn?.addEventListener('click', () => { setCropMode(false); closePanel(); });   // ✅ เสร็จสิ้นการครอป
-    imgZoomIn?.addEventListener('input', e => api.updateSelected({ imgZ: clampNum(parseFloat(e.target.value) || 1, 1, 3) }));
+    imgZoomIn?.addEventListener('input', e => { const v = clampNum(parseFloat(e.target.value) || 1, 1, 3); api.updateSelected({ imgZ: v }); setVal('pv-imgzoom-val', v.toFixed(1) + '×'); });
     function clampNum(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
     aspectsEl?.querySelectorAll('.pv-preset').forEach(b => {
       b.addEventListener('click', () => {
@@ -1259,14 +1275,15 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     const fltCt = document.getElementById('pv-flt-ct');
     const fltSa = document.getElementById('pv-flt-sa');
     const fltBl = document.getElementById('pv-flt-bl');
-    fltBr?.addEventListener('input', e => api.updateSelected({ brP: parseInt(e.target.value, 10) }));
-    fltCt?.addEventListener('input', e => api.updateSelected({ ctP: parseInt(e.target.value, 10) }));
-    fltSa?.addEventListener('input', e => api.updateSelected({ saP: parseInt(e.target.value, 10) }));
-    fltBl?.addEventListener('input', e => api.updateSelected({ blP: parseFloat(e.target.value) }));
+    fltBr?.addEventListener('input', e => { const v = parseInt(e.target.value, 10); api.updateSelected({ brP: v }); setVal('pv-flt-br-val', v + '%'); });
+    fltCt?.addEventListener('input', e => { const v = parseInt(e.target.value, 10); api.updateSelected({ ctP: v }); setVal('pv-flt-ct-val', v + '%'); });
+    fltSa?.addEventListener('input', e => { const v = parseInt(e.target.value, 10); api.updateSelected({ saP: v }); setVal('pv-flt-sa-val', v + '%'); });
+    fltBl?.addEventListener('input', e => { const v = parseFloat(e.target.value); api.updateSelected({ blP: v }); setVal('pv-flt-bl-val', v.toFixed(1)); });
     document.getElementById('pv-flt-reset')?.addEventListener('click', () => {
       api.updateSelected({ brP: 100, ctP: 100, saP: 100, blP: 0 });
       if (fltBr) fltBr.value = 100; if (fltCt) fltCt.value = 100;
       if (fltSa) fltSa.value = 100; if (fltBl) fltBl.value = 0;
+      setVal('pv-flt-br-val', '100%'); setVal('pv-flt-ct-val', '100%'); setVal('pv-flt-sa-val', '100%'); setVal('pv-flt-bl-val', '0.0');
     });
 
 
@@ -1330,13 +1347,37 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       setTimeout(() => { try { textIn.focus(); } catch (e) {} }, 60);
       if (hintEl) hintEl.textContent = '✍️ พิมพ์ข้อความในช่องด้านล่าง แล้วลากบนภาพเพื่อจัดตำแหน่ง';
     }
-    function dockItem(ico, txt, opts = {}) {
+
+    // ── V34: ไอคอนเวกเตอร์ SVG เส้น (currentColor) — สะอาด มืออาชีพ ── 
+    const SVG = {
+      text:    '<path d="M4 7V5h16v2M9 5v14M15 5v14"/>',
+      image:   '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 16-5-5L5 20"/>',
+      sticker: '<path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9l7-7V5a2 2 0 0 0-2-2Z"/><path d="M14 21v-5a2 2 0 0 1 2-2h5"/>',
+      emoji:   '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/>',
+      zoom:    '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/>',
+      layout:  '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
+      edit:    '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+      font:    '<path d="M4 20V6a2 2 0 0 1 2-2h4M4 12h6M14 20l4-11 4 11M15.5 16h5"/>',
+      color:   '<circle cx="13.5" cy="6.5" r="1.2"/><circle cx="17.5" cy="10.5" r="1.2"/><circle cx="8.5" cy="7.5" r="1.2"/><circle cx="6.5" cy="12.5" r="1.2"/><path d="M12 2a10 10 0 1 0 0 20 2.5 2.5 0 0 0 2-4 2.5 2.5 0 0 1 2-4h1a5 5 0 0 0 5-5c0-4.4-4.5-7-10-7Z"/>',
+      effect:  '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/><circle cx="12" cy="12" r="2.5"/>',
+      order:   '<path d="M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4"/>',
+      crop:    '<path d="M6 2v14a2 2 0 0 0 2 2h14M2 6h14a2 2 0 0 1 2 2v14"/>',
+      shape:   '<rect x="4" y="4" width="16" height="16" rx="4"/>',
+      adjust:  '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+      replace: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>',
+      trash:   '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/>',
+      done:    '<circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/>',
+    };
+    function ico(name) {
+      return '<svg class="pv-dock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (SVG[name] || '') + '</svg>';
+    }
+    function dockItem(iconName, txt, opts = {}) {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'pv-dock-item';
+      b.className = 'pv-dock-item' + (opts.danger ? ' pv-dock-danger' : '') + (opts.done ? ' pv-dock-done' : '');
       if (opts.id) b.id = opts.id;
       if (opts.pane) b.dataset.pane = opts.pane;
-      b.innerHTML = '<span class="pv-dock-ico">' + ico + '</span><span class="pv-dock-txt">' + txt + '</span>';
+      b.innerHTML = ico(iconName) + '<span class="pv-dock-txt">' + txt + '</span>';
       b.addEventListener('click', () => {
         if (opts.pane) { (openPane === opts.pane) ? closePanel() : openPanel(opts.pane); }
         if (opts.action) opts.action();
@@ -1348,24 +1389,29 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       if (!dockEl) return;
       dockEl.innerHTML = '';
       if (!sel) {
-        dockItem('➕', 'ข้อความ', { id: 'pv-add-text', action: doAddText });
-        dockItem('🖼️', 'โลโก้/รูป', { action: () => logoInput?.click() });
-        if (!IS_ADMIN && api.hasImage()) dockItem('🔍', 'ซูมรูป', { pane: 'pv-panel-zoom' });
-        if (!IS_ADMIN) dockItem('🎨', 'เลือกแบบ', { pane: 'pv-tpl-section' });
+        if (!IS_ADMIN) dockItem('image', 'อัปรูป', { action: () => fileInput?.click() });
+        dockItem('text', 'ข้อความ', { id: 'pv-add-text', action: doAddText });
+        dockItem('image', 'โลโก้/รูป', { action: () => logoInput?.click() });
+        dockItem('sticker', 'สติกเกอร์', { pane: 'pv-panel-sticker' });
+        dockItem('emoji', 'อิโมจิ', { pane: 'pv-panel-emoji' });
+        if (!IS_ADMIN && api.hasImage()) dockItem('zoom', 'ซูมรูป', { pane: 'pv-panel-zoom' });
+        if (!IS_ADMIN) dockItem('layout', 'เลือกแบบ', { pane: 'pv-tpl-section' });
       } else if (sel.type === 'text') {
-        dockItem('✏️', 'แก้ไข', { pane: 'pv-panel-edit' });
-        dockItem('🔤', 'ฟอนต์', { pane: 'pv-pane-font' });
-        dockItem('🎨', 'สี', { pane: 'pv-pane-color' });
-        dockItem('✨', 'เอฟเฟกต์', { pane: 'pv-pane-fx' });
-        dockItem('↕️', 'ลำดับ', { pane: 'pv-panel-order' });
-        dockItem('🗑️', 'ลบ', { action: () => { api.deleteSelected(); } });
+        dockItem('edit', 'แก้ไข', { pane: 'pv-panel-edit' });
+        dockItem('font', 'ฟอนต์', { pane: 'pv-pane-font' });
+        dockItem('color', 'สี', { pane: 'pv-pane-color' });
+        dockItem('effect', 'เอฟเฟกต์', { pane: 'pv-pane-fx' });
+        dockItem('order', 'ลำดับ', { pane: 'pv-panel-order' });
+        dockItem('trash', 'ลบ', { danger: true, action: () => { api.deleteSelected(); } });
+        dockItem('done', 'เสร็จสิ้น', { done: true, id: 'pv-done-text', action: () => api.selectLayer(-1) });
       } else {
-        dockItem('✂️', 'ครอป', { action: () => { setCropMode(true); openPanel('pv-panel-crop'); } });
-        dockItem('📐', 'รูปทรง', { pane: 'pv-panel-shape' });
-        dockItem('🎛️', 'ปรับภาพ', { pane: 'pv-panel-adjust' });
-        dockItem('🔄', 'เปลี่ยนรูป', { action: () => document.getElementById('pv-replace-input')?.click() });
-        dockItem('↕️', 'ลำดับ', { pane: 'pv-panel-order' });
-        dockItem('🗑️', 'ลบ', { action: () => { api.deleteSelected(); } });
+        dockItem('crop', 'ครอป', { action: () => { setCropMode(true); openPanel('pv-panel-crop'); } });
+        dockItem('shape', 'รูปทรง', { pane: 'pv-panel-shape' });
+        dockItem('adjust', 'ปรับภาพ', { pane: 'pv-panel-adjust' });
+        dockItem('replace', 'เปลี่ยนรูป', { action: () => document.getElementById('pv-replace-input')?.click() });
+        dockItem('order', 'ลำดับ', { pane: 'pv-panel-order' });
+        dockItem('trash', 'ลบ', { danger: true, action: () => { api.deleteSelected(); } });
+        dockItem('done', 'เสร็จสิ้น', { done: true, id: 'pv-done-img', action: () => api.selectLayer(-1) });
       }
       dockEl.querySelectorAll('.pv-dock-item').forEach(b => b.classList.toggle('active', !!openPane && b.dataset.pane === openPane));
     }
@@ -1395,6 +1441,9 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
         strokeIn.value = layer.strokeW || 0;
         shadowIn.value = layer.shadow || 0;
         curveIn.value  = layer.curve || 0;
+        setVal('pv-stroke-val', layer.strokeW || 0);
+        setVal('pv-shadow-val', layer.shadow || 0);
+        setVal('pv-curve-val', curveTxt(layer.curve || 0));
         markStroke(layer.strokeColor);
         presetsEl?.querySelectorAll('.pv-preset').forEach(x => x.classList.remove('active'));
         markActiveFont(layer.font || 'Kanit');
@@ -1402,13 +1451,14 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
         // เลือกข้อความ → เปิดแผงแก้ไขให้เลย (รู้ทันทีว่าพิมพ์ตรงไหน)
         openPanel('pv-panel-edit');
       } else {
-        if (sizeImgIn) sizeImgIn.value = Math.round(layer.w);
-        if (radiusIn) radiusIn.value = layer.radius || 0;
-        if (imgZoomIn) imgZoomIn.value = layer.imgZ || 1;
-        if (fltBr) fltBr.value = layer.brP != null ? layer.brP : 100;
-        if (fltCt) fltCt.value = layer.ctP != null ? layer.ctP : 100;
-        if (fltSa) fltSa.value = layer.saP != null ? layer.saP : 100;
-        if (fltBl) fltBl.value = layer.blP || 0;
+        if (sizeImgIn) { sizeImgIn.value = Math.round(layer.w); setVal('pv-size-img-val', Math.round(layer.w)); }
+        if (radiusIn) { radiusIn.value = layer.radius || 0; setVal('pv-radius-val', (layer.radius || 0) >= 100 ? '⭕ วงกลม' : (layer.radius || 0) + '%'); }
+        if (imgZoomIn) { imgZoomIn.value = layer.imgZ || 1; setVal('pv-imgzoom-val', (layer.imgZ || 1).toFixed(1) + '×'); }
+        const _br = layer.brP != null ? layer.brP : 100, _ct = layer.ctP != null ? layer.ctP : 100, _sa = layer.saP != null ? layer.saP : 100, _bl = layer.blP || 0;
+        if (fltBr) { fltBr.value = _br; setVal('pv-flt-br-val', _br + '%'); }
+        if (fltCt) { fltCt.value = _ct; setVal('pv-flt-ct-val', _ct + '%'); }
+        if (fltSa) { fltSa.value = _sa; setVal('pv-flt-sa-val', _sa + '%'); }
+        if (fltBl) { fltBl.value = _bl; setVal('pv-flt-bl-val', _bl.toFixed(1)); }
         refreshDock(layer);
         // รูป: โชว์ dock เฉยๆ (แผงเปิดเมื่อกดเครื่องมือ) — ยกเว้นกำลังครอปอยู่
         if (layer._crop) openPanel('pv-panel-crop'); else closePanel();
@@ -1511,6 +1561,27 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     }
     fileInput?.addEventListener('change', () => { if (fileInput.files[0]) { handleFile(fileInput.files[0]); fileInput.value = ''; } });
 
+    // ── V34: คลังสติกเกอร์ + อิโมจิ (วางเป็นเลเยอร์ข้อความ emoji ขนาดใหญ่) ──
+    const STICKERS = ['⭐','❤️','🎉','🎂','🎈','🎁','👑','🏆','✨','🌟','💯','🔥','💖','🌈','☀️','🌸','🍀','⚡','💎','🎀','📌','✅','🎯','💐'];
+    const EMOJIS = ['😀','😍','🥰','😎','🤩','😂','🥳','😇','😊','🙌','👍','👏','🙏','💪','🤝','👋','🐶','🐱','🌺','🌹','🍰','🍕','☕','🎵','📷','💌','🎓','💼'];
+    function placeEmoji(ch) {
+      api.addTextLayer(ch, { size: 40, bold: false });
+      openPanel('pv-panel-edit');
+      if (hintEl) hintEl.textContent = '👍 ลากเพื่อจัดตำแหน่ง · แผง "แก้ไข" ปรับขนาดได้';
+    }
+    function fillGrid(gridId, arr) {
+      const grid = document.getElementById(gridId);
+      if (!grid) return;
+      arr.forEach(ch => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'pv-emoji-cell'; b.textContent = ch;
+        b.addEventListener('click', () => placeEmoji(ch));
+        grid.appendChild(b);
+      });
+    }
+    fillGrid('pv-sticker-grid', STICKERS);
+    fillGrid('pv-emoji-grid', EMOJIS);
+
     const canvasEl = document.getElementById('preview-canvas');
     canvasEl?.addEventListener('dragover', e => { e.preventDefault(); canvasEl.style.opacity = '.7'; });
     canvasEl?.addEventListener('dragleave', () => { canvasEl.style.opacity = ''; });
@@ -1552,6 +1623,7 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       const w = parseInt(e.target.value, 10) || 60;
       const k = w / Math.max(1, l.w);
       api.updateSelected({ w, h: (l.h || l.w * l.ratio) * k });     // สเกลทั้งกล่อง คงสัดส่วน
+      setVal('pv-size-img-val', w);
     });
     boldBtn?.addEventListener('click', () => {
       const l = api.getSelected(); if (!l || l.type !== 'text') return;
@@ -1754,7 +1826,7 @@ window.TemplateStudio = (function () {
           '</div>',
           '<div class="pvd-body" id="ts-body"></div>',
           '<div class="ts-foot">',
-            '<button type="button" class="btn btn-primary btn-md btn-block" id="ts-save">💾 บันทึกเทมเพลต</button>',
+            '<button type="button" class="btn btn-primary ts-save-btn" id="ts-save">💾 บันทึกเทมเพลต</button>',
           '</div>',
         '</div>',
       ].join('');

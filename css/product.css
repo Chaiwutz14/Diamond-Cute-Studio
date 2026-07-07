@@ -985,3 +985,62 @@
 }
 .ts-caret { font-size: .64rem; color: var(--accent); font-weight: 600; flex-shrink: 0; }
 .ts-bar-body { display: grid; gap: .55rem; padding-bottom: .55rem; }
+
+/* ══ V34: ไอคอนเวกเตอร์ dock (ใหญ่ขึ้น ใช้ง่าย) + badge ตัวเลข + emoji + CTA กะทัดรัด ══ */
+.pvd-dock { gap: .15rem; padding: .4rem .45rem calc(.4rem + env(safe-area-inset-bottom, 0px)); }
+.pv-dock-item { min-width: 66px; padding: .5rem .4rem; gap: .3rem; border-radius: var(--r-lg); }
+.pv-dock-svg { width: 26px; height: 26px; color: var(--text-2); transition: color .12s, transform .1s; }
+.pv-dock-txt { font-size: .68rem; }
+.pv-dock-item:active { background: var(--glass); }
+.pv-dock-item:active .pv-dock-svg { transform: scale(.9); }
+/* กดใช้งาน → ทึบเข้ม (fill) */
+.pv-dock-item.active { background: var(--accent); }
+.pv-dock-item.active .pv-dock-svg { color: #fff; fill: rgba(255,255,255,.18); stroke-width: 2.2; }
+.pv-dock-item.active .pv-dock-txt { color: #fff; font-weight: 800; }
+/* ปุ่มลบ = โทนแดง · เสร็จสิ้น = โทนเขียวเน้น */
+.pv-dock-danger .pv-dock-svg { color: var(--rose, #F43F5E); }
+.pv-dock-danger:active { background: rgba(244,63,94,.12); }
+.pv-dock-done .pv-dock-svg { color: var(--emerald, #10B981); }
+.pv-dock-done .pv-dock-txt { color: var(--emerald, #10B981); font-weight: 700; }
+.pv-dock-done:active { background: rgba(16,185,129,.14); }
+
+/* badge ตัวเลขระดับข้างสไลเดอร์ */
+.pv-val {
+  flex-shrink: 0; min-width: 2.6rem; text-align: center;
+  font-family: var(--font-display); font-weight: 700; font-size: .72rem;
+  color: var(--accent); background: var(--glass);
+  border-radius: 99px; padding: .12rem .4rem;
+}
+
+/* สไลเดอร์ + ปุ่มเครื่องมือ ใหญ่ขึ้น กดง่าย */
+.pv-fx-row { gap: .55rem; margin-top: .55rem; }
+.pv-fx-row input[type=range] { height: 20px; }
+.pv-fx-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.25); cursor: pointer; }
+.pv-fx-row input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.25); cursor: pointer; }
+.pv-mode, .pv-ab-btn, .pv-preset { padding: .45rem .8rem; font-size: .76rem; }
+.pv-swatch { width: 30px; height: 30px; }
+.pv-swatch-sm { width: 24px !important; height: 24px !important; }
+.pv-btn { padding: .5rem .8rem; font-size: .82rem; }
+
+/* คลังสติกเกอร์/อิโมจิ */
+.pv-emoji-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: .3rem; max-height: 30dvh; overflow-y: auto; padding-top: .2rem; }
+.pv-emoji-cell {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; background: var(--bg-mid); border: 1.5px solid var(--border);
+  border-radius: var(--r-md); cursor: pointer; transition: all .12s;
+}
+.pv-emoji-cell:active { transform: scale(.88); background: var(--glass); border-color: var(--accent); }
+
+/* CTA ลูกค้า — กะทัดรัด แถวเดียว */
+.pvd-foot { gap: .5rem; padding: .4rem .6rem calc(.5rem + env(safe-area-inset-bottom, 0px)); }
+.pvd-cta { flex: 1; border-radius: 99px; font-size: .9rem; padding: .7rem 1rem; }
+.pvd-cta-mini {
+  flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--bg-mid); cursor: pointer;
+  font-size: 1.15rem; display: flex; align-items: center; justify-content: center;
+}
+.pvd-cta-mini:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Studio: ปุ่มบันทึกกะทัดรัด */
+.ts-foot { padding: .5rem .85rem calc(.5rem + env(safe-area-inset-bottom, 0px)); }
+.ts-save-btn { width: 100%; border-radius: 99px; padding: .7rem 1rem; font-size: .9rem; }
