@@ -626,7 +626,11 @@
   color: var(--text-2); font-size: 1rem; cursor: pointer;
 }
 .pvd-close:hover { border-color: var(--rose); color: var(--rose); }
-.pvd-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 1rem 1rem 0; }
+.pvd-body {
+  flex: 1; min-height: 0; overflow: hidden;
+  display: flex; flex-direction: column;
+  padding: 0;
+}
 .pvd-canvas-wrap { text-align: center; margin-bottom: .5rem; }
 
 #preview-canvas {
@@ -918,3 +922,66 @@
 .ts-size-chip.active { border-color: var(--accent); background: var(--glass); }
 .ts-size-chip.active .ts-shape { border-color: var(--accent); }
 .ts-size-chip.active .ts-size-name { color: var(--accent); }
+
+
+/* ══ V33: โครง Canva — ภาพบนเสมอ · แผงเหนือ dock · dock ล่างสุด ══ */
+.pvd-layout { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.pvd-stage {
+  flex: 1; min-height: 110px;
+  display: flex; align-items: center; justify-content: center;
+  padding: .6rem .75rem .3rem; overflow: hidden;
+}
+.pvd-stage canvas {
+  max-width: 100%; max-height: 100%;
+  border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.14);
+  touch-action: none;
+}
+.pvd-hintline {
+  flex-shrink: 0; margin: 0 .75rem .35rem; padding: .3rem .6rem;
+  font-size: .68rem; line-height: 1.5;
+}
+.pvd-panel {
+  flex-shrink: 0; max-height: 38dvh; overflow-y: auto;
+  border-top: 1.5px solid var(--border); background: var(--bg-card);
+  padding: .65rem .85rem .55rem;
+  animation: pvPanelUp .18s ease-out;
+}
+@keyframes pvPanelUp { from { transform: translateY(12px); opacity: .4; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pvd-panel { animation: none; } }
+.pvd-panel-tip { font-size: .7rem; color: var(--text-3); margin-bottom: .5rem; line-height: 1.5; }
+.pvd-dock {
+  flex-shrink: 0; display: flex; gap: .25rem;
+  overflow-x: auto; scrollbar-width: none;
+  padding: .3rem .5rem calc(.3rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1.5px solid var(--border); background: var(--bg-card);
+}
+.pvd-dock::-webkit-scrollbar { display: none; }
+.pv-dock-item {
+  flex-shrink: 0; min-width: 60px;
+  display: flex; flex-direction: column; align-items: center; gap: .12rem;
+  background: none; border: none; cursor: pointer;
+  padding: .35rem .45rem; border-radius: var(--r-md);
+  color: var(--text-2); transition: background .12s, color .12s;
+}
+.pv-dock-item:active { background: var(--glass); }
+.pv-dock-item.active { background: var(--glass); color: var(--accent); }
+.pv-dock-item.active .pv-dock-txt { color: var(--accent); font-weight: 700; }
+.pv-dock-ico { font-size: 1.25rem; line-height: 1; }
+.pv-dock-txt { font-family: var(--font-display); font-size: .62rem; font-weight: 600; color: inherit; white-space: nowrap; }
+.pv-dock-item:disabled { opacity: .4; cursor: not-allowed; }
+.pvd-foot {
+  flex-shrink: 0; display: flex; align-items: center; gap: .4rem;
+  padding: .35rem .6rem calc(.5rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border); background: var(--bg-card);
+}
+
+/* ลิ้นชักส่วนบน Studio */
+.ts-bar { padding-top: 0; }
+.ts-bar-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-size: .74rem; color: var(--text-2);
+  padding: .55rem .1rem .45rem;
+}
+.ts-caret { font-size: .64rem; color: var(--accent); font-weight: 600; flex-shrink: 0; }
+.ts-bar-body { display: grid; gap: .55rem; padding-bottom: .55rem; }

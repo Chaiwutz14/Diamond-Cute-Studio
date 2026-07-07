@@ -128,6 +128,7 @@ window.CanvasPreview = (function(){
     let imgOff  = { x: 0, y: 0 };   // ⑤ ตำแหน่งรูปหลัก (ลากเลื่อนได้)
     let imgZoom = 1;                //    ซูมรูปหลัก 1–3 เท่า
     let layers  = [];               // ④ เลเยอร์ข้อความ/รูปเสริม (วาดทับบนสุด)
+    let dragGuides = null;          // V33: เส้นไกด์ตอนลาก {gx, gy, gap:{x,y1,y2,val}}
     let selectedIdx = -1;
     let onSelectionChange = null;   // callback ให้ UI อัปเดต toolbar
     let onLayersChange    = null;
@@ -588,6 +589,68 @@ window.CanvasPreview = (function(){
         }
       }
       drawLayers();
+      drawCropOverlay();
+      drawGuides();
+    }
+
+    // V33: โหมดครอป — ส่วนที่เก็บสีเข้มชัด ส่วนตัดทิ้งจางลง + ตาราง 3×3 (แบบ Canva)
+    function drawCropOverlay() {
+      const l = layers[selectedIdx];
+      if (!l || l.type !== 'image' || !l._crop) return;
+      const b = layerBox(l);
+      ctx.save();
+      // พื้นที่นอกกรอบ (evenodd)
+      ctx.beginPath();
+      ctx.rect(0, 0, logicalW, logicalH);
+      ctx.rect(b.x, b.y, b.w, b.h);
+      try { ctx.clip('evenodd'); } catch (e) { ctx.clip(); }
+      ctx.fillStyle = 'rgba(10,18,30,.55)';
+      ctx.fillRect(0, 0, logicalW, logicalH);
+      // เงารูปเต็ม (ส่วนที่ถูกตัดทิ้ง) แบบจางๆ ให้เห็นว่าลาก/ซูมแล้วได้อะไร
+      const cover = Math.max(b.w / l.img.width, b.h / l.img.height);
+      const sc = cover * (l.imgZ || 1);
+      const sw = l.img.width * sc, sh = l.img.height * sc;
+      ctx.globalAlpha = .4;
+      ctx.drawImage(l.img, b.x + (b.w - sw) / 2 + (l.imgX || 0), b.y + (b.h - sh) / 2 + (l.imgY || 0), sw, sh);
+      ctx.restore();
+      // ขอบขาว + ตาราง 3×3 บนส่วนที่เก็บ
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 2;
+      ctx.strokeRect(b.x, b.y, b.w, b.h);
+      ctx.lineWidth = .8; ctx.strokeStyle = 'rgba(255,255,255,.55)';
+      for (let i = 1; i <= 2; i++) {
+        ctx.beginPath(); ctx.moveTo(b.x + b.w * i / 3, b.y); ctx.lineTo(b.x + b.w * i / 3, b.y + b.h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(b.x, b.y + b.h * i / 3); ctx.lineTo(b.x + b.w, b.y + b.h * i / 3); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // V33: เส้นไกด์กึ่งกลาง + ระยะห่างเท่ากัน (สีชมพูแบบ Canva)
+    function drawGuides() {
+      if (!dragGuides) return;
+      const g = dragGuides;
+      ctx.save();
+      ctx.strokeStyle = '#E01E8F'; ctx.lineWidth = 1.2; ctx.setLineDash([6, 5]);
+      if (g.gx != null) { ctx.beginPath(); ctx.moveTo(g.gx, 0); ctx.lineTo(g.gx, logicalH); ctx.stroke(); }
+      if (g.gy != null) { ctx.beginPath(); ctx.moveTo(0, g.gy); ctx.lineTo(logicalW, g.gy); ctx.stroke(); }
+      if (g.gap) {
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(g.gap.x, g.gap.y1); ctx.lineTo(g.gap.x, g.gap.y2); ctx.stroke();
+        // ป้ายตัวเลขระยะ (เท่ากันบน-ล่าง)
+        const label = String(Math.round(g.gap.val));
+        [ (g.gap.y1 + g.gap.mid) / 2, (g.gap.mid + g.gap.y2) / 2 ].forEach(cy => {
+          ctx.fillStyle = '#E01E8F';
+          const w = 10 + label.length * 6;
+          ctx.beginPath();
+          if (typeof ctx.roundRect === 'function') ctx.roundRect(g.gap.x + 5, cy - 8, w, 16, 8);
+          else ctx.rect(g.gap.x + 5, cy - 8, w, 16);
+          ctx.fill();
+          ctx.fillStyle = '#fff'; ctx.font = "700 9px 'Kanit', sans-serif";
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(label, g.gap.x + 5 + w / 2, cy + .5);
+        });
+      }
+      ctx.restore();
     }
 
     // ─── ④ Interaction: แตะเลือก/ลากเลเยอร์ · ลากรูปหลัก (pointer events = มือถือ+คอม) ───
@@ -640,8 +703,25 @@ window.CanvasPreview = (function(){
             l.imgX = (drag.cx != null ? drag.cx : 0) + (p.x - drag.startX);
             l.imgY = (drag.cy != null ? drag.cy : 0) + (p.y - drag.startY);
           } else {
-            l.x = clamp(p.x - drag.dx, 4, logicalW - 4);
-            l.y = clamp(p.y - drag.dy, 4, logicalH - 4);
+            let nx = clamp(p.x - drag.dx, 4, logicalW - 4);
+            let ny = clamp(p.y - drag.dy, 4, logicalH - 4);
+            // V33: snap กึ่งกลาง + ระยะห่างเท่ากันระหว่างบรรทัด (พร้อมเส้นไกด์)
+            const SN = 6;
+            const g = { gx: null, gy: null, gap: null };
+            if (Math.abs(nx - logicalW / 2) < SN) { nx = logicalW / 2; g.gx = nx; }
+            if (Math.abs(ny - logicalH / 2) < SN) { ny = logicalH / 2; g.gy = ny; }
+            const others = layers.filter((o, k) => k !== drag.idx && o.type === 'text').map(o => o.y).sort((a, b) => a - b);
+            const prev = others.filter(y => y < ny - 2).pop();
+            const next = others.find(y => y > ny + 2);
+            if (prev != null && next != null) {
+              const mid = (prev + next) / 2;
+              if (Math.abs(ny - mid) < SN) {
+                ny = mid;
+                g.gap = { x: Math.min(logicalW - 40, nx + 14), y1: prev, y2: next, mid: ny, val: (next - prev) / 2 };
+              }
+            }
+            l.x = nx; l.y = ny;
+            dragGuides = (g.gx != null || g.gy != null || g.gap) ? g : null;
           }
           render();
         } else if (drag.kind === 'photo' && drag.moved) {
@@ -655,6 +735,7 @@ window.CanvasPreview = (function(){
       let lastTap = { t: 0, idx: -1 };
       const endDrag = ev => {
         if (!drag) return;
+        if (dragGuides) { dragGuides = null; render(); }   // V33: เก็บเส้นไกด์
         const wasTap = !drag.moved;
         const kind = drag.kind;
         const idx = drag.idx;
@@ -844,43 +925,28 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       '</button>').join('');
 
     body.innerHTML = [
-      '<div class="preview-tool-inner">',
-        '<div class="preview-howto">💡 <b>① เลือกแบบด้านล่าง</b> → <b>② แตะข้อความเพื่อแก้</b> (แตะ 2 ครั้ง = พิมพ์ทันที) → <b>③ ลากเพื่อย้าย</b> · เพิ่มข้อความ/รูปได้ไม่จำกัด</div>',
-        '<div class="pvd-canvas-wrap">',
-          '<canvas id="preview-canvas" title="แตะเพื่ออัปโหลด/เลือกชิ้นงาน"></canvas>',
+      // ═══ V33: โครงแบบ Canva — ภาพอยู่บนเสมอ (ย่ออัตโนมัติ) · แผงเด้ง "เหนือ" dock · dock ไอคอน+ข้อความล่างสุด ═══
+      '<div class="pvd-layout">',
+        '<div class="pvd-stage" id="pvd-stage">',
+          '<canvas id="preview-canvas" title="แตะเพื่อเลือกชิ้นงาน"></canvas>',
         '</div>',
-        '<div id="preview-upload-hint" class="preview-hint" style="text-align:center">📌 แตะที่รูปเพื่ออัปโหลด · แตะข้อความเพื่อเลือกแล้วลากจัดตำแหน่ง</div>',
+        '<div id="preview-upload-hint" class="preview-hint pvd-hintline">💡 <b>① เลือกแบบ</b> → <b>② แตะข้อความเพื่อแก้</b> (แตะ 2 ครั้ง = พิมพ์ทันที) → <b>③ ลากเพื่อย้าย</b></div>',
 
-        '<div class="pv-zoom-row" id="pv-zoom-row" style="display:none">',
-          '<span>🔍</span>',
-          '<input type="range" id="pv-zoom" min="1" max="3" step="0.02" value="1" aria-label="ซูมรูป">',
-          '<span class="pv-zoom-hint">ลากรูปเพื่อเลื่อนตำแหน่งได้</span>',
-        '</div>',
+        // ── แผงเครื่องมือ (โผล่เหนือ dock ทีละแผง) ──
+        '<div class="pvd-panel" id="pv-panel" style="display:none">',
 
-        '<div class="pv-add-row">',
-          '<button type="button" class="pv-btn" id="pv-add-text">➕ ข้อความ</button>',
-          '<label class="pv-btn" style="cursor:pointer">➕ โลโก้/รูปเสริม<input type="file" id="pv-logo-input" accept="image/*" style="display:none"></label>',
-        '</div>',
-
-        '<div class="pv-layer-bar" id="pv-layer-bar" style="display:none">',
-          '<div class="pv-layer-row" id="pv-text-row">',
-            '<input type="text" class="form-input pv-text-input" id="pv-text-input" maxlength="60" placeholder="พิมพ์ข้อความ...">',
-          '</div>',
-          '<div class="pv-layer-row">',
-            '<span class="pv-row-ico" title="ขนาด">🔠</span>',
-            '<input type="range" id="pv-size" min="10" max="72" step="1" title="ขนาด" aria-label="ขนาด">',
-            '<button type="button" class="pv-mini-btn" id="pv-bold" title="ตัวหนา"><b>B</b></button>',
-            '<button type="button" class="pv-mini-btn pv-del" id="pv-del" title="ลบชิ้นนี้">🗑️</button>',
-          '</div>',
-          // V30: แผงปรับแต่งแบบแท็บ — มินิมอล ครบเครื่องแบบ Canva
-          '<div class="pv-tabs" id="pv-tabs">',
-            '<button type="button" class="pv-tab active" data-tab="color">🎨 สี</button>',
-            '<button type="button" class="pv-tab" data-tab="fx">✨ เอฟเฟกต์</button>',
-            '<button type="button" class="pv-tab" data-tab="font">🔤 ฟอนต์</button>',
+          '<div class="pv-pane" id="pv-panel-edit" style="display:none">',
+            '<div class="pv-layer-row" id="pv-text-row">',
+              '<input type="text" class="form-input pv-text-input" id="pv-text-input" maxlength="60" placeholder="พิมพ์ข้อความ...">',
+            '</div>',
+            '<div class="pv-layer-row">',
+              '<span class="pv-row-ico" title="ขนาด">🔠</span>',
+              '<input type="range" id="pv-size" min="10" max="72" step="1" aria-label="ขนาด">',
+              '<button type="button" class="pv-mini-btn" id="pv-bold" title="ตัวหนา"><b>B</b></button>',
+            '</div>',
           '</div>',
 
-          // ── แท็บสี: โหมดสีเดียว/ไล่เฉด/รุ้ง + จานสี + ปรับสีเอง (ไม่มี dialog ระบบอีกต่อไป) ──
-          '<div class="pv-pane" id="pv-pane-color">',
+          '<div class="pv-pane" id="pv-pane-color" style="display:none">',
             '<div class="pv-mode-row" id="pv-color-modes">',
               '<button type="button" class="pv-mode active" data-mode="solid">สีเดียว</button>',
               '<button type="button" class="pv-mode" data-mode="gradient">ไล่เฉด</button>',
@@ -906,7 +972,6 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
             '</div>',
           '</div>',
 
-          // ── แท็บเอฟเฟกต์: preset สำเร็จ + สไลเดอร์ละเอียด (ขอบ/เงา/โค้ง) ──
           '<div class="pv-pane" id="pv-pane-fx" style="display:none">',
             '<div class="pv-preset-row" id="pv-presets">',
               '<button type="button" class="pv-preset" data-p="none">ธรรมดา</button>',
@@ -921,8 +986,18 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
             '<div class="pv-fx-row"><span class="pv-fx-label">🌈 โค้ง</span><input type="range" id="pv-curve" min="-100" max="100" step="2" value="0"><button type="button" class="pv-mini-btn" id="pv-curve-reset" title="คืนตรง">↺</button></div>',
           '</div>',
 
-          // ── V31: แผงเลเยอร์รูป (โผล่เมื่อเลือกรูป/โลโก้) — ครอปอิสระ + มุมมน 0→วงกลม ──
-          '<div class="pv-pane" id="pv-pane-img" style="display:none">',
+          '<div class="pv-pane" id="pv-pane-font" style="display:none">',
+            '<div class="pv-font-menu pv-font-inline" id="pv-font-menu" role="listbox">', fontMenuItems, '</div>',
+          '</div>',
+
+          // รูป: ครอป / รูปทรง / ปรับภาพ
+          '<div class="pv-pane" id="pv-panel-crop" style="display:none">',
+            '<div class="pvd-panel-tip">✂️ ลากบนรูป = เลื่อนรูปในกรอบ · ส่วนจาง = ถูกตัดทิ้ง</div>',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🔍 ซูมใน</span><input type="range" id="pv-imgzoom" min="1" max="3" step="0.02" value="1" aria-label="ซูมรูปในกรอบ"></div>',
+            '<button type="button" class="pv-btn" id="pv-crop-toggle" style="width:100%;justify-content:center">✅ เสร็จสิ้นการครอป</button>',
+          '</div>',
+          '<div class="pv-pane" id="pv-panel-shape" style="display:none">',
+            '<div class="pv-fx-row"><span class="pv-fx-label">🔠 ขนาด</span><input type="range" id="pv-size-img" min="24" max="240" step="1" aria-label="ขนาดรูป"></div>',
             '<div class="pv-fx-row">',
               '<span class="pv-fx-label">📐 สัดส่วน</span>',
               '<div class="pv-preset-row" id="pv-aspects" style="padding-bottom:0">',
@@ -933,38 +1008,49 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
               '</div>',
             '</div>',
             '<div class="pv-fx-row"><span class="pv-fx-label">⭕ มุมมน</span><input type="range" id="pv-radius" min="0" max="100" step="1" value="0"><span class="pv-fx-hint" id="pv-radius-hint"></span></div>',
-            '<div class="pv-fx-row">',
-              '<button type="button" class="pv-btn" id="pv-crop-toggle">✂️ ครอปรูป</button>',
-              '<input type="range" id="pv-imgzoom" min="1" max="3" step="0.02" value="1" style="display:none" aria-label="ซูมรูปในกรอบ">',
-            '</div>',
-            '<div class="pv-fx-row">',
-              '<label class="pv-btn" style="cursor:pointer">🔄 เปลี่ยนรูป<input type="file" id="pv-replace-input" accept="image/*" style="display:none"></label>',
-              '<button type="button" class="pv-btn" id="pv-to-back">⬇️ ไปหลังสุด</button>',
-              '<button type="button" class="pv-btn" id="pv-to-front">⬆️ มาหน้าสุด</button>',
-            '</div>',
-            // V32: เครื่องมือปรับภาพ
+          '</div>',
+          '<div class="pv-pane" id="pv-panel-adjust" style="display:none">',
             '<div class="pv-fx-row"><span class="pv-fx-label">☀️ สว่าง</span><input type="range" id="pv-flt-br" min="40" max="160" step="2" value="100"></div>',
             '<div class="pv-fx-row"><span class="pv-fx-label">◐ คมชัด</span><input type="range" id="pv-flt-ct" min="40" max="160" step="2" value="100"></div>',
             '<div class="pv-fx-row"><span class="pv-fx-label">🌈 สีสด</span><input type="range" id="pv-flt-sa" min="0" max="200" step="4" value="100"></div>',
             '<div class="pv-fx-row"><span class="pv-fx-label">💧 เบลอ</span><input type="range" id="pv-flt-bl" min="0" max="6" step="0.2" value="0"><button type="button" class="pv-mini-btn" id="pv-flt-reset" title="คืนค่าเดิม">↺</button></div>',
           '</div>',
+          '<div class="pv-pane" id="pv-panel-order" style="display:none">',
+            '<div class="pv-add-row" style="margin:0">',
+              '<button type="button" class="pv-btn" id="pv-to-back">⬇️ ไปหลังสุด</button>',
+              '<button type="button" class="pv-btn" id="pv-to-front">⬆️ มาหน้าสุด</button>',
+            '</div>',
+          '</div>',
 
-          // ── แท็บฟอนต์ (16 แบบ แสดงด้วยฟอนต์ตัวเอง) ──
-          '<div class="pv-pane" id="pv-pane-font" style="display:none">',
-            '<div class="pv-font-menu pv-font-inline" id="pv-font-menu" role="listbox">', fontMenuItems, '</div>',
+          // ซูม/เลื่อนรูปพื้น (ลูกค้า)
+          '<div class="pv-pane" id="pv-panel-zoom" style="display:none">',
+            '<div class="pv-zoom-row" id="pv-zoom-row" style="margin:0;max-width:none">',
+              '<span>🔍</span>',
+              '<input type="range" id="pv-zoom" min="1" max="3" step="0.02" value="1" aria-label="ซูมรูป">',
+              '<span class="pv-zoom-hint">ลากรูปเพื่อเลื่อนตำแหน่งได้</span>',
+            '</div>',
+          '</div>',
+
+          // เลือกแบบ + caption (ลูกค้า)
+          '<div class="pv-pane" id="pv-tpl-section" style="display:none">',
+            '<div class="template-scroll" id="template-chips-row"></div>',
+            '<div style="margin-top:.6rem" id="pv-caption-row"><input class="form-input" id="preview-caption" maxlength="60" placeholder="ข้อความใต้รูป (ไม่บังคับ) เช่น Happy Birthday 🎂" style="font-size:.85rem"></div>',
           '</div>',
         '</div>',
 
-        '<div style="display:flex;gap:.5rem;margin-bottom:.9rem" id="pv-upload-row">',
-          '<label class="btn btn-secondary btn-md" style="flex:1;border-radius:var(--r-lg);cursor:pointer;justify-content:center">📤 เลือกรูปจากเครื่อง<input type="file" id="preview-file-input" accept="image/*" style="display:none"></label>',
-          '<button class="btn btn-ghost btn-md" id="preview-download-btn" style="border-radius:var(--r-lg)" title="บันทึกภาพตัวอย่าง" disabled>💾</button>',
+        // ── Dock ไอคอน+ข้อความ (เปลี่ยนตามสิ่งที่เลือก) ──
+        '<div class="pvd-dock" id="pv-dock"></div>',
+
+        // ── แถวปุ่มหลัก (ลูกค้า) ──
+        '<div class="pvd-foot" id="pv-upload-row">',
+          '<label class="pv-dock-item" style="cursor:pointer" title="อัปโหลดรูปหลัก"><span class="pv-dock-ico">📤</span><span class="pv-dock-txt">อัปรูป</span><input type="file" id="preview-file-input" accept="image/*" style="display:none"></label>',
+          '<button class="pv-dock-item" id="preview-download-btn" disabled title="บันทึกภาพ"><span class="pv-dock-ico">💾</span><span class="pv-dock-txt">บันทึก</span></button>',
+          '<button class="btn btn-primary btn-md" id="preview-attach-btn" style="flex:1;border-radius:var(--r-lg)" disabled>📎 ใช้แบบนี้ในออเดอร์</button>',
         '</div>',
-        '<button class="btn btn-primary btn-md btn-block" id="preview-attach-btn" style="margin-bottom:.9rem" disabled>📎 ใช้แบบนี้ในออเดอร์</button>',
-        '<div style="margin-bottom:.9rem" id="pv-caption-row"><input class="form-input" id="preview-caption" maxlength="60" placeholder="ข้อความใต้รูป (ไม่บังคับ) เช่น Happy Birthday 🎂" style="font-size:.85rem"></div>',
-        '<div style="padding-bottom:1.2rem" id="pv-tpl-section">',
-          '<div class="preview-tpl-label">🎨 เลือกแบบ</div>',
-          '<div class="template-scroll" id="template-chips-row"></div>',
-        '</div>',
+
+        // input แฝง (เลเยอร์รูป)
+        '<input type="file" id="pv-logo-input" accept="image/*" style="display:none">',
+        '<input type="file" id="pv-replace-input" accept="image/*" style="display:none">',
       '</div>'
     ].join('');
 
@@ -986,8 +1072,21 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     const boldBtn   = document.getElementById('pv-bold');
     const delBtn    = document.getElementById('pv-del');
     const capRow    = document.getElementById('pv-caption-row');
-    const tabsEl    = document.getElementById('pv-tabs');
-    const panes     = { color: document.getElementById('pv-pane-color'), fx: document.getElementById('pv-pane-fx'), font: document.getElementById('pv-pane-font') };
+    // ── V33: ระบบแผง (เด้งเหนือ dock) + dock ไอคอน ──
+    const panelEl = document.getElementById('pv-panel');
+    const dockEl  = document.getElementById('pv-dock');
+    const PANES = {};
+    ['pv-panel-edit','pv-pane-color','pv-pane-fx','pv-pane-font','pv-panel-crop','pv-panel-shape',
+     'pv-panel-adjust','pv-panel-order','pv-panel-zoom','pv-tpl-section'].forEach(id => { PANES[id] = document.getElementById(id); });
+    let openPane = null;
+    function openPanel(id) {
+      openPane = id;
+      Object.keys(PANES).forEach(k => { if (PANES[k]) PANES[k].style.display = (k === id) ? '' : 'none'; });
+      if (panelEl) panelEl.style.display = id ? '' : 'none';
+      dockEl?.querySelectorAll('.pv-dock-item').forEach(b => b.classList.toggle('active', b.dataset.pane === id));
+    }
+    function closePanel() { openPanel(null); }
+    const sizeImgIn = document.getElementById('pv-size-img');
     const swatchBox = document.getElementById('pv-swatches');
     const modesEl   = document.getElementById('pv-color-modes');
     const gradRow   = document.getElementById('pv-grad-row');
@@ -1114,29 +1213,27 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     curveIn?.addEventListener('input', e => api.updateSelected({ curve: parseInt(e.target.value, 10) || 0 }));
     document.getElementById('pv-curve-reset')?.addEventListener('click', () => { curveIn.value = 0; api.updateSelected({ curve: 0 }); });
 
-    // ── V31: แผงเลเยอร์รูป ──
-    const imgPane   = document.getElementById('pv-pane-img');
+    // ── V31/33: เครื่องมือเลเยอร์รูป ──
     const radiusIn  = document.getElementById('pv-radius');
-    const cropBtn   = document.getElementById('pv-crop-toggle');
+    const cropBtn   = document.getElementById('pv-crop-toggle');   // V33: ปุ่ม "เสร็จสิ้นการครอป"
     const imgZoomIn = document.getElementById('pv-imgzoom');
     const aspectsEl = document.getElementById('pv-aspects');
+    function setCropMode(on) {
+      const l = api.getSelected(); if (!l || l.type !== 'image') return;
+      l._crop = !!on;
+      if (on) {
+        imgZoomIn.value = l.imgZ || 1;
+        if (hintEl) hintEl.innerHTML = '✂️ <b>ลากบนรูป = เลื่อนรูปในกรอบ</b> · ส่วนจาง = ถูกตัดทิ้ง · เสร็จแล้วกด ✅';
+      } else if (hintEl) hintEl.textContent = '📌 ลากเพื่อจัดตำแหน่ง · แตะชิ้นอื่นเพื่อสลับ';
+      api.render();
+    }
 
     radiusIn?.addEventListener('input', e => {
       api.updateSelected({ radius: parseInt(e.target.value, 10) || 0 });
       const hint = document.getElementById('pv-radius-hint');
       if (hint) hint.textContent = e.target.value >= 100 ? '⭕' : (e.target.value > 0 ? e.target.value + '%' : '');
     });
-    cropBtn?.addEventListener('click', () => {
-      const l = api.getSelected(); if (!l || l.type !== 'image') return;
-      l._crop = !l._crop;
-      cropBtn.classList.toggle('active', l._crop);
-      imgZoomIn.style.display = l._crop ? '' : 'none';
-      imgZoomIn.value = l.imgZ || 1;
-      if (hintEl) hintEl.textContent = l._crop
-        ? '✂️ โหมดครอป: ลากบนรูปเพื่อเลื่อนรูปในกรอบ · เลื่อนแถบเพื่อซูม · กด ✂️ อีกครั้งเพื่อเสร็จ'
-        : '📌 ลากเพื่อจัดตำแหน่ง · แตะชิ้นอื่นเพื่อสลับ';
-      api.render();
-    });
+    cropBtn?.addEventListener('click', () => { setCropMode(false); closePanel(); });   // ✅ เสร็จสิ้นการครอป
     imgZoomIn?.addEventListener('input', e => api.updateSelected({ imgZ: clampNum(parseFloat(e.target.value) || 1, 1, 3) }));
     function clampNum(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
     aspectsEl?.querySelectorAll('.pv-preset').forEach(b => {
@@ -1172,13 +1269,6 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       if (fltSa) fltSa.value = 100; if (fltBl) fltBl.value = 0;
     });
 
-    // ── V30: แท็บ ──
-    tabsEl?.querySelectorAll('.pv-tab').forEach(t => {
-      t.addEventListener('click', () => {
-        tabsEl.querySelectorAll('.pv-tab').forEach(x => x.classList.toggle('active', x === t));
-        Object.keys(panes).forEach(k => { if (panes[k]) panes[k].style.display = (k === t.dataset.tab) ? '' : 'none'; });
-      });
-    });
 
     function refreshActionButtons() {
       const has = api.hasContent();
@@ -1233,20 +1323,63 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       });
     });
 
-    // ── V30: sync แผงทั้งหมดให้ตรงกับชิ้นที่เลือก ──
+    // ── V33: Dock — ไอคอน+ข้อความ เปลี่ยนตามสิ่งที่เลือก · แผงเด้งเหนือ dock ──
+    function doAddText() {
+      api.addTextLayer('');
+      openPanel('pv-panel-edit');
+      setTimeout(() => { try { textIn.focus(); } catch (e) {} }, 60);
+      if (hintEl) hintEl.textContent = '✍️ พิมพ์ข้อความในช่องด้านล่าง แล้วลากบนภาพเพื่อจัดตำแหน่ง';
+    }
+    function dockItem(ico, txt, opts = {}) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pv-dock-item';
+      if (opts.id) b.id = opts.id;
+      if (opts.pane) b.dataset.pane = opts.pane;
+      b.innerHTML = '<span class="pv-dock-ico">' + ico + '</span><span class="pv-dock-txt">' + txt + '</span>';
+      b.addEventListener('click', () => {
+        if (opts.pane) { (openPane === opts.pane) ? closePanel() : openPanel(opts.pane); }
+        if (opts.action) opts.action();
+      });
+      dockEl.appendChild(b);
+      return b;
+    }
+    function refreshDock(sel) {
+      if (!dockEl) return;
+      dockEl.innerHTML = '';
+      if (!sel) {
+        dockItem('➕', 'ข้อความ', { id: 'pv-add-text', action: doAddText });
+        dockItem('🖼️', 'โลโก้/รูป', { action: () => logoInput?.click() });
+        if (!IS_ADMIN && api.hasImage()) dockItem('🔍', 'ซูมรูป', { pane: 'pv-panel-zoom' });
+        if (!IS_ADMIN) dockItem('🎨', 'เลือกแบบ', { pane: 'pv-tpl-section' });
+      } else if (sel.type === 'text') {
+        dockItem('✏️', 'แก้ไข', { pane: 'pv-panel-edit' });
+        dockItem('🔤', 'ฟอนต์', { pane: 'pv-pane-font' });
+        dockItem('🎨', 'สี', { pane: 'pv-pane-color' });
+        dockItem('✨', 'เอฟเฟกต์', { pane: 'pv-pane-fx' });
+        dockItem('↕️', 'ลำดับ', { pane: 'pv-panel-order' });
+        dockItem('🗑️', 'ลบ', { action: () => { api.deleteSelected(); } });
+      } else {
+        dockItem('✂️', 'ครอป', { action: () => { setCropMode(true); openPanel('pv-panel-crop'); } });
+        dockItem('📐', 'รูปทรง', { pane: 'pv-panel-shape' });
+        dockItem('🎛️', 'ปรับภาพ', { pane: 'pv-panel-adjust' });
+        dockItem('🔄', 'เปลี่ยนรูป', { action: () => document.getElementById('pv-replace-input')?.click() });
+        dockItem('↕️', 'ลำดับ', { pane: 'pv-panel-order' });
+        dockItem('🗑️', 'ลบ', { action: () => { api.deleteSelected(); } });
+      }
+      dockEl.querySelectorAll('.pv-dock-item').forEach(b => b.classList.toggle('active', !!openPane && b.dataset.pane === openPane));
+    }
+
+    // ── V33: sync ค่าทุกคอนโทรลให้ตรงกับชิ้นที่เลือก + จัด dock/แผง ──
     function syncToolbar(layer) {
-      if (!layer) { layerBar.style.display = 'none'; return; }
-      layerBar.style.display = '';
+      if (!layer) {
+        // ออกจากโหมดครอปค้าง (ถ้ามี)
+        closePanel();
+        refreshDock(null);
+        return;
+      }
       const isText = layer.type === 'text';
-      textRow.style.display = isText ? '' : 'none';
-      tabsEl.style.display  = isText ? '' : 'none';
-      boldBtn.style.display = isText ? '' : 'none';
-      Object.keys(panes).forEach(k => { if (panes[k]) panes[k].style.display = 'none'; });
-      if (imgPane) imgPane.style.display = 'none';
       if (isText) {
-        // เปิดแท็บสีเป็นค่าเริ่ม
-        tabsEl.querySelectorAll('.pv-tab').forEach(x => x.classList.toggle('active', x.dataset.tab === 'color'));
-        if (panes.color) panes.color.style.display = '';
         textIn.value = layer.text;
         sizeIn.min = 10; sizeIn.max = 72; sizeIn.value = layer.size;
         boldBtn.classList.toggle('active', !!layer.bold);
@@ -1264,18 +1397,21 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
         curveIn.value  = layer.curve || 0;
         markStroke(layer.strokeColor);
         presetsEl?.querySelectorAll('.pv-preset').forEach(x => x.classList.remove('active'));
-        // ฟอนต์
         markActiveFont(layer.font || 'Kanit');
+        refreshDock(layer);
+        // เลือกข้อความ → เปิดแผงแก้ไขให้เลย (รู้ทันทีว่าพิมพ์ตรงไหน)
+        openPanel('pv-panel-edit');
       } else {
-        sizeIn.min = 24; sizeIn.max = 240; sizeIn.value = Math.round(layer.w);
-        if (imgPane) imgPane.style.display = '';
+        if (sizeImgIn) sizeImgIn.value = Math.round(layer.w);
         if (radiusIn) radiusIn.value = layer.radius || 0;
-        if (cropBtn) cropBtn.classList.toggle('active', !!layer._crop);
-        if (imgZoomIn) { imgZoomIn.style.display = layer._crop ? '' : 'none'; imgZoomIn.value = layer.imgZ || 1; }
+        if (imgZoomIn) imgZoomIn.value = layer.imgZ || 1;
         if (fltBr) fltBr.value = layer.brP != null ? layer.brP : 100;
         if (fltCt) fltCt.value = layer.ctP != null ? layer.ctP : 100;
         if (fltSa) fltSa.value = layer.saP != null ? layer.saP : 100;
         if (fltBl) fltBl.value = layer.blP || 0;
+        refreshDock(layer);
+        // รูป: โชว์ dock เฉยๆ (แผงเปิดเมื่อกดเครื่องมือ) — ยกเว้นกำลังครอปอยู่
+        if (layer._crop) openPanel('pv-panel-crop'); else closePanel();
       }
     }
 
@@ -1285,6 +1421,7 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       onEmptyTap: () => { if (!IS_ADMIN && !api.hasImage()) fileInput?.click(); },
       onLayerDoubleTap: (l) => {                                  // V32: แตะสองครั้ง = แก้ทันที
         if (l.type === 'text') {
+          openPanel('pv-panel-edit');
           textIn?.focus();
           try { textIn.select(); } catch (e) {}
           if (hintEl) hintEl.textContent = '✍️ พิมพ์แก้ข้อความได้เลย — เสร็จแล้วแตะที่อื่นเพื่อวาง';
@@ -1365,8 +1502,8 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       try {
         await api.loadImage(file);
         refreshActionButtons();
-        zoomRow.style.display = '';
         zoomIn.value = 1;
+        if (!api.getSelected()) { refreshDock(null); openPanel('pv-panel-zoom'); }   // V33: ซูมอยู่ในแผงเหนือ dock
         hintEl.textContent = '✅ อัปโหลดแล้ว — ลากรูปเพื่อเลื่อน · เลื่อน 🔍 เพื่อซูม · เพิ่มข้อความได้เลย';
       } catch (e) {
         DMC.toast(e.message || 'โหลดรูปไม่สำเร็จ', 'error');
@@ -1384,14 +1521,7 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
 
     zoomIn?.addEventListener('input', e => api.setPhotoZoom(e.target.value));
 
-    // ─── เลเยอร์ ───
-    document.getElementById('pv-add-text')?.addEventListener('click', () => {
-      api.addTextLayer('ข้อความ');
-      hintEl.textContent = '✍️ พิมพ์ข้อความในช่องด้านล่าง แล้วลากบนรูปเพื่อจัดตำแหน่ง';
-      textIn?.focus();
-      try { textIn.select(); } catch (e) {}
-    });
-
+    // ─── เลเยอร์ ─── (ปุ่มเพิ่มข้อความย้ายไปอยู่ใน dock → doAddText)
     const logoInput = document.getElementById('pv-logo-input');
     logoInput?.addEventListener('change', async () => {
       const f = logoInput.files[0];
@@ -1414,13 +1544,14 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     // (V30: สีย้ายไปแท็บสี — จานสี + HSL picker ของระบบเราเอง)
     // (V29: การเลือกฟอนต์ย้ายไปที่เมนู .pv-font-item ด้านบน)
     sizeIn?.addEventListener('input',  e => {
-      const l = api.getSelected(); if (!l) return;
-      if (l.type === 'text') api.updateSelected({ size: parseInt(e.target.value, 10) || 16 });
-      else {
-        const w = parseInt(e.target.value, 10) || 60;
-        const k = w / Math.max(1, l.w);
-        api.updateSelected({ w, h: (l.h || l.w * l.ratio) * k });   // สเกลทั้งกล่อง คงสัดส่วน
-      }
+      const l = api.getSelected(); if (!l || l.type !== 'text') return;
+      api.updateSelected({ size: parseInt(e.target.value, 10) || 16 });
+    });
+    sizeImgIn?.addEventListener('input', e => {
+      const l = api.getSelected(); if (!l || l.type !== 'image') return;
+      const w = parseInt(e.target.value, 10) || 60;
+      const k = w / Math.max(1, l.w);
+      api.updateSelected({ w, h: (l.h || l.w * l.ratio) * k });     // สเกลทั้งกล่อง คงสัดส่วน
     });
     boldBtn?.addEventListener('click', () => {
       const l = api.getSelected(); if (!l || l.type !== 'text') return;
@@ -1461,6 +1592,9 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
         }
       });
     });
+  // ── V33: สร้าง dock เริ่มต้น (ยังไม่เลือกอะไร) ──
+  try { syncToolbar(null); } catch (e) {}
+
   // ── V31: โหมดแอดมิน (Template Studio) — ตัดส่วนที่ผูกกับออเดอร์ออก ──
   if (IS_ADMIN) {
     ['preview-attach-btn', 'pv-caption-row', 'pv-upload-row', 'pv-tpl-section'].forEach(id => {
@@ -1591,6 +1725,8 @@ window.TemplateStudio = (function () {
             '<button type="button" class="pvd-close" id="ts-close" aria-label="ปิด">✕</button>',
           '</div>',
           '<div class="ts-bar">',
+            '<button type="button" class="ts-bar-toggle" id="ts-bar-toggle" aria-expanded="true">⚙️ ตั้งค่าเทมเพลต (ชื่อ · ขนาด · พื้นหลัง) <span class="ts-caret" id="ts-caret">▲ พับเก็บ</span></button>',
+            '<div class="ts-bar-body" id="ts-bar-body">',
             '<input class="form-input" id="ts-name" maxlength="30" placeholder="ชื่อเทมเพลต เช่น บัตรพนักงานเขียว" style="font-size:.85rem">',
             // V32: ชิปขนาดแบบเห็นรูปทรงจริง (ไม่มี dialog ระบบ)
             '<div class="ts-row-label">📐 ขนาดผืนงาน <span>(แตะเพื่อเลือก)</span></div>',
@@ -1614,6 +1750,7 @@ window.TemplateStudio = (function () {
               '<input type="range" id="ts-hue" class="pv-hue" min="0" max="360" step="1" value="160" aria-label="เฉดสีพื้น">',
               '<input type="range" id="ts-light" class="pv-light" min="8" max="97" step="1" value="90" aria-label="ความสว่างพื้น">',
             '</div>',
+            '</div>',   // ปิด ts-bar-body
           '</div>',
           '<div class="pvd-body" id="ts-body"></div>',
           '<div class="ts-foot">',
@@ -1624,6 +1761,17 @@ window.TemplateStudio = (function () {
       document.body.appendChild(modal);
       modal.style.cssText = 'position:fixed;inset:0;z-index:9500;display:flex;background:rgba(10,25,20,.45);align-items:center;justify-content:center;';
       document.getElementById('ts-close').addEventListener('click', close);
+
+      // V33: ลิ้นชักพับเก็บ/กางออก — ส่วนตั้งค่าไม่บังพื้นที่แต่งงานอีกต่อไป
+      document.getElementById('ts-bar-toggle').addEventListener('click', () => {
+        const bodyEl = document.getElementById('ts-bar-body');
+        const caret = document.getElementById('ts-caret');
+        const tog = document.getElementById('ts-bar-toggle');
+        const open = bodyEl.style.display === 'none';
+        bodyEl.style.display = open ? '' : 'none';
+        caret.textContent = open ? '▲ พับเก็บ' : '▼ กางออก';
+        tog.setAttribute('aria-expanded', String(open));
+      });
 
       // พื้นหลัง
       const bgWrap = document.getElementById('ts-bgs');
@@ -1703,6 +1851,8 @@ window.TemplateStudio = (function () {
     szWrap.querySelectorAll('.ts-size-chip').forEach((x, i) => x.classList.toggle('active', i === 0));
     document.getElementById('ts-bg-clear').style.display = 'none';
     document.getElementById('ts-hsl').style.display = 'none';
+    document.getElementById('ts-bar-body').style.display = '';
+    document.getElementById('ts-caret').textContent = '▲ พับเก็บ';
 
     // โหมดแก้ไขเทมเพลตเดิม
     if (editingId) {
