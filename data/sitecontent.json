@@ -1,77 +1,74 @@
 {
-  "generatedAt": "2026-07-05T21:54:17.125Z",
+  "generatedAt": "2026-07-08T04:42:26.069Z",
   "data": {
-    "updatedAt": {
-      "seconds": 1783017899
-    },
-    "fees": {
-      "shipCod": 50,
-      "surchargePromptpay": 0,
-      "freeShipMin": 0,
-      "surchargeCod": 0,
-      "shipTransfer": 30
+    "stats": {
+      "rating": "4.9/5",
+      "days": "1-3",
+      "orders": "500+"
     },
     "payment": {
+      "qrImageUrl": "",
       "methods": {
-        "truemoney": {
-          "shown": true,
-          "ready": false
-        },
         "promptpay": {
           "ready": true,
           "shown": true
         },
         "cod": {
+          "shown": true,
+          "ready": false
+        },
+        "credit": {
           "ready": false,
           "shown": true
         },
-        "credit": {
-          "shown": true,
-          "ready": false
+        "truemoney": {
+          "ready": false,
+          "shown": true
         }
       },
       "promptpayName": "นาย ชัยวุฒิ บุญชูวงศ์",
-      "promptpayId": "0809987611",
-      "qrImageUrl": ""
+      "promptpayId": "0809987611"
     },
-    "promo": {
-      "tag": "🎁 โปรโมชั่นพิเศษ",
-      "desc": "สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย  เพียงกรอกโค้ด WELCOME15",
-      "title": "ลูกค้าใหม่ ลดทันที 15%",
-      "active": true,
-      "btnText": "สั่งเลย →",
-      "btnLink": "catalog.html"
+    "updatedAt": {
+      "seconds": 1783017899
     },
-    "announce": {
-      "active": true,
-      "text": "ลูกค้าใหม่ กรอกคูปอง WELCOME15 ลดทันที 15% ไม่มีขั้นต่ำ"
-    },
-    "lastDeliveredAt": {
-      "seconds": 1783015807
-    },
-    "stats": {
-      "orders": "500+",
-      "days": "1-3",
-      "rating": "4.9/5"
+    "fees": {
+      "shipTransfer": 30,
+      "surchargeCod": 0,
+      "surchargePromptpay": 0,
+      "freeShipMin": 0,
+      "shipCod": 50
     },
     "contact": {
-      "facebook": "https://www.facebook.com/share/19CQvQxW6E/",
-      "hours": "จันทร์–เสาร์ 08:00–20:00 น.",
-      "lineLabel": "@913huiwn",
       "line": "https://line.me/R/ti/p/@913huiwn",
-      "email": "Peeza1482546@gmail.com",
+      "hours": "จันทร์–เสาร์ 08:00–20:00 น.",
       "tiktok": "https://tiktok.com",
+      "instagram": "https://instagram.com",
+      "lineLabel": "@913huiwn",
+      "email": "Peeza1482546@gmail.com",
       "phone": "096-1207907",
-      "instagram": "https://instagram.com"
+      "facebook": "https://www.facebook.com/share/19CQvQxW6E/"
+    },
+    "hero": {
+      "title3": "ที่สวยงามที่สุด",
+      "badge": "งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ",
+      "desc": "บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน\nป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย",
+      "title1": "ทำให้ทุกภาพ",
+      "title2": "กลายเป็นของที่ระลึก"
+    },
+    "_test": 1782880037380,
+    "announce": {
+      "text": "ลูกค้าใหม่ กรอกคูปอง WELCOME15 ลดทันที 15% ไม่มีขั้นต่ำ",
+      "active": true
     },
     "faq": [
       {
-        "q": "ใช้เวลาผลิตกี่วัน?",
-        "a": "ส่วนใหญ่ 1-3 วันทำการ ขึ้นกับจำนวนและประเภทงาน หากเร่งด่วนแจ้งทาง LINE ได้เลยครับ"
+        "a": "ส่วนใหญ่ 1-3 วันทำการ ขึ้นกับจำนวนและประเภทงาน หากเร่งด่วนแจ้งทาง LINE ได้เลยครับ",
+        "q": "ใช้เวลาผลิตกี่วัน?"
       },
       {
-        "q": "ส่งไฟล์รูปทางไหน?",
-        "a": "แนบไฟล์ตอนสั่งซื้อได้เลย หรือส่งทาง LINE หลังสั่งซื้อก็ได้ครับ"
+        "a": "แนบไฟล์ตอนสั่งซื้อได้เลย หรือส่งทาง LINE หลังสั่งซื้อก็ได้ครับ",
+        "q": "ส่งไฟล์รูปทางไหน?"
       },
       {
         "a": "โอนผ่าน PromptPay,เก็บเงินปลายทาง (COD) \nTrue money(พร้อมเปิดใช้งานเร็วๆนี้) บัตรเครดิต(พร้อมเปิดใช้งานเร็วๆนี้) ครับ",
@@ -82,13 +79,16 @@
         "q": "แก้ไขงานได้ไหม?"
       }
     ],
-    "_test": 1782880037380,
-    "hero": {
-      "title1": "ทำให้ทุกภาพ",
-      "title2": "กลายเป็นของที่ระลึก",
-      "desc": "บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ บัตรนักเรียน\nป้ายร้านค้า QR Code ป้ายตุ๊กตา และอีกมากมาย",
-      "title3": "ที่สวยงามที่สุด",
-      "badge": "งานคุณภาพ · ส่งทั่วไทย · รับประกันความพอใจ"
+    "lastDeliveredAt": {
+      "seconds": 1783015807
+    },
+    "promo": {
+      "tag": "🎁 โปรโมชั่นพิเศษ",
+      "btnLink": "catalog.html",
+      "btnText": "สั่งเลย →",
+      "title": "ลูกค้าใหม่ ลดทันที 15%",
+      "desc": "สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย  เพียงกรอกโค้ด WELCOME15",
+      "active": true
     }
   }
 }
