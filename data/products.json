@@ -1,65 +1,62 @@
 {
-  "generatedAt": "2026-07-08T05:15:23.663Z",
+  "generatedAt": "2026-07-08T05:18:29.960Z",
   "count": 12,
   "items": [
     {
       "id": "3lq5CQjrq1l3XI5aoxmw",
-      "priceTiers": [],
-      "orderCount": 0,
-      "fullDesc": "• ไดคัทตามตัวละคร\n\n• สีสันสดใส\n\n• เหมาะสำหรับของขวัญ\n\n• ตกแต่งโต๊ะ\n\n• ตั้งโชว์ได้\n\n•เลือกแบบได้เองตามต้องการ",
-      "active": true,
-      "materials": [
-        "เคลือบมัน(Glossy)",
-        "เคลือบด้าน(Matte)",
-        "กระดาษภาพถ่าย (Photo Paper)"
-      ],
-      "minQty": 1,
-      "category": "ป้ายตุ๊กตา",
-      "isNew": false,
       "isSale": false,
-      "price": 129,
-      "sizes": [
-        "กำหนดเอง(Custom)"
-      ],
+      "priceTiers": [],
+      "updatedAt": {
+        "seconds": 1783486964
+      },
+      "videoUrl": "",
+      "shortDesc": "ป้ายตุ๊กตาหัวดุ๊กดิ๊กสุดน่ารัก คุณภาพระดับพรีเมี่ยม สีสดใส ไม่ซีดจาง",
+      "hasPreview": false,
       "templates": [],
-      "coverIndex": 1,
       "images": [
         {
-          "label": "นักมวยกล้ามโต",
-          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1783102109/dmc-studio/tdgqlrhhacfglu0uhodz.jpg"
+          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1783102109/dmc-studio/tdgqlrhhacfglu0uhodz.jpg",
+          "label": "นักมวยกล้ามโต"
         },
         {
           "label": "ไดโนเสาร์สุดน่ารัก",
           "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1783102132/dmc-studio/l5kmhlcmh1i1cuipbu8b.jpg"
         }
       ],
-      "featured": false,
+      "isNew": false,
       "name": "ตุ๊กตาหัวดุ๊กดิ๊ก",
-      "shortDesc": "ป้ายตุ๊กตาหัวดุ๊กดิ๊กสุดน่ารัก คุณภาพระดับพรีเมี่ยม สีสดใส ไม่ซีดจาง",
-      "videoUrl": "",
-      "updatedAt": {
-        "seconds": 1783486964
-      },
-      "unit": "ชิ้น",
+      "oldPrice": 159,
       "createdAt": {
         "seconds": 1783102227
       },
-      "emoji": "📦",
-      "oldPrice": 159,
-      "hasPreview": false,
+      "category": "ป้ายตุ๊กตา",
       "isHot": true,
-      "image": "https://res.cloudinary.com/yuonwywx/image/upload/v1783102132/dmc-studio/l5kmhlcmh1i1cuipbu8b.jpg"
+      "image": "https://res.cloudinary.com/yuonwywx/image/upload/v1783102132/dmc-studio/l5kmhlcmh1i1cuipbu8b.jpg",
+      "fullDesc": "• ไดคัทตามตัวละคร\n\n• สีสันสดใส\n\n• เหมาะสำหรับของขวัญ\n\n• ตกแต่งโต๊ะ\n\n• ตั้งโชว์ได้\n\n•เลือกแบบได้เองตามต้องการ",
+      "featured": false,
+      "minQty": 1,
+      "emoji": "📦",
+      "coverIndex": 1,
+      "orderCount": 0,
+      "active": true,
+      "unit": "ชิ้น",
+      "sizes": [
+        "กำหนดเอง(Custom)"
+      ],
+      "materials": [
+        "เคลือบมัน(Glossy)",
+        "เคลือบด้าน(Matte)",
+        "กระดาษภาพถ่าย (Photo Paper)"
+      ],
+      "price": 129
     },
     {
       "id": "Q6DfuK8hxj6O65UYAP1f",
-      "featured": true,
-      "images": [
-        {
-          "label": "",
-          "url": "https://i.ibb.co/1fzhJbGb/1000041352.jpg"
-        }
+      "materials": [
+        "เคลือบมัน(Glossy)",
+        "เคลือบด้าน(Matte)",
+        "กระดาษภาพถ่าย (Photo Paper)"
       ],
-      "coverIndex": 0,
       "price": 39,
       "sizes": [
         "2.50 × 4.50 ซม.",
@@ -67,6 +64,23 @@
         "4.00 × 6.00 ซม. (ขนาดมาตรฐาน)",
         "5.00 × 7.00 ซม."
       ],
+      "unit": "ชิ้น",
+      "active": true,
+      "orderCount": 0,
+      "coverIndex": 0,
+      "emoji": "📦",
+      "minQty": 1,
+      "featured": true,
+      "fullDesc": "• ผลิตจากภาพของลูกค้า\n\n• พิมพ์สีคมชัด ความละเอียดสูง\n\n• ขนาดกะทัดรัด พกพาสะดวก\n\n• ห่วงพวงกุญแจแข็งแรง ใช้งานได้ยาวนาน\n\n• เหมาะสำหรับห้อยกุญแจ กระเป๋า เป้ หรือของใช้ส่วนตัว\n\n• เหมาะเป็นของขวัญ ของที่ระลึก ของแจก และของสะสม\n\n• รองรับไฟล์ JPG, PNG และ PDF\n\n• แนะนำไฟล์ภาพความละเอียด 300 DPI เพื่อคุณภาพงานพิมพ์ที่ดีที่สุด\n\n• สีของงานพิมพ์จริงอาจแตกต่างจากสีบนหน้าจอเล็กน้อย",
+      "image": "https://i.ibb.co/1fzhJbGb/1000041352.jpg",
+      "createdAt": {
+        "seconds": 1781298738
+      },
+      "category": "รูปโพลารอยด์",
+      "isHot": false,
+      "name": "พวงกุญแจโพลารอยด์",
+      "oldPrice": 49,
+      "isNew": false,
       "templates": [
         "classic",
         "minimal",
@@ -75,196 +89,168 @@
         "cool",
         "cute"
       ],
-      "minQty": 1,
-      "category": "รูปโพลารอยด์",
-      "isNew": false,
-      "isSale": false,
-      "materials": [
-        "เคลือบมัน(Glossy)",
-        "เคลือบด้าน(Matte)",
-        "กระดาษภาพถ่าย (Photo Paper)"
+      "images": [
+        {
+          "url": "https://i.ibb.co/1fzhJbGb/1000041352.jpg",
+          "label": ""
+        }
       ],
-      "active": true,
-      "priceTiers": [],
-      "orderCount": 0,
-      "fullDesc": "• ผลิตจากภาพของลูกค้า\n\n• พิมพ์สีคมชัด ความละเอียดสูง\n\n• ขนาดกะทัดรัด พกพาสะดวก\n\n• ห่วงพวงกุญแจแข็งแรง ใช้งานได้ยาวนาน\n\n• เหมาะสำหรับห้อยกุญแจ กระเป๋า เป้ หรือของใช้ส่วนตัว\n\n• เหมาะเป็นของขวัญ ของที่ระลึก ของแจก และของสะสม\n\n• รองรับไฟล์ JPG, PNG และ PDF\n\n• แนะนำไฟล์ภาพความละเอียด 300 DPI เพื่อคุณภาพงานพิมพ์ที่ดีที่สุด\n\n• สีของงานพิมพ์จริงอาจแตกต่างจากสีบนหน้าจอเล็กน้อย",
-      "image": "https://i.ibb.co/1fzhJbGb/1000041352.jpg",
       "hasPreview": false,
-      "isHot": false,
-      "oldPrice": 49,
-      "emoji": "📦",
+      "shortDesc": "พวงกุญแจโพลารอยด์ขนาดเล็ก ผลิตจากภาพของลูกค้า ขนาดกะทัดรัด น้ำหนักเบา เหมาะสำหรับห้อยกุญแจ กระเป๋า หรือมอบเป็นของขวัญ",
+      "videoUrl": "",
       "updatedAt": {
         "seconds": 1783486601
       },
-      "createdAt": {
-        "seconds": 1781298738
-      },
-      "unit": "ชิ้น",
-      "videoUrl": "",
-      "name": "พวงกุญแจโพลารอยด์",
-      "shortDesc": "พวงกุญแจโพลารอยด์ขนาดเล็ก ผลิตจากภาพของลูกค้า ขนาดกะทัดรัด น้ำหนักเบา เหมาะสำหรับห้อยกุญแจ กระเป๋า หรือมอบเป็นของขวัญ"
+      "priceTiers": [],
+      "isSale": false
     },
     {
       "id": "RLjlijP5lO0pV7Nxg59w",
-      "oldPrice": null,
-      "emoji": "📦",
-      "image": "https://res.cloudinary.com/yuonwywx/image/upload/v1783102560/dmc-studio/zlppj0pgv8fmzwdm6mcu.jpg",
-      "isHot": true,
-      "hasPreview": true,
-      "videoUrl": "",
-      "shortDesc": "นามบัตรคุณภาพสูง สีคมชัด กระดาษหนา ผลิตตามแบบลูกค้า",
-      "name": "ป้ายบัตรพนักงาน",
-      "unit": "ชิ้น",
-      "createdAt": {
-        "seconds": 1783102599
-      },
       "updatedAt": {
         "seconds": 1783485743
       },
-      "coverIndex": 0,
-      "sizes": [
-        "8.6x5.4 ซม. (CR80)"
+      "videoUrl": "",
+      "isSale": false,
+      "priceTiers": [
+        "10 ชิ้น แถม 1 ชิ้น"
       ],
       "templates": [
         "X8YTO6kvpO8QbPdLpcVo"
       ],
-      "price": 59,
-      "featured": false,
       "images": [
         {
-          "label": "บัตรพนักงาน 7-11",
-          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1783102560/dmc-studio/zlppj0pgv8fmzwdm6mcu.jpg"
+          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1783102560/dmc-studio/zlppj0pgv8fmzwdm6mcu.jpg",
+          "label": "บัตรพนักงาน 7-11"
         }
       ],
-      "active": true,
-      "fullDesc": "• ผลิตจาก กระดาษ คุณภาพสูง\n\n• กันน้ำ\n\n• แข็งแรง\n\n• รองรับ QR Code\n\n• รองรับ Barcode\n\n• ใส่รูป ชื่อ ตำแหน่ง โลโก้บริษัท\n\n• ใช้งานร่วมกับสายคล้องได้",
-      "orderCount": 0,
-      "priceTiers": [
-        "10 ชิ้น แถม 1 ชิ้น"
-      ],
-      "isSale": false,
       "isNew": false,
-      "category": "บัตรแขวนคอ",
+      "name": "ป้ายบัตรพนักงาน",
+      "oldPrice": null,
+      "shortDesc": "นามบัตรคุณภาพสูง สีคมชัด กระดาษหนา ผลิตตามแบบลูกค้า",
+      "hasPreview": true,
       "minQty": 1,
+      "emoji": "📦",
+      "createdAt": {
+        "seconds": 1783102599
+      },
+      "isHot": true,
+      "category": "บัตรแขวนคอ",
+      "image": "https://res.cloudinary.com/yuonwywx/image/upload/v1783102560/dmc-studio/zlppj0pgv8fmzwdm6mcu.jpg",
+      "fullDesc": "• ผลิตจาก กระดาษ คุณภาพสูง\n\n• กันน้ำ\n\n• แข็งแรง\n\n• รองรับ QR Code\n\n• รองรับ Barcode\n\n• ใส่รูป ชื่อ ตำแหน่ง โลโก้บริษัท\n\n• ใช้งานร่วมกับสายคล้องได้",
+      "featured": false,
+      "active": true,
+      "sizes": [
+        "8.6x5.4 ซม. (CR80)"
+      ],
+      "unit": "ชิ้น",
       "materials": [
         "เคลือบมัน(Glossy)",
         "เคลือบด้าน(Matte)"
-      ]
+      ],
+      "price": 59,
+      "coverIndex": 0,
+      "orderCount": 0
     },
     {
       "id": "Rg9PE2EswNQs7O5evoS5",
-      "oldPrice": null,
-      "price": 3,
-      "emoji": "📦",
-      "templates": [],
-      "sizes": [],
-      "featured": false,
-      "image": "https://i.ibb.co/6c0xDZD0/1000068776.jpg",
-      "hasPreview": false,
-      "isHot": false,
-      "active": true,
-      "name": "โพลาลอยด์",
-      "priceTiers": [],
-      "shortDesc": "ส่งภาพได้เลย",
-      "orderCount": 0,
-      "fullDesc": "ราคาคุ้มๆ",
-      "minQty": 10,
       "category": "โพลารอยด์",
-      "updatedAt": {
-        "seconds": 1781084937
-      },
-      "isNew": false,
+      "isHot": false,
       "isSale": false,
       "createdAt": {
         "seconds": 1781015643
       },
+      "image": "https://i.ibb.co/6c0xDZD0/1000068776.jpg",
+      "fullDesc": "ราคาคุ้มๆ",
+      "priceTiers": [],
+      "featured": false,
+      "minQty": 10,
+      "updatedAt": {
+        "seconds": 1781084937
+      },
+      "emoji": "📦",
+      "shortDesc": "ส่งภาพได้เลย",
+      "hasPreview": false,
+      "orderCount": 0,
+      "templates": [],
+      "isNew": false,
+      "active": true,
+      "sizes": [],
       "unit": "ใบละ",
-      "materials": []
+      "oldPrice": null,
+      "name": "โพลาลอยด์",
+      "materials": [],
+      "price": 3
     },
     {
       "id": "TfU4JVXLN75qoS7Zy2Up",
-      "videoUrl": "",
-      "name": "อัลบั้มหนูน้อย 1-12 เดือน",
-      "shortDesc": "เซ็ตอัลบั้มภาพพัฒนาการหนูน้อย ตั้งแต่แรกเกิดถึงอายุ 12 เดือน บันทึกทุกช่วงเวลาสำคัญ พร้อมออกแบบน่ารัก เหมาะสำหรับเก็บเป็นความทรงจำหรือมอบเป็นของขวัญ",
-      "unit": "ชิ้น",
-      "createdAt": {
-        "seconds": 1781259461
-      },
-      "updatedAt": {
-        "seconds": 1783486544
-      },
-      "oldPrice": null,
-      "emoji": "📦",
-      "image": "https://i.ibb.co/G3JJ82gd/1000041356.jpg",
-      "isHot": false,
-      "hasPreview": false,
-      "active": true,
       "orderCount": 0,
-      "fullDesc": "• บันทึกพัฒนาการของลูกน้อยตั้งแต่แรกเกิดจนถึงอายุ 12 เดือน\n\n• ภายในชุดประกอบด้วยภาพรายเดือนครบ 12 เดือน พร้อมหน้าปกอัลบั้ม\n\n• ออกแบบโทนสีสดใส น่ารัก เหมาะสำหรับเด็กผู้ชายและเด็กผู้หญิง\n\n• สามารถใส่ชื่อเด็ก วันเดือนปีเกิด น้ำหนัก ส่วนสูง และข้อความพิเศษได้\n\n• พิมพ์ด้วยเครื่องพิมพ์คุณภาพสูง สีคมชัด\n\n• ใช้กระดาษภาพถ่ายคุณภาพดี ให้สีสวยและรายละเอียดคมชัด\n\n• เหมาะสำหรับเก็บเป็นความทรงจำ มอบเป็นของขวัญวันเกิด ของขวัญรับขวัญเด็กแรกเกิด หรือของที่ระลึกสำหรับครอบครัว\n\n• รองรับไฟล์ JPG, PNG และ PDF\n\n• แนะนำไฟล์ภาพความละเอียด 300 DPI เพื่อคุณภาพงานพิมพ์ที่ดีที่สุด\n\n• สีของงานพิมพ์จริงอาจแตกต่างจากสีบนหน้าจอเล็กน้อย",
-      "priceTiers": [],
-      "isNew": true,
-      "isSale": false,
-      "minQty": 1,
-      "category": "ความทรงจำ",
-      "materials": [
-        "เคลือบมัน(Glossy)",
-        "เคลือบด้าน(Matte)",
-        "กระดาษภาพถ่าย (Photo Paper)"
-      ],
       "coverIndex": 0,
-      "templates": [],
       "sizes": [
         "4 × 6 นิ้ว",
         "5 × 7 นิ้ว",
         "6 × 8 นิ้ว",
         "A4 (21.0 × 29.7 ซม.)"
       ],
+      "unit": "ชิ้น",
       "price": 129,
+      "materials": [
+        "เคลือบมัน(Glossy)",
+        "เคลือบด้าน(Matte)",
+        "กระดาษภาพถ่าย (Photo Paper)"
+      ],
+      "active": true,
+      "fullDesc": "• บันทึกพัฒนาการของลูกน้อยตั้งแต่แรกเกิดจนถึงอายุ 12 เดือน\n\n• ภายในชุดประกอบด้วยภาพรายเดือนครบ 12 เดือน พร้อมหน้าปกอัลบั้ม\n\n• ออกแบบโทนสีสดใส น่ารัก เหมาะสำหรับเด็กผู้ชายและเด็กผู้หญิง\n\n• สามารถใส่ชื่อเด็ก วันเดือนปีเกิด น้ำหนัก ส่วนสูง และข้อความพิเศษได้\n\n• พิมพ์ด้วยเครื่องพิมพ์คุณภาพสูง สีคมชัด\n\n• ใช้กระดาษภาพถ่ายคุณภาพดี ให้สีสวยและรายละเอียดคมชัด\n\n• เหมาะสำหรับเก็บเป็นความทรงจำ มอบเป็นของขวัญวันเกิด ของขวัญรับขวัญเด็กแรกเกิด หรือของที่ระลึกสำหรับครอบครัว\n\n• รองรับไฟล์ JPG, PNG และ PDF\n\n• แนะนำไฟล์ภาพความละเอียด 300 DPI เพื่อคุณภาพงานพิมพ์ที่ดีที่สุด\n\n• สีของงานพิมพ์จริงอาจแตกต่างจากสีบนหน้าจอเล็กน้อย",
       "featured": false,
+      "isHot": false,
+      "category": "ความทรงจำ",
+      "createdAt": {
+        "seconds": 1781259461
+      },
+      "image": "https://i.ibb.co/G3JJ82gd/1000041356.jpg",
+      "minQty": 1,
+      "emoji": "📦",
+      "shortDesc": "เซ็ตอัลบั้มภาพพัฒนาการหนูน้อย ตั้งแต่แรกเกิดถึงอายุ 12 เดือน บันทึกทุกช่วงเวลาสำคัญ พร้อมออกแบบน่ารัก เหมาะสำหรับเก็บเป็นความทรงจำหรือมอบเป็นของขวัญ",
+      "hasPreview": false,
+      "oldPrice": null,
+      "name": "อัลบั้มหนูน้อย 1-12 เดือน",
       "images": [
         {
           "label": "",
           "url": "https://i.ibb.co/G3JJ82gd/1000041356.jpg"
         }
-      ]
+      ],
+      "templates": [],
+      "isNew": true,
+      "priceTiers": [],
+      "isSale": false,
+      "videoUrl": "",
+      "updatedAt": {
+        "seconds": 1783486544
+      }
     },
     {
       "id": "VLdvVMN9uWtQl1zWt5sz",
+      "shortDesc": "พวงกุญแจบัตรนักเรียน ผลิตจากภาพของลูกค้า ดีไซน์คล้ายบัตรนักเรียนจริง ขนาดกะทัดรัด เหมาะสำหรับห้อยกุญแจ กระเป๋า หรือมอบเป็นของขวัญและของที่ระลึก",
+      "hasPreview": false,
+      "oldPrice": null,
+      "name": "พวงกุญแจบัตรนักเรียน",
+      "images": [
+        {
+          "url": "https://i.ibb.co/jvgfGysD/1000068602.png",
+          "label": ""
+        }
+      ],
+      "templates": [],
+      "isNew": false,
+      "priceTiers": [],
+      "isSale": false,
+      "videoUrl": "",
       "updatedAt": {
         "seconds": 1783487721
       },
-      "createdAt": {
-        "seconds": 1781085151
-      },
-      "unit": "ใบ",
-      "name": "พวงกุญแจบัตรนักเรียน",
-      "shortDesc": "พวงกุญแจบัตรนักเรียน ผลิตจากภาพของลูกค้า ดีไซน์คล้ายบัตรนักเรียนจริง ขนาดกะทัดรัด เหมาะสำหรับห้อยกุญแจ กระเป๋า หรือมอบเป็นของขวัญและของที่ระลึก",
-      "videoUrl": "",
-      "hasPreview": false,
-      "isHot": true,
-      "image": "https://i.ibb.co/jvgfGysD/1000068602.png",
-      "emoji": "📦",
-      "oldPrice": null,
-      "materials": [
-        "เคลือบมัน(Glossy)",
-        "เคลือบด้าน(Matte)"
-      ],
-      "minQty": 1,
-      "category": "บัตรนักเรียน",
-      "isNew": false,
-      "isSale": false,
-      "priceTiers": [],
       "orderCount": 0,
-      "fullDesc": "• ออกแบบในรูปแบบบัตรนักเรียนตามสไตล์ที่ลูกค้าต้องการ\n\n• สามารถใส่รูป ชื่อ ชื่อเล่น โรงเรียน ระดับชั้น เลขประจำตัว และข้อความพิเศษได้\n\n• พิมพ์ด้วยเครื่องพิมพ์คุณภาพสูง สีสด คมชัด\n\n• เคลือบเพื่อเพิ่มความสวยงามและช่วยป้องกันรอยขีดข่วน\n\n• มาพร้อมห่วงพวงกุญแจโลหะ แข็งแรง พร้อมใช้งาน\n\n• เหมาะสำหรับห้อยกุญแจ กระเป๋า เป้ หรือใช้เป็นของที่ระลึก\n\n• เหมาะสำหรับนักเรียน นักศึกษา คู่รัก เพื่อน และของขวัญในโอกาสต่าง ๆ\n\n• รองรับไฟล์ JPG, PNG และ PDF\n\n• แนะนำไฟล์ภาพความละเอียด 300 DPI เพื่อคุณภาพงานพิมพ์ที่ดีที่สุด\n\n• สีของงานพิมพ์จริงอาจแตกต่างจากสีบนหน้าจอเล็กน้อย",
-      "active": true,
-      "images": [
-        {
-          "label": "",
-          "url": "https://i.ibb.co/jvgfGysD/1000068602.png"
-        }
-      ],
-      "featured": false,
-      "price": 29,
+      "coverIndex": 0,
+      "unit": "ใบ",
       "sizes": [
         "2 × 3 ซม.",
         "3 × 4 ซม.",
@@ -272,37 +258,59 @@
         "5 × 7 ซม.",
         "6 × 9 ซม.กำหนดเอง"
       ],
-      "templates": [],
-      "coverIndex": 0
+      "price": 29,
+      "materials": [
+        "เคลือบมัน(Glossy)",
+        "เคลือบด้าน(Matte)"
+      ],
+      "active": true,
+      "fullDesc": "• ออกแบบในรูปแบบบัตรนักเรียนตามสไตล์ที่ลูกค้าต้องการ\n\n• สามารถใส่รูป ชื่อ ชื่อเล่น โรงเรียน ระดับชั้น เลขประจำตัว และข้อความพิเศษได้\n\n• พิมพ์ด้วยเครื่องพิมพ์คุณภาพสูง สีสด คมชัด\n\n• เคลือบเพื่อเพิ่มความสวยงามและช่วยป้องกันรอยขีดข่วน\n\n• มาพร้อมห่วงพวงกุญแจโลหะ แข็งแรง พร้อมใช้งาน\n\n• เหมาะสำหรับห้อยกุญแจ กระเป๋า เป้ หรือใช้เป็นของที่ระลึก\n\n• เหมาะสำหรับนักเรียน นักศึกษา คู่รัก เพื่อน และของขวัญในโอกาสต่าง ๆ\n\n• รองรับไฟล์ JPG, PNG และ PDF\n\n• แนะนำไฟล์ภาพความละเอียด 300 DPI เพื่อคุณภาพงานพิมพ์ที่ดีที่สุด\n\n• สีของงานพิมพ์จริงอาจแตกต่างจากสีบนหน้าจอเล็กน้อย",
+      "featured": false,
+      "isHot": true,
+      "category": "บัตรนักเรียน",
+      "createdAt": {
+        "seconds": 1781085151
+      },
+      "image": "https://i.ibb.co/jvgfGysD/1000068602.png",
+      "minQty": 1,
+      "emoji": "📦"
     },
     {
       "id": "aiDzz199c5wWbM97QHs6",
-      "isHot": false,
-      "hasPreview": false,
-      "image": "https://i.ibb.co/svtqsxYh/1000041357.jpg",
       "emoji": "📦",
-      "oldPrice": null,
-      "unit": "ใบ",
+      "minQty": 1,
+      "image": "https://i.ibb.co/svtqsxYh/1000041357.jpg",
+      "isHot": false,
+      "category": "ป้ายตุ๊กตา",
       "createdAt": {
         "seconds": 1781181447
       },
+      "featured": false,
+      "fullDesc": "",
+      "active": true,
+      "price": 129,
+      "materials": [],
+      "sizes": [],
+      "unit": "ใบ",
+      "coverIndex": 1,
+      "orderCount": 0,
       "updatedAt": {
         "seconds": 1783485815
       },
-      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก",
-      "shortDesc": "",
       "videoUrl": "",
+      "isSale": false,
+      "priceTiers": [],
+      "isNew": false,
       "images": [
         {
-          "label": "ไดโนเสาร์",
-          "url": "https://i.ibb.co/JWfrYhXt/1000041354.jpg"
+          "url": "https://i.ibb.co/JWfrYhXt/1000041354.jpg",
+          "label": "ไดโนเสาร์"
         },
         {
           "label": "QR Code สแกนตุ๊กตาหิมะ",
           "url": "https://i.ibb.co/svtqsxYh/1000041357.jpg"
         }
       ],
-      "featured": false,
       "templates": [
         "classic",
         "minimal",
@@ -311,240 +319,238 @@
         "cool",
         "cute"
       ],
-      "sizes": [],
-      "price": 129,
-      "coverIndex": 1,
-      "materials": [],
-      "isNew": false,
-      "isSale": false,
-      "minQty": 1,
-      "category": "ป้ายตุ๊กตา",
-      "orderCount": 0,
-      "fullDesc": "",
-      "priceTiers": [],
-      "active": true
+      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก",
+      "oldPrice": null,
+      "hasPreview": false,
+      "shortDesc": ""
     },
     {
       "id": "k6V9i9gFEhLmwn7zCyyL",
-      "shortDesc": "เซ็ตโพลารอยด์รูปหัวใจ จำนวน 20 รูป พิมพ์สีคมชัด ดีไซน์น่ารัก เหมาะสำหรับตกแต่งห้อง สมุดอัลบั้ม กล่องของขวัญ และมอบเป็นของขวัญในโอกาสพิเศษ",
-      "name": "เซ็ตโพลารอยด์หัวใจ",
-      "videoUrl": "",
-      "updatedAt": {
-        "seconds": 1783486923
-      },
+      "emoji": "📦",
+      "minQty": 1,
+      "featured": false,
+      "fullDesc": "• ภายในชุดประกอบด้วยรูปโพลารอยด์จำนวน 20 รูป พร้อมเทมเพลตการติดทรงหัวใจ\n\n• พิมพ์ด้วยเครื่องพิมพ์คุณภาพสูง สีสด คมชัด รายละเอียดครบถ้วน\n\n• ใช้กระดาษภาพถ่ายคุณภาพดี ให้สีสวยและอายุการใช้งานยาวนาน\n\n• สามารถใช้ภาพได้ทั้งภาพบุคคล ครอบครัว คู่รัก เพื่อน สัตว์เลี้ยง หรือภาพท่องเที่ยว\n\n• เหมาะสำหรับตกแต่งห้องนอน โต๊ะทำงาน สมุด Scrapbook อัลบั้มภาพ กล่องของขวัญ และของที่ระลึก\n\n• ลูกค้าสามารถเลือกภาพได้ครบทั้ง 20 รูป โดยสามารถส่งภาพซ้ำหรือภาพไม่ซ้ำกันก็ได้\n\n• รองรับไฟล์ JPG, PNG และ PDF\n\n• แนะนำไฟล์ภาพความละเอียด 300 DPI เพื่อคุณภาพงานพิมพ์ที่ดีที่สุด\n\n• สีของงานพิมพ์จริงอาจแตกต่างจากสีบนหน้าจอเล็กน้อย",
+      "image": "https://i.ibb.co/HJz2bbJ/355620.jpg",
+      "isHot": true,
+      "category": "รูปโพลารอยด์",
       "createdAt": {
         "seconds": 1781067461
       },
-      "unit": "ใบ",
-      "emoji": "📦",
-      "oldPrice": null,
-      "hasPreview": false,
-      "isHot": true,
-      "image": "https://i.ibb.co/HJz2bbJ/355620.jpg",
-      "priceTiers": [
-        "5เซ็ต แถม 1 เซ็๖"
-      ],
-      "fullDesc": "• ภายในชุดประกอบด้วยรูปโพลารอยด์จำนวน 20 รูป พร้อมเทมเพลตการติดทรงหัวใจ\n\n• พิมพ์ด้วยเครื่องพิมพ์คุณภาพสูง สีสด คมชัด รายละเอียดครบถ้วน\n\n• ใช้กระดาษภาพถ่ายคุณภาพดี ให้สีสวยและอายุการใช้งานยาวนาน\n\n• สามารถใช้ภาพได้ทั้งภาพบุคคล ครอบครัว คู่รัก เพื่อน สัตว์เลี้ยง หรือภาพท่องเที่ยว\n\n• เหมาะสำหรับตกแต่งห้องนอน โต๊ะทำงาน สมุด Scrapbook อัลบั้มภาพ กล่องของขวัญ และของที่ระลึก\n\n• ลูกค้าสามารถเลือกภาพได้ครบทั้ง 20 รูป โดยสามารถส่งภาพซ้ำหรือภาพไม่ซ้ำกันก็ได้\n\n• รองรับไฟล์ JPG, PNG และ PDF\n\n• แนะนำไฟล์ภาพความละเอียด 300 DPI เพื่อคุณภาพงานพิมพ์ที่ดีที่สุด\n\n• สีของงานพิมพ์จริงอาจแตกต่างจากสีบนหน้าจอเล็กน้อย",
-      "orderCount": 0,
-      "active": true,
       "materials": [
         "มันเงา(Glossy)",
         "ด้าน(Matte)",
         "เคลือบ"
       ],
-      "category": "รูปโพลารอยด์",
-      "minQty": 1,
-      "isSale": false,
-      "isNew": false,
       "price": 29,
-      "templates": [],
       "sizes": [
         "2x3 นิ้ว",
         "3x4 นิ้ว(แนะนำ)",
         "4x6 นิ้ว",
         "กำหนดเอง"
       ],
+      "unit": "ใบ",
+      "active": true,
+      "orderCount": 0,
       "coverIndex": 0,
+      "videoUrl": "",
+      "updatedAt": {
+        "seconds": 1783486923
+      },
+      "priceTiers": [
+        "5เซ็ต แถม 1 เซ็๖"
+      ],
+      "isSale": false,
+      "oldPrice": null,
+      "name": "เซ็ตโพลารอยด์หัวใจ",
+      "isNew": false,
       "images": [
         {
-          "label": "",
-          "url": "https://i.ibb.co/HJz2bbJ/355620.jpg"
+          "url": "https://i.ibb.co/HJz2bbJ/355620.jpg",
+          "label": ""
         }
       ],
-      "featured": false
+      "templates": [],
+      "hasPreview": false,
+      "shortDesc": "เซ็ตโพลารอยด์รูปหัวใจ จำนวน 20 รูป พิมพ์สีคมชัด ดีไซน์น่ารัก เหมาะสำหรับตกแต่งห้อง สมุดอัลบั้ม กล่องของขวัญ และมอบเป็นของขวัญในโอกาสพิเศษ"
     },
     {
       "id": "sJx9wZBN6zg2jrZrGARU",
-      "shortDesc": "ตุ๊กตาหัวดุ๊กดิ๊กสุดน่ารัก ผลิตจากภาพของลูกค้า เหมาะสำหรับเป็นของขวัญ ของฝาก และของสะสม",
-      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก2หัว",
-      "videoUrl": "https://vt.tiktok.com/ZSCscgGtH/",
-      "updatedAt": {
-        "seconds": 1783288456
-      },
-      "createdAt": {
-        "seconds": 1781085073
-      },
+      "sizes": [
+        "กำหนดเอง(Custom)"
+      ],
       "unit": "ชิ้น",
-      "emoji": "📦",
-      "oldPrice": 199,
-      "hasPreview": false,
-      "isHot": true,
-      "image": "https://i.ibb.co/rftGWd7L/1000068870.jpg",
-      "priceTiers": [],
-      "fullDesc": "• ผลิตจากภาพของลูกค้า\n• ไดคัทตามรูป\n• สีสด คมชัด\n• เหมาะสำหรับของขวัญ วันเกิด รับปริญญา และโอกาสพิเศษ\n• เลือกแบบ 1 คน หรือ 2 คนได้\n• ผลิตตามแบบทุกชิ้น\n• ใช้วัสดุคุณภาพ แข็งแรง กันน้ำ",
-      "orderCount": 0,
-      "active": true,
+      "price": 169,
       "materials": [
         "มันเงา(Glossy)",
         "ด้าน(Matte)"
       ],
-      "category": "ป้ายตุ๊กตา",
-      "minQty": 1,
-      "isSale": true,
-      "isNew": false,
-      "price": 169,
-      "sizes": [
-        "กำหนดเอง(Custom)"
-      ],
-      "templates": [],
+      "active": true,
+      "orderCount": 0,
       "coverIndex": 0,
+      "minQty": 1,
+      "emoji": "📦",
+      "fullDesc": "• ผลิตจากภาพของลูกค้า\n• ไดคัทตามรูป\n• สีสด คมชัด\n• เหมาะสำหรับของขวัญ วันเกิด รับปริญญา และโอกาสพิเศษ\n• เลือกแบบ 1 คน หรือ 2 คนได้\n• ผลิตตามแบบทุกชิ้น\n• ใช้วัสดุคุณภาพ แข็งแรง กันน้ำ",
+      "featured": true,
+      "createdAt": {
+        "seconds": 1781085073
+      },
+      "isHot": true,
+      "category": "ป้ายตุ๊กตา",
+      "image": "https://i.ibb.co/rftGWd7L/1000068870.jpg",
+      "oldPrice": 199,
+      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก2หัว",
+      "templates": [],
       "images": [
         {
           "label": "",
           "url": "https://i.ibb.co/rftGWd7L/1000068870.jpg"
         }
       ],
-      "featured": true
+      "isNew": false,
+      "shortDesc": "ตุ๊กตาหัวดุ๊กดิ๊กสุดน่ารัก ผลิตจากภาพของลูกค้า เหมาะสำหรับเป็นของขวัญ ของฝาก และของสะสม",
+      "hasPreview": false,
+      "videoUrl": "https://vt.tiktok.com/ZSCscgGtH/",
+      "updatedAt": {
+        "seconds": 1783288456
+      },
+      "priceTiers": [],
+      "isSale": true
     },
     {
       "id": "sUApJ4zdCBJCd9BlL8xY",
-      "price": 69,
-      "sizes": [
-        "8.60 x 5.40 ซม. (มาตรฐานCR80)"
-      ],
-      "templates": [],
-      "coverIndex": 0,
-      "images": [
-        {
-          "label": "",
-          "url": "https://i.ibb.co/tps0S6HR/1000064030.jpg"
-        }
-      ],
+      "image": "https://i.ibb.co/tps0S6HR/1000064030.jpg",
+      "isHot": true,
+      "category": "บัตรนักเรียน",
+      "createdAt": {
+        "seconds": 1781085276
+      },
       "featured": false,
-      "priceTiers": [],
       "fullDesc": "• สีสันสดใส ไม่ซีดจาง\n\n• กันน้ำ แข็งแรง\n\n• รองรับ QR Code และ Barcode\n\n• ใส่ชื่อ รูป ตำแหน่ง โลโก้ได้ตามต้องการ\n\n• ใช้งานร่วมกับสายคล้องบัตรได้\n\n• สีสด คมชัด\n\n• เหมาะสำหรับบริษัท โรงเรียน หน่วยงาน และองค์กร",
+      "emoji": "📦",
+      "minQty": 1,
+      "coverIndex": 0,
       "orderCount": 0,
       "active": true,
+      "price": 69,
       "materials": [
         "เคลือบมัน(Glossy)",
         "เคลือบด้าน(Matte)"
       ],
-      "category": "บัตรนักเรียน",
-      "minQty": 1,
+      "sizes": [
+        "8.60 x 5.40 ซม. (มาตรฐานCR80)"
+      ],
+      "unit": "ชิ้น",
       "isSale": false,
-      "isNew": false,
-      "emoji": "📦",
-      "oldPrice": 79,
-      "hasPreview": false,
-      "isHot": true,
-      "image": "https://i.ibb.co/tps0S6HR/1000064030.jpg",
-      "shortDesc": "บัตรนักเรียน ผลิตจากวัสดุคุณภาพดี แข็งแรง กันน้ำ ใช้งานได้ยาวนาน",
-      "name": "บัตรนักเรียนพร้อมกรอบ",
-      "videoUrl": "",
+      "priceTiers": [],
       "updatedAt": {
         "seconds": 1783487513
       },
-      "unit": "ชิ้น",
-      "createdAt": {
-        "seconds": 1781085276
-      }
+      "videoUrl": "",
+      "hasPreview": false,
+      "shortDesc": "บัตรนักเรียน ผลิตจากวัสดุคุณภาพดี แข็งแรง กันน้ำ ใช้งานได้ยาวนาน",
+      "isNew": false,
+      "images": [
+        {
+          "url": "https://i.ibb.co/tps0S6HR/1000064030.jpg",
+          "label": ""
+        }
+      ],
+      "templates": [],
+      "oldPrice": 79,
+      "name": "บัตรนักเรียนพร้อมกรอบ"
     },
     {
       "id": "yix6MrqKErhZkq8MtPxk",
-      "materials": [],
-      "isSale": false,
-      "isNew": false,
-      "category": "ป้ายตุ๊กตา",
-      "minQty": 1,
-      "fullDesc": "",
       "orderCount": 0,
-      "priceTiers": [],
-      "active": true,
-      "images": [
-        {
-          "label": "",
-          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1783011867/dmc-studio/jhd0uguoyggnnow3qdi2.jpg"
-        }
-      ],
-      "featured": false,
-      "templates": [],
-      "sizes": [],
-      "price": 129,
       "coverIndex": 0,
       "unit": "ชิ้น",
+      "sizes": [
+        "กำหนดเอง(Custom)"
+      ],
+      "materials": [
+        "เคลือบมัน(Glossy)",
+        "เคลือบด้าน(Matte)",
+        "กระดาษภาพถ่าย (Photo Paper)"
+      ],
+      "price": 129,
+      "active": true,
+      "fullDesc": "• ออกแบบเป็นตุ๊กตาหัวดุ๊กดิ๊กจากภาพของลูกค้า\n\n• เพิ่ม QR Code พร้อมเพย์ หรือ QR Code ชำระเงินของทุกธนาคารได้\n\n• สามารถใส่ชื่อร้าน โลโก้ เบอร์โทร และช่องทางติดต่อเพิ่มเติมได้\n\n• พิมพ์ด้วยเครื่องพิมพ์คุณภาพสูง สีสด คมชัด\n\n• เคลือบเพื่อเพิ่มความสวยงามและช่วยป้องกันรอยขีดข่วน\n\n• เหมาะสำหรับตั้งหน้าเคาน์เตอร์ ร้านอาหาร คาเฟ่ ร้านเครื่องดื่ม ร้านค้าออนไลน์ และธุรกิจทุกประเภท\n\n• รองรับไฟล์ JPG, PNG และ PDF\n\n• แนะนำไฟล์ภาพความละเอียด 300 DPI เพื่อคุณภาพงานพิมพ์ที่ดีที่สุด\n\n• สีของงานพิมพ์จริงอาจแตกต่างจากสีบนหน้าจอเล็กน้อย",
+      "featured": false,
       "createdAt": {
         "seconds": 1783011920
       },
-      "updatedAt": {
-        "seconds": 1783011920
-      },
-      "shortDesc": "",
-      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก",
-      "videoUrl": "https://youtube.com/shorts/gvbxMNiR9XA?si=K_zH_V66SYepeXDt",
-      "isHot": false,
-      "hasPreview": false,
+      "category": "ป้ายตุ๊กตา",
+      "isHot": true,
       "image": "https://res.cloudinary.com/yuonwywx/image/upload/v1783011867/dmc-studio/jhd0uguoyggnnow3qdi2.jpg",
+      "minQty": 1,
       "emoji": "📦",
-      "oldPrice": 159
+      "shortDesc": "ป้ายชำระเงินสุดน่ารัก ดีไซน์ตุ๊กตาหัวดุ๊กดิ๊ก พร้อม QR Code พร้อมเพย์ ช่วยเพิ่มความโดดเด่นให้หน้าร้าน สแกนง่าย เหมาะสำหรับร้านค้า คาเฟ่ และธุรกิจทุกประเภท",
+      "hasPreview": false,
+      "oldPrice": 159,
+      "name": "ตุ๊กตาหัวดุ๊กดิ๊ก",
+      "templates": [],
+      "images": [
+        {
+          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1783011867/dmc-studio/jhd0uguoyggnnow3qdi2.jpg",
+          "label": ""
+        }
+      ],
+      "isNew": false,
+      "priceTiers": [],
+      "isSale": false,
+      "videoUrl": "https://youtube.com/shorts/gvbxMNiR9XA?si=K_zH_V66SYepeXDt",
+      "updatedAt": {
+        "seconds": 1783487908
+      }
     },
     {
       "id": "zLCHtJf7TEKx1BUe7e4a",
-      "isHot": false,
-      "hasPreview": false,
-      "image": "https://res.cloudinary.com/yuonwywx/image/upload/v1782975508/dmc-studio/cbocqrqfm6gy7zirlyju.jpg",
       "emoji": "📦",
-      "oldPrice": 79,
+      "minQty": 1,
+      "image": "https://res.cloudinary.com/yuonwywx/image/upload/v1782975508/dmc-studio/cbocqrqfm6gy7zirlyju.jpg",
+      "isHot": false,
+      "category": "QR Code",
       "createdAt": {
         "seconds": 1782975730
       },
-      "unit": "ใบ",
-      "updatedAt": {
-        "seconds": 1783486740
-      },
-      "shortDesc": "ป้าย QR Code พร้อมเพย์ สแกนง่าย สีคมชัด เหมาะสำหรับร้านค้า และธุรกิจทุกประเภท",
-      "name": "QR Code แสกนรับชำระ",
-      "videoUrl": "",
-      "images": [
-        {
-          "label": "",
-          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1782975508/dmc-studio/cbocqrqfm6gy7zirlyju.jpg"
-        },
-        {
-          "label": "",
-          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1782975518/dmc-studio/bf0cxiieuz55ddb89xzt.jpg"
-        }
-      ],
       "featured": false,
-      "templates": [],
+      "fullDesc": "• รองรับ QR Code ทุกธนาคาร\n\n• รองรับ QR พร้อมเพย์\n\n• เพิ่มโลโก้ร้านได้\n\n• เพิ่มชื่อร้าน\n\n• เพิ่ม Facebook\n\n• เพิ่ม Line\n\n• เพิ่มเบอร์โทร\n\n• พิมพ์สีคมชัด\n\n• เหมาะสำหรับร้านค้า ร้านอาหาร คาเฟ่ และธุรกิจทั่วไป\n\n• พร้อมใช้งานทันที",
+      "active": true,
+      "materials": [
+        "มันเงาพรีเมี่ยม (Glossy Premium)"
+      ],
+      "price": 59,
       "sizes": [
         "4×6 นิ้ว",
         "5×7 นิ้ว",
         "6×8นิ้ว",
         "กำหนดเอง(ไม่เกินขนาดA4)"
       ],
-      "price": 59,
+      "unit": "ใบ",
       "coverIndex": 0,
-      "materials": [
-        "มันเงาพรีเมี่ยม (Glossy Premium)"
-      ],
-      "isSale": false,
-      "isNew": true,
-      "category": "QR Code",
-      "minQty": 1,
-      "fullDesc": "• รองรับ QR Code ทุกธนาคาร\n\n• รองรับ QR พร้อมเพย์\n\n• เพิ่มโลโก้ร้านได้\n\n• เพิ่มชื่อร้าน\n\n• เพิ่ม Facebook\n\n• เพิ่ม Line\n\n• เพิ่มเบอร์โทร\n\n• พิมพ์สีคมชัด\n\n• เหมาะสำหรับร้านค้า ร้านอาหาร คาเฟ่ และธุรกิจทั่วไป\n\n• พร้อมใช้งานทันที",
       "orderCount": 0,
+      "updatedAt": {
+        "seconds": 1783486740
+      },
+      "videoUrl": "",
+      "isSale": false,
       "priceTiers": [],
-      "active": true
+      "isNew": true,
+      "images": [
+        {
+          "label": "",
+          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1782975508/dmc-studio/cbocqrqfm6gy7zirlyju.jpg"
+        },
+        {
+          "url": "https://res.cloudinary.com/yuonwywx/image/upload/v1782975518/dmc-studio/bf0cxiieuz55ddb89xzt.jpg",
+          "label": ""
+        }
+      ],
+      "templates": [],
+      "oldPrice": 79,
+      "name": "QR Code แสกนรับชำระ",
+      "hasPreview": false,
+      "shortDesc": "ป้าย QR Code พร้อมเพย์ สแกนง่าย สีคมชัด เหมาะสำหรับร้านค้า และธุรกิจทุกประเภท"
     }
   ]
 }
