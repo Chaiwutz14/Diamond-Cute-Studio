@@ -1,22 +1,22 @@
 {
-  "generatedAt": "2026-07-08T04:43:36.943Z",
+  "generatedAt": "2026-07-08T04:51:11.728Z",
   "count": 1,
   "items": [
     {
       "id": "DBBAiPVigJjV7hZBKKB1",
+      "name": "น้องโอม",
+      "moderatedAt": {
+        "seconds": 1781523383
+      },
+      "productName": "พวงกุญแจโพลารอยด์",
+      "rating": 5,
       "text": "ภาพสวย คมชัด คุ้มค่ามากๆครับ",
       "status": "approved",
       "source": "customer",
       "productId": "Q6DfuK8hxj6O65UYAP1f",
-      "moderatedAt": {
-        "seconds": 1781523383
-      },
-      "rating": 5,
       "createdAt": {
         "seconds": 1781522319
-      },
-      "productName": "พวงกุญแจโพลารอยด์",
-      "name": "น้องโอม"
+      }
     }
   ]
 }
