@@ -16,6 +16,7 @@ let productId = null;
 let qty = 1;
 let selectedSize = '';
 let selectedMaterial = '';
+let selectedVariant = '';   // V35: แบบสินค้า (จากชื่อแบบของรูปที่แอดมินตั้ง)
 let galleryItems = [];   // [{type:'image', url, label} | {type:'video', embedUrl}]
 let activeGalleryIndex = 0;
 
@@ -176,7 +177,8 @@ function renderProduct() {
   buildGalleryItems();
   renderGallery();
 
-  // ── ตัวเลือกขนาด/วัสดุ ──
+  // ── ตัวเลือกแบบ/ขนาด/วัสดุ ──
+  renderVariantChips();                                // V35: แบบสินค้า (จากชื่อแบบของรูป)
   renderOptionChips('size', product.sizes || []);
   renderOptionChips('material', product.materials || []);
 
@@ -477,7 +479,7 @@ function renderOptionChips(kind, options) {
     chip.addEventListener('click', () => {
       chips.querySelectorAll('.option-chip').forEach(x => x.classList.remove('active'));
       chip.classList.add('active');
-      if (kind === 'size') selectedSize = opt; else selectedMaterial = opt;
+      setSelectedOption(kind, opt);
       setText(kind + '-selected', opt);
       switchImageByLabel(opt);
     });
@@ -485,8 +487,45 @@ function renderOptionChips(kind, options) {
   });
 
   // ค่าเริ่มต้น = ตัวแรก
-  if (kind === 'size') selectedSize = options[0]; else selectedMaterial = options[0];
+  setSelectedOption(kind, options[0]);
   setText(kind + '-selected', options[0]);
+}
+
+// V35: จำค่าที่ลูกค้าเลือกไว้ตามชนิดตัวเลือก
+function setSelectedOption(kind, val) {
+  if (kind === 'size') selectedSize = val;
+  else if (kind === 'material') selectedMaterial = val;
+  else if (kind === 'variant') selectedVariant = val;
+}
+
+// ══ V35: แบบสินค้า — สร้างตัวเลือกจาก "ชื่อแบบ" ที่แอดมินตั้งให้รูปสินค้า ══
+//  · รูปที่มีชื่อแบบ → ขึ้นเป็นตัวเลือก "แบบ" ให้ลูกค้ากดเลือก (กดแล้วรูปสลับตาม)
+//  · รูปที่ไม่ใส่ชื่อแบบ → เป็นรูปแกลเลอรีปกติ ไม่ขึ้นเป็นตัวเลือก (เช่น รูปอธิบายขนาด)
+//  · ชื่อแบบที่ตรงกับตัวเลือกขนาด/วัสดุอยู่แล้ว → คงพฤติกรรมเดิม (รูปสลับตามขนาด/วัสดุ)
+//    ไม่สร้างกลุ่มตัวเลือกซ้ำซ้อน
+function renderVariantChips() {
+  const optSet = new Set(
+    [...(product.sizes || []), ...(product.materials || [])]
+      .map(s => String(s).trim().toLowerCase())
+  );
+  const seen = new Set();
+  const variants = [];
+  galleryItems.forEach(g => {
+    if (g.type !== 'image' || !g.label) return;
+    const key = g.label.toLowerCase();
+    if (optSet.has(key) || seen.has(key)) return;
+    seen.add(key);
+    variants.push(g.label);
+  });
+  if (variants.length) renderOptionChips('variant', variants);
+}
+
+// หารูปของแบบที่เลือกอยู่ (ใช้เป็นรูปตะกร้า)
+function findVariantImage() {
+  if (!selectedVariant) return null;
+  const want = selectedVariant.trim().toLowerCase();
+  return galleryItems.find(g =>
+    g.type === 'image' && g.label && g.label.toLowerCase() === want) || null;
 }
 
 // ลูกค้ากดเลือกแบบ → ถ้ามีรูปที่ label ตรงกัน สลับรูปให้ทันที
@@ -513,8 +552,14 @@ function updateQtyUI() {
 }
 
 function addToCart(goToCart) {
-  const options = [selectedSize, selectedMaterial].filter(Boolean).join(' · ');
+  // V35: แนบ "แบบ" ที่เลือกเข้าออเดอร์ด้วย — ตะกร้าแยกรายการตามแบบให้อัตโนมัติ
+  const options = [
+    selectedVariant ? ('แบบ: ' + selectedVariant) : '',
+    selectedSize,
+    selectedMaterial,
+  ].filter(Boolean).join(' · ');
   const customDetails = (document.getElementById('product-details')?.value || '').trim();   // V4.6
+  const variantImg = findVariantImage();   // V35: รูปตะกร้า = รูปของแบบที่เลือก
   DMC.addToCart({
     id: product.id,
     name: product.name,
@@ -525,7 +570,7 @@ function addToCart(goToCart) {
     options,
     customDetails,                                                                          // V4.6: เก็บใน cart
     emoji: product.emoji || '📦',
-    image: (galleryItems.find(g => g.type === 'image') || {}).url || product.image || '',
+    image: (variantImg || galleryItems.find(g => g.type === 'image') || {}).url || product.image || '',
   });
   // V.upgrade1: ตัด toast ซ้ำออก — DMC.addToCart() แจ้งเตือนให้แล้ว
   if (goToCart) setTimeout(() => { window.location.href = 'cart.html'; }, 350);

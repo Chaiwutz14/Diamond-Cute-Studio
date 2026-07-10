@@ -14,6 +14,15 @@
 
    API สาธารณะคงเดิมทั้งหมด: CanvasPreview.create / loadCustomFrames / TEMPLATES
    และ window.initPreviewTool(options) — product.js/order.js ไม่ต้องแก้
+
+   ใหม่ใน V35 (07/2026):
+   ① Free Transform — จุดจับปรับขนาดบน canvas (สไตล์ Canva)
+      · ข้อความ: ✕ ลบ (มุมขวาบน) + ⤡ ลากปรับขนาดฟอนต์ (มุมขวาล่าง)
+      · รูปภาพ: 8 จุดรอบกรอบ — มุม = คงสัดส่วน · ขอบ = ยืดกว้าง/สูงอิสระ
+   ② แถบขนาดฟอนต์: สไลเดอร์ + ปุ่ม −/+ + ช่องตัวเลขพิมพ์ระบุเองได้ (8–200)
+   ③ B (ตัวหนา) ย้ายเข้าแถบ dock เป็นไอคอนเวกเตอร์เหมือนเครื่องมืออื่น
+   ④ "เลือกเทมเพลต" ย้ายเป็น Drop-down มุมซ้ายบน (เดิมชื่อ "เลือกแบบ" อยู่ใน dock)
+   ⑤ export (💾 บันทึก / 📎 แนบออเดอร์) ซ่อนกรอบเลือก+จุดจับอัตโนมัติ ไม่ติดไปกับไฟล์จริง
 ═══════════════════════════════════════════════ */
 'use strict';
 
@@ -129,6 +138,8 @@ window.CanvasPreview = (function(){
     let imgZoom = 1;                //    ซูมรูปหลัก 1–3 เท่า
     let layers  = [];               // ④ เลเยอร์ข้อความ/รูปเสริม (วาดทับบนสุด)
     let dragGuides = null;          // V33: เส้นไกด์ตอนลาก {gx, gy, gap:{x,y1,y2,val}}
+    let hideOverlay = false;        // V35: ซ่อนกรอบเลือก/จุดจับตอน export (กันเส้นติดไปกับไฟล์จริง)
+    let onLayerResize = null;       // V35: callback แจ้ง UI ตอนลากจุดจับปรับขนาด
     let selectedIdx = -1;
     let onSelectionChange = null;   // callback ให้ UI อัปเดต toolbar
     let onLayersChange    = null;
@@ -508,7 +519,7 @@ window.CanvasPreview = (function(){
           drawTextLayer(l);
         }
         ctx.restore();
-        if (i === selectedIdx) {
+        if (i === selectedIdx && !hideOverlay) {
           const b = layerBox(l);
           ctx.save();
           ctx.strokeStyle = 'rgba(14,165,233,.95)';
@@ -516,8 +527,65 @@ window.CanvasPreview = (function(){
           ctx.setLineDash([5, 4]);
           ctx.strokeRect(b.x - 5, b.y - 4, b.w + 10, b.h + 8);
           ctx.restore();
+          if (!(l.type === 'image' && l._crop)) drawHandles(l);   // V35: จุดจับปรับขนาดอิสระ
         }
       });
+    }
+
+    // ═══ V35: จุดจับปรับแต่งอิสระบน canvas (สไตล์ Canva) ═══
+    //  ข้อความ: ✕ ลบ (มุมขวาบน) + ⤡ ลากปรับขนาดฟอนต์ (มุมขวาล่าง)
+    //  รูปภาพ: 8 จุดรอบกรอบ — มุม = ย่อ/ขยายคงสัดส่วน · ด้าน = ยืดกว้าง/สูงอิสระ
+    const HANDLE_HIT = 13;   // รัศมีแตะโดน (logical px — เผื่อนิ้วบนมือถือ)
+    function handlePoints(l) {
+      const b = layerBox(l);
+      const x0 = b.x - 5, y0 = b.y - 4, x1 = b.x + b.w + 5, y1 = b.y + b.h + 4;   // ตรงกับกรอบเลือก
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      if (l.type === 'text') {
+        return [ { id: 'del', x: x1, y: y0 }, { id: 'se', x: x1, y: y1 } ];
+      }
+      return [
+        { id: 'nw', x: x0, y: y0 }, { id: 'n', x: cx, y: y0 }, { id: 'ne', x: x1, y: y0 },
+        { id: 'w',  x: x0, y: cy },                            { id: 'e',  x: x1, y: cy },
+        { id: 'sw', x: x0, y: y1 }, { id: 's', x: cx, y: y1 }, { id: 'se', x: x1, y: y1 },
+      ];
+    }
+    function drawHandles(l) {
+      handlePoints(l).forEach(h => {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, h.id === 'del' ? 8 : 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.shadowColor = 'rgba(0,0,0,.32)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 1;
+        ctx.fill();
+        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = h.id === 'del' ? 'rgba(225,29,72,.9)' : 'rgba(100,116,139,.7)';
+        ctx.stroke();
+        if (h.id === 'del') {                       // ✕ ลบ
+          ctx.strokeStyle = '#E11D48'; ctx.lineWidth = 1.7; ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(h.x - 3, h.y - 3); ctx.lineTo(h.x + 3, h.y + 3);
+          ctx.moveTo(h.x + 3, h.y - 3); ctx.lineTo(h.x - 3, h.y + 3);
+          ctx.stroke();
+        } else if (l.type === 'text' && h.id === 'se') {   // ⤡ ปรับขนาดฟอนต์
+          ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(h.x - 2.6, h.y - 2.6); ctx.lineTo(h.x + 2.6, h.y + 2.6);
+          ctx.moveTo(h.x + 2.6, h.y + 2.6); ctx.lineTo(h.x + 0.2, h.y + 2.6);
+          ctx.moveTo(h.x + 2.6, h.y + 2.6); ctx.lineTo(h.x + 2.6, h.y + 0.2);
+          ctx.stroke();
+        }
+        ctx.restore();
+      });
+    }
+    function hitHandle(p) {
+      const l = layers[selectedIdx];
+      if (!l || hideOverlay) return null;
+      if (l.type === 'image' && l._crop) return null;   // โหมดครอปมีการลากของตัวเอง
+      for (const h of handlePoints(l)) {
+        if (Math.hypot(p.x - h.x, p.y - h.y) <= HANDLE_HIT) return h.id;
+      }
+      return null;
     }
 
     function render() {
@@ -673,10 +741,28 @@ window.CanvasPreview = (function(){
     function attachInteraction(callbacks = {}) {
       onSelectionChange = callbacks.onSelectionChange || null;
       onLayersChange    = callbacks.onLayersChange || null;
+      onLayerResize     = callbacks.onLayerResize || null;   // V35
       canvas.style.touchAction = 'none';
 
       canvas.addEventListener('pointerdown', ev => {
         const p = toLogical(ev);
+        // V35: จุดจับของชิ้นที่เลือกอยู่ มาก่อนการแตะเลเยอร์อื่น
+        if (selectedIdx >= 0) {
+          const hid = hitHandle(p);
+          if (hid) {
+            const l = layers[selectedIdx];
+            if (hid === 'del') { deleteSelected(); ev.preventDefault(); return; }
+            const sh = l.type === 'image' ? (l.h || l.w * l.ratio) : 0;
+            drag = {
+              kind: 'handle', idx: selectedIdx, h: hid, startX: p.x, startY: p.y, moved: false,
+              sw: l.w || 0, sh, sx: l.x, sy: l.y, ssize: l.size || 0,
+              sdist: Math.max(8, Math.hypot(p.x - l.x, p.y - l.y)),
+            };
+            try { canvas.setPointerCapture(ev.pointerId); } catch (e) {}
+            ev.preventDefault();
+            return;
+          }
+        }
         const idx = hitLayer(p);
         if (idx >= 0) {
           selectedIdx = idx;
@@ -697,6 +783,37 @@ window.CanvasPreview = (function(){
         if (!drag) return;
         const p = toLogical(ev);
         if (Math.abs(p.x - drag.startX) + Math.abs(p.y - drag.startY) > 3) drag.moved = true;
+        if (drag.kind === 'handle') {
+          // V35: ลากจุดจับ = ปรับขนาดอิสระ
+          const l = layers[drag.idx]; if (!l) return;
+          if (l.type === 'text') {
+            // ⤡ มุมขวาล่าง: ขนาดฟอนต์แปรตามระยะจากจุดกึ่งกลางข้อความ
+            const d = Math.hypot(p.x - drag.sx, p.y - drag.sy);
+            const ns = clamp(Math.round(drag.ssize * d / drag.sdist), 8, 200);
+            if (ns !== l.size) { l.size = ns; render(); if (onLayerResize) onLayerResize(l); }
+          } else {
+            const MIN = 16;
+            const left = drag.sx - drag.sw / 2, right = drag.sx + drag.sw / 2;
+            const top  = drag.sy - drag.sh / 2, bot   = drag.sy + drag.sh / 2;
+            let w = drag.sw, h = drag.sh, ax = null, ay = null;
+            if (drag.h.includes('e')) { w = clamp(p.x - left,  MIN, logicalW * 2); ax = left;  }
+            if (drag.h.includes('w')) { w = clamp(right - p.x, MIN, logicalW * 2); ax = right; }
+            if (drag.h.includes('s')) { h = clamp(p.y - top,   MIN, logicalH * 2); ay = top;   }
+            if (drag.h.includes('n')) { h = clamp(bot - p.y,   MIN, logicalH * 2); ay = bot;   }
+            if (drag.h.length === 2) {                     // มุม = คงสัดส่วนเดิม
+              const k = Math.max(w / drag.sw, h / drag.sh);
+              w = Math.max(MIN, drag.sw * k);
+              h = Math.max(MIN, drag.sh * k);
+            }
+            l.w = w; l.h = h;
+            l.x = ax != null ? (drag.h.includes('w') ? ax - w / 2 : ax + w / 2) : drag.sx;
+            l.y = ay != null ? (drag.h.includes('n') ? ay - h / 2 : ay + h / 2) : drag.sy;
+            render();
+            if (onLayerResize) onLayerResize(l);
+          }
+          ev.preventDefault();
+          return;
+        }
         if (drag.kind === 'layer' && drag.moved) {
           const l = layers[drag.idx]; if (!l) return;
           if (l.type === 'image' && l._crop) {          // V31: โหมดครอป — เลื่อนรูป "ใน" กรอบ
@@ -762,11 +879,15 @@ window.CanvasPreview = (function(){
     function download(filename) {
       if (!userImage && !layers.length) return;
       let dataUrl;
+      // V35: ซ่อนกรอบเลือก/จุดจับก่อน export แล้วคืนภาพเดิม
+      hideOverlay = true; render();
       try { dataUrl = canvas.toDataURL('image/jpeg', 0.92); }
       catch (e) {
+        hideOverlay = false; render();
         if (typeof DMC !== 'undefined') DMC.toast('บันทึกภาพไม่ได้ (กรอบนี้มีข้อจำกัดด้านลิขสิทธิ์รูป) — ลองแบบอื่น หรือแคปหน้าจอแทนได้ครับ', 'error', 4500);
         return;
       }
+      hideOverlay = false; render();
       const link = document.createElement('a');
       link.download = filename || 'preview-diamond-cute-studio.jpg';
       link.href = dataUrl;
@@ -867,7 +988,12 @@ window.CanvasPreview = (function(){
       loadImage, selectBuiltin, selectCustomFrame, setCaption, render, download,
       hasImage: () => !!userImage,
       hasContent: () => !!userImage || layers.length > 0,
-      getBlob: (cb) => { try { canvas.toBlob(b => cb(b), 'image/jpeg', 0.92); } catch (e) { cb(null); } },
+      getBlob: (cb) => {
+        // V35: toBlob เก็บพิกเซล ณ ตอนเรียก — ซ่อนกรอบเลือก/จุดจับก่อน แล้วคืนภาพเดิมได้ทันที
+        try { hideOverlay = true; render(); canvas.toBlob(b => cb(b), 'image/jpeg', 0.92); }
+        catch (e) { cb(null); }
+        finally { hideOverlay = false; render(); }
+      },
       // V13 layer API
       addTextLayer, addImageLayerFromFile, updateSelected, deleteSelected,
       getSelected, selectLayer, setPhotoZoom, attachInteraction,
@@ -930,10 +1056,22 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     body.innerHTML = [
       // ═══ V33: โครงแบบ Canva — ภาพอยู่บนเสมอ (ย่ออัตโนมัติ) · แผงเด้ง "เหนือ" dock · dock ไอคอน+ข้อความล่างสุด ═══
       '<div class="pvd-layout">',
+        // ── V35: เลือกเทมเพลต — Drop-down มุมซ้ายบน (ย้ายจาก dock) ──
+        '<div class="pvd-topbar" id="pv-tpl-topbar">',
+          '<div class="pv-tpl-dd" id="pv-tpl-dd">',
+            '<button type="button" class="pv-tpl-dd-btn" id="pv-tpl-dd-btn" aria-haspopup="listbox" aria-expanded="false">',
+              '🎨 <span id="pv-tpl-dd-label">เลือกเทมเพลต</span> <span class="pv-tpl-dd-caret" aria-hidden="true">▾</span>',
+            '</button>',
+            '<div class="pv-tpl-dd-menu" id="pv-tpl-dd-menu" style="display:none" role="listbox" aria-label="เลือกเทมเพลต">',
+              '<div class="template-scroll pv-tpl-dd-list" id="template-chips-row"></div>',
+              '<div id="pv-caption-row" class="pv-tpl-dd-cap"><input class="form-input" id="preview-caption" maxlength="60" placeholder="ข้อความใต้รูป (ไม่บังคับ) เช่น Happy Birthday 🎂" style="font-size:.85rem"></div>',
+            '</div>',
+          '</div>',
+        '</div>',
         '<div class="pvd-stage" id="pvd-stage">',
           '<canvas id="preview-canvas" title="แตะเพื่อเลือกชิ้นงาน"></canvas>',
         '</div>',
-        '<div id="preview-upload-hint" class="preview-hint pvd-hintline">💡 <b>① เลือกแบบ</b> → <b>② แตะข้อความเพื่อแก้</b> (แตะ 2 ครั้ง = พิมพ์ทันที) → <b>③ ลากเพื่อย้าย</b></div>',
+        '<div id="preview-upload-hint" class="preview-hint pvd-hintline">💡 <b>① เลือกเทมเพลต (มุมซ้ายบน)</b> → <b>② แตะข้อความเพื่อแก้</b> (แตะ 2 ครั้ง = พิมพ์ทันที) → <b>③ ลากเพื่อย้าย</b></div>',
 
         // ── แผงเครื่องมือ (โผล่เหนือ dock ทีละแผง) ──
         '<div class="pvd-panel" id="pv-panel" style="display:none">',
@@ -942,10 +1080,13 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
             '<div class="pv-layer-row" id="pv-text-row">',
               '<input type="text" class="form-input pv-text-input" id="pv-text-input" maxlength="60" placeholder="พิมพ์ข้อความ...">',
             '</div>',
+            // V35: ปรับขนาดฟอนต์ครบวงจร — สไลเดอร์ + ปุ่ม −/+ + ช่องตัวเลขพิมพ์เองได้ (B ย้ายไปแถบ dock)
             '<div class="pv-layer-row">',
               '<span class="pv-row-ico" title="ขนาด">🔠</span>',
-              '<input type="range" id="pv-size" min="10" max="72" step="1" aria-label="ขนาด">',
-              '<button type="button" class="pv-mini-btn" id="pv-bold" title="ตัวหนา"><b>B</b></button>',
+              '<input type="range" id="pv-size" min="10" max="72" step="1" aria-label="ขนาดตัวอักษร">',
+              '<button type="button" class="pv-mini-btn pv-step-btn" id="pv-size-minus" title="ลดขนาด" aria-label="ลดขนาดตัวอักษร">−</button>',
+              '<input type="number" class="pv-size-num" id="pv-size-num" min="8" max="200" step="1" inputmode="numeric" aria-label="ขนาดตัวอักษร (พิมพ์ระบุเองได้)" title="พิมพ์ขนาดที่ต้องการได้เลย">',
+              '<button type="button" class="pv-mini-btn pv-step-btn" id="pv-size-plus" title="เพิ่มขนาด" aria-label="เพิ่มขนาดตัวอักษร">+</button>',
             '</div>',
           '</div>',
 
@@ -1043,11 +1184,7 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
             '</div>',
           '</div>',
 
-          // เลือกแบบ + caption (ลูกค้า)
-          '<div class="pv-pane" id="pv-tpl-section" style="display:none">',
-            '<div class="template-scroll" id="template-chips-row"></div>',
-            '<div style="margin-top:.6rem" id="pv-caption-row"><input class="form-input" id="preview-caption" maxlength="60" placeholder="ข้อความใต้รูป (ไม่บังคับ) เช่น Happy Birthday 🎂" style="font-size:.85rem"></div>',
-          '</div>',
+          // (V35: "เลือกเทมเพลต" ย้ายไป Drop-down มุมซ้ายบนแล้ว — pv-tpl-topbar)
         '</div>',
 
         // ── Dock ไอคอน+ข้อความ (เปลี่ยนตามสิ่งที่เลือก) ──
@@ -1081,7 +1218,7 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     const textRow   = document.getElementById('pv-text-row');
     const textIn    = document.getElementById('pv-text-input');
     const sizeIn    = document.getElementById('pv-size');
-    const boldBtn   = document.getElementById('pv-bold');
+    const sizeNumIn = document.getElementById('pv-size-num');       // V35: ช่องเลขขนาดฟอนต์ (พิมพ์เองได้)
     const delBtn    = document.getElementById('pv-del');
     const capRow    = document.getElementById('pv-caption-row');
     // ── V33: ระบบแผง (เด้งเหนือ dock) + dock ไอคอน ──
@@ -1089,14 +1226,15 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     const dockEl  = document.getElementById('pv-dock');
     const PANES = {};
     ['pv-panel-edit','pv-pane-color','pv-pane-fx','pv-pane-font','pv-panel-crop','pv-panel-shape',
-     'pv-panel-adjust','pv-panel-order','pv-panel-zoom','pv-tpl-section',
+     'pv-panel-adjust','pv-panel-order','pv-panel-zoom',
      'pv-panel-sticker','pv-panel-emoji'].forEach(id => { PANES[id] = document.getElementById(id); });
     let openPane = null;
     function openPanel(id) {
       openPane = id;
       Object.keys(PANES).forEach(k => { if (PANES[k]) PANES[k].style.display = (k === id) ? '' : 'none'; });
       if (panelEl) panelEl.style.display = id ? '' : 'none';
-      dockEl?.querySelectorAll('.pv-dock-item').forEach(b => b.classList.toggle('active', b.dataset.pane === id));
+      // V35: แตะเฉพาะปุ่มที่ผูกกับแผง — ไม่ไปล้างสถานะปุ่ม toggle อย่าง "ตัวหนา"
+      dockEl?.querySelectorAll('.pv-dock-item').forEach(b => { if (b.dataset.pane) b.classList.toggle('active', b.dataset.pane === id); });
     }
     function closePanel() { openPanel(null); }
     const sizeImgIn = document.getElementById('pv-size-img');
@@ -1358,6 +1496,7 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       layout:  '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
       edit:    '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
       font:    '<path d="M4 20V6a2 2 0 0 1 2-2h4M4 12h6M14 20l4-11 4 11M15.5 16h5"/>',
+      bold:    '<path d="M8 4.5h5.5a3.6 3.6 0 0 1 0 7.2H8zM8 11.7h6.5a3.6 3.6 0 0 1 0 7.2H8zM8 4.5v14.4"/>',
       color:   '<circle cx="13.5" cy="6.5" r="1.2"/><circle cx="17.5" cy="10.5" r="1.2"/><circle cx="8.5" cy="7.5" r="1.2"/><circle cx="6.5" cy="12.5" r="1.2"/><path d="M12 2a10 10 0 1 0 0 20 2.5 2.5 0 0 0 2-4 2.5 2.5 0 0 1 2-4h1a5 5 0 0 0 5-5c0-4.4-4.5-7-10-7Z"/>',
       effect:  '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/><circle cx="12" cy="12" r="2.5"/>',
       order:   '<path d="M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4"/>',
@@ -1395,10 +1534,16 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
         dockItem('sticker', 'สติกเกอร์', { pane: 'pv-panel-sticker' });
         dockItem('emoji', 'อิโมจิ', { pane: 'pv-panel-emoji' });
         if (!IS_ADMIN && api.hasImage()) dockItem('zoom', 'ซูมรูป', { pane: 'pv-panel-zoom' });
-        if (!IS_ADMIN) dockItem('layout', 'เลือกแบบ', { pane: 'pv-tpl-section' });
       } else if (sel.type === 'text') {
         dockItem('edit', 'แก้ไข', { pane: 'pv-panel-edit' });
         dockItem('font', 'ฟอนต์', { pane: 'pv-pane-font' });
+        // V35: B (ตัวหนา) ย้ายจากแถวสไลเดอร์มาอยู่ในแถบ dock — ไอคอนเวกเตอร์เหมือนตัวอื่น
+        const bBtn = dockItem('bold', 'ตัวหนา', { id: 'pv-dock-bold', action: () => {
+          const l = api.getSelected(); if (!l || l.type !== 'text') return;
+          api.updateSelected({ bold: !l.bold });
+          document.getElementById('pv-dock-bold')?.classList.toggle('active', !!api.getSelected().bold);
+        } });
+        bBtn.classList.toggle('active', !!sel.bold);
         dockItem('color', 'สี', { pane: 'pv-pane-color' });
         dockItem('effect', 'เอฟเฟกต์', { pane: 'pv-pane-fx' });
         dockItem('order', 'ลำดับ', { pane: 'pv-panel-order' });
@@ -1413,7 +1558,7 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
         dockItem('trash', 'ลบ', { danger: true, action: () => { api.deleteSelected(); } });
         dockItem('done', 'เสร็จสิ้น', { done: true, id: 'pv-done-img', action: () => api.selectLayer(-1) });
       }
-      dockEl.querySelectorAll('.pv-dock-item').forEach(b => b.classList.toggle('active', !!openPane && b.dataset.pane === openPane));
+      dockEl.querySelectorAll('.pv-dock-item').forEach(b => { if (b.dataset.pane) b.classList.toggle('active', !!openPane && b.dataset.pane === openPane); });
     }
 
     // ── V33: sync ค่าทุกคอนโทรลให้ตรงกับชิ้นที่เลือก + จัด dock/แผง ──
@@ -1428,7 +1573,8 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       if (isText) {
         textIn.value = layer.text;
         sizeIn.min = 10; sizeIn.max = 72; sizeIn.value = layer.size;
-        boldBtn.classList.toggle('active', !!layer.bold);
+        if (sizeNumIn) sizeNumIn.value = layer.size;   // V35: เลขขนาดฟอนต์ตรงกับชิ้นที่เลือกเสมอ
+        // (V35: สถานะปุ่ม "ตัวหนา" sync ใน refreshDock แล้ว)
         // สี: โหมด + จานสี + เป้า A/B + ทิศ
         colorTarget = 'color'; syncGradTarget();
         const mode = layer.colorMode || 'solid';
@@ -1468,6 +1614,16 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     api.attachInteraction({
       onSelectionChange: syncToolbar,
       onLayersChange: refreshActionButtons,
+      onLayerResize: (l) => {                                     // V35: ลากจุดจับ → ค่าบนแผงตามทันที
+        if (!l) return;
+        if (l.type === 'text') {
+          if (sizeIn) sizeIn.value = l.size;
+          if (sizeNumIn) sizeNumIn.value = l.size;
+        } else if (sizeImgIn) {
+          sizeImgIn.value = Math.round(l.w);
+          setVal('pv-size-img-val', Math.round(l.w));
+        }
+      },
       onEmptyTap: () => { if (!IS_ADMIN && !api.hasImage()) fileInput?.click(); },
       onLayerDoubleTap: (l) => {                                  // V32: แตะสองครั้ง = แก้ทันที
         if (l.type === 'text') {
@@ -1481,8 +1637,27 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       },
     });
 
-    // ─── template chips ───
-    function addChip(label, emojiOrImg, onClick, isImg, isCustomTpl) {
+    // ─── V35: Drop-down "เลือกเทมเพลต" มุมซ้ายบน ───
+    const tplDD   = document.getElementById('pv-tpl-dd');
+    const tplBtn  = document.getElementById('pv-tpl-dd-btn');
+    const tplMenu = document.getElementById('pv-tpl-dd-menu');
+    const tplLbl  = document.getElementById('pv-tpl-dd-label');
+    function setTplLabel(t) { if (tplLbl && t) tplLbl.textContent = t; }
+    function closeTplMenu() {
+      if (tplMenu) tplMenu.style.display = 'none';
+      tplBtn?.setAttribute('aria-expanded', 'false');
+    }
+    tplBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = tplMenu && tplMenu.style.display === 'none';
+      if (tplMenu) tplMenu.style.display = willOpen ? '' : 'none';
+      tplBtn.setAttribute('aria-expanded', String(!!willOpen));
+    });
+    // แตะนอกเมนู → ปิด (ผูกกับ body ของ Designer เอง — ไม่ค้าง listener ระดับ document)
+    body.addEventListener('click', (e) => { if (tplDD && !tplDD.contains(e.target)) closeTplMenu(); });
+
+    // ─── template chips (แสดงในเมนู Drop-down) ───
+    function addChip(label, emojiOrImg, onClick, isImg, isCustomTpl, isMore) {
       const chip = document.createElement('div');
       chip.className = 'template-chip';
       const icon = document.createElement('span');
@@ -1502,6 +1677,8 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
         chip.classList.add('active');
         onClick();
         capRow.style.display = isCustomTpl ? 'none' : '';
+        if (!isMore) setTplLabel(label);   // "เพิ่มเติม…" ไม่ใช่เทมเพลต — ไม่เปลี่ยนป้าย
+        closeTplMenu();
       });
       row.appendChild(chip);
       return chip;
@@ -1516,7 +1693,7 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       const act = () => api.selectBuiltin(t.id);
       const chip = addChip(t.name, t.emoji, act);
       chip.title = t.description;
-      chipActions.push({ chip, act });
+      chipActions.push({ chip, act, label: t.name });
     });
 
     let frames = [];
@@ -1529,19 +1706,20 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       const act = isDesign ? (() => api.loadTemplateData(f)) : (() => api.selectCustomFrame(f));
       const icon = isDesign ? (f.thumbUrl || '') : f.frameUrl;
       const chip = addChip(f.name, icon || '✨', act, !!icon, true);
-      chipActions.push({ chip, act });
+      chipActions.push({ chip, act, label: f.name });
     });
 
     if (chipActions.length) {
       chipActions[0].chip.classList.add('active');
       chipActions[0].act();
       capRow.style.display = (builtins.length === 0) ? 'none' : '';
+      setTplLabel(chipActions[0].label);   // V35: ป้าย Drop-down = เทมเพลตที่ใช้อยู่
     }
 
     const moreChip = IS_ADMIN ? null : addChip('เพิ่มเติม…', '✨', () => {
       if (hintEl) hintEl.innerHTML = '💬 ร้านมีแบบมากกว่านี้! <a href="' + (options.lineUrl || '#') + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">ทักไลน์เพื่อดูแบบเพิ่มเติม →</a>';
       if (typeof DMC !== 'undefined') DMC.toast('ทักไลน์ร้านเพื่อดูแบบเพิ่มเติมได้เลยครับ 💬', 'info');
-    });
+    }, false, false, true);   // V35: isMore — ไม่ใช่เทมเพลต ไม่เปลี่ยนป้าย Drop-down
     if (moreChip) {
       moreChip.classList.add('template-chip-more');
       moreChip.title = 'ติดต่อ LINE เพื่อดูแบบอื่นๆ นอกเหนือจากในเว็บ';
@@ -1614,9 +1792,29 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
     textIn?.addEventListener('input',  e => api.updateSelected({ text: e.target.value || ' ' }));
     // (V30: สีย้ายไปแท็บสี — จานสี + HSL picker ของระบบเราเอง)
     // (V29: การเลือกฟอนต์ย้ายไปที่เมนู .pv-font-item ด้านบน)
-    sizeIn?.addEventListener('input',  e => {
+    // ── V35: ปรับขนาดฟอนต์ครบวงจร — สไลเดอร์ / ช่องเลข (พิมพ์เอง) / ปุ่ม −/+ ทำงานร่วมกัน ──
+    function setTextSize(v) {
       const l = api.getSelected(); if (!l || l.type !== 'text') return;
-      api.updateSelected({ size: parseInt(e.target.value, 10) || 16 });
+      const n = clampNum(parseInt(v, 10) || l.size || 16, 8, 200);
+      api.updateSelected({ size: n });
+      if (sizeIn) sizeIn.value = n;         // สไลเดอร์ clamp ที่ 10–72 เองถ้าเกินช่วง
+      if (sizeNumIn) sizeNumIn.value = n;
+    }
+    sizeIn?.addEventListener('input', e => setTextSize(e.target.value));
+    sizeNumIn?.addEventListener('input', e => {
+      // พิมพ์สด: อัปเดตเมื่อเลขอยู่ในช่วงแล้วเท่านั้น (ไม่แย่งแก้ค่าระหว่างพิมพ์)
+      const v = parseInt(e.target.value, 10);
+      if (isNaN(v) || v < 8 || v > 200) return;
+      const l = api.getSelected(); if (!l || l.type !== 'text') return;
+      api.updateSelected({ size: v });
+      if (sizeIn) sizeIn.value = v;
+    });
+    sizeNumIn?.addEventListener('change', e => setTextSize(e.target.value));   // เบลอ/Enter → clamp ให้เรียบร้อย
+    document.getElementById('pv-size-minus')?.addEventListener('click', () => {
+      const l = api.getSelected(); if (l && l.type === 'text') setTextSize((l.size || 16) - 1);
+    });
+    document.getElementById('pv-size-plus')?.addEventListener('click', () => {
+      const l = api.getSelected(); if (l && l.type === 'text') setTextSize((l.size || 16) + 1);
     });
     sizeImgIn?.addEventListener('input', e => {
       const l = api.getSelected(); if (!l || l.type !== 'image') return;
@@ -1625,11 +1823,7 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
       api.updateSelected({ w, h: (l.h || l.w * l.ratio) * k });     // สเกลทั้งกล่อง คงสัดส่วน
       setVal('pv-size-img-val', w);
     });
-    boldBtn?.addEventListener('click', () => {
-      const l = api.getSelected(); if (!l || l.type !== 'text') return;
-      api.updateSelected({ bold: !l.bold });
-      boldBtn.classList.toggle('active', !!api.getSelected().bold);
-    });
+    // (V35: ปุ่มตัวหนา B ย้ายไปแถบ dock — ดู refreshDock)
     delBtn?.addEventListener('click', () => { api.deleteSelected(); refreshActionButtons(); });
 
     dlBtn?.addEventListener('click', () => api.download());
@@ -1669,7 +1863,7 @@ window.__PV_mountDesigner = async function mountDesigner(body, options) {
 
   // ── V31: โหมดแอดมิน (Template Studio) — ตัดส่วนที่ผูกกับออเดอร์ออก ──
   if (IS_ADMIN) {
-    ['preview-attach-btn', 'pv-caption-row', 'pv-upload-row', 'pv-tpl-section'].forEach(id => {
+    ['preview-attach-btn', 'pv-caption-row', 'pv-upload-row', 'pv-tpl-topbar'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
