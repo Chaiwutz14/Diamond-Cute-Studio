@@ -168,7 +168,7 @@ window.openProductModal = async function(productId) {
       <div id="p-images-list"></div>
       <button type="button" id="p-add-image-btn" style="margin-top:.5rem">➕ เพิ่มรูปอีก</button>
       <input type="file" id="p-img-file-hidden" accept="image/*" style="display:none">
-      <div style="font-size:.73rem;color:var(--text-3);margin-top:.35rem">💡 ใส่ "ชื่อแบบ" ให้ตรงกับตัวเลือกขนาด/วัสดุ เช่น "2x3 นิ้ว" — ลูกค้ากดตัวเลือกนั้นแล้วรูปจะสลับให้เอง</div>
+      <div style="font-size:.73rem;color:var(--text-3);margin-top:.35rem">💡 ใส่ "ชื่อแบบ" ให้รูป → หน้าสินค้าจะขึ้นตัวเลือก "🎨 แบบ" ให้ลูกค้าเลือก และแนบชื่อแบบเข้าออเดอร์ให้อัตโนมัติ · ถ้าชื่อแบบตรงกับตัวเลือกขนาด/วัสดุ (เช่น "2x3 นิ้ว") รูปจะสลับตามตัวเลือกนั้นแทน · รูปที่ไม่ใส่ชื่อแบบ = รูปประกอบปกติ ไม่ขึ้นเป็นตัวเลือก</div>
     </div>
 
     <!-- วิดีโอ -->
