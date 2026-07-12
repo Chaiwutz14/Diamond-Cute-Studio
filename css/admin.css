@@ -820,3 +820,257 @@
   .dash-mini-grid{ grid-template-columns: repeat(2, 1fr); }
   .dash-health-wrap { flex-direction: column; }
 }
+
+/* ═══════════════════════════════════════════════
+   V38 — Admin UX/UI Redesign
+   (Dashboard ใหม่ · การ์ดออเดอร์ · การ์ดสินค้า · chips กรอง)
+═══════════════════════════════════════════════ */
+
+/* ── 1) KPI Hero cards (ไอคอน tile + ตัวเลขใหญ่ + trend ↑↓) ── */
+.dk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: .8rem;
+}
+.dk-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: .95rem 1rem;
+  display: flex; flex-direction: column; gap: .45rem;
+  box-shadow: var(--shadow-card);
+  transition: transform .15s, box-shadow .15s;
+}
+.dk-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.dk-top { display: flex; align-items: center; gap: .6rem; }
+.dk-ic {
+  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+}
+.dk-ic.blue   { background: var(--glass); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.dk-ic.gold   { background: rgba(245,158,11,.14); }
+.dk-ic.green  { background: rgba(16,185,129,.14); }
+.dk-ic.rose   { background: rgba(251,113,133,.14); }
+.dk-ic.purple { background: rgba(139,92,246,.14); }
+.dk-lb  { font-size: .76rem; color: var(--text-3); font-weight: 600; }
+.dk-val {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: 1.45rem; line-height: 1.1; color: var(--text-1);
+  letter-spacing: .2px;
+}
+.dk-trend { display: flex; align-items: center; gap: .3rem; font-size: .72rem; font-weight: 700; }
+.dk-trend.up   { color: var(--emerald); }
+.dk-trend.down { color: var(--rose); }
+.dk-trend.flat { color: var(--text-3); font-weight: 500; }
+
+/* ── 2) แถว counters รอง (chips ตัวเลขเล็ก) ── */
+.dash-statchips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+.dash-statchip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .4rem .8rem; border-radius: 999px;
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  font-size: .76rem; color: var(--text-3);
+}
+.dash-statchip b { font-family: var(--font-display); font-weight: 800; color: var(--text-1); font-size: .86rem; }
+
+/* ── 3) กราฟแท่งใหม่ (ตัวเลขบนแท่ง เหมือน dashboard มืออาชีพ) ── */
+.vchart { display: flex; align-items: flex-end; gap: 6px; height: 190px; padding-top: 1.4rem; }
+.vchart-col { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; height: 100%; }
+.vchart-num {
+  font-family: var(--font-display); font-size: .66rem; font-weight: 700;
+  color: var(--text-2); margin-bottom: 4px; white-space: nowrap;
+  max-width: 100%; overflow: hidden;
+}
+.vchart-track { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.vchart-bar {
+  width: 72%; max-width: 34px; min-height: 4px;
+  border-radius: 7px 7px 3px 3px;
+  background: var(--glass-hover);
+  background: color-mix(in srgb, var(--accent) 32%, var(--bg-mid));
+  transition: height .4s ease;
+}
+.vchart-col.today .vchart-bar { background: linear-gradient(to top, var(--accent), var(--accent-light)); box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 35%, transparent); }
+.vchart-col.today .vchart-num { color: var(--accent); }
+.vchart-x {
+  font-size: .64rem; color: var(--text-3); margin-top: 5px;
+  white-space: nowrap; max-width: 100%; overflow: hidden;
+}
+.vchart-col.today .vchart-x { color: var(--accent); font-weight: 700; }
+.vchart.dense { gap: 2px; }
+.vchart.dense .vchart-bar { border-radius: 3px 3px 1px 1px; width: 100%; }
+
+/* ── 4) Donut chart (CSS ล้วน) ── */
+.donut-wrap { display: flex; align-items: center; gap: 1.1rem; }
+.donut {
+  width: 128px; height: 128px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.donut-hole {
+  width: 82px; height: 82px; border-radius: 50%; background: var(--bg-card);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 1px var(--border) inset;
+}
+.donut-total { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; color: var(--text-1); line-height: 1; }
+.donut-sub   { font-size: .62rem; color: var(--text-3); margin-top: 2px; }
+.donut-legend { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .34rem; }
+.dlg-row { display: flex; align-items: center; gap: .5rem; font-size: .78rem; min-width: 0; }
+.dlg-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.dlg-lb  { flex: 1; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dlg-val { color: var(--text-1); font-weight: 700; font-family: var(--font-display); font-size: .76rem; }
+.dlg-pct { color: var(--text-3); font-size: .7rem; min-width: 44px; text-align: right; }
+
+/* ── 5) Ranked rows (อันดับ + แถบ + ค่า + %) ── */
+.rank-row { display: flex; align-items: center; gap: .55rem; padding: .34rem 0; }
+.rank-n {
+  width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0;
+  background: var(--bg-mid); color: var(--text-3);
+  font-size: .66rem; font-weight: 800; font-family: var(--font-display);
+  display: flex; align-items: center; justify-content: center;
+}
+.rank-row:first-child .rank-n { background: var(--glass); background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+.rank-lb {
+  flex: 0 0 92px; font-size: .78rem; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rank-lb.wide { flex: 0 1 40%; }
+.rank-track { flex: 1; height: 7px; border-radius: 999px; background: var(--bg-mid); overflow: hidden; }
+.rank-fill  { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width .4s; }
+.rank-val { flex-shrink: 0; font-family: var(--font-display); font-weight: 700; font-size: .74rem; color: var(--text-1); min-width: 44px; text-align: right; }
+.rank-pct { flex-shrink: 0; font-size: .68rem; color: var(--text-3); min-width: 40px; text-align: right; }
+
+/* ── 6) Chips กรอง (ออเดอร์/สินค้า) ── */
+.fchips {
+  display: flex; gap: .45rem; overflow-x: auto; padding-bottom: .35rem;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-bottom: 1rem;
+}
+.fchips::-webkit-scrollbar { display: none; }
+.fchip {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: .35rem;
+  padding: .45rem .95rem; border-radius: 999px;
+  font-family: var(--font-display); font-size: .8rem; font-weight: 600;
+  color: var(--text-3); background: var(--bg-card);
+  border: 1.5px solid var(--border); cursor: pointer; transition: all .15s;
+}
+.fchip:hover { color: var(--text-1); border-color: var(--border-hover); }
+.fchip.active { color: #fff; background: var(--accent); border-color: var(--accent); box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 35%, transparent); }
+.fchip .fchip-n {
+  font-size: .66rem; padding: .05rem .4rem; border-radius: 999px;
+  background: var(--bg-mid); color: var(--text-3); font-weight: 700;
+}
+.fchip.active .fchip-n { background: rgba(255,255,255,.25); color: #fff; }
+
+/* ── 7) การ์ดออเดอร์ ── */
+.ord-list { display: flex; flex-direction: column; gap: .8rem; }
+.ord-card {
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: 16px; padding: .9rem 1rem;
+  box-shadow: var(--shadow-card);
+}
+.ord-head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .55rem; }
+.ord-id {
+  font-family: var(--font-display); font-weight: 800; font-size: .88rem;
+  color: var(--accent); letter-spacing: .2px;
+}
+.ord-date { font-size: .7rem; color: var(--text-3); }
+.ord-head .status { margin-left: auto; }
+.status { padding: .22rem .6rem; border-radius: 999px; font-size: .7rem; font-weight: 700; font-family: var(--font-display); white-space: nowrap; }
+.ord-cust { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; font-size: .86rem; }
+.ord-cust b { color: var(--text-1); font-family: var(--font-display); }
+.ord-cust a { color: var(--text-3); font-size: .76rem; text-decoration: none; }
+.ord-items {
+  font-size: .8rem; color: var(--text-2); line-height: 1.55;
+  margin: .35rem 0 .55rem; word-break: break-word;
+}
+.ord-mid { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: .65rem; }
+.ord-price { font-family: var(--font-display); font-weight: 800; font-size: 1.08rem; color: var(--text-1); }
+.ord-trackno {
+  font-size: .74rem; color: var(--text-2);
+  background: var(--bg-mid); padding: .25rem .6rem; border-radius: 8px;
+}
+.ord-warn { font-size: .74rem; color: var(--gold-deep); font-weight: 700; }
+.ord-actions { display: flex; gap: .5rem; align-items: center; }
+.ord-actions .form-select { flex: 1; min-width: 0; padding: .42rem .6rem; font-size: .78rem; }
+.ord-view-btn {
+  flex-shrink: 0; padding: .45rem .95rem; border-radius: 10px;
+  font-family: var(--font-display); font-size: .78rem; font-weight: 700;
+  color: var(--accent); background: var(--glass); background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1.5px solid var(--border-hover); border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  cursor: pointer; transition: all .15s;
+}
+.ord-view-btn:hover { background: var(--accent); color: #fff; }
+@media (min-width: 760px) {
+  .ord-card { display: grid; grid-template-columns: 1fr 300px; gap: .3rem 1.25rem; align-items: center; }
+  .ord-card .ord-head, .ord-card .ord-cust, .ord-card .ord-items { grid-column: 1; }
+  .ord-card .ord-mid { grid-column: 1; margin-bottom: 0; }
+  .ord-card .ord-actions { grid-column: 2; grid-row: 1 / span 4; flex-direction: column; align-items: stretch; }
+  .ord-actions .form-select { width: 100%; }
+}
+
+/* ── 8) การ์ดสินค้า ── */
+.pgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: .8rem;
+}
+.pcard {
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: 16px; padding: .8rem;
+  display: flex; gap: .75rem;
+  box-shadow: var(--shadow-card);
+  transition: transform .15s, box-shadow .15s;
+}
+.pcard:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.pcard.off { opacity: .55; }
+.pcard-img {
+  width: 74px; height: 74px; border-radius: 12px; flex-shrink: 0;
+  background: var(--bg-mid); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; overflow: hidden; position: relative;
+}
+.pcard-img img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
+.pcard-imgn {
+  position: absolute; bottom: 0; right: 0;
+  background: var(--accent); color: #fff; font-size: .56rem; font-weight: 700;
+  padding: 0 .3rem; border-radius: 6px 0 0 0;
+}
+.pcard-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .18rem; }
+.pcard-name {
+  font-family: var(--font-display); font-weight: 700; font-size: .86rem; color: var(--text-1);
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3;
+}
+.pcard-cat { font-size: .68rem; color: var(--text-3); }
+.pcard-price { font-family: var(--font-display); font-weight: 800; font-size: .92rem; color: var(--accent); }
+.pcard-price small { font-weight: 500; color: var(--text-3); font-size: .68rem; }
+.pcard-badges { display: flex; gap: .25rem; flex-wrap: wrap; }
+.pcard-foot { display: flex; align-items: center; gap: .45rem; margin-top: auto; padding-top: .35rem; }
+.pcard-edit {
+  padding: .32rem .7rem; border-radius: 8px; cursor: pointer;
+  font-family: var(--font-display); font-size: .72rem; font-weight: 700;
+  color: var(--accent); background: var(--glass); background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1.5px solid var(--border-hover); border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  transition: all .15s;
+}
+.pcard-edit:hover { background: var(--accent); color: #fff; }
+.pcard-del {
+  padding: .32rem .55rem; border-radius: 8px; cursor: pointer;
+  font-size: .72rem; color: var(--rose);
+  background: transparent; border: 1.5px solid rgba(251,113,133,.35);
+  transition: all .15s;
+}
+.pcard-del:hover { background: var(--rose); color: #fff; }
+.pcard-foot .toggle-switch { margin-left: auto; transform: scale(.85); transform-origin: right center; }
+
+/* ── ปรับแท็บ dashboard (เดิม) ให้เป็น segmented pills ── */
+.dash-tabs { border-bottom: none; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: 999px; padding: .3rem; gap: .25rem; width: fit-content; max-width: 100%; }
+.dash-tab { border-radius: 999px; padding: .45rem .95rem; font-size: .8rem; }
+.dash-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 35%, transparent); }
+
+@media (max-width: 640px) {
+  .dk-grid { grid-template-columns: repeat(2, 1fr); }
+  .dk-val { font-size: 1.2rem; }
+  .vchart { height: 160px; }
+  .donut-wrap { flex-direction: row; }
+  .pgrid { grid-template-columns: 1fr; }
+}

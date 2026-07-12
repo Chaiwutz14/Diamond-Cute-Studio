@@ -43,48 +43,7 @@ async function loadContentCMS(container) {
       <div class="form-group" style="margin:0"><label class="form-label">ข้อความประกาศ</label><input class="form-input" id="cms-announce-text" value="${v(_an.text)}" placeholder="เช่น 🎉 ลดพิเศษเดือนนี้ ทุกออเดอร์ส่งฟรี!"></div>
     </div>
 
-    <!-- Hero -->
-    <div class="admin-box">
-      <div class="admin-box-header"><div class="admin-box-title">🏠 หน้าแรก — Hero</div></div>
-      <div class="form-group"><label class="form-label">ป้ายเล็กด้านบน</label><input class="form-input" id="cms-hero-badge" value="${v(content.hero.badge)}"></div>
-      <div class="form-group"><label class="form-label">หัวข้อบรรทัด 1</label><input class="form-input" id="cms-hero-t1" value="${v(content.hero.title1)}"></div>
-      <div class="form-group"><label class="form-label">หัวข้อบรรทัด 2 (ไฮไลต์)</label><input class="form-input" id="cms-hero-t2" value="${v(content.hero.title2)}"></div>
-      <div class="form-group"><label class="form-label">หัวข้อบรรทัด 3</label><input class="form-input" id="cms-hero-t3" value="${v(content.hero.title3)}"></div>
-      <div class="form-group"><label class="form-label">คำอธิบายใต้หัวข้อ</label><textarea class="form-input form-textarea" id="cms-hero-desc">${v(content.hero.desc)}</textarea></div>
-    </div>
-
-    <!-- ตัวเลขความเชื่อมั่น + โปรโมชั่น -->
-    <div class="admin-box">
-      <div class="admin-box-header"><div class="admin-box-title">📊 ตัวเลขความเชื่อมั่น</div></div>
-      <div class="form-row" style="margin-bottom:1rem">
-        <div class="form-group" style="margin:0"><label class="form-label">จำนวนออเดอร์ เช่น 500+</label><input class="form-input" id="cms-stat-orders" value="${v(content.stats.orders)}"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">คะแนนรีวิว เช่น 4.9/5</label><input class="form-input" id="cms-stat-rating" value="${v(content.stats.rating)}"></div>
-      </div>
-      <div class="form-group"><label class="form-label">เวลาผลิต (วัน) เช่น 1-3</label><input class="form-input" id="cms-stat-days" value="${v(content.stats.days)}"></div>
-      <div class="admin-box-header" style="margin-top:1.25rem"><div class="admin-box-title">🎁 แบนเนอร์โปรโมชั่น</div></div>
-      <label style="display:flex;align-items:center;gap:.45rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem;margin-bottom:.85rem">
-        <input type="checkbox" id="cms-promo-active" ${content.promo.active ? 'checked' : ''} style="accent-color:var(--accent)"> แสดงแบนเนอร์โปรโมชั่น
-      </label>
-      <div class="form-group"><label class="form-label">ป้ายกำกับ</label><input class="form-input" id="cms-promo-tag" value="${v(content.promo.tag)}"></div>
-      <div class="form-group"><label class="form-label">หัวข้อโปร</label><input class="form-input" id="cms-promo-title" value="${v(content.promo.title)}"></div>
-      <div class="form-group"><label class="form-label">รายละเอียด</label><input class="form-input" id="cms-promo-desc" value="${v(content.promo.desc)}"></div>
-      <div class="form-group"><label class="form-label">ข้อความปุ่ม</label><input class="form-input" id="cms-promo-btn" value="${v(content.promo.btnText)}"></div>
-    </div>
-
-    <!-- ช่องทางติดต่อ -->
-    <div class="admin-box">
-      <div class="admin-box-header"><div class="admin-box-title">📞 ช่องทางติดต่อ (ใช้ทั้งเว็บ)</div></div>
-      <div class="form-group"><label class="form-label">LINE URL</label><input class="form-input" id="cms-ct-line" value="${v(content.contact.line)}" placeholder="https://line.me/R/ti/p/@xxx"></div>
-      <div class="form-group"><label class="form-label">ชื่อ LINE ID แสดงผล</label><input class="form-input" id="cms-ct-linelabel" value="${v(content.contact.lineLabel)}" placeholder="@yourshop"></div>
-      <div class="form-group"><label class="form-label">Facebook URL</label><input class="form-input" id="cms-ct-fb" value="${v(content.contact.facebook)}"></div>
-      <div class="form-group"><label class="form-label">Instagram URL</label><input class="form-input" id="cms-ct-ig" value="${v(content.contact.instagram)}"></div>
-      <div class="form-group"><label class="form-label">TikTok URL</label><input class="form-input" id="cms-ct-tiktok" value="${v(content.contact.tiktok)}"></div>
-      <div class="form-row" style="margin-bottom:0">
-        <div class="form-group" style="margin:0"><label class="form-label">อีเมล</label><input class="form-input" id="cms-ct-email" value="${v(content.contact.email)}"></div>
-        <div class="form-group" style="margin:0"><label class="form-label">เบอร์โทรร้าน</label><input class="form-input" id="cms-ct-phone" value="${v(content.contact.phone)}"></div>
-      </div>
-      <div class="form-group" style="margin-top:1rem"><label class="form-label">เวลาทำการ</label><input class="form-input" id="cms-ct-hours" value="${v(content.contact.hours)}"></div>
-    </div>
+    
 
     <!-- PromptPay -->
     <div class="admin-box">
@@ -107,6 +66,8 @@ async function loadContentCMS(container) {
       <div id="cms-qr-preview" style="text-align:center"></div>
     </div>
 
+    
+
     <!-- ช่องทางชำระเงิน (เปิด/ปิด + พร้อม/ไม่พร้อม) -->
     <div class="admin-box">
       <div class="admin-box-header"><div class="admin-box-title">🔘 ช่องทางชำระเงิน</div></div>
@@ -118,6 +79,8 @@ async function loadContentCMS(container) {
         💡 <strong>แสดงในเว็บ</strong> = ลูกค้าเห็นช่องทางนี้ &nbsp;·&nbsp; <strong>พร้อมใช้งาน</strong> = กดเลือกได้ (ปิด = ขึ้น "เร็วๆ นี้" กดไม่ได้)
       </div>
     </div>
+
+    
 
     <!-- ค่าส่ง / ค่าธรรมเนียม -->
     <div class="admin-box">
@@ -133,6 +96,57 @@ async function loadContentCMS(container) {
         <div class="form-group" style="margin:0"><label class="form-label">ค่าธรรมเนียมเพิ่ม COD (บาท)</label><input class="form-input" id="cms-fee-sur-cod" type="number" min="0" inputmode="numeric" value="${Number((content.fees&&content.fees.surchargeCod) ?? 0)}"></div>
       </div>
     </div>
+
+    
+
+    <!-- ช่องทางติดต่อ -->
+    <div class="admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">📞 ช่องทางติดต่อ (ใช้ทั้งเว็บ)</div></div>
+      <div class="form-group"><label class="form-label">LINE URL</label><input class="form-input" id="cms-ct-line" value="${v(content.contact.line)}" placeholder="https://line.me/R/ti/p/@xxx"></div>
+      <div class="form-group"><label class="form-label">ชื่อ LINE ID แสดงผล</label><input class="form-input" id="cms-ct-linelabel" value="${v(content.contact.lineLabel)}" placeholder="@yourshop"></div>
+      <div class="form-group"><label class="form-label">Facebook URL</label><input class="form-input" id="cms-ct-fb" value="${v(content.contact.facebook)}"></div>
+      <div class="form-group"><label class="form-label">Instagram URL</label><input class="form-input" id="cms-ct-ig" value="${v(content.contact.instagram)}"></div>
+      <div class="form-group"><label class="form-label">TikTok URL</label><input class="form-input" id="cms-ct-tiktok" value="${v(content.contact.tiktok)}"></div>
+      <div class="form-row" style="margin-bottom:0">
+        <div class="form-group" style="margin:0"><label class="form-label">อีเมล</label><input class="form-input" id="cms-ct-email" value="${v(content.contact.email)}"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">เบอร์โทรร้าน</label><input class="form-input" id="cms-ct-phone" value="${v(content.contact.phone)}"></div>
+      </div>
+      <div class="form-group" style="margin-top:1rem"><label class="form-label">เวลาทำการ</label><input class="form-input" id="cms-ct-hours" value="${v(content.contact.hours)}"></div>
+    </div>
+
+    
+
+    <!-- Hero -->
+    <div class="admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">🏠 หน้าแรก — Hero</div></div>
+      <div class="form-group"><label class="form-label">ป้ายเล็กด้านบน</label><input class="form-input" id="cms-hero-badge" value="${v(content.hero.badge)}"></div>
+      <div class="form-group"><label class="form-label">หัวข้อบรรทัด 1</label><input class="form-input" id="cms-hero-t1" value="${v(content.hero.title1)}"></div>
+      <div class="form-group"><label class="form-label">หัวข้อบรรทัด 2 (ไฮไลต์)</label><input class="form-input" id="cms-hero-t2" value="${v(content.hero.title2)}"></div>
+      <div class="form-group"><label class="form-label">หัวข้อบรรทัด 3</label><input class="form-input" id="cms-hero-t3" value="${v(content.hero.title3)}"></div>
+      <div class="form-group"><label class="form-label">คำอธิบายใต้หัวข้อ</label><textarea class="form-input form-textarea" id="cms-hero-desc">${v(content.hero.desc)}</textarea></div>
+    </div>
+
+    
+
+    <!-- ตัวเลขความเชื่อมั่น + โปรโมชั่น -->
+    <div class="admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">📊 ตัวเลขความเชื่อมั่น</div></div>
+      <div class="form-row" style="margin-bottom:1rem">
+        <div class="form-group" style="margin:0"><label class="form-label">จำนวนออเดอร์ เช่น 500+</label><input class="form-input" id="cms-stat-orders" value="${v(content.stats.orders)}"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">คะแนนรีวิว เช่น 4.9/5</label><input class="form-input" id="cms-stat-rating" value="${v(content.stats.rating)}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">เวลาผลิต (วัน) เช่น 1-3</label><input class="form-input" id="cms-stat-days" value="${v(content.stats.days)}"></div>
+      <div class="admin-box-header" style="margin-top:1.25rem"><div class="admin-box-title">🎁 แบนเนอร์โปรโมชั่น</div></div>
+      <label style="display:flex;align-items:center;gap:.45rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem;margin-bottom:.85rem">
+        <input type="checkbox" id="cms-promo-active" ${content.promo.active ? 'checked' : ''} style="accent-color:var(--accent)"> แสดงแบนเนอร์โปรโมชั่น
+      </label>
+      <div class="form-group"><label class="form-label">ป้ายกำกับ</label><input class="form-input" id="cms-promo-tag" value="${v(content.promo.tag)}"></div>
+      <div class="form-group"><label class="form-label">หัวข้อโปร</label><input class="form-input" id="cms-promo-title" value="${v(content.promo.title)}"></div>
+      <div class="form-group"><label class="form-label">รายละเอียด</label><input class="form-input" id="cms-promo-desc" value="${v(content.promo.desc)}"></div>
+      <div class="form-group"><label class="form-label">ข้อความปุ่ม</label><input class="form-input" id="cms-promo-btn" value="${v(content.promo.btnText)}"></div>
+    </div>
+
+    
 
     <!-- FAQ -->
     <div class="admin-box" style="grid-column:1/-1">

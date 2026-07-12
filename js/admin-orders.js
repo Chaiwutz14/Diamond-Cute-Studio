@@ -9,21 +9,46 @@
 //  ORDERS (+ Tracking)
 // ══════════════════════════════════════════════
 async function loadOrders(container) {
+  // V38: การ์ดออเดอร์ (แทนตารางที่ล้นจอมือถือ) + chips กรองสถานะ + ค้นหา
   container.innerHTML = `
     <div class="admin-topbar">
       <div class="admin-greeting"><h2>📦 ออเดอร์ทั้งหมด</h2><p>จัดการสถานะ เลขพัสดุ และรายละเอียดออเดอร์</p></div>
       <div class="admin-topbar-actions">
-        <select data-custom class="form-input form-select" id="order-filter" style="width:auto;padding:.45rem 2rem .45rem .75rem">
-          <option value="">ทุกสถานะ</option>
-          ${ORDER_STATUSES.map(s=>`<option value="${s.key}">${s.label}</option>`).join('')}
-        </select>
+        <input class="form-input" id="order-search" placeholder="🔍 ค้นหา ชื่อ / เบอร์ / เลขออเดอร์..." style="width:240px;max-width:100%">
       </div>
     </div>
-    <div class="admin-box">
-      <div id="orders-table-wrap">${typeof Loading !== 'undefined' ? Loading.Skeleton.tableRows(5) : ''}</div>
-    </div>`;
-  document.getElementById('order-filter')?.addEventListener('change', loadOrdersTable);
+    <input type="hidden" id="order-filter" value="">
+    <div class="fchips" id="order-chips">
+      <button class="fchip active" data-status="">ทั้งหมด</button>
+      ${ORDER_STATUSES.map(s=>`<button class="fchip" data-status="${s.key}">${s.label}</button>`).join('')}
+    </div>
+    <div id="orders-table-wrap">${typeof Loading !== 'undefined' ? Loading.Skeleton.tableRows(5) : ''}</div>`;
+
+  document.getElementById('order-chips')?.querySelectorAll('.fchip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#order-chips .fchip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const f = document.getElementById('order-filter');
+      if (f) f.value = chip.dataset.status;
+      loadOrdersTable();
+    });
+  });
+  // ค้นหาในรายการที่โหลดแล้ว (ฝั่งหน้าจอ — เร็ว ไม่เปลืองโควต้า)
+  document.getElementById('order-search')?.addEventListener('input', DMC.debounce(filterOrderCards, 200));
   await loadOrdersTable();
+}
+
+function filterOrderCards() {
+  const q = (document.getElementById('order-search')?.value || '').toLowerCase().trim();
+  const cards = document.querySelectorAll('#orders-list .ord-card');
+  let shown = 0;
+  cards.forEach(c => {
+    const hit = !q || (c.dataset.search || '').includes(q);
+    c.style.display = hit ? '' : 'none';
+    if (hit) shown++;
+  });
+  const hint = document.getElementById('orders-search-hint');
+  if (hint) hint.textContent = q ? `พบ ${shown} จาก ${cards.length} ออเดอร์ที่โหลดไว้ (กด "โหลดเพิ่ม" ด้านล่างถ้ายังไม่เจอ)` : '';
 }
 
 // ── BUG-01 fix: เดิม .limit(150) ไม่มี orderBy → Firestore คืน 150 ใบ "แรกตาม docId" (ไม่ใช่ล่าสุด)
@@ -32,21 +57,38 @@ async function loadOrders(container) {
 const ORDERS_PAGE_SIZE = 50;
 let _ordersPage = { cursor: null, filter: '', clientSorted: false, busy: false };
 
+// V38: การ์ดออเดอร์ — เห็นครบใน 1 การ์ด ไม่ต้องเลื่อนซ้าย-ขวา
+//   data-search = ข้อความสำหรับช่องค้นหา (เลขออเดอร์+ชื่อ+เบอร์+รายการ ตัวพิมพ์เล็ก)
 function orderRowHtml(o) {
-  return `<tr>
-      <td><span class="order-id-cell">#${o.orderId||o.id.slice(-6).toUpperCase()}</span>${o.slipVerify&&o.slipVerify.status==='failed'?` <span title="ตรวจสลิปอัตโนมัติไม่ผ่าน — ควรตรวจเอง" style="color:#f59e0b">⚠️</span>`:''}</td>
-      <td><div style="font-weight:600">${DMC.escapeHtml(o.customerName||'—')}</div><div style="font-size:.75rem;color:var(--text-3)">${DMC.escapeHtml(o.customerPhone||'')}</div></td>
-      <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.83rem">${DMC.escapeHtml(o.itemsSummary||'—')}</td>
-      <td class="price-cell">${DMC.formatPrice(o.total||0)}</td>
-      <td style="font-size:.78rem">${o.trackingNo ? '🚚 ' + DMC.escapeHtml(o.trackingNo) : '<span style="color:var(--text-3)">—</span>'}</td>
-      <td>
-        <select data-custom class="form-input form-select" style="padding:.28rem .5rem;font-size:.78rem;width:auto" data-act-change="quickUpdateStatus" data-id="${o.id}">
+  const oid   = o.orderId || o.id.slice(-6).toUpperCase();
+  const phone = String(o.customerPhone || '').trim();
+  const searchable = DMC.escapeHtml([oid, o.customerName || '', phone, o.itemsSummary || ''].join(' ').toLowerCase());
+  const slipWarn = (o.slipVerify && o.slipVerify.status === 'failed')
+    ? `<span class="ord-warn" title="ตรวจสลิปอัตโนมัติไม่ผ่าน — ควรตรวจเอง">⚠️ ตรวจสลิปเอง</span>` : '';
+  return `<div class="ord-card" data-search="${searchable}">
+      <div class="ord-head">
+        <span class="ord-id">#${DMC.escapeHtml(oid)}</span>
+        <span class="ord-date">${o.createdAt ? DMC.formatDate(o.createdAt, true) : '—'}</span>
+        <span class="status status-${o.status || 'pending'}">${statusShort(o.status)}</span>
+      </div>
+      <div class="ord-cust">
+        <b>${DMC.escapeHtml(o.customerName || '—')}</b>
+        ${phone ? `<a href="tel:${DMC.escapeHtml(phone.replace(/[^\d+]/g, ''))}">📞 ${DMC.escapeHtml(phone)}</a>` : ''}
+      </div>
+      <div class="ord-items">${DMC.escapeHtml(o.itemsSummary || '—')}</div>
+      <div class="ord-mid">
+        <span class="ord-price">${DMC.formatPrice(o.total || 0)}</span>
+        ${o.trackingNo ? `<span class="ord-trackno">🚚 ${DMC.escapeHtml(o.trackingNo)}</span>`
+          : (o.status === 'shipping' ? '<span class="ord-warn">⚠️ ยังไม่ใส่เลขพัสดุ</span>' : '')}
+        ${slipWarn}
+      </div>
+      <div class="ord-actions">
+        <select data-custom class="form-input form-select" data-act-change="quickUpdateStatus" data-id="${o.id}" aria-label="เปลี่ยนสถานะ">
           ${ORDER_STATUSES.map(s=>`<option value="${s.key}" ${o.status===s.key?'selected':''}>${s.short}</option>`).join('')}
         </select>
-      </td>
-      <td style="font-size:.78rem;color:var(--text-3)">${o.createdAt?DMC.formatDate(o.createdAt,true):'—'}</td>
-      <td><button class="table-action-btn" data-act="openOrderModal" data-id="${o.id}">📋 ดู</button></td>
-    </tr>`;
+        <button class="ord-view-btn" data-act="openOrderModal" data-id="${o.id}">📋 จัดการ</button>
+      </div>
+    </div>`;
 }
 
 async function fetchOrdersPage(filter, cursor) {
@@ -83,29 +125,31 @@ async function loadOrdersTable() {
     _ordersPage.cursor = page.cursor;
     _ordersPage.clientSorted = page.clientSorted;
 
-    el.innerHTML = `<div style="overflow-x:auto">
-        <table class="data-table">
-          <thead><tr><th>ออเดอร์</th><th>ลูกค้า</th><th>รายการ</th><th>ราคา</th><th>เลขพัสดุ</th><th>สถานะ</th><th>วันที่</th><th></th></tr></thead>
-          <tbody id="orders-tbody">${page.docs.map(orderRowHtml).join('')}</tbody>
-        </table></div>
+    el.innerHTML = `
+      <div id="orders-search-hint" class="dash-hint" style="margin-bottom:.5rem"></div>
+      <div class="ord-list" id="orders-list">${page.docs.map(orderRowHtml).join('')}</div>
       <div id="orders-more-wrap" style="text-align:center;margin-top:1rem">
         ${page.canLoadMore
           ? '<button class="btn btn-ghost btn-md" id="orders-more-btn" style="border-radius:var(--r-lg)">โหลดเพิ่ม ↓</button>'
           : (page.clientSorted ? '<div style="font-size:.74rem;color:var(--text-3)">แสดง 150 ออเดอร์ล่าสุดของสถานะนี้ · สร้าง composite index (status + createdAt) เพื่อดูครบและโหลดเพิ่ม</div>' : '')}
       </div>`;
     document.getElementById('orders-more-btn')?.addEventListener('click', loadMoreOrders);
+    filterOrderCards();   // เผื่อมีคำค้นค้างอยู่ตอนสลับ chip
   } catch(e) { el.innerHTML = '<div style="color:var(--text-3);padding:1rem;text-align:center">โหลดไม่สำเร็จ: '+DMC.escapeHtml(e.message)+'</div>'; }
 }
 
 async function loadMoreOrders() {
   if (_ordersPage.busy || !_ordersPage.cursor) return;
   _ordersPage.busy = true;
-  const btn   = document.getElementById('orders-more-btn');
-  const tbody = document.getElementById('orders-tbody');
+  const btn  = document.getElementById('orders-more-btn');
+  const list = document.getElementById('orders-list');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังโหลด...'; }
   try {
     const page = await fetchOrdersPage(_ordersPage.filter, _ordersPage.cursor);
-    if (tbody && page.docs.length) tbody.insertAdjacentHTML('beforeend', page.docs.map(orderRowHtml).join(''));
+    if (list && page.docs.length) {
+      list.insertAdjacentHTML('beforeend', page.docs.map(orderRowHtml).join(''));
+      filterOrderCards();   // ใช้คำค้นเดิมกับการ์ดที่เพิ่งโหลดเพิ่ม
+    }
     _ordersPage.cursor = page.cursor;
     const wrap = document.getElementById('orders-more-wrap');
     if (!page.canLoadMore) { if (wrap) wrap.innerHTML = '<div style="font-size:.74rem;color:var(--text-3)">แสดงครบทุกออเดอร์แล้ว ✅</div>'; }

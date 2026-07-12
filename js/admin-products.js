@@ -8,7 +8,11 @@
 // ══════════════════════════════════════════════
 //  PRODUCTS (Multi-image + Video + Templates)
 // ══════════════════════════════════════════════
+// V38: ตัวกรองหมวดหมู่ (chips) — ช่วยดูแลสินค้าแยกตามหมวด ไม่ปนกัน
+let _prodCatFilter = '__all__';
+
 async function loadProducts(container) {
+  _prodCatFilter = '__all__';   // เปิดหน้าใหม่ = เริ่มที่ "ทั้งหมด"
   container.innerHTML = `
     <div class="admin-topbar">
       <div class="admin-greeting"><h2>🛍️ จัดการสินค้า</h2><p>เพิ่ม แก้ไข รูปหลายรูป วิดีโอ และเทมเพลต</p></div>
@@ -17,9 +21,8 @@ async function loadProducts(container) {
         <button class="btn btn-primary btn-md" id="add-product-btn">+ เพิ่มสินค้าใหม่</button>
       </div>
     </div>
-    <div class="admin-box">
-      <div id="products-table-wrap">${typeof Loading !== 'undefined' ? Loading.Skeleton.tableRows(4) : ''}</div>
-    </div>`;
+    <div class="fchips" id="product-cat-chips"></div>
+    <div id="products-table-wrap">${typeof Loading !== 'undefined' ? Loading.Skeleton.tableRows(4) : ''}</div>`;
   document.getElementById('add-product-btn')?.addEventListener('click', () => openProductModal(null));
   document.getElementById('product-search')?.addEventListener('input', DMC.debounce(loadProductsTable, 300));
   await loadProductsTable();
@@ -46,48 +49,73 @@ async function loadProductsTable() {
     }
     let products = [];
     snap.forEach(doc => products.push({id:doc.id,...doc.data()}));
+
+    // ── V38: chips หมวดหมู่ + จำนวน (นับจากสินค้าทั้งหมด ก่อนกรองคำค้น) ──
+    const NOCAT = '__none__';
+    const catCounts = {};
+    products.forEach(p => {
+      const c = (p.category || '').trim() || NOCAT;
+      catCounts[c] = (catCounts[c] || 0) + 1;
+    });
+    if (_prodCatFilter !== '__all__' && !(catCounts[_prodCatFilter] > 0)) _prodCatFilter = '__all__';
+    const chipsEl = document.getElementById('product-cat-chips');
+    if (chipsEl) {
+      const cats = Object.keys(catCounts).filter(c => c !== NOCAT).sort((a,b) => a.localeCompare(b,'th'));
+      const chip = (key, label, n) =>
+        `<button class="fchip ${_prodCatFilter===key?'active':''}" data-cat="${DMC.escapeHtml(key)}">${label} <span class="fchip-n">${n}</span></button>`;
+      chipsEl.innerHTML =
+        chip('__all__', '🗂️ ทั้งหมด', products.length) +
+        cats.map(c => chip(c, DMC.escapeHtml(c), catCounts[c])).join('') +
+        (catCounts[NOCAT] ? chip(NOCAT, '❓ ไม่ระบุหมวด', catCounts[NOCAT]) : '');
+      chipsEl.querySelectorAll('.fchip').forEach(b => b.addEventListener('click', () => {
+        _prodCatFilter = b.dataset.cat;
+        loadProductsTable();
+      }));
+    }
+
+    // ── กรอง: หมวด → คำค้น ──
+    if (_prodCatFilter !== '__all__') {
+      products = products.filter(p => ((p.category || '').trim() || NOCAT) === _prodCatFilter);
+    }
     if (search) products = products.filter(p => (p.name||'').toLowerCase().includes(search) || (p.category||'').toLowerCase().includes(search));
     products.sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
 
-    const rows = products.map(p => {
+    if (!products.length) {
+      el.innerHTML = '<div style="text-align:center;padding:2.5rem;color:var(--text-3)">ไม่พบสินค้าตามเงื่อนไขที่เลือก</div>';
+      return;
+    }
+
+    // ── V38: การ์ดสินค้า (แทนตารางที่ล้นจอมือถือ) ──
+    const cards = products.map(p => {
       const cover = adminCoverOf(p);
       const imgCount = Array.isArray(p.images) ? p.images.length : (p.image ? 1 : 0);
-      return `<tr>
-      <td>
-        <div style="width:46px;height:46px;border-radius:var(--r-md);background:var(--bg-mid);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:1.3rem;position:relative">
-          ${cover?`<img src="${DMC.escapeHtml(cover)}" style="width:100%;height:100%;object-fit:contain;padding:2px">`:(p.emoji||'📦')}
-          ${imgCount>1?`<span style="position:absolute;bottom:0;right:0;background:var(--accent);color:#fff;font-size:.55rem;padding:0 .25rem;border-radius:4px 0 0 0">${imgCount}</span>`:''}
+      return `<div class="pcard ${p.active?'':'off'}">
+      <div class="pcard-img">
+        ${cover?`<img src="${DMC.escapeHtml(cover)}" loading="lazy" alt="">`:(p.emoji||'📦')}
+        ${imgCount>1?`<span class="pcard-imgn">${imgCount}</span>`:''}
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-name">${DMC.escapeHtml(p.name)}</div>
+        <div class="pcard-cat">${DMC.escapeHtml(p.category||'ไม่ระบุหมวด')}${p.videoUrl?' · 🎬':''}${p.hasPreview?' · 🎨':''}</div>
+        <div class="pcard-price">${DMC.formatPrice(p.price)}<small>/${DMC.escapeHtml(p.unit||'ชิ้น')}</small></div>
+        <div class="pcard-badges">
+          ${p.isNew?'<span class="badge badge-new" style="font-size:.62rem">✨ ใหม่</span>':''}
+          ${p.isHot?'<span class="badge badge-hot" style="font-size:.62rem">🔥 ขายดี</span>':''}
+          ${p.isSale?'<span class="badge badge-sale" style="font-size:.62rem">💰 ลด</span>':''}
+          ${p.featured?'<span class="badge badge-accent" style="font-size:.62rem">⭐ แนะนำ</span>':''}
         </div>
-      </td>
-      <td><div style="font-family:var(--font-display);font-weight:600">${DMC.escapeHtml(p.name)}</div><div style="font-size:.75rem;color:var(--text-3)">${DMC.escapeHtml(p.category||'—')}${p.videoUrl?' · 🎬':''}${p.hasPreview?' · 🎨':''}</div></td>
-      <td class="price-cell">${DMC.formatPrice(p.price)}<span style="color:var(--text-3);font-size:.75rem">/${DMC.escapeHtml(p.unit||'ชิ้น')}</span></td>
-      <td>
-        <div style="display:flex;gap:.3rem;flex-wrap:wrap">
-          ${p.isNew?'<span class="badge badge-new" style="font-size:.65rem">✨</span>':''}
-          ${p.isHot?'<span class="badge badge-hot" style="font-size:.65rem">🔥</span>':''}
-          ${p.isSale?'<span class="badge badge-sale" style="font-size:.65rem">💰</span>':''}
-          ${p.featured?'<span class="badge badge-accent" style="font-size:.65rem">⭐</span>':''}
+        <div class="pcard-foot">
+          <button class="pcard-edit" data-act="openProductModal" data-id="${p.id}">✏️ แก้ไข</button>
+          <button class="pcard-del btn-del-product" data-id="${p.id}" data-name="${DMC.escapeHtml(p.name)}" aria-label="ลบสินค้า">🗑️</button>
+          <label class="toggle-switch" title="เปิด/ปิดแสดงบนเว็บ">
+            <input type="checkbox" ${p.active?'checked':''} data-act-change="toggleProduct" data-id="${p.id}">
+            <span class="toggle-slider"></span>
+          </label>
         </div>
-      </td>
-      <td>
-        <label class="toggle-switch">
-          <input type="checkbox" ${p.active?'checked':''} data-act-change="toggleProduct" data-id="${p.id}">
-          <span class="toggle-slider"></span>
-        </label>
-      </td>
-      <td>
-        <div style="display:flex;gap:.35rem">
-          <button class="table-action-btn" data-act="openProductModal" data-id="${p.id}">✏️ แก้ไข</button>
-          <button class="table-action-btn btn-del-product" style="color:var(--rose);border-color:var(--rose)" data-id="${p.id}" data-name="${DMC.escapeHtml(p.name)}">🗑️</button>
-        </div>
-      </td>
-    </tr>`;}).join('');
+      </div>
+    </div>`;}).join('');
 
-    el.innerHTML = `<div style="overflow-x:auto">
-      <table class="data-table">
-        <thead><tr><th>รูป</th><th>สินค้า</th><th>ราคา</th><th>แท็ก</th><th>แสดง</th><th>จัดการ</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table></div>`;
+    el.innerHTML = `<div class="pgrid">${cards}</div>`;
 
     // ปุ่มลบ — ใช้ data-attr กัน quote ในชื่อสินค้า
     el.querySelectorAll('.btn-del-product').forEach(btn => {
