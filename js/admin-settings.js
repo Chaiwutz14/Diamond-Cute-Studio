@@ -9,42 +9,13 @@
 //  SETTINGS (รหัสผ่าน + LINE)
 // ══════════════════════════════════════════════
 async function loadSettings(container) {
+  // V38: เรียงกล่องตามความสำคัญ — Backup (ประกันชีวิตข้อมูล) → LINE →
+  //      Search Dictionary → รหัสผ่าน → ความปลอดภัย (สรุปสถานะไว้ท้าย)
   container.innerHTML = `
     <div class="admin-topbar">
-      <div class="admin-greeting"><h2>⚙️ ตั้งค่าระบบ</h2><p>รหัสผ่าน Admin และการแจ้งเตือน LINE</p></div>
+      <div class="admin-greeting"><h2>⚙️ ตั้งค่าระบบ</h2><p>Backup · แจ้งเตือน LINE · ระบบค้นหา · รหัสผ่าน · ความปลอดภัย</p></div>
     </div>
     <div class="settings-grid">
-      <div class="admin-box">
-        <div class="admin-box-header"><div class="admin-box-title">🔐 เปลี่ยนรหัสผ่าน Admin</div></div>
-        <div style="background:rgba(14,165,233,.06);border:1px solid var(--border);border-radius:var(--r-md);padding:.9rem 1rem;font-size:.84rem;color:var(--text-2);line-height:1.75">
-          🔑 ระบบยืนยันตัวตนด้วย <strong>Firebase Authentication</strong> แล้ว<br>
-          เปลี่ยนรหัสผ่านได้ที่ <strong>Firebase Console → Authentication → Users</strong> → เลือกอีเมลแอดมิน → Reset password<br>
-          <span style="color:var(--text-3);font-size:.78rem">ปลอดภัยกว่าเดิม · ไม่ต้องแก้โค้ดหรืออัปขึ้น GitHub อีกต่อไป</span>
-        </div>
-      </div>
-
-      <div class="admin-box">
-        <div class="admin-box-header"><div class="admin-box-title">💬 LINE แจ้งเตือนออเดอร์</div></div>
-        <p style="font-size:.83rem;color:var(--text-2);margin-bottom:.75rem">ตั้งค่าใน Cloudflare Worker → Settings → Variables and Secrets</p>
-        <div style="background:var(--bg-mid);border-radius:var(--r-md);padding:1rem;font-size:.82rem;line-height:1.9">
-          <div><strong>LINE_TOKEN</strong> <span style="color:var(--text-3)">= Channel Access Token</span></div>
-          <div><strong>LINE_USER_ID</strong> <span style="color:var(--text-3)">= User ID (U...) คั่นด้วย , ถ้าหลายคน</span></div>
-        </div>
-        <button class="btn btn-secondary btn-md" id="test-line-btn" style="margin-top:.85rem">🔔 ทดสอบส่งแจ้งเตือน</button>
-      </div>
-
-      <div class="admin-box">
-        <div class="admin-box-header"><div class="admin-box-title">🛡️ ความปลอดภัยของระบบ</div></div>
-        <div class="security-status">
-          ${securityRows()}
-        </div>
-      </div>
-    </div>`;
-
-  // ── V15: กล่องสำรองข้อมูล (Export / Import JSON) ──
-  const grid = container.querySelector('.settings-grid');
-  if (grid) {
-    grid.insertAdjacentHTML('beforeend', `
       <div class="admin-box">
         <div class="admin-box-header"><div class="admin-box-title">💾 สำรองข้อมูล (Backup)</div></div>
         <p style="font-size:.83rem;color:var(--text-2);line-height:1.7;margin-bottom:.9rem">
@@ -57,9 +28,49 @@ async function loadSettings(container) {
           <input type="file" id="backup-import-file" accept="application/json" style="display:none">
         </div>
         <div id="backup-status" style="font-size:.78rem;color:var(--text-3);margin-top:.7rem"></div>
-      </div>`);
+      </div>
+
+      <div class="admin-box">
+        <div class="admin-box-header"><div class="admin-box-title">💬 LINE แจ้งเตือนออเดอร์</div></div>
+        <p style="font-size:.83rem;color:var(--text-2);margin-bottom:.75rem">ตั้งค่าใน Cloudflare Worker → Settings → Variables and Secrets</p>
+        <div style="background:var(--bg-mid);border-radius:var(--r-md);padding:1rem;font-size:.82rem;line-height:1.9">
+          <div><strong>LINE_TOKEN</strong> <span style="color:var(--text-3)">= Channel Access Token</span></div>
+          <div><strong>LINE_USER_ID</strong> <span style="color:var(--text-3)">= User ID (U...) คั่นด้วย , ถ้าหลายคน</span></div>
+        </div>
+        <button class="btn btn-secondary btn-md" id="test-line-btn" style="margin-top:.85rem">🔔 ทดสอบส่งแจ้งเตือน</button>
+      </div>
+    </div>`;
+
+  const grid = container.querySelector('.settings-grid');
+  if (grid) {
     initBackupBox();
-    initSearchAdminBox(grid);   // V36: การ์ดจัดการคำพ้อง/Alias + สถิติคำค้น
+    initSearchAdminBox(grid);   // V36: การ์ดจัดการคำพ้อง/Alias + สถิติคำค้น (ต่อท้าย = ลำดับ 3)
+
+    // ── ลำดับ 4-5: รหัสผ่าน + ความปลอดภัย (V38: เพิ่ม Login ล่าสุด/Failed/เวอร์ชัน) ──
+    const lastLogin = Number(localStorage.getItem('dcs_last_login') || 0);
+    const loginTxt  = lastLogin ? new Date(lastLogin).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+    let failedTxt = '0 ครั้ง';
+    try { const rl = DMC.getRateLimit(); if (rl && rl.count) failedTxt = rl.count + ' ครั้ง (ใน 15 นาที)'; } catch (e) {}
+    const verTxt = (typeof DASH_VERSION !== 'undefined') ? DASH_VERSION : '—';
+    grid.insertAdjacentHTML('beforeend', `
+      <div class="admin-box">
+        <div class="admin-box-header"><div class="admin-box-title">🔐 เปลี่ยนรหัสผ่าน Admin</div></div>
+        <div style="background:rgba(14,165,233,.06);border:1px solid var(--border);border-radius:var(--r-md);padding:.9rem 1rem;font-size:.84rem;color:var(--text-2);line-height:1.75">
+          🔑 ระบบยืนยันตัวตนด้วย <strong>Firebase Authentication</strong> แล้ว<br>
+          เปลี่ยนรหัสผ่านได้ที่ <strong>Firebase Console → Authentication → Users</strong> → เลือกอีเมลแอดมิน → Reset password<br>
+          <span style="color:var(--text-3);font-size:.78rem">ปลอดภัยกว่าเดิม · ไม่ต้องแก้โค้ดหรืออัปขึ้น GitHub อีกต่อไป</span>
+        </div>
+      </div>
+
+      <div class="admin-box">
+        <div class="admin-box-header"><div class="admin-box-title">🛡️ ความปลอดภัยของระบบ</div></div>
+        <div class="security-status">
+          ${securityRows()}
+          <div class="security-row" style="color:var(--text-2)">🕘 Login ล่าสุด (เครื่องนี้): ${DMC.escapeHtml(loginTxt)}</div>
+          <div class="security-row" style="color:var(--text-2)">🚫 Login ผิดพลาดล่าสุด: ${DMC.escapeHtml(failedTxt)}</div>
+          <div class="security-row" style="color:var(--text-2)">🏷️ เวอร์ชันระบบ Admin: ${DMC.escapeHtml(verTxt)}</div>
+        </div>
+      </div>`);
   }
 
   document.getElementById('test-line-btn')?.addEventListener('click', async () => {
