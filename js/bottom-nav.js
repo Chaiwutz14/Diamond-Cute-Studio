@@ -14,12 +14,25 @@
   var path = location.pathname.toLowerCase();
   if (path.indexOf('admin') !== -1) return;
 
+  // V36: ไอคอนเวกเตอร์เส้น (stroke = currentColor) — โทนเดียวทั้งแถบ ดูทางการ/ทันสมัย
+  //      สีตามสถานะอัตโนมัติ: ปกติ = เทา (--text-3) · หน้าปัจจุบัน = สี accent
+  var ICON_SVG = {
+    home:    '<path d="M3 10.2 12 3l9 7.2"/><path d="M5.5 8.8V20a1 1 0 0 0 1 1H10v-5.4a2 2 0 0 1 4 0V21h3.5a1 1 0 0 0 1-1V8.8"/>',
+    bag:     '<path d="M6 7h12l1.2 12.3a1.5 1.5 0 0 1-1.5 1.7H6.3a1.5 1.5 0 0 1-1.5-1.7L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/>',
+    cart:    '<circle cx="9" cy="20" r="1.4"/><circle cx="17.5" cy="20" r="1.4"/><path d="M2.5 3.5h2.2l2.4 11.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2l1.7-7.3H6"/>',
+    box:     '<path d="M21 8.2 12 3 3 8.2v7.6L12 21l9-5.2z"/><path d="M3.3 8.4 12 13.3l8.7-4.9M12 13.3V20.7"/>',
+    chat:    '<path d="M21 12.3c0 4-4 7.2-9 7.2-1 0-2-.13-2.9-.37L4 21l1.2-3.3C3.8 16.4 3 14.5 3 12.3 3 8.3 7 5 12 5s9 3.3 9 7.3z"/>',
+  };
+  function navIcon(key) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON_SVG[key] || '') + '</svg>';
+  }
+
   var NAV = [
-    { href: 'index.html',   icon: '🏠', label: 'หน้าแรก',  match: ['index.html', '/'] },
-    { href: 'catalog.html', icon: '🛍️', label: 'สินค้า',   match: ['catalog.html', 'product.html'] },
-    { href: 'cart.html',    icon: '🛒', label: 'ตะกร้า',   match: ['cart.html'], badge: true },
-    { href: 'orders.html',  icon: '📦', label: 'ออเดอร์',  match: ['orders.html'] },
-    { href: 'contact.html', icon: '💬', label: 'ติดต่อ',   match: ['contact.html'] },
+    { href: 'index.html',   icon: 'home', label: 'หน้าแรก',  match: ['index.html', '/'] },
+    { href: 'catalog.html', icon: 'bag',  label: 'สินค้า',   match: ['catalog.html', 'product.html'] },
+    { href: 'cart.html',    icon: 'cart', label: 'ตะกร้า',   match: ['cart.html'], badge: true },
+    { href: 'orders.html',  icon: 'box',  label: 'ออเดอร์',  match: ['orders.html'] },
+    { href: 'contact.html', icon: 'chat', label: 'ติดต่อ',   match: ['contact.html'] },
   ];
 
   function currentFile() {
@@ -39,7 +52,9 @@
       +     'backdrop-filter:saturate(180%) blur(8px)}'
       +   '.dcs-bn-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;'
       +     'padding:.35rem .1rem;text-decoration:none;color:var(--text-3);position:relative;transition:color .15s;box-sizing:border-box}'
-      +   '.dcs-bn-item .ic{font-size:1.25rem;line-height:1;transition:transform .15s}'
+      +   '.dcs-bn-item .ic{line-height:0;transition:transform .15s;display:flex;align-items:center;justify-content:center}'
+      +   '.dcs-bn-item .ic svg{width:22px;height:22px;display:block}'
+      +   '.dcs-bn-item.active .ic svg{stroke-width:2.1}'
       +   '.dcs-bn-item .lb{font-size:.64rem;font-family:var(--font-display,sans-serif);font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
       +   '.dcs-bn-item.active{color:var(--accent)}'
       +   '.dcs-bn-item.active .ic{transform:translateY(-2px) scale(1.1)}'
@@ -75,7 +90,7 @@
       var active = n.match.indexOf(cur) !== -1;
       return '<a href="' + n.href + '" class="dcs-bn-item' + (active ? ' active' : '') + '">'
         + (n.badge ? '<span class="dcs-bn-badge" id="dcs-cart-badge" style="display:none">0</span>' : '')
-        + '<span class="ic">' + n.icon + '</span>'
+        + '<span class="ic">' + navIcon(n.icon) + '</span>'
         + '<span class="lb">' + n.label + '</span>'
         + '</a>';
     }).join('');

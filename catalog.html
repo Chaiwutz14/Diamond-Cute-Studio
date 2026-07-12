@@ -140,17 +140,24 @@
 
     <!-- Search + Sort toolbar -->
     <div class="catalog-toolbar">
-      <div class="search-bar">
-        <span class="search-bar-icon">🔍</span>
-        <input type="text" id="search-input" placeholder="ค้นหาสินค้า เช่น โพลารอยด์, นามบัตร..." aria-label="ค้นหาสินค้า">
+      <div class="search-bar-wrap" id="search-bar-wrap">
+        <div class="search-bar">
+          <span class="search-bar-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="ค้นหาสินค้า เช่น โพลารอยด์, นามบัตร..." aria-label="ค้นหาสินค้า" autocomplete="off" enterkeyhint="search">
+          <button type="button" id="search-clear-btn" class="search-clear-btn" aria-label="ล้างคำค้นหา" style="display:none">✕</button>
+        </div>
+        <!-- V36: Autocomplete + คำค้นล่าสุด/ยอดนิยม + Did you mean -->
+        <div class="search-suggest" id="search-suggest" style="display:none" role="listbox" aria-label="คำแนะนำการค้นหา"></div>
       </div>
       <div class="catalog-controls">
         <span class="result-count">พบ <strong id="result-count">—</strong> รายการ</span>
         <div class="sort-select-wrap"><select class="form-input form-select" id="sort-select" data-custom data-title="เรียงลำดับ" style="width:auto;padding:0.45rem 2.2rem 0.45rem 0.75rem">
+          <option value="relevance">เกี่ยวข้อง</option>
           <option value="featured">ยอดนิยม</option>
+          <option value="newest">ใหม่ล่าสุด</option>
           <option value="price-asc">ราคา ต่ำ→สูง</option>
           <option value="price-desc">ราคา สูง→ต่ำ</option>
-          <option value="newest">ใหม่ล่าสุด</option>
+          <option value="az">ชื่อ A-Z ก-ฮ</option>
         </select>
         </div>
       </div>
@@ -181,9 +188,11 @@
 <script src="js/loading.js" defer></script>
 <script src="js/config.js" defer></script>
 <script src="js/utils.js" defer></script>
+<script src="js/analytics.js" defer></script><!-- V37: สถิติผู้เข้าชม -->
 <script src="js/custom-select.js" defer></script>
 <script src="js/cms.js" defer></script>
 <script src="js/categories.js" defer></script>
+<script src="js/search-engine.js" defer></script><!-- V36: Search Engine Core -->
 <script src="js/navbar.js" defer></script>
 <script src="js/catalog.js" defer></script>
 <script src="js/footer.js" defer></script>

@@ -88,17 +88,56 @@
   gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;
 }
 
+/* V36: wrapper ถือ flex + เป็น anchor ของกล่อง suggestions */
+.search-bar-wrap { position: relative; flex: 1; min-width: 200px; max-width: 400px; }
 .search-bar {
   display: flex; align-items: center; gap: .5rem;
   background: var(--bg-card); border: 1.5px solid var(--border);
   border-radius: var(--r-pill); padding: .5rem 1.1rem;
-  flex: 1; min-width: 200px; max-width: 400px;
+  width: 100%;
   transition: border-color .15s; box-shadow: var(--shadow-card);
 }
 .search-bar:focus-within { border-color: var(--accent); }
 .search-bar-icon { color: var(--text-3); font-size: .9rem; flex-shrink: 0; }
 .search-bar input { background: transparent; border: none; color: var(--text-1); font-size: .88rem; width: 100%; }
 .search-bar input::placeholder { color: var(--text-3); }
+.search-bar input:focus { outline: none; }
+/* V36: ปุ่มล้างคำค้น */
+.search-clear-btn {
+  flex-shrink: 0; border: none; background: var(--bg-mid); color: var(--text-3);
+  width: 20px; height: 20px; border-radius: 50%; cursor: pointer; line-height: 1;
+  font-size: .7rem; display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s;
+}
+.search-clear-btn:hover { background: var(--accent); color: #fff; }
+
+/* V36: กล่อง Autocomplete / คำค้นล่าสุด / ยอดนิยม */
+.search-suggest {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 1200;
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,.16));
+  overflow: hidden; max-height: 62vh; overflow-y: auto;
+}
+.search-suggest .suggest-header {
+  font-family: var(--font-display); font-size: .72rem; font-weight: 700;
+  color: var(--text-3); padding: .6rem .95rem .3rem; letter-spacing: .02em;
+}
+.search-suggest .suggest-item {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .55rem .95rem; cursor: pointer; font-size: .86rem; color: var(--text-2);
+  transition: background .12s;
+}
+.search-suggest .suggest-item:hover,
+.search-suggest .suggest-item.active { background: var(--bg-mid); color: var(--text-1); }
+.search-suggest .suggest-ico { flex-shrink: 0; font-size: .82rem; opacity: .8; }
+.search-suggest .suggest-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-suggest .suggest-txt b { color: var(--accent); font-weight: 700; }
+
+/* V36: ไฮไลต์คำที่ค้นในผลลัพธ์ */
+mark.dcs-hl {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: inherit; border-radius: 3px; padding: 0 .05em; font-weight: 700;
+}
 
 .catalog-controls { display: flex; align-items: center; gap: .72rem; flex-shrink: 0; }
 .result-count { font-family: var(--font-display); font-size: .84rem; color: var(--text-3); }
@@ -465,6 +504,7 @@
   /* Toolbar compact */
   .catalog-toolbar { gap: .5rem; }
   .search-bar { min-width: 0; }
+  .search-bar-wrap { min-width: 0; max-width: none; flex: 1 1 100%; }
 }
 
 @media (max-width: 400px) {

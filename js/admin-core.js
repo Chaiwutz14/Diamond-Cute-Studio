@@ -197,6 +197,8 @@ function initLoginPage() {
 //  DASHBOARD SHELL
 // ══════════════════════════════════════════════
 function initDashboard() {
+  // V37: บันทึกเวลาเข้าสู่ระบบล่าสุด — Dashboard ใช้ในกล่อง Security / Recent Activity
+  try { localStorage.setItem('dcs_last_login', String(Date.now())); } catch (e) {}
   initSidebarNav();
   bindGlobalDelegation();
   document.getElementById('logout-btn')?.addEventListener('click', doLogout);

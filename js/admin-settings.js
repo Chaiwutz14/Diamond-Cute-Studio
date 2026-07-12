@@ -59,6 +59,7 @@ async function loadSettings(container) {
         <div id="backup-status" style="font-size:.78rem;color:var(--text-3);margin-top:.7rem"></div>
       </div>`);
     initBackupBox();
+    initSearchAdminBox(grid);   // V36: การ์ดจัดการคำพ้อง/Alias + สถิติคำค้น
   }
 
   document.getElementById('test-line-btn')?.addEventListener('click', async () => {
@@ -104,6 +105,8 @@ function initBackupBox() {
       URL.revokeObjectURL(a.href);
       status('✅ Export สำเร็จ — เก็บไฟล์ไว้ในที่ปลอดภัย');
       DMC.toast('Export ข้อมูลสำเร็จ ✅', 'success');
+      // V37: บันทึกเวลา Backup ล่าสุด — Dashboard ใช้แจ้งเตือน/คิด Health Score
+      try { localStorage.setItem('dcs_last_backup', String(Date.now())); } catch (e) {}
     } catch(e) {
       status('❌ ' + e.message);
       DMC.toast('Export ไม่สำเร็จ: ' + e.message, 'error');
@@ -148,4 +151,127 @@ function initBackupBox() {
       DMC.toast('Import ไม่สำเร็จ: ' + e.message, 'error');
     }
   });
+}
+
+
+// ══════════════════════════════════════════════
+//  V36 — SEARCH ADMIN: จัดการคำพ้อง/Alias + สถิติคำค้น
+//  บันทึกลง settings/search — เอนจินค้นหาฝั่งลูกค้าอ่านไปใช้อัตโนมัติ
+// ══════════════════════════════════════════════
+function initSearchAdminBox(grid) {
+  if (!grid) return;
+  grid.insertAdjacentHTML('beforeend', `
+    <div class="admin-box" id="search-admin-box">
+      <div class="admin-box-header"><div class="admin-box-title">🔍 ระบบค้นหา — คำพ้อง & คำย่อ</div></div>
+      <p style="font-size:.83rem;color:var(--text-2);line-height:1.7;margin-bottom:.8rem">
+        เพิ่มคำพ้องความหมายและคำย่อ เพื่อให้ลูกค้าค้นหาเจอสินค้าได้ง่ายขึ้น<br>
+        <span style="color:var(--text-3);font-size:.78rem">มีชุดคำพื้นฐานให้อยู่แล้ว — ที่เพิ่มตรงนี้คือคำเสริมของร้านคุณ</span>
+      </p>
+      <div class="form-group">
+        <label class="form-label">คำพ้องความหมาย (Synonyms)
+          <span style="font-weight:400;color:var(--text-3)">— บรรทัดละกลุ่ม รูปแบบ: <code>คำหลัก = คำพ้อง1, คำพ้อง2</code></span>
+        </label>
+        <textarea class="form-input form-textarea" id="search-synonyms" rows="5" placeholder="รูป = ภาพ, photo, ปริ้นรูป&#10;การ์ดแต่งงาน = การ์ดเชิญ, wedding card" style="font-family:monospace;font-size:.82rem"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">คำย่อ / ชื่อเรียกอื่น (Aliases)
+          <span style="font-weight:400;color:var(--text-3)">— บรรทัดละคู่ รูปแบบ: <code>คำย่อ &gt; คำเต็ม</code></span>
+        </label>
+        <textarea class="form-input form-textarea" id="search-aliases" rows="4" placeholder="นบ > นามบัตร&#10;รร > โรงเรียน" style="font-family:monospace;font-size:.82rem"></textarea>
+      </div>
+      <button class="btn btn-primary btn-md" id="search-dict-save">💾 บันทึกคำพ้อง</button>
+      <div id="search-dict-status" style="font-size:.78rem;color:var(--text-3);margin-top:.7rem"></div>
+    </div>
+
+    <div class="admin-box" id="search-stats-box">
+      <div class="admin-box-header"><div class="admin-box-title">📊 สถิติคำค้นหา</div></div>
+      <div id="search-stats-body" style="font-size:.85rem;color:var(--text-2)">กำลังโหลด…</div>
+      <button class="btn btn-ghost btn-sm" id="search-stats-refresh" style="margin-top:.7rem">🔄 รีเฟรช</button>
+    </div>`);
+
+  loadSearchDict();
+  loadSearchStats();
+  document.getElementById('search-dict-save')?.addEventListener('click', saveSearchDict);
+  document.getElementById('search-stats-refresh')?.addEventListener('click', loadSearchStats);
+}
+
+async function loadSearchDict() {
+  try {
+    if (!db) db = await DMC.getFirebaseReady();
+    const doc = await db.collection('settings').doc('search').get();
+    const d = doc.exists ? doc.data() : {};
+    const syn = document.getElementById('search-synonyms');
+    const ali = document.getElementById('search-aliases');
+    if (syn) syn.value = d.synonyms || '';
+    if (ali) ali.value = d.aliases || '';
+  } catch (e) {}
+}
+
+async function saveSearchDict() {
+  const btn = document.getElementById('search-dict-save');
+  const status = document.getElementById('search-dict-status');
+  const synonyms = document.getElementById('search-synonyms')?.value || '';
+  const aliases  = document.getElementById('search-aliases')?.value || '';
+  if (typeof Loading !== 'undefined') Loading.buttonLoad(btn);
+  try {
+    if (!db) db = await DMC.getFirebaseReady();
+    await db.collection('settings').doc('search').set({
+      synonyms, aliases,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    // ล้าง cache ฝั่งลูกค้า (โหลดใหม่รอบหน้า) — และของแอดมินเองด้วย
+    try { localStorage.removeItem('dcs_search_dict_v1'); } catch (e) {}
+    if (typeof Loading !== 'undefined') Loading.buttonDone(btn);
+    DMC.toast('บันทึกคำพ้องสำเร็จ ✅ (มีผลกับหน้าค้นหาทันทีรอบถัดไป)', 'success');
+    if (status) status.textContent = 'อัปเดตล่าสุด: เมื่อสักครู่';
+  } catch (e) {
+    if (typeof Loading !== 'undefined') Loading.buttonDone(btn);
+    DMC.toast('บันทึกไม่สำเร็จ: ' + (e.message || e), 'error');
+  }
+}
+
+async function loadSearchStats() {
+  const body = document.getElementById('search-stats-body');
+  if (!body) return;
+  body.textContent = 'กำลังโหลด…';
+  try {
+    if (!db) db = await DMC.getFirebaseReady();
+    // Top 10 ตามจำนวนค้น
+    const topSnap = await db.collection('searchStats').orderBy('count', 'desc').limit(10).get();
+    const top = [];
+    topSnap.forEach(d => { const x = d.data(); if (x && x.term) top.push(x); });
+
+    // คำที่ค้นแล้วไม่พบ (zero == true) — เรียงตามจำนวนครั้ง
+    const zeroSnap = await db.collection('searchStats').where('zero', '==', true).limit(30).get();
+    const zeros = [];
+    zeroSnap.forEach(d => { const x = d.data(); if (x && x.term) zeros.push(x); });
+    zeros.sort((a, b) => (b.count || 0) - (a.count || 0));
+
+    if (!top.length && !zeros.length) {
+      body.innerHTML = '<span style="color:var(--text-3)">ยังไม่มีข้อมูลการค้นหา</span>';
+      return;
+    }
+
+    const esc = s => DMC.escapeHtml(String(s || ''));
+    let html = '';
+    if (top.length) {
+      html += '<div style="font-family:var(--font-display);font-weight:700;margin:.2rem 0 .5rem">🔥 คำค้นยอดนิยม</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:.3rem;margin-bottom:1rem">' + top.map(x => {
+        const ctr = x.count ? Math.round(((x.clicks || 0) / x.count) * 100) : 0;
+        return `<div style="display:flex;justify-content:space-between;gap:.75rem;padding:.35rem .6rem;background:var(--bg-mid);border-radius:var(--r-sm)">
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.term)}</span>
+          <span style="flex-shrink:0;color:var(--text-3);font-size:.8rem">ค้น ${x.count || 0} · คลิก ${x.clicks || 0} · CTR ${ctr}%</span>
+        </div>`;
+      }).join('') + '</div>';
+    }
+    if (zeros.length) {
+      html += '<div style="font-family:var(--font-display);font-weight:700;margin:.2rem 0 .5rem;color:var(--rose,#fb7185)">⚠️ ค้นแล้วไม่พบ (ควรเพิ่มสินค้า/คำพ้อง)</div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:.4rem">' + zeros.slice(0, 20).map(x =>
+        `<span style="padding:.3rem .7rem;background:rgba(251,113,133,.12);border-radius:999px;font-size:.82rem">${esc(x.term)} <span style="color:var(--text-3)">×${x.count || 0}</span></span>`
+      ).join('') + '</div>';
+    }
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = '<span style="color:var(--text-3)">โหลดสถิติไม่สำเร็จ (อาจต้องสร้าง index ใน Firestore) — ' + DMC.escapeHtml(e.message || '') + '</span>';
+  }
 }

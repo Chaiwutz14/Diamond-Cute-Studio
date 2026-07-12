@@ -290,6 +290,24 @@ window.openProductModal = async function(productId) {
       <textarea class="form-input form-textarea" id="p-desc">${DMC.escapeHtml(product.fullDesc||'')}</textarea>
     </div>
 
+    <!-- V36: ตั้งค่าการค้นหา -->
+    <details style="margin-bottom:1.25rem;border:1px solid var(--border);border-radius:var(--r-md);padding:.4rem .85rem">
+      <summary style="cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:.86rem;color:var(--text-2);padding:.35rem 0">🔍 ตั้งค่าการค้นหา (Search)</summary>
+      <div class="form-group" style="margin-top:.7rem">
+        <label class="form-label">คำค้น / Keywords <span style="font-weight:400;color:var(--text-3)">(คั่นด้วยคอมมา — ช่วยให้ค้นเจอง่ายขึ้น เช่น โพลา, polaroid, รูปติดผนัง)</span></label>
+        <input class="form-input" id="p-keywords" value="${DMC.escapeHtml((product.keywords||[]).join(', '))}" placeholder="โพลา, polaroid, รูปติดผนัง">
+      </div>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">ลำดับความสำคัญ (Priority) <span style="font-weight:400;color:var(--text-3)">(−50 ถึง 50 · มากขึ้น = ดันขึ้นบน)</span></label>
+          <input class="form-input" id="p-boost" type="number" min="-50" max="50" step="1" value="${Number(product.searchBoost)||0}" style="width:140px">
+        </div>
+        <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem;padding-bottom:.55rem">
+          <input type="checkbox" id="p-hidesearch" ${product.hideFromSearch?'checked':''} style="accent-color:var(--rose)"> 🚫 ซ่อนจากผลการค้นหา
+        </label>
+      </div>
+    </details>
+
     <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem">
       <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem">
         <input type="checkbox" id="p-active" ${product.active?'checked':''} style="accent-color:var(--accent)"> แสดงสินค้า
@@ -606,6 +624,9 @@ window.saveProduct = async function(productId) {
     templates:  tplChecks,
     shortDesc:  document.getElementById('p-shortdesc')?.value.trim(),
     fullDesc:   document.getElementById('p-desc')?.value.trim(),
+    keywords:   splitComma('p-keywords'),                                             // V36: คำค้นเพิ่มเติม
+    searchBoost: Math.max(-50, Math.min(50, parseInt(document.getElementById('p-boost')?.value) || 0)),  // V36: priority
+    hideFromSearch: !!document.getElementById('p-hidesearch')?.checked,               // V36: ซ่อนจากค้นหา
     emoji:      document.getElementById('p-emoji')?.value.trim()||'📦',
     images,
     coverIndex,

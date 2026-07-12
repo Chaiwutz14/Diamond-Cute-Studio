@@ -638,3 +638,185 @@
 .cms-pay-toggle input[type="checkbox"]:checked { background:var(--accent); }
 .cms-pay-toggle input[type="checkbox"]:checked::after { transform:translateX(20px); }
 .cms-pay-toggle-label { font-size:.66rem; color:var(--text-3); font-family:var(--font-display); font-weight:600; }
+
+/* ═══════════════════════════════════════════════
+   V37 — Dashboard Admin (แท็บ + สถิติ + Health Score)
+═══════════════════════════════════════════════ */
+
+/* ── แถว counters ภาพรวม ── */
+.dash-ov-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: .6rem;
+  margin: .9rem 0 0;
+}
+.dash-ov-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: .65rem .5rem;
+  display: flex; flex-direction: column; align-items: center; gap: .15rem;
+  text-align: center;
+}
+.dash-ov-ic  { font-size: 1.15rem; }
+.dash-ov-val { font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; color: var(--text-1); }
+.dash-ov-lb  { font-size: .68rem; color: var(--text-3); }
+.dash-soon   {
+  display: inline-block; font-size: .62rem; font-weight: 700; color: var(--gold-deep);
+  background: rgba(240,180,41,.14); padding: .1rem .45rem; border-radius: 999px; white-space: nowrap;
+}
+
+/* ── Quick Actions ── */
+.dash-quick { display: flex; flex-wrap: wrap; gap: .5rem; margin: .9rem 0 0; }
+.dash-quick-btn {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .45rem .8rem; font-size: .8rem; font-weight: 600;
+  font-family: var(--font-display); color: var(--text-2);
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: 999px; cursor: pointer; transition: all .15s;
+}
+.dash-quick-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+
+/* ── แท็บ ── */
+.dash-tabs {
+  display: flex; gap: .4rem; margin: 1.1rem 0 1rem;
+  overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  border-bottom: 1.5px solid var(--border); padding-bottom: .5rem;
+}
+.dash-tabs::-webkit-scrollbar { display: none; }
+.dash-tab {
+  flex-shrink: 0;
+  padding: .5rem 1rem; font-size: .85rem; font-weight: 600;
+  font-family: var(--font-display); color: var(--text-3);
+  background: transparent; border: 1.5px solid transparent;
+  border-radius: var(--r-lg); cursor: pointer; transition: all .15s;
+}
+.dash-tab:hover  { color: var(--text-1); background: var(--bg-mid); }
+.dash-tab.active { color: var(--accent); background: var(--bg-card); border-color: var(--accent); }
+
+/* ── สถานะโหลด ── */
+.dash-loading { text-align: center; padding: 3rem 1rem; color: var(--text-3); }
+.dash-loading .spinner { display: inline-block; vertical-align: middle; margin-right: .5rem; }
+.dash-loading-sm { color: var(--text-3); font-size: .83rem; padding: .5rem 0; }
+.dash-empty { color: var(--text-3); font-size: .84rem; padding: .4rem 0; line-height: 1.6; }
+.dash-hint  { color: var(--text-3); font-size: .76rem; margin-top: .6rem; line-height: 1.6; }
+
+/* ── mini stat cards ── */
+.dash-mini-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: .6rem; margin-bottom: 1.1rem;
+}
+.dash-mini {
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: var(--r-lg); padding: .75rem .6rem; text-align: center;
+  display: flex; flex-direction: column; gap: .2rem;
+}
+.dash-mini-val { font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; color: var(--accent-light); }
+.dash-mini-lb  { font-size: .7rem; color: var(--text-3); }
+
+/* ── แถวคำค้น / รายการสินค้า ── */
+.dash-term-row {
+  display: flex; justify-content: space-between; align-items: center; gap: .75rem;
+  padding: .42rem .6rem; margin-bottom: .3rem;
+  background: var(--bg-mid); border-radius: var(--r-sm); font-size: .84rem;
+}
+.dash-term { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-1); }
+.dash-term-meta { flex-shrink: 0; color: var(--text-3); font-size: .76rem; }
+
+.dash-chip-wrap { display: flex; flex-wrap: wrap; gap: .4rem; }
+.dash-chip {
+  padding: .3rem .7rem; border-radius: 999px; font-size: .8rem;
+  background: var(--bg-mid); color: var(--text-2);
+}
+.dash-chip.warn { background: rgba(251,113,133,.12); }
+.dash-chip b { color: var(--text-3); font-weight: 600; }
+
+/* ── แถบสถิติแนวนอน (device/browser/source) ── */
+.dash-bar-row { display: flex; align-items: center; gap: .6rem; margin-bottom: .45rem; font-size: .8rem; }
+.dash-bar-label { flex: 0 0 108px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-bar-track { flex: 1; height: 8px; background: var(--bg-mid); border-radius: 999px; overflow: hidden; }
+.dash-bar-fill  { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .4s; }
+.dash-bar-val   { flex: 0 0 auto; min-width: 34px; text-align: right; color: var(--text-3); font-size: .76rem; }
+
+/* ── ปุ่มช่วงกราฟ 7/30 วัน ── */
+.dash-range-btn {
+  padding: .25rem .7rem; font-size: .74rem; font-weight: 600;
+  font-family: var(--font-display); color: var(--text-3);
+  background: var(--bg-mid); border: 1.5px solid transparent;
+  border-radius: 999px; cursor: pointer; margin-left: .3rem;
+}
+.dash-range-btn.active { color: var(--accent); border-color: var(--accent); background: var(--bg-card); }
+
+/* ── Checklist ── */
+.dash-check-row {
+  display: flex; justify-content: space-between; align-items: center; gap: .5rem;
+  padding: .5rem .2rem; font-size: .84rem; color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+}
+.dash-check-count.ok   { color: var(--emerald-light); font-weight: 700; }
+.dash-check-count.warn { color: var(--gold-deep); font-weight: 700; font-size: .78rem; }
+.dash-check-detail {
+  font-size: .76rem; color: var(--text-3); line-height: 1.7;
+  padding: .45rem .6rem; background: var(--bg-mid); border-radius: var(--r-sm); margin: .3rem 0 .5rem;
+}
+
+/* ── การแจ้งเตือน ── */
+.dash-notif-row {
+  display: flex; gap: .5rem; align-items: flex-start;
+  padding: .45rem 0; font-size: .82rem; color: var(--text-2);
+  border-bottom: 1px solid var(--border); line-height: 1.5;
+}
+.dash-notif-row:last-child { border-bottom: none; }
+
+/* ── System status / performance / security ── */
+.dash-sys-row {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .42rem 0; font-size: .82rem; border-bottom: 1px solid var(--border);
+}
+.dash-sys-row:last-child { border-bottom: none; }
+.dash-sys-name { color: var(--text-2); flex: 1; }
+.dash-sys-val  { color: var(--text-3); font-size: .78rem; text-align: right; }
+.dash-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.dash-dot.ok  { background: var(--emerald); box-shadow: 0 0 6px var(--emerald); }
+.dash-dot.bad { background: var(--rose); box-shadow: 0 0 6px var(--rose); }
+.dash-dot.na  { background: var(--text-3); opacity: .5; }
+
+/* ── Storage bar ── */
+.dash-storage-bar {
+  height: 9px; background: var(--bg-mid); border-radius: 999px;
+  overflow: hidden; margin: .4rem 0 .6rem;
+}
+.dash-storage-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--emerald), var(--gold)); border-radius: 999px; }
+
+/* ── Recent activity ── */
+.dash-act-row {
+  display: flex; align-items: center; gap: .55rem;
+  padding: .45rem 0; font-size: .82rem; border-bottom: 1px solid var(--border);
+}
+.dash-act-row:last-child { border-bottom: none; }
+.dash-act-text { flex: 1; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-act-time { flex-shrink: 0; color: var(--text-3); font-size: .72rem; }
+
+/* ── Health Score ── */
+.dash-health-wrap { display: flex; align-items: center; gap: 1rem; }
+.dash-health-ring {
+  width: 92px; height: 92px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.dash-health-inner {
+  width: 72px; height: 72px; border-radius: 50%; background: var(--bg-card);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+}
+.dash-health-score { font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; color: var(--text-1); line-height: 1; }
+.dash-health-grade { font-size: .64rem; font-weight: 700; }
+.dash-health-rows  { flex: 1; min-width: 0; }
+.dash-health-row {
+  display: flex; justify-content: space-between; gap: .5rem;
+  font-size: .74rem; color: var(--text-3); padding: .18rem 0;
+}
+
+@media (max-width: 640px) {
+  .dash-ov-grid  { grid-template-columns: repeat(3, 1fr); }
+  .dash-mini-grid{ grid-template-columns: repeat(2, 1fr); }
+  .dash-health-wrap { flex-direction: column; }
+}

@@ -9,7 +9,7 @@
    - ไม่แตะ Firebase / ImgBB / API (ให้ผ่านตรงเสมอ)
 ═══════════════════════════════════════════════ */
 
-const CACHE_VERSION = 'dcs-v35-free-transform';
+const CACHE_VERSION = 'dcs-v37-admin-dashboard';
 const CACHE_NAME = 'dcs-cache-' + CACHE_VERSION;
 
 // ไฟล์หลักที่ pre-cache ตอนติดตั้ง (โหลดครั้งแรกเร็วขึ้น + ออฟไลน์ได้)
@@ -39,9 +39,11 @@ const PRECACHE = [
   './js/config.js',
   './js/loading.js',
   './js/utils.js',
+  './js/analytics.js',
   './js/slip-verify.js',
   './js/cms.js',
   './js/categories.js',
+  './js/search-engine.js',
   './js/reviews.js',
   './js/navbar.js',
   './js/footer.js',
