@@ -281,12 +281,20 @@ async function applyCMSContent() {
     const c = await CMS.get();
     const set = (id, text) => { const el = document.getElementById(id); if (el && text) el.textContent = text; };
 
-    set('hero-badge-text', c.hero.badge);
-    set('hero-t1', c.hero.title1);
-    set('hero-t2', c.hero.title2);
-    set('hero-t3', c.hero.title3);
-    const desc = document.getElementById('hero-desc-text');
-    if (desc && c.hero.desc) desc.innerHTML = DMC.escapeHtml(c.hero.desc).replace(/\n/g, '<br>');
+    // When the new carousel is active, CMS may update the hero copy only on slide 1.
+    // This avoids an async CMS response overwriting the campaign copy on another slide.
+    const heroSlides = document.getElementById('dmc-hero-slides');
+    const activeSlide = heroSlides && heroSlides.querySelector('.dmc-hero-slide.is-active');
+    const firstSlide = heroSlides && heroSlides.firstElementChild;
+    const canApplyHeroCopy = !heroSlides || !activeSlide || activeSlide === firstSlide;
+    if (canApplyHeroCopy) {
+      set('hero-badge-text', c.hero.badge);
+      set('hero-t1', c.hero.title1);
+      set('hero-t2', c.hero.title2);
+      set('hero-t3', c.hero.title3);
+      const desc = document.getElementById('hero-desc-text');
+      if (desc && c.hero.desc) desc.innerHTML = DMC.escapeHtml(c.hero.desc).replace(/\n/g, '<br>');
+    }
 
     set('stat-orders', c.stats.orders);
     set('stat-rating', c.stats.rating);
