@@ -6,7 +6,7 @@ import { chromium } from 'playwright';
 const BASE = 'http://127.0.0.1:4173';
 const ARTIFACTS = 'artifacts';
 await fs.mkdir(ARTIFACTS, { recursive: true });
-const report = { branch: process.env.GITHUB_REF_NAME || 'local', startedAt: new Date().toISOString(), checks: [], pageErrors: [], sameOriginHttpErrors: [], consoleErrors: [], measurements: [], screenshots: [] };
+const report = { branch: process.env.GITHUB_REF_NAME || 'local', startedAt: new Date().toISOString(), checks: [], pageErrors: [], environmentWarnings: [], sameOriginHttpErrors: [], consoleErrors: [], measurements: [], screenshots: [] };
 let currentRoute = 'startup';
 function check(name, condition, details = '') {
   report.checks.push({ name, passed: Boolean(condition), details });
@@ -26,9 +26,16 @@ try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
   page.setDefaultTimeout(12000);
-  page.on('pageerror', error => report.pageErrors.push({ route: currentRoute, message: error.message, stack: String(error.stack || '').slice(0, 1800) }));
+  page.on('pageerror', error => {
+    const item = { route: currentRoute, message: error.message, stack: String(error.stack || '').slice(0, 1800) };
+    if (/Uncaught \(in promise\) cancelled/.test(error.message) && /firebase-app-check-compat\.js/.test(item.stack)) report.environmentWarnings.push({ ...item, reason: 'Firebase App Check reCAPTCHA is not registered for the localhost test origin' });
+    else report.pageErrors.push(item);
+  });
   page.on('console', message => {
-    if (message.type() === 'error') report.consoleErrors.push({ route: currentRoute, message: message.text().slice(0, 500) });
+    if (message.type() !== 'error') return;
+    const item = { route: currentRoute, message: message.text().slice(0, 500) };
+    if (/appCheck\/recaptcha-error|firebase-app-check-compat\.js|@firebase\/app-check/.test(item.message)) report.environmentWarnings.push({ ...item, reason: 'Firebase App Check reCAPTCHA cannot validate the localhost test origin' });
+    else report.consoleErrors.push(item);
   });
   page.on('response', response => {
     try {
@@ -66,6 +73,10 @@ try {
         categoryCount: document.querySelectorAll('#categories-grid .cat-card').length,
         featuredCount: document.querySelectorAll('#featured-products .product-card').length,
         trustStrip: !!document.querySelector('.dmc-trust-strip'),
+        categoryDisplay: document.querySelector('#categories-grid') ? getComputedStyle(document.querySelector('#categories-grid')).display : 'missing',
+        categoryScrollWidth: document.querySelector('#categories-grid')?.scrollWidth || 0,
+        categoryClientWidth: document.querySelector('#categories-grid')?.clientWidth || 0,
+        popularMobileVisible: document.querySelector('.hp-popular-mobile') ? getComputedStyle(document.querySelector('.hp-popular-mobile')).display !== 'none' : false,
         duplicates: [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))]
       };
     });
@@ -81,6 +92,8 @@ try {
     if (width <= 760) {
       check(`${name}: floating bottom nav geometry`, metrics.bottom && metrics.bottomDisplay !== 'none' && metrics.bottom.left > 0 && metrics.bottom.right < width && metrics.bottom.bottom <= height + 1, JSON.stringify(metrics.bottom));
       check(`${name}: mobile hamburger remains available`, metrics.hamburgerDisplay !== 'none', metrics.hamburgerDisplay);
+      check(`${name}: category shortcuts form a horizontal row`, metrics.categoryDisplay === 'flex' && metrics.categoryScrollWidth > metrics.categoryClientWidth, `display=${metrics.categoryDisplay}, scroll=${metrics.categoryScrollWidth}, client=${metrics.categoryClientWidth}`);
+      check(`${name}: popular categories appear only on mobile`, metrics.popularMobileVisible, String(metrics.popularMobileVisible));
     } else if (width <= 1180) {
       check(`${name}: tablet uses compact nav`, metrics.linksDisplay === 'none' && metrics.hamburgerDisplay !== 'none', `links=${metrics.linksDisplay}, hamburger=${metrics.hamburgerDisplay}`);
       const headerNoOverlap = metrics.logo && metrics.search && metrics.actions && metrics.logo.right <= metrics.search.left + 2 && metrics.search.right <= metrics.actions.left + 2;
@@ -93,6 +106,13 @@ try {
   }
 
   await loadHomeAt('desktop-1440', 1440, 1000);
+  currentRoute = 'home-cart-interaction';
+  const addButton = page.locator('#featured-products .btn-add-cart').first();
+  await addButton.scrollIntoViewIfNeeded();
+  await addButton.click();
+  await page.waitForFunction(() => document.querySelector('#featured-products .btn-add-cart')?.textContent?.trim() === '✓', null, { timeout: 3000 });
+  check('featured product add-to-cart interaction remains active', await page.locator('#featured-products .btn-add-cart').first().textContent() === '✓', 'button changes to success state without leaving Home');
+  check('add-to-cart does not navigate away from Home', new URL(page.url()).pathname.endsWith('/index.html'), page.url());
   currentRoute = 'home-carousel-interaction';
   const totalSlides = await page.locator('#dmc-hero-slides .dmc-hero-slide').count();
   if (totalSlides > 1) {
@@ -108,12 +128,19 @@ try {
   await loadHomeAt('tablet-1024', 1024, 900);
   await loadHomeAt('mobile-390', 390, 844);
   await loadHomeAt('small-mobile-320', 320, 740);
+  currentRoute = 'mobile-menu-regression';
+  await page.locator('#hamburger-btn').click();
+  check('mobile menu opens', await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open')), 'drawer should have open class');
+  await page.keyboard.press('Escape');
+  check('mobile menu closes on Escape', !(await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open'))), 'drawer should be closed');
 
   currentRoute = 'header-search-regression';
   await page.locator('#nav-search-input').fill('polaroid');
   await page.locator('#nav-search-input').press('Enter');
   await page.waitForURL(/catalog\.html\?q=polaroid/);
   await page.waitForSelector('#search-input');
+  await page.waitForLoadState('domcontentloaded').catch(() => {});
+  await page.waitForFunction(() => document.querySelector('#search-input')?.value === 'polaroid', null, { timeout: 5000 }).catch(() => {});
   const searchValue = await page.locator('#search-input').inputValue();
   check('header search routes to Catalog and restores query', searchValue === 'polaroid', `catalog input="${searchValue}"`);
 
@@ -133,11 +160,12 @@ try {
     check(`${name}: page marker exists`, await page.locator(marker).count() > 0, marker);
   }
 
-  check('no uncaught JavaScript page errors', report.pageErrors.length === 0, JSON.stringify(report.pageErrors));
+  check('no uncaught application JavaScript page errors', report.pageErrors.length === 0, JSON.stringify(report.pageErrors));
+  check('no unexpected browser console errors', report.consoleErrors.length === 0, JSON.stringify(report.consoleErrors));
   check('no same-origin HTTP 4xx/5xx assets', report.sameOriginHttpErrors.length === 0, JSON.stringify(report.sameOriginHttpErrors));
   report.finishedAt = new Date().toISOString();
   await fs.writeFile(`${ARTIFACTS}/uxui-qa-results.json`, JSON.stringify(report, null, 2));
-  console.log('Console errors observed (not automatically failed): ' + report.consoleErrors.length);
+  console.log('Unexpected console errors: ' + report.consoleErrors.length + '; known localhost App Check warnings: ' + report.environmentWarnings.length);
   console.log(`QA result: ${report.checks.filter(c => c.passed).length}/${report.checks.length} passed`);
   if (report.checks.some(c => !c.passed)) process.exitCode = 1;
 } catch (error) {
