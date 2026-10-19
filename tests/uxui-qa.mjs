@@ -42,6 +42,7 @@ try {
     if (message.type() !== 'error') return;
     const item = { route: currentRoute, message: message.text().slice(0, 500) };
     if (/appCheck\/recaptcha-error|firebase-app-check-compat\.js|@firebase\/app-check/.test(item.message)) report.environmentWarnings.push({ ...item, reason: 'Firebase App Check reCAPTCHA cannot validate the localhost test origin' });
+    else if (/Framing 'https:\/\/www\.google\.com\/' violates .*report-only Content Security Policy directive/i.test(item.message)) report.environmentWarnings.push({ ...item, reason: 'Third-party Google frame emits a report-only CSP warning in the localhost QA environment; it is not an enforced block or application exception' });
     else report.consoleErrors.push(item);
   });
   page.on('response', response => {
