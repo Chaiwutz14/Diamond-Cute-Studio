@@ -69,3 +69,16 @@
 @media(max-width:900px){.navbar{padding-inline:1rem}.nav-inner{gap:.55rem}.nav-search{flex:1 1 auto;min-width:0;height:38px;padding-left:.6rem}.nav-search input{font-size:.75rem}.nav-logo-text{display:none}.nav-actions{gap:.3rem}.nav-hamburger{display:flex}.nav-links{display:none}.nav-icon-btn{width:38px;height:38px;flex:0 0 38px}}
 @media(max-width:480px){.navbar{padding-inline:.6rem}.nav-inner{gap:.4rem}.nav-logo{gap:0}.nav-logo-icon{width:24px;height:24px}.nav-logo-icon::before{width:20px;height:20px}.nav-search{height:36px;gap:.2rem;padding:0 .3rem 0 .5rem}.nav-search input{font-size:.7rem}.nav-search button{flex-basis:25px;height:25px}}
 @media(max-width:350px){.nav-search-icon{display:none}.nav-search input{font-size:.66rem}}
+
+/* QA fix: prevent header collisions between tablet and compact desktop widths */
+@media(min-width:901px) and (max-width:1180px){
+ .nav-links{display:none}
+ .nav-hamburger{display:flex}
+ .nav-search{flex:1 1 220px;max-width:300px;min-width:160px}
+ .nav-actions{gap:.3rem}
+}
+@media(min-width:1181px){
+ .nav-links{gap:0;min-width:0}
+ .nav-link{padding:.38rem .45rem;font-size:.8rem}
+ .nav-search{flex:0 1 245px;min-width:200px}
+}

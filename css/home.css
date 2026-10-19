@@ -520,7 +520,7 @@
 @media (prefers-reduced-motion: reduce){.design-strip::after{animation:none;display:none}}
 
 /* UX refresh: responsive banner carousel and light blue/pink visual system */
-.dmc-hero{position:relative;isolation:isolate;max-width:1440px;min-height:clamp(320px,38vw,520px);margin:0 auto;overflow:hidden;background:#eaf5ff;border-radius:0 0 22px 22px;color:#173e68}
+.dmc-hero{position:relative;isolation:isolate;max-width:1440px;min-height:clamp(320px,38vw,520px);margin:var(--nav-h) auto 0;overflow:hidden;background:#eaf5ff;border-radius:0 0 22px 22px;color:#173e68}
 .dmc-hero-slides,.dmc-hero-overlay{position:absolute;inset:0}.dmc-hero-slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .55s ease}.dmc-hero-slide.is-active{opacity:1;visibility:visible}.dmc-hero-slide img{width:100%;height:100%;display:block;object-fit:cover;object-position:center}
 .dmc-hero-overlay{z-index:1;background:linear-gradient(90deg,rgba(239,248,255,.98) 0%,rgba(239,248,255,.88) 31%,rgba(239,248,255,.24) 58%,rgba(239,248,255,.02) 100%)}
 .dmc-hero-content{position:relative;z-index:2;width:100%;max-width:1280px;margin:auto;padding:clamp(28px,5vw,70px) clamp(20px,5vw,70px)}
