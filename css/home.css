@@ -541,3 +541,28 @@
 .hp-chips{grid-template-columns:repeat(6,minmax(0,1fr));gap:.75rem}
 @media(max-width:760px){.hp-chips{grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem .5rem}.hp-chips .cat-icon{width:62px;height:62px}}
 @media(max-width:380px){.hp-chips{grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem .35rem}}
+
+
+/* Secondary public pages — consistent surface, spacing and responsive controls */
+.gallery-wrapper,.contact-wrapper,.about-wrapper{max-width:1180px;margin:0 auto;padding:calc(var(--nav-h) + 1.5rem) 1.1rem 4rem}
+.page-hero{border:1px solid #e0edf7;border-radius:22px;background:linear-gradient(120deg,#eaf6ff,#fff 60%,#fff0f7);padding:clamp(1.25rem,3vw,2.2rem);margin-bottom:1.25rem;box-shadow:0 5px 18px rgba(35,80,120,.04)}
+.gallery-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0 1.25rem}
+.gallery-tab{border:1px solid #dce8f3;border-radius:999px;background:#fff;padding:.55rem .9rem;color:#345b7e;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.gallery-tab.active,.gallery-tab:hover{background:#eaf5ff;border-color:#9ccbea;color:#176bb0}
+.gallery-grid{gap:14px}
+.contact-layout{gap:1.25rem}
+.contact-form-card,.info-card,.info-section{border-radius:18px}
+.contact-form-card{border:1px solid #e0eaf4;box-shadow:0 5px 18px rgba(24,62,100,.045)}
+.contact-form-title{color:#1b5f98}
+.about-wrapper .info-section{margin-bottom:1.2rem}
+.about-wrapper .info-card{border:1px solid #e3edf6;background:linear-gradient(145deg,#fff,#f7fbff);box-shadow:0 4px 14px rgba(31,79,119,.04)}
+.gallery-wrapper img{border-radius:12px}
+@media(max-width:760px){
+ .gallery-wrapper,.contact-wrapper,.about-wrapper{padding:calc(var(--nav-h) + 1rem) .75rem 7rem}
+ .page-hero{border-radius:18px;padding:1.15rem;margin-bottom:1rem}
+ .gallery-tabs{flex-wrap:nowrap;overflow-x:auto;padding:0 0 .35rem;scrollbar-width:thin}
+ .gallery-tab{white-space:nowrap;flex:0 0 auto;font-size:.78rem;padding:.5rem .75rem}
+ .gallery-grid{gap:9px}
+ .contact-layout{display:block}
+ .contact-form-card{margin-top:1rem;padding:1rem}
+}

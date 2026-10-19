@@ -441,3 +441,12 @@
  .step{font-size:.73rem;gap:.3rem}
  .step-connector{min-width:.6rem;margin:0 .15rem}
 }
+
+/* Tracking page visual consistency */
+.track-container{max-width:1080px}
+.track-header{border-radius:20px;background:linear-gradient(110deg,#edf7ff,#fff2f8);border:1px solid #e0edf7;padding:1.3rem 1.4rem;margin-bottom:1rem}
+.track-tabs{display:flex;gap:.5rem;flex-wrap:wrap}
+.track-tab{border:1px solid #dce8f3;border-radius:999px;background:#fff;padding:.65rem .95rem}
+.track-tab.active{background:#e8f4ff;border-color:#94c7eb;color:#176bb0}
+.track-panel{border-radius:18px}
+@media(max-width:760px){.track-container{padding:calc(var(--nav-h) + 1rem) .75rem 7rem}.track-header{padding:1rem;border-radius:16px}.track-tabs{display:grid;grid-template-columns:1fr}.track-tab{width:100%}}
