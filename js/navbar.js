@@ -33,8 +33,7 @@
         <nav class="navbar" id="main-nav">
           <div class="nav-inner">
             <a href="index.html" class="nav-logo">
-              <span class="nav-logo-icon">💎</span>
-              <span class="nav-logo-text">Diamond Cute Studio</span>
+              <img class="nav-logo-image" src="assets/dmc-logo.svg" alt="DMC Studio">
             </a>
             <div style="display:flex;align-items:center;gap:.5rem">
               <span class="badge badge-rose" style="font-size:.7rem">⚙️ Admin</span>
@@ -49,8 +48,7 @@
       <nav class="navbar" id="main-nav">
         <div class="nav-inner">
           <a href="index.html" class="nav-logo">
-            <span class="nav-logo-icon">💎</span>
-            <span class="nav-logo-text">Diamond Cute Studio</span>
+            <img class="nav-logo-image" src="assets/dmc-logo.svg" alt="DMC Studio">
           </a>
 
           <ul class="nav-links" role="list">${desktopLinks}</ul>

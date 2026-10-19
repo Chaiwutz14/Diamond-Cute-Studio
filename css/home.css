@@ -720,3 +720,40 @@
  .dmc-hero-actions{max-width:45%}
  .dmc-hero-primary{padding:7px 9px;font-size:.66rem}
 }
+
+
+/* Full visual renovation: artwork leads; only one clear action remains */
+.dmc-hero{min-height:clamp(300px,31vw,430px);max-width:1440px;background:linear-gradient(120deg,#dff2ff,#fff0f8);border-radius:0 0 22px 22px}
+.dmc-hero-slides{inset:0}
+.dmc-hero-collage{left:0!important;right:0!important;top:0!important;bottom:0!important;width:100%;height:100%}
+.dmc-hero-overlay{z-index:1;background:linear-gradient(90deg,rgba(238,248,255,.76) 0%,rgba(238,248,255,.22) 27%,rgba(255,255,255,0) 62%)}
+.dmc-hero-content{position:absolute;left:clamp(16px,4.2vw,60px);bottom:clamp(26px,4vw,48px);z-index:5;width:auto;max-width:none;margin:0;padding:0}
+.dmc-hero-primary{min-height:42px;padding:10px 21px;font-size:.88rem;box-shadow:0 8px 22px rgba(217,54,134,.28);border:1px solid rgba(255,255,255,.72)}
+.dmc-hero-controls{z-index:6}
+.hp-category-shortcuts{padding-top:1rem}
+.hp-category-shortcuts .hp-chips{margin-top:0}
+.hp-category-shortcuts .cat-card{border:0;background:transparent;box-shadow:none;padding:.5rem .25rem;border-radius:18px}
+.hp-category-shortcuts .cat-card:hover{background:linear-gradient(145deg,#f7fbff,#fff0f7);box-shadow:0 5px 16px rgba(31,79,119,.08)}
+.hp-category-shortcuts .cat-icon{width:78px;height:78px;border-radius:50%;padding:0;overflow:hidden;background:linear-gradient(135deg,#e4f4ff,#fbeaf5);box-shadow:0 5px 14px rgba(42,106,160,.1)}
+.hp-category-shortcuts .cat-icon-image img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.hp-category-shortcuts .cat-name{font-size:.9rem;font-weight:800;color:#173e68}
+.hp-category-shortcuts .cat-count{font-size:.72rem;color:#7790a9}
+@media(max-width:760px){
+ .dmc-hero{min-height:clamp(285px,82vw,355px);border-radius:0 0 17px 17px}
+ .dmc-hero-overlay{background:linear-gradient(90deg,rgba(238,248,255,.64) 0%,rgba(238,248,255,.12) 35%,rgba(255,255,255,0) 65%)}
+ .dmc-hero-content{left:14px;bottom:42px;padding:0}
+ .dmc-hero-primary{min-height:36px;padding:8px 13px;font-size:.75rem}
+ .dmc-hero-controls{right:9px;bottom:8px}
+ .hp-category-shortcuts{padding-top:.6rem}
+ .hp-category-shortcuts .hp-chips{grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem .3rem}
+ .hp-category-shortcuts .cat-icon{width:clamp(54px,16vw,70px);height:clamp(54px,16vw,70px)}
+ .hp-category-shortcuts .cat-name{font-size:.76rem}
+ .hp-category-shortcuts .cat-count{font-size:.64rem}
+}
+@media(max-width:380px){
+ .dmc-hero{min-height:280px}
+ .dmc-hero-content{left:10px;bottom:42px}
+ .dmc-hero-primary{min-height:33px;padding:7px 11px;font-size:.69rem}
+ .hp-category-shortcuts .cat-icon{width:52px;height:52px}
+ .hp-category-shortcuts .cat-name{font-size:.7rem}
+}

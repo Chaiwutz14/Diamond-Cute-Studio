@@ -66,20 +66,15 @@
 <!-- Responsive banner carousel -->
 <section class="dmc-hero" id="dmc-home-hero" aria-label="บริการเด่นของ DMC Studio">
  <div class="dmc-hero-slides" id="dmc-hero-slides" aria-live="off"></div><div class="dmc-hero-overlay" aria-hidden="true"></div>
- <div class="dmc-hero-content"><p class="dmc-hero-eyebrow" id="hero-badge-text">เก็บทุกความทรงจำให้มีความหมาย</p>
- <h1 class="dmc-hero-title"><span id="hero-t1">เปลี่ยนภาพธรรมดา</span><span id="hero-t2">ให้เป็นของขวัญ</span><span id="hero-t3">ที่มีความหมาย ♡</span></h1>
- <p class="dmc-hero-desc" id="hero-desc-text">พิมพ์ภาพสวย ๆ ในแบบของคุณ โพลารอยด์ โฟโต้ นามบัตร บัตรพนักงาน และอีกมากมาย</p>
- <div class="dmc-hero-actions"><a href="catalog.html" class="dmc-hero-primary">ดูสินค้าทั้งหมด <span aria-hidden="true">→</span></a><a href="gallery.html" class="dmc-hero-secondary">ดูผลงาน</a></div></div>
+ <div class="dmc-hero-content" aria-label="เริ่มเลือกสินค้า">
+  <a href="catalog.html" class="dmc-hero-primary">เริ่มสั่งเลย <span aria-hidden="true">→</span></a>
+ </div>
  <div class="dmc-hero-controls" aria-label="ควบคุมแบนเนอร์"><button type="button" id="dmc-hero-prev" aria-label="แบนเนอร์ก่อนหน้า">‹</button><div id="dmc-hero-dots" class="dmc-hero-dots"></div><button type="button" id="dmc-hero-next" aria-label="แบนเนอร์ถัดไป">›</button><button type="button" id="dmc-hero-pause" aria-label="หยุดสไลด์อัตโนมัติ" aria-pressed="false">Ⅱ</button></div>
  <span hidden id="stat-orders">500+</span><span hidden id="stat-rating">4.9/5</span><span hidden id="stat-days">1-3</span>
 </section>
 
-<!-- ═══ SERVICE CHIPS (categories) ═══ -->
-<section class="hp-section">
-  <div class="hp-sec-head">
-    <div><h2 class="hp-h2">เลือก<span class="text-accent">บริการ</span></h2><p class="hp-sub2">มีครบทุกงานพิมพ์</p></div>
-    <a href="catalog.html" class="hp-see">ดูทั้งหมด →</a>
-  </div>
+<!-- Product-category visual shortcuts: product imagery replaces the fixed section heading -->
+<section class="hp-section hp-category-shortcuts" aria-label="เลือกประเภทสินค้า">
   <div class="hp-chips" id="categories-grid">
     <a href="catalog.html?cat=polaroid"      class="cat-card"><span class="cat-icon">📸</span><div class="cat-name">โพลารอยด์</div><div class="cat-count">12 รายการ</div></a>
     <a href="catalog.html?cat=business-card" class="cat-card"><span class="cat-icon">💼</span><div class="cat-name">นามบัตร</div><div class="cat-count">15 รายการ</div></a>
