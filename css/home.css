@@ -791,3 +791,6 @@
 .dmc-hero-primary{width:max-content!important;max-width:none!important;min-width:max-content;white-space:nowrap;flex-wrap:nowrap;line-height:1.15;box-sizing:border-box}
 @media(max-width:760px){.dmc-hero-primary{width:max-content!important;min-width:max-content;padding-inline:14px;font-size:.76rem;line-height:1.1}}
 @media(max-width:380px){.dmc-hero-primary{padding-inline:11px;font-size:.7rem}}
+
+@media(max-width:760px){.dmc-hero-primary{left:5%!important;bottom:13%!important}}
+@media(max-width:380px){.dmc-hero-primary{left:4%!important;bottom:13%!important}}

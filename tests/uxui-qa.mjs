@@ -87,7 +87,7 @@ try {
         popularMobileVisible: document.querySelector('.hp-popular-mobile') ? getComputedStyle(document.querySelector('.hp-popular-mobile')).display !== 'none' : false,
         heroPhotoCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art').length,
         heroAssetCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-art').length,
-        heroArtSrc: document.querySelector('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art')?.getAttribute('src') || '',
+        heroArtSrc: document.querySelector('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art')?.currentSrc || '',
         categoryImageCount: document.querySelectorAll('#categories-grid .cat-card img[src*="assets/categories/category-"]').length,
         categoryAssets: [...document.querySelectorAll('#categories-grid .cat-card img')].map(img=>img.getAttribute('src')),
         promoImageCount: document.querySelectorAll('#promo-art-el .promo-art-frame img').length,
