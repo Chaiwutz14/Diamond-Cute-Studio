@@ -363,9 +363,12 @@ async function loadCategoryCounts() {
       return matches.reduce((s, m) => s + (counts[m.toLowerCase()] || 0), 0);
     }
 
-    // built-in เท่านั้น — fix 8 รายการบนหน้าแรกถาวร
+    // Home shortcuts are curated to six common product categories; the "ดูทั้งหมด" links
+    // elsewhere lead to Catalog, so avoid duplicating a seventh "all products" tile here.
+    const HOME_SLUGS = ['polaroid', 'business-card', 'lanyard', 'doll-tag', 'qrcode', 'student-card'];
+    const homeCategories = HOME_SLUGS.map(slug => BUILTIN.find(cat => cat.slug === slug)).filter(Boolean);
     let html = '';
-    BUILTIN.forEach(cat => {
+    homeCategories.forEach(cat => {
       const n = countFor(cat.match);
       const label = n > 0 ? (n + ' รายการ') : 'เร็วๆ นี้';
       html += '<a href="catalog.html?cat=' + encodeURIComponent(cat.slug) + '" class="cat-card">'
@@ -373,10 +376,6 @@ async function loadCategoryCounts() {
         + '<div class="cat-name">' + DMC.escapeHtml(cat.name) + '</div>'
         + '<div class="cat-count">' + label + '</div></a>';
     });
-    // การ์ด "ทั้งหมด"
-    html += '<a href="catalog.html" class="cat-card"><span class="cat-icon">✨</span>'
-      + '<div class="cat-name">ทั้งหมด</div><div class="cat-count">' + total + ' รายการ</div></a>';
-
     grid.innerHTML = html;
   } catch (e) { /* คงตัวเลขเดิม */ }
 }
