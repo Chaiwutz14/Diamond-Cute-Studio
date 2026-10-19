@@ -19,3 +19,10 @@ undefined
  .dmc-hero{margin-top:109px}
  .hp-category-shortcuts .cat-card{flex-basis:82px}
 }
+
+
+/* Keep the single CTA anchored to the banner box, independent of legacy content sizing */
+.dmc-hero{position:relative;overflow:hidden}
+.dmc-hero-content{position:absolute!important;top:auto!important;bottom:clamp(26px,4vw,48px)!important;left:clamp(16px,4.2vw,60px)!important;right:auto!important;width:max-content!important;height:auto!important;min-height:0!important;max-height:none!important;transform:none!important;padding:0!important;margin:0!important;display:block!important}
+@media(max-width:760px){.dmc-hero-content{left:14px!important;bottom:42px!important}}
+@media(max-width:380px){.dmc-hero-content{left:10px!important;bottom:42px!important}}

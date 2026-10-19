@@ -73,7 +73,7 @@ try {
       const ids = [...document.querySelectorAll('[id]')].map(el => el.id).filter(Boolean);
       return {
         viewport: { width: innerWidth, height: innerHeight }, scrollWidth: document.documentElement.scrollWidth, bodyScrollWidth: document.body.scrollWidth,
-        nav: rect(nav), hero: rect(hero), heroCta: rect(document.querySelector('.dmc-hero-primary')), heroCollage: rect(document.querySelector('.dmc-hero-collage')), hasFixedHeroCopy: !!document.querySelector('.dmc-hero-title, .dmc-hero-desc'), logo: rect(logo), links: rect(links), search: rect(search), actions: rect(actions), hamburger: rect(hamburger), bottom: rect(bottom),
+        nav: rect(nav), hero: rect(hero), heroCta: rect(document.querySelector('.dmc-hero-primary')), heroCollage: rect(document.querySelector('.dmc-hero-collage')), hasFixedHeroCopy: !!document.querySelector('.dmc-hero-title, .dmc-hero-desc'), heroCtaWithinHero: (()=>{const h=hero?.getBoundingClientRect(),c=document.querySelector('.dmc-hero-primary')?.getBoundingClientRect();return !!(h&&c&&c.top>=h.top&&c.bottom<=h.bottom&&c.left>=h.left&&c.right<=h.right)})(), logo: rect(logo), links: rect(links), search: rect(search), actions: rect(actions), hamburger: rect(hamburger), bottom: rect(bottom),
         linksDisplay: links ? getComputedStyle(links).display : 'missing',
         hamburgerDisplay: hamburger ? getComputedStyle(hamburger).display : 'missing',
         bottomDisplay: bottom ? getComputedStyle(bottom).display : 'missing',
@@ -134,7 +134,7 @@ try {
     if (width <= 760) {
       check(`${name}: floating bottom nav geometry`, metrics.bottom && metrics.bottomDisplay !== 'none' && metrics.bottom.left > 0 && metrics.bottom.right < width && metrics.bottom.bottom <= height + 1, JSON.stringify(metrics.bottom));
       check(`${name}: mobile hamburger remains available`, metrics.hamburgerDisplay !== 'none', metrics.hamburgerDisplay);
-      check(`${name}: visual hero omits fixed heading and keeps CTA visible`, !metrics.hasFixedHeroCopy && metrics.heroCta && metrics.heroCta.width > 0 && metrics.heroCta.height > 0, JSON.stringify({cta:metrics.heroCta,hasFixedHeroCopy:metrics.hasFixedHeroCopy}));
+      check(`${name}: visual hero omits fixed heading and keeps CTA inside banner`, !metrics.hasFixedHeroCopy && metrics.heroCta && metrics.heroCta.width > 0 && metrics.heroCta.height > 0 && metrics.heroCtaWithinHero, JSON.stringify({cta:metrics.heroCta,hasFixedHeroCopy:metrics.hasFixedHeroCopy,ctaWithinHero:metrics.heroCtaWithinHero,hero:metrics.hero}));
       check(`${name}: category shortcuts form a horizontal row`, metrics.categoryDisplay === 'flex' && metrics.categoryScrollWidth > metrics.categoryClientWidth, `display=${metrics.categoryDisplay}, scroll=${metrics.categoryScrollWidth}, client=${metrics.categoryClientWidth}`);
       check(`${name}: popular categories appear only on mobile`, metrics.popularMobileVisible, String(metrics.popularMobileVisible));
     } else if (width <= 1180) {
