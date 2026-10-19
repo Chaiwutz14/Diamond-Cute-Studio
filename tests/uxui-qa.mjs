@@ -1,0 +1,147 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { chromium } from 'playwright';
+
+const BASE = 'http://127.0.0.1:4173';
+const ARTIFACTS = 'artifacts';
+await fs.mkdir(ARTIFACTS, { recursive: true });
+const report = { branch: process.env.GITHUB_REF_NAME || 'local', startedAt: new Date().toISOString(), checks: [], pageErrors: [], sameOriginHttpErrors: [], consoleErrors: [], measurements: [], screenshots: [] };
+let currentRoute = 'startup';
+function check(name, condition, details = '') {
+  report.checks.push({ name, passed: Boolean(condition), details });
+  console.log(`[${condition ? 'PASS' : 'FAIL'}] ${name}${details ? ' — ' + details : ''}`);
+}
+const server = spawn('python3', ['-m', 'http.server', '4173', '--bind', '127.0.0.1'], { stdio: 'ignore' });
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+let browser;
+try {
+  let available = false;
+  for (let i = 0; i < 40; i++) {
+    try { const response = await fetch(BASE + '/index.html'); if (response.ok) { available = true; break; } } catch {}
+    await sleep(250);
+  }
+  assert.ok(available, 'local static server did not start');
+
+  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
+  page.setDefaultTimeout(12000);
+  page.on('pageerror', error => report.pageErrors.push({ route: currentRoute, message: error.message }));
+  page.on('console', message => {
+    if (message.type() === 'error') report.consoleErrors.push({ route: currentRoute, message: message.text().slice(0, 500) });
+  });
+  page.on('response', response => {
+    try {
+      const u = new URL(response.url());
+      if (u.origin === BASE && u.pathname !== '/favicon.ico' && response.status() >= 400) report.sameOriginHttpErrors.push({ route: currentRoute, status: response.status(), url: u.pathname });
+    } catch {}
+  });
+
+  async function loadHomeAt(name, width, height) {
+    currentRoute = 'home-' + name;
+    await page.setViewportSize({ width, height });
+    await page.goto(BASE + '/index.html', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#main-nav');
+    await page.waitForSelector('#dmc-home-hero');
+    await page.waitForFunction(() => document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide').length > 0, null, { timeout: 18000 });
+    await page.waitForTimeout(500);
+    const metrics = await page.evaluate(() => {
+      const rect = el => { if (!el) return null; const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, top: r.top, right: r.right, bottom: r.bottom, left: r.left, width: r.width, height: r.height }; };
+      const nav = document.querySelector('#main-nav'), hero = document.querySelector('#dmc-home-hero');
+      const logo = document.querySelector('.nav-logo'), links = document.querySelector('.nav-links'), search = document.querySelector('.nav-search');
+      const actions = document.querySelector('.nav-actions'), hamburger = document.querySelector('#hamburger-btn'), bottom = document.querySelector('#dcs-bottom-nav');
+      const ids = [...document.querySelectorAll('[id]')].map(el => el.id).filter(Boolean);
+      return {
+        viewport: { width: innerWidth, height: innerHeight }, scrollWidth: document.documentElement.scrollWidth, bodyScrollWidth: document.body.scrollWidth,
+        nav: rect(nav), hero: rect(hero), logo: rect(logo), links: rect(links), search: rect(search), actions: rect(actions), hamburger: rect(hamburger), bottom: rect(bottom),
+        linksDisplay: links ? getComputedStyle(links).display : 'missing',
+        hamburgerDisplay: hamburger ? getComputedStyle(hamburger).display : 'missing',
+        bottomDisplay: bottom ? getComputedStyle(bottom).display : 'missing',
+        activeSlides: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide.is-active').length,
+        slideCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide').length,
+        categoryCount: document.querySelectorAll('#categories-grid .cat-card').length,
+        featuredCount: document.querySelectorAll('#featured-products .product-card').length,
+        trustStrip: !!document.querySelector('.dmc-trust-strip'),
+        duplicates: [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))]
+      };
+    });
+    report.measurements.push({ name, ...metrics });
+    const screenshot = `${ARTIFACTS}/home-${name}.png`;
+    await page.screenshot({ path: screenshot, fullPage: true, animations: 'disabled' });
+    report.screenshots.push(screenshot);
+    check(`${name}: hero/nav layout`, metrics.hero && metrics.nav && metrics.hero.top >= metrics.nav.bottom - 1, `hero top=${metrics.hero?.top}, navbar bottom=${metrics.nav?.bottom}`);
+    check(`${name}: no horizontal overflow`, metrics.scrollWidth <= width + 2 && metrics.bodyScrollWidth <= width + 2, `document=${metrics.scrollWidth}, body=${metrics.bodyScrollWidth}, viewport=${width}`);
+    check(`${name}: carousel has exactly one active slide`, metrics.activeSlides === 1, `active=${metrics.activeSlides}, total=${metrics.slideCount}`);
+    check(`${name}: no duplicate IDs`, metrics.duplicates.length === 0, metrics.duplicates.join(', ') || 'none');
+    check(`${name}: homepage category/product/trust sections rendered`, metrics.categoryCount >= 5 && metrics.featuredCount >= 1 && metrics.trustStrip, `categories=${metrics.categoryCount}, products=${metrics.featuredCount}, trust=${metrics.trustStrip}`);
+    if (width <= 760) {
+      check(`${name}: floating bottom nav geometry`, metrics.bottom && metrics.bottomDisplay !== 'none' && metrics.bottom.left > 0 && metrics.bottom.right < width && metrics.bottom.bottom <= height + 1, JSON.stringify(metrics.bottom));
+      check(`${name}: mobile hamburger remains available`, metrics.hamburgerDisplay !== 'none', metrics.hamburgerDisplay);
+    } else if (width <= 1180) {
+      check(`${name}: tablet uses compact nav`, metrics.linksDisplay === 'none' && metrics.hamburgerDisplay !== 'none', `links=${metrics.linksDisplay}, hamburger=${metrics.hamburgerDisplay}`);
+      const headerNoOverlap = metrics.logo && metrics.search && metrics.actions && metrics.logo.right <= metrics.search.left + 2 && metrics.search.right <= metrics.actions.left + 2;
+      check(`${name}: tablet header has no overlap`, headerNoOverlap, JSON.stringify({logo:metrics.logo,search:metrics.search,actions:metrics.actions}));
+    } else {
+      check(`${name}: desktop nav links visible`, metrics.linksDisplay !== 'none', metrics.linksDisplay);
+      const noOverlap = metrics.logo && metrics.links && metrics.search && metrics.actions && metrics.logo.right <= metrics.links.left + 2 && metrics.links.right <= metrics.search.left + 2 && metrics.search.right <= metrics.actions.left + 2;
+      check(`${name}: desktop header items do not overlap`, noOverlap, JSON.stringify({ logo: metrics.logo, links: metrics.links, search: metrics.search, actions: metrics.actions }));
+    }
+  }
+
+  await loadHomeAt('desktop-1440', 1440, 1000);
+  currentRoute = 'home-carousel-interaction';
+  const totalSlides = await page.locator('#dmc-hero-slides .dmc-hero-slide').count();
+  if (totalSlides > 1) {
+    const before = await page.locator('#dmc-hero-slides .dmc-hero-slide').evaluateAll(els => els.findIndex(el => el.classList.contains('is-active')));
+    await page.locator('#dmc-hero-next').click();
+    await page.waitForTimeout(120);
+    const after = await page.locator('#dmc-hero-slides .dmc-hero-slide').evaluateAll(els => els.findIndex(el => el.classList.contains('is-active')));
+    check('carousel next control changes active slide', before !== after, `before=${before}, after=${after}`);
+    await page.locator('#dmc-hero-pause').click();
+    check('carousel pause control toggles pressed state', await page.locator('#dmc-hero-pause').getAttribute('aria-pressed') === 'true', 'aria-pressed should become true');
+  } else check('carousel interaction has multiple slides', false, `only ${totalSlides} slide(s) rendered`);
+
+  await loadHomeAt('tablet-1024', 1024, 900);
+  await loadHomeAt('mobile-390', 390, 844);
+  await loadHomeAt('small-mobile-320', 320, 740);
+
+  currentRoute = 'header-search-regression';
+  await page.locator('#nav-search-input').fill('polaroid');
+  await page.locator('#nav-search-input').press('Enter');
+  await page.waitForURL(/catalog\.html\?q=polaroid/);
+  await page.waitForSelector('#search-input');
+  const searchValue = await page.locator('#search-input').inputValue();
+  check('header search routes to Catalog and restores query', searchValue === 'polaroid', `catalog input="${searchValue}"`);
+
+  const routes = [
+    ['catalog', '/catalog.html', '.catalog-wrapper'],
+    ['product', '/product.html', '#product-detail'],
+    ['cart', '/cart.html', '#order-wrapper'],
+    ['orders', '/orders.html', '.track-page'],
+    ['gallery', '/gallery.html', '.gallery-wrapper'],
+    ['contact', '/contact.html', '.contact-wrapper'],
+    ['about', '/about.html', '.about-wrapper'],
+  ];
+  for (const [name, path, marker] of routes) {
+    currentRoute = 'route-' + name;
+    await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#main-nav');
+    check(`${name}: page marker exists`, await page.locator(marker).count() > 0, marker);
+  }
+
+  check('no uncaught JavaScript page errors', report.pageErrors.length === 0, JSON.stringify(report.pageErrors));
+  check('no same-origin HTTP 4xx/5xx assets', report.sameOriginHttpErrors.length === 0, JSON.stringify(report.sameOriginHttpErrors));
+  report.finishedAt = new Date().toISOString();
+  await fs.writeFile(`${ARTIFACTS}/uxui-qa-results.json`, JSON.stringify(report, null, 2));
+  console.log('Console errors observed (not automatically failed): ' + report.consoleErrors.length);
+  console.log(`QA result: ${report.checks.filter(c => c.passed).length}/${report.checks.length} passed`);
+  if (report.checks.some(c => !c.passed)) process.exitCode = 1;
+} catch (error) {
+  report.fatalError = error.stack || error.message;
+  report.finishedAt = new Date().toISOString();
+  await fs.writeFile(`${ARTIFACTS}/uxui-qa-results.json`, JSON.stringify(report, null, 2));
+  throw error;
+} finally {
+  if (browser) await browser.close().catch(() => {});
+  server.kill('SIGTERM');
+}
