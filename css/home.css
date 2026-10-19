@@ -566,3 +566,22 @@
  .contact-layout{display:block}
  .contact-form-card{margin-top:1rem;padding:1rem}
 }
+
+/* QA refinement: compact, single-row service shortcuts on mobile */
+@media(max-width:760px){
+ .hp-chips{display:flex;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;gap:.55rem;padding:0 0 .55rem;scrollbar-width:thin}
+ .hp-chips .cat-card{flex:0 0 82px;min-width:82px;padding:.65rem .28rem .55rem;scroll-snap-align:start}
+ .hp-chips .cat-icon{width:54px;height:54px;font-size:1.7rem}
+ .hp-chips .cat-name{font-size:.7rem;line-height:1.3}
+ .hp-chips .cat-count{display:none}
+ .dmc-trust-strip{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:11px 7px}
+ .dmc-trust-item{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;gap:4px}
+ .dmc-trust-icon{width:25px;height:25px;flex-basis:25px;font-size:.95rem;border-radius:9px}
+ .dmc-trust-item strong{font-size:.6rem;line-height:1.25}
+ .dmc-trust-item small{font-size:.54rem;line-height:1.25}
+}
+@media(max-width:350px){
+ .hp-chips .cat-card{flex-basis:76px;min-width:76px}
+ .dmc-trust-item strong{font-size:.56rem}
+ .dmc-trust-item small{font-size:.5rem}
+}

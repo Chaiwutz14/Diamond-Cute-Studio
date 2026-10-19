@@ -26,7 +26,7 @@ try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
   page.setDefaultTimeout(12000);
-  page.on('pageerror', error => report.pageErrors.push({ route: currentRoute, message: error.message }));
+  page.on('pageerror', error => report.pageErrors.push({ route: currentRoute, message: error.message, stack: String(error.stack || '').slice(0, 1800) }));
   page.on('console', message => {
     if (message.type() === 'error') report.consoleErrors.push({ route: currentRoute, message: message.text().slice(0, 500) });
   });
@@ -44,7 +44,11 @@ try {
     await page.waitForSelector('#main-nav');
     await page.waitForSelector('#dmc-home-hero');
     await page.waitForFunction(() => document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide').length > 0, null, { timeout: 18000 });
-    await page.waitForTimeout(500);
+    await page.waitForFunction(() => {
+      const img = document.querySelector('#dmc-hero-slides .dmc-hero-slide.is-active img');
+      return !!img && img.complete && img.naturalWidth > 0;
+    }, null, { timeout: 18000 });
+    await page.waitForTimeout(250);
     const metrics = await page.evaluate(() => {
       const rect = el => { if (!el) return null; const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, top: r.top, right: r.right, bottom: r.bottom, left: r.left, width: r.width, height: r.height }; };
       const nav = document.querySelector('#main-nav'), hero = document.querySelector('#dmc-home-hero');
