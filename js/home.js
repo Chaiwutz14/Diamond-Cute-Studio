@@ -406,124 +406,27 @@ async function loadHomeGallery() {
 //  V16 — Hero Showcase (coverflow) · เฉพาะเดสก์ท็อป
 // ══════════════════════════════════════════════
 async function initHeroShowcase() {
-  const root = document.getElementById('hp-showcase');
-  const stage = document.getElementById('hps-stage');
-  const dotsEl = document.getElementById('hps-dots');
-  if (!root || !stage || !dotsEl) return;
-
-  // เฉพาะเดสก์ท็อป — มือถือใช้การ์ดแขวนเหมือนเดิม
-  if (!window.matchMedia || !window.matchMedia('(min-width:1025px)').matches) return;
-
-  // รูป: ใช้แกลเลอรี (ผลงานที่ส่งแล้ว) สูงสุด 5 รูป
-  let items = [];
-  try {
-    const list = await DMC.loadGallery();
-    list.forEach(x => {
-      const url = x.image || x.imageUrl || x.url;
-      if (url) items.push({
-        url,
-        name: x.name || x.title || 'ผลงานของเรา',
-        sub:  x.category || x.subtitle || x.sub || 'Diamond Cute Studio',
-        ts:   (x.createdAt && x.createdAt.seconds) || 0
-      });
-    });
-  } catch (e) { /* ออฟไลน์ → ใช้ fallback */ }
-
-  if (items.length < 2) {
-    items = HERO_FALLBACK_IMAGES.slice(0, 5).map(p => ({ url: p.url, name: p.name, sub: 'ตัวอย่างผลงาน', ts: 0 }));
-  }
-  items = items.slice(0, 5);
-  if (!items.length) return;
-
-  // ป้าย "ส่งล่าสุด ..."
-  updateDeliverBadge(items);
-
-  let active = Math.floor(items.length / 2);   // เริ่มที่รูปกลาง
-
-  stage.innerHTML = '';
-  dotsEl.innerHTML = '';
-  items.forEach((it, i) => {
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'hps-card';
-    card.setAttribute('aria-label', it.name);
-    const img = document.createElement('img');
-    img.src = DMC.imgCDN(it.url, 420);
-    img.setAttribute('data-full', it.url);
-    img.alt = it.name;
-    img.loading = 'lazy';
-    img.decoding = 'async';
-    card.appendChild(img);
-    card.addEventListener('click', () => { active = i; layout(); });
-    stage.appendChild(card);
-
-    const dot = document.createElement('button');
-    dot.type = 'button';
-    dot.className = 'hps-dot';
-    dot.setAttribute('aria-label', 'รูปที่ ' + (i + 1));
-    dot.addEventListener('click', () => { active = i; layout(); });
-    dotsEl.appendChild(dot);
-  });
-
-  const cards = Array.prototype.slice.call(stage.children);
-  const dots  = Array.prototype.slice.call(dotsEl.children);
-
-  function setTxt(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
-
-  function layout() {
-    cards.forEach((card, i) => {
-      const off = i - active, aoff = Math.abs(off);
-      let tx, scale, ry, op, z;
-      if (off === 0)       { tx = 0;        scale = 1;   ry = 0;        op = 1;   z = 30; }
-      else if (aoff === 1) { tx = off * 128; scale = .82; ry = off * -26; op = .92; z = 20; }
-      else if (aoff === 2) { tx = off * 208; scale = .64; ry = off * -32; op = .55; z = 10; }
-      else                 { tx = off * 260; scale = .5;  ry = off * -34; op = 0;   z = 0;  }
-      card.style.transform = 'translateX(' + tx + 'px) scale(' + scale + ') rotateY(' + ry + 'deg)';
-      card.style.opacity = op;
-      card.style.zIndex = z;
-      card.style.pointerEvents = op > 0 ? 'auto' : 'none';
-      card.classList.toggle('is-active', off === 0);
-    });
-    dots.forEach((d, i) => d.classList.toggle('on', i === active));
-    const it = items[active];
-    setTxt('hps-title', it.name);
-    setTxt('hps-sub', it.sub);
-    setTxt('hps-frameno', 'FRAME ' + String(active + 1).padStart(2, '0'));
-    const cntEl = document.getElementById('hps-count');
-    if (cntEl) cntEl.innerHTML = '<span class="cur">' + String(active + 1).padStart(2, '0')
-      + '</span><span class="sep"> / </span><span class="tot">' + String(items.length).padStart(2, '0') + '</span>';
-  }
-  function go(dir) { active = (active + dir + items.length) % items.length; layout(); }
-
-  const prev = document.getElementById('hps-prev');
-  const next = document.getElementById('hps-next');
-  if (prev) prev.addEventListener('click', () => go(-1));
-  if (next) next.addEventListener('click', () => go(1));
-
-  layout();
-  root.parentElement && root.closest('.hp-hero') && root.closest('.hp-hero').classList.add('has-showcase');
-
-  // เลื่อนอัตโนมัติ (เคารพ reduced-motion + หยุดเมื่อ hover / พ้นจอ / สลับแท็บ)
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!reduce && items.length > 1) {
-    let timer = null, onScreen = true, hovering = false;
-    function start() {
-      if (timer || !onScreen || hovering || document.hidden) return;   // เริ่มเฉพาะเมื่อควรเล่นจริง
-      timer = setInterval(() => go(1), 4200);
-    }
-    function stop() { if (timer) { clearInterval(timer); timer = null; } }
-    root.addEventListener('mouseenter', () => { hovering = true; stop(); });
-    root.addEventListener('mouseleave', () => { hovering = false; start(); });
-    document.addEventListener('visibilitychange', () => { document.hidden ? stop() : start(); });
-    // V17 (LOW-03): หยุดเมื่อ carousel เลื่อนพ้นจอ → ไม่เปลือง CPU/เพนต์ตอนมองไม่เห็น
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver((ents) => {
-        onScreen = !!(ents[0] && ents[0].isIntersecting);
-        onScreen ? start() : stop();
-      }, { threshold: 0.1 }).observe(root);
-    }
-    start();
-  }
+ const root=document.getElementById('dmc-home-hero'),stage=document.getElementById('dmc-hero-slides'),dotsEl=document.getElementById('dmc-hero-dots');
+ if(!root||!stage||!dotsEl)return;
+ const reduced=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+ let items=[];
+ try{if(typeof DMC!=='undefined'&&DMC.loadGallery){const gallery=await DMC.loadGallery();(gallery||[]).forEach(x=>{const url=x.image||x.imageUrl||x.url;if(url&&!items.some(v=>v.url===url))items.push({url,name:x.name||x.title||'ผลงานจาก DMC Studio'});});}}catch(e){}
+ if(!items.length)items=HERO_FALLBACK_IMAGES.slice();items=items.slice(0,5);
+ const copies=[{badge:'เก็บทุกความทรงจำให้มีความหมาย',a:'เปลี่ยนภาพธรรมดา',b:'ให้เป็นของขวัญ',c:'ที่มีความหมาย ♡'},{badge:'งานพิมพ์ในแบบของคุณ',a:'สร้างสรรค์ทุกไอเดีย',b:'ด้วยงานพิมพ์คุณภาพ',c:'DMC Studio ♡'},{badge:'ใส่ใจทุกรายละเอียด',a:'ภาพสวย งานพรีเมียม',b:'ทำได้ตามแบบที่คุณชอบ',c:'ส่งทั่วไทย ♡'}];
+ let active=0,timer=null,paused=reduced,inView=true;stage.innerHTML='';dotsEl.innerHTML='';
+ items.forEach((item,i)=>{const slide=document.createElement('div');slide.className='dmc-hero-slide';slide.setAttribute('aria-hidden','true');const img=document.createElement('img');img.src=typeof DMC!=='undefined'&&DMC.imgCDN?DMC.imgCDN(item.url,1400):item.url;img.alt=item.name||'ตัวอย่างงานพิมพ์ DMC Studio';img.loading=i===0?'eager':'lazy';img.decoding='async';slide.appendChild(img);stage.appendChild(slide);const dot=document.createElement('button');dot.type='button';dot.className='dmc-hero-dot';dot.setAttribute('aria-label','แสดงแบนเนอร์ที่ '+(i+1));dot.addEventListener('click',()=>{show(i);start();});dotsEl.appendChild(dot);});
+ const slides=Array.from(stage.children),dots=Array.from(dotsEl.children);
+ function show(index){active=(index+items.length)%items.length;slides.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-hidden',on?'false':'true');});dots.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-current',on?'true':'false');});
+  if(active!==0){const c=copies[active%copies.length];[['hero-badge-text',c.badge],['hero-t1',c.a],['hero-t2',c.b],['hero-t3',c.c],['hero-desc-text','งานพิมพ์สวย ๆ ในแบบของคุณ พร้อมบริการจัดส่งทั่วไทย']].forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v;});}
+  else if(typeof CMS!=='undefined'&&CMS.get){CMS.get().then(data=>{if(active!==0)return;const h=data.hero||{};[['hero-badge-text','badge'],['hero-t1','title1'],['hero-t2','title2'],['hero-t3','title3'],['hero-desc-text','desc']].forEach(([id,key])=>{const el=document.getElementById(id);if(el&&h[key])el.textContent=h[key];});}).catch(()=>{});}
+ }
+ function stop(){if(timer){clearInterval(timer);timer=null;}}function start(){stop();if(paused||!inView||document.hidden||reduced||items.length<2)return;timer=setInterval(()=>show(active+1),5200);}
+ const prev=document.getElementById('dmc-hero-prev'),next=document.getElementById('dmc-hero-next'),pause=document.getElementById('dmc-hero-pause');
+ if(prev)prev.addEventListener('click',()=>{show(active-1);start();});if(next)next.addEventListener('click',()=>{show(active+1);start();});
+ if(pause)pause.addEventListener('click',()=>{paused=!paused;pause.setAttribute('aria-pressed',paused?'true':'false');pause.setAttribute('aria-label',paused?'เล่นสไลด์อัตโนมัติ':'หยุดสไลด์อัตโนมัติ');pause.textContent=paused?'▶':'Ⅱ';start();});
+ root.addEventListener('mouseenter',stop);root.addEventListener('mouseleave',start);root.addEventListener('focusin',stop);root.addEventListener('focusout',start);document.addEventListener('visibilitychange',start);
+ if('IntersectionObserver'in window)new IntersectionObserver(entries=>{inView=!!(entries[0]&&entries[0].isIntersecting);start();},{threshold:.1}).observe(root);
+ show(0);start();
 }
 
 // อัปเดตป้ายเวลาส่งล่าสุด: CMS.lastDeliveredAt → รูปแกลเลอรีล่าสุด → ข้อความทั่วไป

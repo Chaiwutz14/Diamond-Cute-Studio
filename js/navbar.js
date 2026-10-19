@@ -54,7 +54,11 @@
           </a>
 
           <ul class="nav-links" role="list">${desktopLinks}</ul>
-
+          <form class="nav-search" action="catalog.html" method="get" role="search" aria-label="ค้นหาสินค้า">
+            <label class="nav-search-label" for="nav-search-input">ค้นหาสินค้า</label><span class="nav-search-icon" aria-hidden="true">⌕</span>
+            <input id="nav-search-input" name="q" type="search" maxlength="120" placeholder="ค้นหาสินค้า เช่น โพลารอยด์ นามบัตร…" autocomplete="off">
+            <button type="submit" aria-label="ค้นหา">→</button>
+          </form>
           <div class="nav-actions">
             <!-- theme switcher injected here by theme-switcher.js -->
             <a href="#" id="nav-line-btn"
@@ -86,6 +90,16 @@
     initBehavior();
     applyLineLinks();
     applyAnnounce();
+    initHeaderSearch();
+  }
+
+  function initHeaderSearch() {
+    var input = document.getElementById('nav-search-input');
+    if (!input) return;
+    if ((location.pathname.split('/').pop() || '') === 'catalog.html') {
+      var q = new URLSearchParams(location.search).get('q');
+      if (q) input.value = q.slice(0, 120);
+    }
   }
 
   function applyAnnounce() {
