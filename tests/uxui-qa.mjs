@@ -91,6 +91,33 @@ try {
     const screenshot = `${ARTIFACTS}/home-${name}.png`;
     await page.screenshot({ path: screenshot, fullPage: false, animations: 'disabled', timeout: 15000 });
     report.screenshots.push(screenshot);
+
+    // Capture scroll-position checkpoints instead of fullPage screenshots (which can hang with remote fonts).
+    const slices = width === 1440
+      ? [
+          ['services-trust', '#categories-grid'],
+          ['bestsellers', '#featured-products'],
+          ['promo-gallery', '#promo-section-el'],
+          ['gallery-reviews', '#home-gallery-section']
+        ]
+      : width === 390
+        ? [
+            ['services-trust', '#categories-grid'],
+            ['bestsellers', '#featured-products'],
+            ['mobile-popular-categories', '.hp-popular-mobile']
+          ]
+        : [];
+    for (const [suffix, selector] of slices) {
+      await page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (el) window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top - 105);
+      }, selector);
+      await page.waitForTimeout(180);
+      const shot = `${ARTIFACTS}/home-${name}-${suffix}.png`;
+      await page.screenshot({ path: shot, fullPage: false, animations: 'disabled', timeout: 15000 });
+      report.screenshots.push(shot);
+    }
+    await page.evaluate(() => window.scrollTo(0, 0));
     check(`${name}: hero/nav layout`, metrics.hero && metrics.nav && metrics.hero.top >= metrics.nav.bottom - 1, `hero top=${metrics.hero?.top}, navbar bottom=${metrics.nav?.bottom}`);
     check(`${name}: no horizontal overflow`, metrics.scrollWidth <= width + 2 && metrics.bodyScrollWidth <= width + 2, `document=${metrics.scrollWidth}, body=${metrics.bodyScrollWidth}, viewport=${width}`);
     check(`${name}: carousel has exactly one active slide`, metrics.activeSlides === 1, `active=${metrics.activeSlides}, total=${metrics.slideCount}`);
