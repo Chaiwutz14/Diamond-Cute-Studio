@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - uxui/redesign-reference-mobile-desktop
+      - uxui/reference-led-renovation-v2
   pull_request:
     branches:
       - main

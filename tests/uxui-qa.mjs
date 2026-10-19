@@ -59,10 +59,9 @@ try {
     await page.waitForSelector('#dmc-home-hero');
     await page.waitForFunction(() => document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide').length > 0, null, { timeout: 18000 });
     await page.waitForFunction(() => {
-      const img = document.querySelector('#dmc-hero-slides .dmc-hero-slide.is-active img');
+      const img = document.querySelector('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art');
       return !!img && img.complete && img.naturalWidth > 0;
     }, null, { timeout: 18000 });
-    await page.waitForFunction(() => document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-photo img').length >= 3, null, { timeout: 12000 });
     await page.waitForFunction(() => document.querySelectorAll('#promo-art-el .promo-art-frame img').length >= 3, null, { timeout: 12000 });
     await page.waitForTimeout(250);
     const metrics = await page.evaluate(() => {
@@ -86,8 +85,10 @@ try {
         categoryScrollWidth: document.querySelector('#categories-grid')?.scrollWidth || 0,
         categoryClientWidth: document.querySelector('#categories-grid')?.clientWidth || 0,
         popularMobileVisible: document.querySelector('.hp-popular-mobile') ? getComputedStyle(document.querySelector('.hp-popular-mobile')).display !== 'none' : false,
-        heroPhotoCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-photo img').length,
-        categoryImageCount: document.querySelectorAll('#categories-grid .cat-icon-image img').length,
+        heroPhotoCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art').length,
+        heroAssetCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-art').length,
+        categoryImageCount: document.querySelectorAll('#categories-grid .cat-card img[src*="assets/categories/category-"]').length,
+        categoryAssets: [...document.querySelectorAll('#categories-grid .cat-card img')].map(img=>img.getAttribute('src')),
         promoImageCount: document.querySelectorAll('#promo-art-el .promo-art-frame img').length,
         duplicates: [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))]
       };
@@ -127,15 +128,15 @@ try {
     check(`${name}: no horizontal overflow`, metrics.scrollWidth <= width + 2 && metrics.bodyScrollWidth <= width + 2, `document=${metrics.scrollWidth}, body=${metrics.bodyScrollWidth}, viewport=${width}`);
     check(`${name}: carousel has exactly one active slide`, metrics.activeSlides === 1, `active=${metrics.activeSlides}, total=${metrics.slideCount}`);
     check(`${name}: no duplicate IDs`, metrics.duplicates.length === 0, metrics.duplicates.join(', ') || 'none');
-    check(`${name}: homepage category/product/trust sections rendered`, metrics.categoryCount >= 5 && metrics.featuredCount >= 1 && metrics.trustStrip, `categories=${metrics.categoryCount}, products=${metrics.featuredCount}, trust=${metrics.trustStrip}`);
-    check(`${name}: hero renders a product-photo collage`, metrics.heroPhotoCount >= 3, `active hero photos=${metrics.heroPhotoCount}`);
-    check(`${name}: category shortcuts use product photos`, metrics.categoryImageCount >= 3, `category image thumbnails=${metrics.categoryImageCount}`);
+    check(`${name}: homepage category/product/trust sections rendered`, metrics.categoryCount === 6 && metrics.featuredCount >= 1 && metrics.trustStrip, `categories=${metrics.categoryCount}, products=${metrics.featuredCount}, trust=${metrics.trustStrip}`);
+    check(`${name}: hero uses custom-designed three-banner carousel`, metrics.heroAssetCount === 3 && metrics.heroPhotoCount === 1, `banner assets=${metrics.heroAssetCount}, active banner=${metrics.heroPhotoCount}`);
+    check(`${name}: category shortcuts use six authored SVG illustrations`, metrics.categoryCount === 6 && metrics.categoryImageCount === 6 && metrics.categoryAssets.every(src=>src && src.startsWith('assets/categories/category-')), `category art=${metrics.categoryImageCount}`);
     check(`${name}: promotion banner uses product photos`, metrics.promoImageCount >= 3, `promo art photos=${metrics.promoImageCount}`);
     if (width <= 760) {
       check(`${name}: floating bottom nav geometry`, metrics.bottom && metrics.bottomDisplay !== 'none' && metrics.bottom.left > 0 && metrics.bottom.right < width && metrics.bottom.bottom <= height + 1, JSON.stringify(metrics.bottom));
       check(`${name}: mobile hamburger remains available`, metrics.hamburgerDisplay !== 'none', metrics.hamburgerDisplay);
       check(`${name}: visual hero omits fixed heading and keeps CTA inside banner`, !metrics.hasFixedHeroCopy && metrics.heroCta && metrics.heroCta.width > 0 && metrics.heroCta.height > 0 && metrics.heroCtaWithinHero, JSON.stringify({cta:metrics.heroCta,hasFixedHeroCopy:metrics.hasFixedHeroCopy,ctaWithinHero:metrics.heroCtaWithinHero,hero:metrics.hero}));
-      check(`${name}: category shortcuts form a horizontal row`, metrics.categoryDisplay === 'flex' && metrics.categoryScrollWidth > metrics.categoryClientWidth, `display=${metrics.categoryDisplay}, scroll=${metrics.categoryScrollWidth}, client=${metrics.categoryClientWidth}`);
+      check(`${name}: category shortcuts form a horizontal row`, metrics.categoryDisplay === 'flex' && metrics.categoryScrollWidth >= metrics.categoryClientWidth, `display=${metrics.categoryDisplay}, scroll=${metrics.categoryScrollWidth}, client=${metrics.categoryClientWidth}`);
       check(`${name}: popular categories appear only on mobile`, metrics.popularMobileVisible, String(metrics.popularMobileVisible));
     } else if (width <= 1180) {
       check(`${name}: tablet uses compact nav`, metrics.linksDisplay === 'none' && metrics.hamburgerDisplay !== 'none', `links=${metrics.linksDisplay}, hamburger=${metrics.hamburgerDisplay}`);
@@ -178,6 +179,7 @@ try {
   check('mobile menu closes on Escape', !(await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open'))), 'drawer should be closed');
 
   currentRoute = 'header-search-regression';
+  check('global search exists on Home', await page.locator('.nav-search').count() === 1, 'one homepage search');
   await page.locator('#nav-search-input').fill('polaroid');
   await page.locator('#nav-search-input').press('Enter');
   await page.waitForURL(/catalog\.html\?q=polaroid/);
@@ -201,6 +203,7 @@ try {
     await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#main-nav');
     check(`${name}: page marker exists`, await page.locator(marker).count() > 0, marker);
+    check(`${name}: global navbar search is omitted outside Home`, await page.locator('.nav-search').count() === 0, 'page-specific controls remain');
   }
 
   check('no uncaught application JavaScript page errors', report.pageErrors.length === 0, JSON.stringify(report.pageErrors));
