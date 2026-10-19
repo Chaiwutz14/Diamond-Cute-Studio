@@ -1140,3 +1140,34 @@ mark.dcs-hl {
 
 /* ══ V35: หัวข้อรีวิว — เว้นระยะจากการ์ดสินค้าที่เกี่ยวข้องด้านบน ══ */
 .product-reviews-section { margin-top: 2.5rem; }
+
+
+/* UX refresh — catalog and product detail visual layer only; JS hooks/IDs untouched */
+.catalog-wrapper{max-width:1240px;gap:1.4rem;padding-top:1.5rem}
+.filter-panel,.filter-sidebar .filter-panel{border-width:1px;border-radius:18px;box-shadow:0 4px 16px rgba(31,79,119,.055)}
+.catalog-toolbar{gap:.8rem}
+.search-bar{min-height:44px;border-radius:999px;background:#fff;box-shadow:0 3px 12px rgba(31,79,119,.04)}
+.product-grid .product-card{border:1px solid #e3edf6;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 4px 16px rgba(24,62,100,.055);transition:transform .18s ease,box-shadow .18s ease}
+.product-grid .product-card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(24,62,100,.1)}
+.product-grid .product-img-wrap{background:#f1f7fd}
+.product-grid .product-info{padding:.8rem .85rem .9rem}
+.product-grid .product-name{line-height:1.35}
+.detail-layout{gap:clamp(1.25rem,3vw,2.5rem)}
+.detail-info{background:#fff;border:1px solid #e3edf6;border-radius:22px;padding:clamp(1rem,2.5vw,1.6rem);box-shadow:0 5px 20px rgba(24,62,100,.045)}
+.detail-price-block{border-radius:16px;background:linear-gradient(110deg,#f1f8ff,#fff3f9);border:1px solid #e4edf6}
+.options-group{padding:.9rem 0;border-bottom:1px solid #edf2f7}
+.options-chips .option-chip,.options-chips button{border-radius:999px}
+.detail-actions{gap:.6rem}
+.detail-actions .btn{border-radius:999px;min-height:46px}
+.line-contact{border-radius:14px;background:#eff8ff;border:1px solid #dceefa;padding:.85rem 1rem}
+@media(max-width:760px){
+ .catalog-wrapper{display:block;padding:1rem .75rem 6rem}
+ .filter-sidebar{position:static}
+ .detail-info{padding:1rem;border-radius:18px}
+ .detail-layout{gap:1rem}
+ .product-grid{gap:.65rem}
+ .product-grid .product-info{padding:.65rem}
+ .product-grid .product-name{font-size:.84rem}
+ .product-grid .btn-add-cart{width:34px;height:34px}
+}
+@media(prefers-reduced-motion:reduce){.product-grid .product-card{transition:none}}

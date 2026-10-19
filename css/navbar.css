@@ -54,3 +54,46 @@
 @media (max-width: 900px) {
   .mobile-drawer { max-height: calc(100svh - var(--nav-h)); overflow-y: auto; }
 }
+
+/* UX refresh: brand and global catalog search */
+.nav-logo-icon{font-size:0;width:27px;height:27px;display:inline-flex;align-items:center;justify-content:center;animation:none;position:relative}
+.nav-logo-icon::before{content:"";width:22px;height:22px;border:2px solid var(--accent);border-radius:7px 7px 7px 2px;transform:rotate(45deg);position:absolute}
+.nav-logo-icon::after{content:"D";font-family:var(--font-display);font-size:1rem;font-weight:800;color:var(--accent);position:relative;transform:rotate(-45deg)}
+.nav-logo-text{font-size:.88rem;letter-spacing:.11em;text-transform:uppercase;background:none;-webkit-text-fill-color:var(--accent-dark);color:var(--accent-dark);line-height:1.1}
+.nav-search{display:flex;align-items:center;gap:.4rem;position:relative;flex:0 1 330px;min-width:150px;height:40px;padding:0 .5rem 0 .8rem;background:var(--bg-card);border:1px solid var(--border);border-radius:999px}
+.nav-search-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.nav-search-icon{font-size:1.35rem;line-height:1;color:var(--text-3)}
+.nav-search input{min-width:0;width:100%;height:100%;border:0;outline:0;background:transparent;color:var(--text-1);font:inherit;font-size:.82rem}
+.nav-search input::placeholder{color:var(--text-3)}.nav-search button{flex:0 0 29px;height:29px;border:0;border-radius:50%;background:var(--soft);color:var(--accent-dark);font-size:1rem;cursor:pointer}
+.nav-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}.nav-actions .hide-mobile{display:none}
+@media(max-width:900px){.navbar{padding-inline:1rem}.nav-inner{gap:.55rem}.nav-search{flex:1 1 auto;min-width:0;height:38px;padding-left:.6rem}.nav-search input{font-size:.75rem}.nav-logo-text{display:none}.nav-actions{gap:.3rem}.nav-hamburger{display:flex}.nav-links{display:none}.nav-icon-btn{width:38px;height:38px;flex:0 0 38px}}
+@media(max-width:480px){.navbar{padding-inline:.6rem}.nav-inner{gap:.4rem}.nav-logo{gap:0}.nav-logo-icon{width:24px;height:24px}.nav-logo-icon::before{width:20px;height:20px}.nav-search{height:36px;gap:.2rem;padding:0 .3rem 0 .5rem}.nav-search input{font-size:.7rem}.nav-search button{flex-basis:25px;height:25px}}
+@media(max-width:350px){.nav-search-icon{display:none}.nav-search input{font-size:.66rem}}
+
+/* QA fix: prevent header collisions between tablet and compact desktop widths */
+@media(min-width:901px) and (max-width:1180px){
+ .nav-links{display:none}
+ .nav-hamburger{display:flex}
+ .nav-search{flex:1 1 220px;max-width:300px;min-width:160px}
+ .nav-actions{gap:.3rem}
+}
+@media(min-width:1181px){
+ .nav-links{gap:0;min-width:0}
+ .nav-link{padding:.38rem .45rem;font-size:.8rem}
+ .nav-search{flex:0 1 245px;min-width:200px}
+}
+
+/* Compact DMC wordmark aligned with the design reference */
+.nav-logo-text{font-size:0;display:flex;flex-direction:column;gap:0;letter-spacing:0;background:none;-webkit-text-fill-color:initial;color:var(--accent-dark);line-height:1}
+.nav-logo-text::before{content:"DMC";font-family:var(--font-display);font-size:1.15rem;font-weight:800;letter-spacing:.11em;color:var(--accent-dark);line-height:1.02}
+.nav-logo-text::after{content:"S T U D I O";font-family:var(--font-display);font-size:.45rem;font-weight:700;letter-spacing:.08em;color:var(--accent);line-height:1.3}
+@media(max-width:900px){.nav-logo-text{display:flex}.nav-logo-text::before{font-size:.91rem}.nav-logo-text::after{font-size:.39rem}}
+@media(max-width:380px){.nav-logo-text::before{font-size:.83rem}.nav-logo-text::after{font-size:.34rem}}
+
+
+/* Brand asset: custom DMC Studio vector wordmark */
+.nav-logo-image{display:block;width:104px;height:auto;max-height:46px;object-fit:contain;flex-shrink:0}
+.nav-logo{gap:0}
+@media(max-width:900px){.nav-logo-image{width:86px;max-height:38px}}
+@media(max-width:480px){.nav-logo-image{width:78px;max-height:35px}}
+@media(max-width:350px){.nav-logo-image{width:70px}}

@@ -20,8 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyCMSContent();    // เนื้อหาจากหลังบ้าน (hero/promo/stats) — V24: อ่าน snapshot ก่อน ไม่บังคับโหลด Firebase
   loadHomeReviews();    // รีวิวจริง — V24: อ่าน snapshot (data/reviews.json) ไม่บังคับโหลด Firebase
   loadCategoryCounts(); // นับจำนวนสินค้าจริงต่อหมวด (เจ้าของ #categories-grid)
-  loadHomeGallery();    // V4: แถบผลงานจริง (#home-gallery)
-  initHeroShowcase();   // V16: coverflow ผลงานฝั่งขวา (เฉพาะเดสก์ท็อป)
+  loadHomeGallery();    // Gallery strip with existing shared loader
+  initHeroShowcase();   // Responsive collage from real product photos
+  initPromoArt();       // Real product photography for the promotional banner
   initTypewriter();     // V25: ข้อความจุดเด่นแบบพิมพ์/ลบวนลูป (อ่านค่าจาก #stat-* ที่ CMS เขียนได้)
 
   // ─── V24/PERF-B: โหลดสินค้าจาก snapshot โดยตรง (ไม่ await getFirebaseReady ก่อน) ──
@@ -281,12 +282,20 @@ async function applyCMSContent() {
     const c = await CMS.get();
     const set = (id, text) => { const el = document.getElementById(id); if (el && text) el.textContent = text; };
 
-    set('hero-badge-text', c.hero.badge);
-    set('hero-t1', c.hero.title1);
-    set('hero-t2', c.hero.title2);
-    set('hero-t3', c.hero.title3);
-    const desc = document.getElementById('hero-desc-text');
-    if (desc && c.hero.desc) desc.innerHTML = DMC.escapeHtml(c.hero.desc).replace(/\n/g, '<br>');
+    // When the new carousel is active, CMS may update the hero copy only on slide 1.
+    // This avoids an async CMS response overwriting the campaign copy on another slide.
+    const heroSlides = document.getElementById('dmc-hero-slides');
+    const activeSlide = heroSlides && heroSlides.querySelector('.dmc-hero-slide.is-active');
+    const firstSlide = heroSlides && heroSlides.firstElementChild;
+    const canApplyHeroCopy = !heroSlides || !activeSlide || activeSlide === firstSlide;
+    if (canApplyHeroCopy) {
+      set('hero-badge-text', c.hero.badge);
+      set('hero-t1', c.hero.title1);
+      set('hero-t2', c.hero.title2);
+      set('hero-t3', c.hero.title3);
+      const desc = document.getElementById('hero-desc-text');
+      if (desc && c.hero.desc) desc.innerHTML = DMC.escapeHtml(c.hero.desc).replace(/\n/g, '<br>');
+    }
 
     set('stat-orders', c.stats.orders);
     set('stat-rating', c.stats.rating);
@@ -355,25 +364,69 @@ async function loadCategoryCounts() {
       return matches.reduce((s, m) => s + (counts[m.toLowerCase()] || 0), 0);
     }
 
-    // built-in เท่านั้น — fix 8 รายการบนหน้าแรกถาวร
+    // Home shortcuts are curated to six common product categories; the "ดูทั้งหมด" links
+    // elsewhere lead to Catalog, so avoid duplicating a seventh "all products" tile here.
+    const HOME_SLUGS = ['polaroid', 'business-card', 'lanyard', 'doll-tag', 'qrcode', 'student-card'];
+    const homeCategories = HOME_SLUGS.map(slug => BUILTIN.find(cat => cat.slug === slug)).filter(Boolean);
     let html = '';
-    BUILTIN.forEach(cat => {
+    function representativeProduct(cat) {
+      return all.find(p => {
+        const value = String(p.category || '').trim().toLowerCase();
+        return (cat.match || []).some(m => value === String(m).toLowerCase() || value.indexOf(String(m).toLowerCase()) !== -1);
+      });
+    }
+    homeCategories.forEach(cat => {
       const n = countFor(cat.match);
       const label = n > 0 ? (n + ' รายการ') : 'เร็วๆ นี้';
+      const product = representativeProduct(cat);
+      const imageUrl = product ? homeCoverOf(product) : '';
+      const icon = imageUrl
+        ? '<span class="cat-icon cat-icon-image"><img src="' + DMC.escapeHtml(DMC.imgCDN(imageUrl, 180)) + '" alt="" loading="lazy" decoding="async"></span>'
+        : '<span class="cat-icon">' + cat.emoji + '</span>';
       html += '<a href="catalog.html?cat=' + encodeURIComponent(cat.slug) + '" class="cat-card">'
-        + '<span class="cat-icon">' + cat.emoji + '</span>'
+        + icon
         + '<div class="cat-name">' + DMC.escapeHtml(cat.name) + '</div>'
         + '<div class="cat-count">' + label + '</div></a>';
     });
-    // การ์ด "ทั้งหมด"
-    html += '<a href="catalog.html" class="cat-card"><span class="cat-icon">✨</span>'
-      + '<div class="cat-name">ทั้งหมด</div><div class="cat-count">' + total + ' รายการ</div></a>';
-
+    const popularGrid = document.querySelector('.hp-popular-grid');
+    if (popularGrid) {
+      popularGrid.querySelectorAll('a[href*="cat="]').forEach(link => {
+        const slug = new URL(link.href, location.href).searchParams.get('cat');
+        const cat = homeCategories.find(c => c.slug === slug) || (window.DMCCat && DMCCat.BUILTIN.find(c => c.slug === slug));
+        if (!cat) return;
+        const product = representativeProduct(cat), imageUrl = product ? homeCoverOf(product) : '';
+        const iconEl = link.querySelector('span');
+        if (iconEl && imageUrl) {
+          iconEl.classList.add('cat-icon-image');
+          iconEl.innerHTML = '<img src="' + DMC.escapeHtml(DMC.imgCDN(imageUrl, 140)) + '" alt="" loading="lazy" decoding="async">';
+        }
+      });
+    }
     grid.innerHTML = html;
   } catch (e) { /* คงตัวเลขเดิม */ }
 }
 
-// ─── Hero showcase: ใช้ผลงานจริงล่าสุด 2-4 ชิ้น ───
+
+function homeProductPriority(product) {
+  const category = String(product && product.category || '').trim().toLowerCase();
+  if (/โพลารอยด์|polaroid|ความทรงจำ/.test(category)) return 0;
+  if (/นามบัตร|business.card/.test(category)) return 1;
+  if (/บัตรแขวน|บัตรพนักงาน|lanyard|student.card|บัตรนักเรียน/.test(category)) return 2;
+  if (/ตุ๊กตา|doll/.test(category)) return 3;
+  if (/qr|คิวอาร์/.test(category)) return 4;
+  return 5;
+}
+
+function homeProductPhotoList(products) {
+  const seen = new Set();
+  return (Array.isArray(products) ? products : [])
+    .filter(p => p && p.active !== false)
+    .map(p => ({ product: p, url: homeCoverOf(p), name: p.name || 'ผลงาน DMC Studio' }))
+    .filter(item => item.url && !seen.has(item.url) && seen.add(item.url))
+    .sort((a, b) => homeProductPriority(a.product) - homeProductPriority(b.product));
+}
+
+// ─── Hero carousel: collage from real DMC product images ───
 async function loadHomeGallery() {
   if (typeof DMC === 'undefined') return;
   const wrap = document.getElementById('home-gallery');
@@ -406,124 +459,90 @@ async function loadHomeGallery() {
 //  V16 — Hero Showcase (coverflow) · เฉพาะเดสก์ท็อป
 // ══════════════════════════════════════════════
 async function initHeroShowcase() {
-  const root = document.getElementById('hp-showcase');
-  const stage = document.getElementById('hps-stage');
-  const dotsEl = document.getElementById('hps-dots');
-  if (!root || !stage || !dotsEl) return;
+ const root=document.getElementById('dmc-home-hero');
+ const stage=document.getElementById('dmc-hero-slides');
+ const dotsEl=document.getElementById('dmc-hero-dots');
+ if(!root||!stage||!dotsEl)return;
+ const reduced=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+ let photos=[];
+ try {
+   if(typeof DMC!=='undefined'&&DMC.loadProducts) photos=homeProductPhotoList(await DMC.loadProducts({limit:500})).slice(0,12);
+ } catch(e) {}
+ // Gallery data is a fallback if product imagery is temporarily unavailable.
+ if(photos.length<5) {
+   try {
+     if(typeof DMC!=='undefined'&&DMC.loadGallery) {
+       const gallery=await DMC.loadGallery();
+       (gallery||[]).forEach(x=>{
+         const url=x.image||x.imageUrl||x.url;
+         if(url&&!photos.some(v=>v.url===url))photos.push({url,name:x.name||x.title||'ผลงานจาก DMC Studio',product:null});
+       });
+     }
+   } catch(e) {}
+ }
+ if(!photos.length)photos=HERO_FALLBACK_IMAGES.map(x=>({url:x.url,name:x.name,product:null}));
+ photos=photos.slice(0,12);
+ const cardsPerSlide=Math.min(5,photos.length);
+ const slideCount=Math.min(3,Math.max(1,Math.ceil(photos.length/4)));
+ const layout=['main','left','upper','right','lower'];
+ let active=0,timer=null,paused=reduced,inView=true;
+ stage.innerHTML='';dotsEl.innerHTML='';
+ for(let slideIndex=0;slideIndex<slideCount;slideIndex++){
+   const slide=document.createElement('div');
+   slide.className='dmc-hero-slide'+(slideIndex===0?' is-active':'');
+   slide.setAttribute('aria-hidden',slideIndex===0?'false':'true');
+   const collage=document.createElement('div');collage.className='dmc-hero-collage';collage.setAttribute('aria-hidden','true');
+   for(let j=0;j<cardsPerSlide;j++){
+     const item=photos[(slideIndex*2+j)%photos.length];
+     const frame=document.createElement('div');frame.className='dmc-hero-photo dmc-hero-photo--'+layout[j];
+     const img=document.createElement('img');
+     img.src=typeof DMC!=='undefined'&&DMC.imgCDN?DMC.imgCDN(item.url,500):item.url;
+     img.alt='';img.loading=slideIndex===0?'eager':'lazy';img.decoding='async';
+     frame.appendChild(img);collage.appendChild(frame);
+   }
+   slide.appendChild(collage);stage.appendChild(slide);
+   const dot=document.createElement('button');dot.type='button';dot.className='dmc-hero-dot'+(slideIndex===0?' is-active':'');
+   dot.setAttribute('aria-label','แสดงแบนเนอร์ที่ '+(slideIndex+1));
+   dot.setAttribute('aria-current',slideIndex===0?'true':'false');
+   dot.addEventListener('click',()=>{show(slideIndex);start();});
+   dotsEl.appendChild(dot);
+ }
+ const slides=Array.from(stage.children),dots=Array.from(dotsEl.children);
+ function show(index){
+   active=(index+slides.length)%slides.length;
+   slides.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-hidden',on?'false':'true');});
+   dots.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-current',on?'true':'false');});
+ }
+ function stop(){if(timer){clearInterval(timer);timer=null;}}
+ function start(){stop();if(paused||!inView||document.hidden||reduced||slides.length<2)return;timer=setInterval(()=>show(active+1),5200);}
+ const prev=document.getElementById('dmc-hero-prev'),next=document.getElementById('dmc-hero-next'),pause=document.getElementById('dmc-hero-pause');
+ if(prev)prev.addEventListener('click',()=>{show(active-1);start();});
+ if(next)next.addEventListener('click',()=>{show(active+1);start();});
+ if(pause)pause.addEventListener('click',()=>{paused=!paused;pause.setAttribute('aria-pressed',paused?'true':'false');pause.setAttribute('aria-label',paused?'เล่นสไลด์อัตโนมัติ':'หยุดสไลด์อัตโนมัติ');pause.textContent=paused?'▶':'Ⅱ';start();});
+ root.addEventListener('mouseenter',stop);root.addEventListener('mouseleave',start);
+ root.addEventListener('focusin',stop);root.addEventListener('focusout',start);
+ document.addEventListener('visibilitychange',start);
+ if('IntersectionObserver'in window)new IntersectionObserver(entries=>{inView=!!(entries[0]&&entries[0].isIntersecting);start();},{threshold:.1}).observe(root);
+ show(0);start();
+}
 
-  // เฉพาะเดสก์ท็อป — มือถือใช้การ์ดแขวนเหมือนเดิม
-  if (!window.matchMedia || !window.matchMedia('(min-width:1025px)').matches) return;
-
-  // รูป: ใช้แกลเลอรี (ผลงานที่ส่งแล้ว) สูงสุด 5 รูป
-  let items = [];
-  try {
-    const list = await DMC.loadGallery();
-    list.forEach(x => {
-      const url = x.image || x.imageUrl || x.url;
-      if (url) items.push({
-        url,
-        name: x.name || x.title || 'ผลงานของเรา',
-        sub:  x.category || x.subtitle || x.sub || 'Diamond Cute Studio',
-        ts:   (x.createdAt && x.createdAt.seconds) || 0
-      });
-    });
-  } catch (e) { /* ออฟไลน์ → ใช้ fallback */ }
-
-  if (items.length < 2) {
-    items = HERO_FALLBACK_IMAGES.slice(0, 5).map(p => ({ url: p.url, name: p.name, sub: 'ตัวอย่างผลงาน', ts: 0 }));
-  }
-  items = items.slice(0, 5);
-  if (!items.length) return;
-
-  // ป้าย "ส่งล่าสุด ..."
-  updateDeliverBadge(items);
-
-  let active = Math.floor(items.length / 2);   // เริ่มที่รูปกลาง
-
-  stage.innerHTML = '';
-  dotsEl.innerHTML = '';
-  items.forEach((it, i) => {
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'hps-card';
-    card.setAttribute('aria-label', it.name);
-    const img = document.createElement('img');
-    img.src = DMC.imgCDN(it.url, 420);
-    img.setAttribute('data-full', it.url);
-    img.alt = it.name;
-    img.loading = 'lazy';
-    img.decoding = 'async';
-    card.appendChild(img);
-    card.addEventListener('click', () => { active = i; layout(); });
-    stage.appendChild(card);
-
-    const dot = document.createElement('button');
-    dot.type = 'button';
-    dot.className = 'hps-dot';
-    dot.setAttribute('aria-label', 'รูปที่ ' + (i + 1));
-    dot.addEventListener('click', () => { active = i; layout(); });
-    dotsEl.appendChild(dot);
-  });
-
-  const cards = Array.prototype.slice.call(stage.children);
-  const dots  = Array.prototype.slice.call(dotsEl.children);
-
-  function setTxt(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
-
-  function layout() {
-    cards.forEach((card, i) => {
-      const off = i - active, aoff = Math.abs(off);
-      let tx, scale, ry, op, z;
-      if (off === 0)       { tx = 0;        scale = 1;   ry = 0;        op = 1;   z = 30; }
-      else if (aoff === 1) { tx = off * 128; scale = .82; ry = off * -26; op = .92; z = 20; }
-      else if (aoff === 2) { tx = off * 208; scale = .64; ry = off * -32; op = .55; z = 10; }
-      else                 { tx = off * 260; scale = .5;  ry = off * -34; op = 0;   z = 0;  }
-      card.style.transform = 'translateX(' + tx + 'px) scale(' + scale + ') rotateY(' + ry + 'deg)';
-      card.style.opacity = op;
-      card.style.zIndex = z;
-      card.style.pointerEvents = op > 0 ? 'auto' : 'none';
-      card.classList.toggle('is-active', off === 0);
-    });
-    dots.forEach((d, i) => d.classList.toggle('on', i === active));
-    const it = items[active];
-    setTxt('hps-title', it.name);
-    setTxt('hps-sub', it.sub);
-    setTxt('hps-frameno', 'FRAME ' + String(active + 1).padStart(2, '0'));
-    const cntEl = document.getElementById('hps-count');
-    if (cntEl) cntEl.innerHTML = '<span class="cur">' + String(active + 1).padStart(2, '0')
-      + '</span><span class="sep"> / </span><span class="tot">' + String(items.length).padStart(2, '0') + '</span>';
-  }
-  function go(dir) { active = (active + dir + items.length) % items.length; layout(); }
-
-  const prev = document.getElementById('hps-prev');
-  const next = document.getElementById('hps-next');
-  if (prev) prev.addEventListener('click', () => go(-1));
-  if (next) next.addEventListener('click', () => go(1));
-
-  layout();
-  root.parentElement && root.closest('.hp-hero') && root.closest('.hp-hero').classList.add('has-showcase');
-
-  // เลื่อนอัตโนมัติ (เคารพ reduced-motion + หยุดเมื่อ hover / พ้นจอ / สลับแท็บ)
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!reduce && items.length > 1) {
-    let timer = null, onScreen = true, hovering = false;
-    function start() {
-      if (timer || !onScreen || hovering || document.hidden) return;   // เริ่มเฉพาะเมื่อควรเล่นจริง
-      timer = setInterval(() => go(1), 4200);
-    }
-    function stop() { if (timer) { clearInterval(timer); timer = null; } }
-    root.addEventListener('mouseenter', () => { hovering = true; stop(); });
-    root.addEventListener('mouseleave', () => { hovering = false; start(); });
-    document.addEventListener('visibilitychange', () => { document.hidden ? stop() : start(); });
-    // V17 (LOW-03): หยุดเมื่อ carousel เลื่อนพ้นจอ → ไม่เปลือง CPU/เพนต์ตอนมองไม่เห็น
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver((ents) => {
-        onScreen = !!(ents[0] && ents[0].isIntersecting);
-        onScreen ? start() : stop();
-      }, { threshold: 0.1 }).observe(root);
-    }
-    start();
-  }
+// Fill the promotional banner with real product photos; text and CTA remain usable if data fails.
+async function initPromoArt() {
+ const wrap=document.getElementById('promo-art-el');
+ if(!wrap||typeof DMC==='undefined'||!DMC.loadProducts)return;
+ try {
+   const products=homeProductPhotoList(await DMC.loadProducts({limit:500}));
+   const selected=products.slice(0,4);
+   if(selected.length<3)return;
+   wrap.innerHTML='';
+   selected.forEach((item,i)=>{
+     const frame=document.createElement('div');frame.className='promo-art-frame promo-art-frame-'+(i+1);
+     const img=document.createElement('img');
+     img.src=DMC.imgCDN?DMC.imgCDN(item.url,360):item.url;
+     img.alt='';img.loading='lazy';img.decoding='async';
+     frame.appendChild(img);wrap.appendChild(frame);
+   });
+ }catch(e){}
 }
 
 // อัปเดตป้ายเวลาส่งล่าสุด: CMS.lastDeliveredAt → รูปแกลเลอรีล่าสุด → ข้อความทั่วไป

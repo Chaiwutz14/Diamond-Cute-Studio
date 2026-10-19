@@ -74,6 +74,11 @@
       + '@keyframes fabPulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.5);opacity:0}}'
       + '@media(max-width:760px){#dcs-fab-line{bottom:74px;width:50px;height:50px}#dcs-fab-line svg{width:27px;height:27px}}'
       + '@media(prefers-reduced-motion:reduce){.fab-pulse{animation:none}}';
+    css += ''
+      + '@media(max-width:760px){'
+      + '#dcs-bottom-nav{left:12px;right:12px;bottom:calc(8px + env(safe-area-inset-bottom,0px));width:auto;max-width:660px;margin:0 auto;border:1px solid color-mix(in srgb,var(--border) 85%,#fff);border-radius:22px;box-shadow:0 8px 30px rgba(24,62,100,.14);padding:.38rem .28rem calc(.38rem + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--bg-card) 91%,transparent)}'
+      + 'body{padding-bottom:104px !important}.dcs-bn-item{border-radius:15px;gap:3px;padding:.38rem .1rem}.dcs-bn-item.active::before{top:auto;bottom:0;width:30px;height:3px;border-radius:3px 3px 0 0}.dcs-bn-item.active .ic{transform:translateY(-1px) scale(1.06)}#dcs-fab-line{display:none !important}}'
+      + '@media(max-width:380px){#dcs-bottom-nav{left:7px;right:7px;border-radius:18px}.dcs-bn-item .lb{font-size:.61rem}}';
     var st = document.createElement('style');
     st.id = 'dcs-bottomnav-style';
     st.textContent = css;

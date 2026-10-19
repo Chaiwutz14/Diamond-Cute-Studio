@@ -51,6 +51,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Read URL param for pre-selected category
   const params = new URLSearchParams(location.search);
   currentCat = params.get('cat') || '';
+  const initialQuery = (params.get('q') || '').slice(0, 120);
+  const initialSearchInput = document.getElementById('search-input');
+  if (initialSearchInput && initialQuery) initialSearchInput.value = initialQuery;
 
   // Mark active category filter
   if (currentCat) {
