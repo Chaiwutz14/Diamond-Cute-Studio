@@ -24,7 +24,14 @@ try {
   assert.ok(available, 'local static server did not start');
 
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
+  // Block the existing Service Worker in this isolated localhost test context.
+  // PWA caching is verified by source/cache-version checks; a cached worker must not race route navigation here.
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+    deviceScaleFactor: 1,
+    serviceWorkers: 'block'
+  });
+  const page = await context.newPage();
   page.setDefaultTimeout(12000);
   page.on('pageerror', error => {
     const item = { route: currentRoute, message: error.message, stack: String(error.stack || '').slice(0, 1800) };
