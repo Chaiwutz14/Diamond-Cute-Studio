@@ -87,6 +87,7 @@ try {
         popularMobileVisible: document.querySelector('.hp-popular-mobile') ? getComputedStyle(document.querySelector('.hp-popular-mobile')).display !== 'none' : false,
         heroPhotoCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art').length,
         heroAssetCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-art').length,
+        heroArtSrc: document.querySelector('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art')?.getAttribute('src') || '',
         categoryImageCount: document.querySelectorAll('#categories-grid .cat-card img[src*="assets/categories/category-"]').length,
         categoryAssets: [...document.querySelectorAll('#categories-grid .cat-card img')].map(img=>img.getAttribute('src')),
         promoImageCount: document.querySelectorAll('#promo-art-el .promo-art-frame img').length,
@@ -130,12 +131,13 @@ try {
     check(`${name}: no duplicate IDs`, metrics.duplicates.length === 0, metrics.duplicates.join(', ') || 'none');
     check(`${name}: homepage category/product/trust sections rendered`, metrics.categoryCount === 6 && metrics.featuredCount >= 1 && metrics.trustStrip, `categories=${metrics.categoryCount}, products=${metrics.featuredCount}, trust=${metrics.trustStrip}`);
     check(`${name}: hero uses custom-designed three-banner carousel`, metrics.heroAssetCount === 3 && metrics.heroPhotoCount === 1, `banner assets=${metrics.heroAssetCount}, active banner=${metrics.heroPhotoCount}`);
+    check(`${name}: banner artwork matches viewport`, width <= 760 ? metrics.heroArtSrc.endsWith('-mobile.svg') : !metrics.heroArtSrc.endsWith('-mobile.svg'), metrics.heroArtSrc);
     check(`${name}: category shortcuts use six authored SVG illustrations`, metrics.categoryCount === 6 && metrics.categoryImageCount === 6 && metrics.categoryAssets.every(src=>src && src.startsWith('assets/categories/category-')), `category art=${metrics.categoryImageCount}`);
     check(`${name}: promotion banner uses product photos`, metrics.promoImageCount >= 3, `promo art photos=${metrics.promoImageCount}`);
     if (width <= 760) {
       check(`${name}: floating bottom nav geometry`, metrics.bottom && metrics.bottomDisplay !== 'none' && metrics.bottom.left > 0 && metrics.bottom.right < width && metrics.bottom.bottom <= height + 1, JSON.stringify(metrics.bottom));
       check(`${name}: mobile hamburger remains available`, metrics.hamburgerDisplay !== 'none', metrics.hamburgerDisplay);
-      check(`${name}: visual hero omits fixed heading and keeps CTA inside banner`, !metrics.hasFixedHeroCopy && metrics.heroCta && metrics.heroCta.width > 0 && metrics.heroCta.height > 0 && metrics.heroCtaWithinHero, JSON.stringify({cta:metrics.heroCta,hasFixedHeroCopy:metrics.hasFixedHeroCopy,ctaWithinHero:metrics.heroCtaWithinHero,hero:metrics.hero}));
+      check(`${name}: visual hero omits fixed heading and keeps CTA inside banner`, !metrics.hasFixedHeroCopy && metrics.heroCta && metrics.heroCta.width > 0 && metrics.heroCta.height > 0 && metrics.heroCta.height < 48 && metrics.heroCtaWithinHero, JSON.stringify({cta:metrics.heroCta,hasFixedHeroCopy:metrics.hasFixedHeroCopy,ctaWithinHero:metrics.heroCtaWithinHero,hero:metrics.hero}));
       check(`${name}: category shortcuts form a horizontal row`, metrics.categoryDisplay === 'flex' && metrics.categoryScrollWidth >= metrics.categoryClientWidth, `display=${metrics.categoryDisplay}, scroll=${metrics.categoryScrollWidth}, client=${metrics.categoryClientWidth}`);
       check(`${name}: duplicate mobile category shelf is removed`, !metrics.popularMobileVisible, String(metrics.popularMobileVisible));
     } else if (width <= 1180) {
