@@ -663,3 +663,39 @@
  .promo-inner{padding-top:145px}
  .promo-art{height:135px}
 }
+
+
+/* Final visual QA adjustment: keep the photo collage to the right of hero copy */
+.dmc-hero-collage{left:42%;right:0;top:0;bottom:0}
+@media(max-width:760px){
+ .dmc-hero{min-height:350px}
+ .dmc-hero-collage{left:40%;right:0;top:0;bottom:0;height:100%;inset:0 0 0 40%}
+ .dmc-hero-overlay{background:linear-gradient(90deg,rgba(239,248,255,.99) 0%,rgba(239,248,255,.93) 39%,rgba(239,248,255,.48) 56%,rgba(239,248,255,.04) 100%)}
+ .dmc-hero-content{display:block;justify-content:initial;flex-direction:initial;min-height:0;max-width:none;width:100%;padding:22px 15px 57px}
+ .dmc-hero-eyebrow{max-width:57%;margin-bottom:8px;padding:4px 7px;font-size:.61rem;line-height:1.3}
+ .dmc-hero-title{max-width:57%;font-size:clamp(1.22rem,5.6vw,1.55rem);line-height:1.19;letter-spacing:-.02em}
+ .dmc-hero-desc{max-width:56%;margin-top:8px;font-size:.69rem;line-height:1.43;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .dmc-hero-actions{max-width:57%;margin-top:12px;gap:0}
+ .dmc-hero-primary{min-height:37px;padding:8px 13px;font-size:.77rem}
+ .dmc-hero-secondary{display:none}
+ .dmc-hero-controls{right:9px;bottom:8px;padding:3px 5px}
+ .dmc-hero-controls>button{width:23px;height:23px}
+ .dmc-hero-photo{padding:4px 4px 12px;border-radius:4px;box-shadow:0 6px 14px rgba(27,67,104,.16)}
+ .dmc-hero-photo--main{left:31%;top:13%;width:37%;height:65%;transform:rotate(3deg)}
+ .dmc-hero-photo--left{left:1%;top:28%;width:28%;height:48%;transform:rotate(-8deg)}
+ .dmc-hero-photo--upper{left:34%;top:1%;width:29%;height:40%;transform:rotate(-5deg)}
+ .dmc-hero-photo--right{right:0;top:23%;width:27%;height:52%;transform:rotate(7deg)}
+ .dmc-hero-photo--lower{left:42%;bottom:0;width:28%;height:37%;transform:rotate(-4deg)}
+}
+@media(max-width:380px){
+ .dmc-hero{min-height:335px}
+ .dmc-hero-content{padding:20px 12px 54px}
+ .dmc-hero-eyebrow{max-width:60%;font-size:.56rem}
+ .dmc-hero-title{max-width:59%;font-size:1.19rem}
+ .dmc-hero-desc{max-width:59%;font-size:.64rem}
+ .dmc-hero-actions{max-width:59%}
+ .dmc-hero-primary{padding:7px 11px;font-size:.72rem}
+ .dmc-hero-photo--main{left:29%;width:38%;height:63%}
+ .dmc-hero-photo--left{width:29%;height:46%}
+ .dmc-hero-photo--right{width:28%;height:50%}
+}
