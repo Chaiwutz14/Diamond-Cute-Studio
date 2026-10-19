@@ -5,6 +5,18 @@
 (function () {
   'use strict';
 
+  function navVector(href) {
+    const paths = {
+      'index.html':'<path d="m3 10 9-7 9 7"/><path d="M5.5 9v11h5v-6h3v6h5V9"/>',
+      'catalog.html':'<rect x="3.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.4"/>',
+      'orders.html':'<path d="M7 3.5h8l4 4v13H5V5.5a2 2 0 0 1 2-2Z"/><path d="M15 3.8v4h4M8 12h8M8 16h6"/>',
+      'about.html':'<rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="m7.5 9 1.8 1.8L12 8M13.5 9.5h3M7.5 15l1.8 1.8L12 14M13.5 15.5h3"/>',
+      'gallery.html':'<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 3 3 3-4 5 6"/>',
+      'contact.html':'<path d="M6.5 3.5h3l1.5 4-2 1.7a14 14 0 0 0 5.8 5.8l1.7-2 4 1.5v3a2 2 0 0 1-2.2 2C10.6 18.6 5.4 13.4 4.5 5.7a2 2 0 0 1 2-2.2Z"/>'
+    };
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[href] || '') + '</svg>';
+  }
+
   function renderNavbar() {
     const page = location.pathname.split('/').pop() || 'index.html';
     const isAdmin = page.startsWith('admin');
@@ -19,7 +31,7 @@
     ];
 
     const desktopLinks = links.map(l =>
-      `<a href="${l.href}" class="nav-link ${page === l.href ? 'active' : ''}">${l.label}</a>`
+      `<a href="${l.href}" class="nav-link ${page === l.href ? 'active' : ''}"><span class="nav-link-icon">${navVector(l.href)}</span><span>${l.label}</span></a>`
     ).join('');
 
     const drawerLinks = links.map(l =>
@@ -27,6 +39,8 @@
          <span>${l.icon}</span> ${l.label}
        </a>`
     ).join('');
+
+    const searchMarkup = (page === 'index.html' || page === '') ? '<form class="nav-search" action="catalog.html" method="get" role="search" aria-label="ค้นหาสินค้า"><label class="nav-search-label" for="nav-search-input">ค้นหาสินค้า</label><span class="nav-search-icon" aria-hidden="true">⌕</span><input id="nav-search-input" name="q" type="search" maxlength="120" placeholder="ค้นหาสินค้า เช่น โพลารอยด์ นามบัตร…" autocomplete="off"><button type="submit" aria-label="ค้นหา"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button></form>' : '';
 
     if (isAdmin) {
       getMountEl().innerHTML = `
@@ -52,11 +66,7 @@
           </a>
 
           <ul class="nav-links" role="list">${desktopLinks}</ul>
-          <form class="nav-search" action="catalog.html" method="get" role="search" aria-label="ค้นหาสินค้า">
-            <label class="nav-search-label" for="nav-search-input">ค้นหาสินค้า</label><span class="nav-search-icon" aria-hidden="true">⌕</span>
-            <input id="nav-search-input" name="q" type="search" maxlength="120" placeholder="ค้นหาสินค้า เช่น โพลารอยด์ นามบัตร…" autocomplete="off">
-            <button type="submit" aria-label="ค้นหา">→</button>
-          </form>
+${searchMarkup}
           <div class="nav-actions">
             <!-- theme switcher injected here by theme-switcher.js -->
             <a href="#" id="nav-line-btn"
@@ -88,7 +98,7 @@
     initBehavior();
     applyLineLinks();
     applyAnnounce();
-    initHeaderSearch();
+    if (page === 'index.html' || page === '') initHeaderSearch();
   }
 
   function initHeaderSearch() {

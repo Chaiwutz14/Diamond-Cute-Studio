@@ -17,14 +17,14 @@
   // V36: ไอคอนเวกเตอร์เส้น (stroke = currentColor) — โทนเดียวทั้งแถบ ดูทางการ/ทันสมัย
   //      สีตามสถานะอัตโนมัติ: ปกติ = เทา (--text-3) · หน้าปัจจุบัน = สี accent
   var ICON_SVG = {
-    home:    '<path d="M3 10.2 12 3l9 7.2"/><path d="M5.5 8.8V20a1 1 0 0 0 1 1H10v-5.4a2 2 0 0 1 4 0V21h3.5a1 1 0 0 0 1-1V8.8"/>',
-    bag:     '<path d="M6 7h12l1.2 12.3a1.5 1.5 0 0 1-1.5 1.7H6.3a1.5 1.5 0 0 1-1.5-1.7L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/>',
-    cart:    '<circle cx="9" cy="20" r="1.4"/><circle cx="17.5" cy="20" r="1.4"/><path d="M2.5 3.5h2.2l2.4 11.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2l1.7-7.3H6"/>',
-    box:     '<path d="M21 8.2 12 3 3 8.2v7.6L12 21l9-5.2z"/><path d="M3.3 8.4 12 13.3l8.7-4.9M12 13.3V20.7"/>',
-    chat:    '<path d="M21 12.3c0 4-4 7.2-9 7.2-1 0-2-.13-2.9-.37L4 21l1.2-3.3C3.8 16.4 3 14.5 3 12.3 3 8.3 7 5 12 5s9 3.3 9 7.3z"/>',
+    home: '<path d="M3.2 10.5 12 3.2l8.8 7.3v9.1a1.2 1.2 0 0 1-1.2 1.2h-4.2v-6.2H8.6v6.2H4.4a1.2 1.2 0 0 1-1.2-1.2Z"/>',
+    bag: '<rect x="4.2" y="5.2" width="15.6" height="16" rx="2.7"/><path d="M8.5 8V6.4a3.5 3.5 0 0 1 7 0V8M8.5 12h7"/>',
+    cart: '<path d="M2.8 4h2.5l2.3 11.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.5l1.6-6.6H6.2"/><circle cx="9.8" cy="20" r="1.5"/><circle cx="17.1" cy="20" r="1.5"/>',
+    box: '<path d="M6 3.5h8l4 4v13a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 20.5v-15A2 2 0 0 1 6 3.5Z"/><path d="M14 3.8v4h4M7.5 12h7M7.5 16h7"/>',
+    chat: '<path d="M20.5 11.5a8 8 0 0 1-8.5 7.7 10 10 0 0 1-3-.45L4 21l1.3-4A7.1 7.1 0 0 1 3.5 11.5 8 8 0 0 1 12 4a8 8 0 0 1 8.5 7.5Z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/>',
   };
   function navIcon(key) {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON_SVG[key] || '') + '</svg>';
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON_SVG[key] || '') + '</svg>';
   }
 
   var NAV = [
@@ -53,7 +53,7 @@
       +   '.dcs-bn-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;'
       +     'padding:.35rem .1rem;text-decoration:none;color:var(--text-3);position:relative;transition:color .15s;box-sizing:border-box}'
       +   '.dcs-bn-item .ic{line-height:0;transition:transform .15s;display:flex;align-items:center;justify-content:center}'
-      +   '.dcs-bn-item .ic svg{width:22px;height:22px;display:block}'
+      +   '.dcs-bn-item .ic svg{width:25px;height:25px;display:block;transition:filter .18s,transform .18s}' + '.dcs-bn-item.active .ic svg{filter:drop-shadow(0 2px 4px rgba(236,73,153,.18))}' + '.dcs-bn-item.active .ic svg path:first-child{fill:rgba(236,73,153,.12)}'
       +   '.dcs-bn-item.active .ic svg{stroke-width:2.1}'
       +   '.dcs-bn-item .lb{font-size:.64rem;font-family:var(--font-display,sans-serif);font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
       +   '.dcs-bn-item.active{color:var(--accent)}'

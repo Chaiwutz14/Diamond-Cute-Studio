@@ -10,7 +10,7 @@
 ═══════════════════════════════════════════════ */
 
 const CACHE_VERSION = 'dcs-v39-uxui-refresh';
-const CACHE_NAME = 'dcs-cache-' + CACHE_VERSION;
+const CACHE_NAME = 'dmc-studio-uxui-v2' + CACHE_VERSION;
 
 // ไฟล์หลักที่ pre-cache ตอนติดตั้ง (โหลดครั้งแรกเร็วขึ้น + ออฟไลน์ได้)
 const PRECACHE = [

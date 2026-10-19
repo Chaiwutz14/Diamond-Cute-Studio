@@ -73,17 +73,15 @@
  <span hidden id="stat-orders">500+</span><span hidden id="stat-rating">4.9/5</span><span hidden id="stat-days">1-3</span>
 </section>
 
-<!-- Product-category visual shortcuts: product imagery replaces the fixed section heading -->
-<section class="hp-section hp-category-shortcuts" aria-label="เลือกประเภทสินค้า">
-  <div class="hp-chips" id="categories-grid">
-    <a href="catalog.html?cat=polaroid" class="cat-card"><span class="cat-icon cat-icon-placeholder" aria-hidden="true"></span><div class="cat-name">โพลารอยด์</div><div class="cat-count"></div></a>
-    <a href="catalog.html?cat=business-card" class="cat-card"><span class="cat-icon cat-icon-placeholder" aria-hidden="true"></span><div class="cat-name">นามบัตร</div><div class="cat-count"></div></a>
-    <a href="catalog.html?cat=lanyard" class="cat-card"><span class="cat-icon cat-icon-placeholder" aria-hidden="true"></span><div class="cat-name">บัตรพนักงาน</div><div class="cat-count"></div></a>
-    <a href="catalog.html?cat=doll-tag" class="cat-card"><span class="cat-icon cat-icon-placeholder" aria-hidden="true"></span><div class="cat-name">ของพรีเมียม</div><div class="cat-count"></div></a>
-    <a href="catalog.html?cat=qrcode" class="cat-card"><span class="cat-icon cat-icon-placeholder" aria-hidden="true"></span><div class="cat-name">สินค้าพร้อม QR</div><div class="cat-count"></div></a>
-    <a href="catalog.html?cat=student-card" class="cat-card"><span class="cat-icon cat-icon-placeholder" aria-hidden="true"></span><div class="cat-name">บัตรนักเรียน</div><div class="cat-count"></div></a>
-  </div>
-</section>
+<!-- Custom SVG category illustrations -->
+<section class="hp-section hp-category-shortcuts" aria-label="เลือกประเภทสินค้า"><div class="hp-chips" id="categories-grid">
+<a href="catalog.html?cat=polaroid" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-polaroid.svg" alt="" width="164" height="164"></span><span class="cat-name">โพลารอยด์</span><span class="cat-count">ภาพเล็ก ความทรงจำยิ่งใหญ่</span></a>
+<a href="catalog.html" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-photo.svg" alt="" width="164" height="164"></span><span class="cat-name">โฟโต้</span><span class="cat-count">พิมพ์ภาพคุณภาพสูง</span></a>
+<a href="catalog.html?cat=business-card" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-business.svg" alt="" width="164" height="164"></span><span class="cat-name">นามบัตร</span><span class="cat-count">สวย เรียบ ดูดี</span></a>
+<a href="catalog.html?cat=lanyard" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-staff.svg" alt="" width="164" height="164"></span><span class="cat-name">บัตรพนักงาน</span><span class="cat-count">โปรไฟล์มืออาชีพ</span></a>
+<a href="catalog.html?cat=doll-tag" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-premium.svg" alt="" width="164" height="164"></span><span class="cat-name">ของพรีเมียม</span><span class="cat-count">ของขวัญสุดพิเศษ</span></a>
+<a href="catalog.html?cat=qrcode" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-qr.svg" alt="" width="164" height="164"></span><span class="cat-name">ป้าย QR Code</span><span class="cat-count">ครบ จบ ในชิ้นเดียว</span></a>
+</div></section>
 
 <!-- Trust strip -->
 <section class="dmc-trust-strip" aria-label="จุดเด่นของบริการ">
@@ -116,17 +114,7 @@
   </div>
 </div>
 
-<!-- Mobile-only popular category shelf, matching the mobile reference -->
-<section class="hp-section hp-popular-mobile" aria-label="หมวดหมู่ยอดนิยม">
- <div class="hp-sec-head"><div><h2 class="hp-h2">หมวดหมู่ยอดนิยม</h2><p class="hp-sub2">เลือกดูงานที่คุณกำลังมองหา</p></div><a href="catalog.html" class="hp-see">ดูทั้งหมด →</a></div>
- <div class="hp-popular-grid">
-  <a class="hp-popular-card" href="catalog.html?cat=polaroid"><span aria-hidden="true">📸</span><strong>โพลารอยด์</strong></a>
-  <a class="hp-popular-card" href="catalog.html?cat=business-card"><span aria-hidden="true">💼</span><strong>นามบัตร</strong></a>
-  <a class="hp-popular-card" href="catalog.html?cat=lanyard"><span aria-hidden="true">🪪</span><strong>บัตรพนักงาน</strong></a>
-  <a class="hp-popular-card" href="catalog.html?cat=student-card"><span aria-hidden="true">🎓</span><strong>บัตรนักเรียน</strong></a>
-  <a class="hp-popular-card" href="catalog.html?cat=qrcode"><span aria-hidden="true">▦</span><strong>สินค้า QR</strong></a>
- </div>
-</section>
+<!-- Duplicate mobile category shelf removed; the shared SVG rail adapts to screen size. -->
 
 <!-- ═══ GALLERY STRIP (ผลงานจริง) ═══ -->
 <section class="hp-section" id="home-gallery-section">
