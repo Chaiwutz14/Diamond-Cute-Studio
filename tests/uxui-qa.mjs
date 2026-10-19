@@ -82,7 +82,7 @@ try {
     });
     report.measurements.push({ name, ...metrics });
     const screenshot = `${ARTIFACTS}/home-${name}.png`;
-    await page.screenshot({ path: screenshot, fullPage: true, animations: 'disabled', timeout: 30000 });
+    await page.screenshot({ path: screenshot, fullPage: false, animations: 'disabled', timeout: 15000 });
     report.screenshots.push(screenshot);
     check(`${name}: hero/nav layout`, metrics.hero && metrics.nav && metrics.hero.top >= metrics.nav.bottom - 1, `hero top=${metrics.hero?.top}, navbar bottom=${metrics.nav?.bottom}`);
     check(`${name}: no horizontal overflow`, metrics.scrollWidth <= width + 2 && metrics.bodyScrollWidth <= width + 2, `document=${metrics.scrollWidth}, body=${metrics.bodyScrollWidth}, viewport=${width}`);
