@@ -118,3 +118,10 @@
  #dcs-bottom-nav .dcs-bn-item.active .ic svg{filter:drop-shadow(0 2px 4px rgba(236,73,153,.18))}
  #dcs-bottom-nav .dcs-bn-item.active::before{background:linear-gradient(90deg,#f45ba6,#ec3d93)}
 }
+
+/* Lightweight custom vector icons in the desktop navigation */
+.nav-link{display:inline-flex;align-items:center;justify-content:center;gap:.34rem}
+.nav-link-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;color:currentColor}
+.nav-link-icon svg{display:block;width:16px;height:16px;stroke:currentColor;transition:transform .18s}
+.nav-link:hover .nav-link-icon svg{transform:translateY(-1px)}
+@media(max-width:900px){.nav-link-icon svg{width:15px;height:15px}}
