@@ -484,11 +484,6 @@ async function initHeroShowcase() {
  photos=photos.slice(0,12);
  const cardsPerSlide=Math.min(5,photos.length);
  const slideCount=Math.min(3,Math.max(1,Math.ceil(photos.length/4)));
- const copies=[
-  {badge:'เก็บทุกความทรงจำให้มีความหมาย',a:'เปลี่ยนภาพธรรมดา',b:'ให้เป็นของขวัญ',c:'ที่มีความหมาย ♡'},
-  {badge:'งานพิมพ์ในแบบของคุณ',a:'สร้างสรรค์ทุกไอเดีย',b:'ด้วยงานพิมพ์คุณภาพ',c:'DMC Studio ♡'},
-  {badge:'ใส่ใจทุกรายละเอียด',a:'ภาพสวย งานพรีเมียม',b:'ทำได้ตามแบบที่คุณชอบ',c:'ส่งทั่วไทย ♡'}
- ];
  const layout=['main','left','upper','right','lower'];
  let active=0,timer=null,paused=reduced,inView=true;
  stage.innerHTML='';dotsEl.innerHTML='';
@@ -513,22 +508,10 @@ async function initHeroShowcase() {
    dotsEl.appendChild(dot);
  }
  const slides=Array.from(stage.children),dots=Array.from(dotsEl.children);
- function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
  function show(index){
    active=(index+slides.length)%slides.length;
    slides.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-hidden',on?'false':'true');});
    dots.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-current',on?'true':'false');});
-   if(active!==0){
-     const c=copies[active%copies.length];
-     setText('hero-badge-text',c.badge);setText('hero-t1',c.a);setText('hero-t2',c.b);setText('hero-t3',c.c);
-     setText('hero-desc-text','งานพิมพ์สวย ๆ ในแบบของคุณ พร้อมบริการจัดส่งทั่วไทย');
-   }else if(typeof CMS!=='undefined'&&CMS.get){
-     CMS.get().then(data=>{
-       if(active!==0)return;
-       const h=data.hero||{};
-       [['hero-badge-text','badge'],['hero-t1','title1'],['hero-t2','title2'],['hero-t3','title3'],['hero-desc-text','desc']].forEach(([id,key])=>{const el=document.getElementById(id);if(el&&h[key])el.textContent=h[key];});
-     }).catch(()=>{});
-   }
  }
  function stop(){if(timer){clearInterval(timer);timer=null;}}
  function start(){stop();if(paused||!inView||document.hidden||reduced||slides.length<2)return;timer=setInterval(()=>show(active+1),5200);}
