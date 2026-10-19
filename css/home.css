@@ -4,3 +4,18 @@ undefined
 
 .hp-category-shortcuts .cat-icon-placeholder{background:linear-gradient(145deg,#e5f5ff,#fff0f7);position:relative}
 .hp-category-shortcuts .cat-icon-placeholder::before{content:"";position:absolute;inset:28%;border:2px solid rgba(31,111,173,.45);border-radius:5px;transform:rotate(45deg)}
+
+
+/* Final responsive geometry: account for the fixed navbar height and keep mobile category shortcuts horizontally scrollable */
+.dmc-hero{margin-top:96px}
+.hp-category-shortcuts .hp-chips{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.5rem}
+@media(max-width:760px){
+ .dmc-hero{margin-top:92px}
+ .hp-category-shortcuts .hp-chips{display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;gap:.45rem;padding:0 0 .45rem;scrollbar-width:none}
+ .hp-category-shortcuts .hp-chips::-webkit-scrollbar{display:none}
+ .hp-category-shortcuts .cat-card{flex:0 0 88px;scroll-snap-align:start}
+}
+@media(max-width:380px){
+ .dmc-hero{margin-top:109px}
+ .hp-category-shortcuts .cat-card{flex-basis:82px}
+}
