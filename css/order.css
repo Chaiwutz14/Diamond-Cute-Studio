@@ -416,3 +416,28 @@
   background: var(--bg-mid); border: 1px dashed var(--border);
   border-radius: var(--r-md); padding: .6rem .8rem; margin: .3rem 0 .5rem;
 }
+
+
+/* UX refresh — checkout and order tracking presentation; all form IDs and steps retained */
+.order-wrapper{max-width:1160px;gap:1.4rem}
+.order-block,.summary-panel{border:1px solid #e0eaf4;border-radius:18px;box-shadow:0 5px 18px rgba(24,62,100,.045)}
+.order-block{padding:clamp(1rem,2.2vw,1.4rem)}
+.cart-item{background:#f5f9fd;border:1px solid #e1ebf4;border-radius:14px}
+.payment-method{border-width:1px;border-radius:14px}
+.payment-method.selected{background:#eef7ff;border-color:#58a8df}
+.summary-panel{border-width:1px}
+.order-steps{gap:.35rem}
+.step-num{width:29px;height:29px}
+.upload-zone,.upload-files-area{border-radius:16px}
+.form-input, input, textarea, select{accent-color:#2b84ce}
+@media(max-width:760px){
+ .order-wrapper{display:block;padding:calc(var(--nav-h) + 1rem) .75rem 7rem}
+ .summary-panel{position:static;margin-top:1rem}
+ .order-block{padding:1rem;margin-bottom:.85rem}
+ .cart-item{gap:.6rem;padding:.65rem}
+ .cart-item-thumb{width:56px;height:56px}
+ .cart-item-name{white-space:normal;line-height:1.35}
+ .order-steps{margin-bottom:1.25rem;justify-content:flex-start}
+ .step{font-size:.73rem;gap:.3rem}
+ .step-connector{min-width:.6rem;margin:0 .15rem}
+}
