@@ -108,3 +108,13 @@
 .nav-search button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}.nav-icon-btn{background:transparent;border:0;color:#244c77}
 @media(max-width:900px){.nav-logo-image{width:92px;max-height:42px}.nav-search{min-width:0}}
 @media(max-width:480px){.nav-logo-image{width:82px;max-height:38px}.nav-actions .nav-icon-btn{width:34px;height:34px;flex-basis:34px}}
+
+/* Floating mobile navigation: soft translucent pill, rounded icon targets and pink active state */
+@media(max-width:760px){
+ #dcs-bottom-nav{background:rgba(255,255,255,.95)!important;border:1px solid rgba(255,255,255,.94)!important;box-shadow:0 9px 32px rgba(24,62,100,.16)!important;backdrop-filter:blur(18px) saturate(150%)}
+ #dcs-bottom-nav .dcs-bn-item{border-radius:16px;gap:4px;padding:.42rem .1rem;color:#55708f}
+ #dcs-bottom-nav .dcs-bn-item .ic svg{width:25px;height:25px;stroke-width:1.65;transition:filter .18s,transform .18s}
+ #dcs-bottom-nav .dcs-bn-item.active{color:#e83f95;background:linear-gradient(180deg,#fff0f8,rgba(255,255,255,0))}
+ #dcs-bottom-nav .dcs-bn-item.active .ic svg{filter:drop-shadow(0 2px 4px rgba(236,73,153,.18))}
+ #dcs-bottom-nav .dcs-bn-item.active::before{background:linear-gradient(90deg,#f45ba6,#ec3d93)}
+}
