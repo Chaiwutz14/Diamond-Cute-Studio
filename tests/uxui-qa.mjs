@@ -62,6 +62,8 @@ try {
       const img = document.querySelector('#dmc-hero-slides .dmc-hero-slide.is-active img');
       return !!img && img.complete && img.naturalWidth > 0;
     }, null, { timeout: 18000 });
+    await page.waitForFunction(() => document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-photo img').length >= 3, null, { timeout: 12000 });
+    await page.waitForFunction(() => document.querySelectorAll('#promo-art-el .promo-art-frame img').length >= 3, null, { timeout: 12000 });
     await page.waitForTimeout(250);
     const metrics = await page.evaluate(() => {
       const rect = el => { if (!el) return null; const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, top: r.top, right: r.right, bottom: r.bottom, left: r.left, width: r.width, height: r.height }; };
@@ -84,6 +86,9 @@ try {
         categoryScrollWidth: document.querySelector('#categories-grid')?.scrollWidth || 0,
         categoryClientWidth: document.querySelector('#categories-grid')?.clientWidth || 0,
         popularMobileVisible: document.querySelector('.hp-popular-mobile') ? getComputedStyle(document.querySelector('.hp-popular-mobile')).display !== 'none' : false,
+        heroPhotoCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-photo img').length,
+        categoryImageCount: document.querySelectorAll('#categories-grid .cat-icon-image img').length,
+        promoImageCount: document.querySelectorAll('#promo-art-el .promo-art-frame img').length,
         duplicates: [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))]
       };
     });
@@ -123,6 +128,9 @@ try {
     check(`${name}: carousel has exactly one active slide`, metrics.activeSlides === 1, `active=${metrics.activeSlides}, total=${metrics.slideCount}`);
     check(`${name}: no duplicate IDs`, metrics.duplicates.length === 0, metrics.duplicates.join(', ') || 'none');
     check(`${name}: homepage category/product/trust sections rendered`, metrics.categoryCount >= 5 && metrics.featuredCount >= 1 && metrics.trustStrip, `categories=${metrics.categoryCount}, products=${metrics.featuredCount}, trust=${metrics.trustStrip}`);
+    check(`${name}: hero renders a product-photo collage`, metrics.heroPhotoCount >= 3, `active hero photos=${metrics.heroPhotoCount}`);
+    check(`${name}: category shortcuts use product photos`, metrics.categoryImageCount >= 3, `category image thumbnails=${metrics.categoryImageCount}`);
+    check(`${name}: promotion banner uses product photos`, metrics.promoImageCount >= 3, `promo art photos=${metrics.promoImageCount}`);
     if (width <= 760) {
       check(`${name}: floating bottom nav geometry`, metrics.bottom && metrics.bottomDisplay !== 'none' && metrics.bottom.left > 0 && metrics.bottom.right < width && metrics.bottom.bottom <= height + 1, JSON.stringify(metrics.bottom));
       check(`${name}: mobile hamburger remains available`, metrics.hamburgerDisplay !== 'none', metrics.hamburgerDisplay);

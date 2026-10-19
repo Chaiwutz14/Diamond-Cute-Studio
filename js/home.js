@@ -20,8 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyCMSContent();    // เนื้อหาจากหลังบ้าน (hero/promo/stats) — V24: อ่าน snapshot ก่อน ไม่บังคับโหลด Firebase
   loadHomeReviews();    // รีวิวจริง — V24: อ่าน snapshot (data/reviews.json) ไม่บังคับโหลด Firebase
   loadCategoryCounts(); // นับจำนวนสินค้าจริงต่อหมวด (เจ้าของ #categories-grid)
-  loadHomeGallery();    // V4: แถบผลงานจริง (#home-gallery)
-  initHeroShowcase();   // V16: coverflow ผลงานฝั่งขวา (เฉพาะเดสก์ท็อป)
+  loadHomeGallery();    // Gallery strip with existing shared loader
+  initHeroShowcase();   // Responsive collage from real product photos
+  initPromoArt();       // Real product photography for the promotional banner
   initTypewriter();     // V25: ข้อความจุดเด่นแบบพิมพ์/ลบวนลูป (อ่านค่าจาก #stat-* ที่ CMS เขียนได้)
 
   // ─── V24/PERF-B: โหลดสินค้าจาก snapshot โดยตรง (ไม่ await getFirebaseReady ก่อน) ──
@@ -368,19 +369,64 @@ async function loadCategoryCounts() {
     const HOME_SLUGS = ['polaroid', 'business-card', 'lanyard', 'doll-tag', 'qrcode', 'student-card'];
     const homeCategories = HOME_SLUGS.map(slug => BUILTIN.find(cat => cat.slug === slug)).filter(Boolean);
     let html = '';
+    function representativeProduct(cat) {
+      return all.find(p => {
+        const value = String(p.category || '').trim().toLowerCase();
+        return (cat.match || []).some(m => value === String(m).toLowerCase() || value.indexOf(String(m).toLowerCase()) !== -1);
+      });
+    }
     homeCategories.forEach(cat => {
       const n = countFor(cat.match);
       const label = n > 0 ? (n + ' รายการ') : 'เร็วๆ นี้';
+      const product = representativeProduct(cat);
+      const imageUrl = product ? homeCoverOf(product) : '';
+      const icon = imageUrl
+        ? '<span class="cat-icon cat-icon-image"><img src="' + DMC.escapeHtml(DMC.imgCDN(imageUrl, 180)) + '" alt="" loading="lazy" decoding="async"></span>'
+        : '<span class="cat-icon">' + cat.emoji + '</span>';
       html += '<a href="catalog.html?cat=' + encodeURIComponent(cat.slug) + '" class="cat-card">'
-        + '<span class="cat-icon">' + cat.emoji + '</span>'
+        + icon
         + '<div class="cat-name">' + DMC.escapeHtml(cat.name) + '</div>'
         + '<div class="cat-count">' + label + '</div></a>';
     });
+    const popularGrid = document.querySelector('.hp-popular-grid');
+    if (popularGrid) {
+      popularGrid.querySelectorAll('a[href*="cat="]').forEach(link => {
+        const slug = new URL(link.href, location.href).searchParams.get('cat');
+        const cat = homeCategories.find(c => c.slug === slug) || (window.DMCCat && DMCCat.BUILTIN.find(c => c.slug === slug));
+        if (!cat) return;
+        const product = representativeProduct(cat), imageUrl = product ? homeCoverOf(product) : '';
+        const iconEl = link.querySelector('span');
+        if (iconEl && imageUrl) {
+          iconEl.classList.add('cat-icon-image');
+          iconEl.innerHTML = '<img src="' + DMC.escapeHtml(DMC.imgCDN(imageUrl, 140)) + '" alt="" loading="lazy" decoding="async">';
+        }
+      });
+    }
     grid.innerHTML = html;
   } catch (e) { /* คงตัวเลขเดิม */ }
 }
 
-// ─── Hero showcase: ใช้ผลงานจริงล่าสุด 2-4 ชิ้น ───
+
+function homeProductPriority(product) {
+  const category = String(product && product.category || '').trim().toLowerCase();
+  if (/โพลารอยด์|polaroid|ความทรงจำ/.test(category)) return 0;
+  if (/นามบัตร|business.card/.test(category)) return 1;
+  if (/บัตรแขวน|บัตรพนักงาน|lanyard|student.card|บัตรนักเรียน/.test(category)) return 2;
+  if (/ตุ๊กตา|doll/.test(category)) return 3;
+  if (/qr|คิวอาร์/.test(category)) return 4;
+  return 5;
+}
+
+function homeProductPhotoList(products) {
+  const seen = new Set();
+  return (Array.isArray(products) ? products : [])
+    .filter(p => p && p.active !== false)
+    .map(p => ({ product: p, url: homeCoverOf(p), name: p.name || 'ผลงาน DMC Studio' }))
+    .filter(item => item.url && !seen.has(item.url) && seen.add(item.url))
+    .sort((a, b) => homeProductPriority(a.product) - homeProductPriority(b.product));
+}
+
+// ─── Hero carousel: collage from real DMC product images ───
 async function loadHomeGallery() {
   if (typeof DMC === 'undefined') return;
   const wrap = document.getElementById('home-gallery');
@@ -413,27 +459,107 @@ async function loadHomeGallery() {
 //  V16 — Hero Showcase (coverflow) · เฉพาะเดสก์ท็อป
 // ══════════════════════════════════════════════
 async function initHeroShowcase() {
- const root=document.getElementById('dmc-home-hero'),stage=document.getElementById('dmc-hero-slides'),dotsEl=document.getElementById('dmc-hero-dots');
+ const root=document.getElementById('dmc-home-hero');
+ const stage=document.getElementById('dmc-hero-slides');
+ const dotsEl=document.getElementById('dmc-hero-dots');
  if(!root||!stage||!dotsEl)return;
  const reduced=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
- let items=[];
- try{if(typeof DMC!=='undefined'&&DMC.loadGallery){const gallery=await DMC.loadGallery();(gallery||[]).forEach(x=>{const url=x.image||x.imageUrl||x.url;if(url&&!items.some(v=>v.url===url))items.push({url,name:x.name||x.title||'ผลงานจาก DMC Studio'});});}}catch(e){}
- if(!items.length)items=HERO_FALLBACK_IMAGES.slice();items=items.slice(0,5);
- const copies=[{badge:'เก็บทุกความทรงจำให้มีความหมาย',a:'เปลี่ยนภาพธรรมดา',b:'ให้เป็นของขวัญ',c:'ที่มีความหมาย ♡'},{badge:'งานพิมพ์ในแบบของคุณ',a:'สร้างสรรค์ทุกไอเดีย',b:'ด้วยงานพิมพ์คุณภาพ',c:'DMC Studio ♡'},{badge:'ใส่ใจทุกรายละเอียด',a:'ภาพสวย งานพรีเมียม',b:'ทำได้ตามแบบที่คุณชอบ',c:'ส่งทั่วไทย ♡'}];
- let active=0,timer=null,paused=reduced,inView=true;stage.innerHTML='';dotsEl.innerHTML='';
- items.forEach((item,i)=>{const slide=document.createElement('div');slide.className='dmc-hero-slide';slide.setAttribute('aria-hidden','true');const img=document.createElement('img');img.src=typeof DMC!=='undefined'&&DMC.imgCDN?DMC.imgCDN(item.url,1400):item.url;img.alt=item.name||'ตัวอย่างงานพิมพ์ DMC Studio';img.loading=i===0?'eager':'lazy';img.decoding='async';slide.appendChild(img);stage.appendChild(slide);const dot=document.createElement('button');dot.type='button';dot.className='dmc-hero-dot';dot.setAttribute('aria-label','แสดงแบนเนอร์ที่ '+(i+1));dot.addEventListener('click',()=>{show(i);start();});dotsEl.appendChild(dot);});
- const slides=Array.from(stage.children),dots=Array.from(dotsEl.children);
- function show(index){active=(index+items.length)%items.length;slides.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-hidden',on?'false':'true');});dots.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-current',on?'true':'false');});
-  if(active!==0){const c=copies[active%copies.length];[['hero-badge-text',c.badge],['hero-t1',c.a],['hero-t2',c.b],['hero-t3',c.c],['hero-desc-text','งานพิมพ์สวย ๆ ในแบบของคุณ พร้อมบริการจัดส่งทั่วไทย']].forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v;});}
-  else if(typeof CMS!=='undefined'&&CMS.get){CMS.get().then(data=>{if(active!==0)return;const h=data.hero||{};[['hero-badge-text','badge'],['hero-t1','title1'],['hero-t2','title2'],['hero-t3','title3'],['hero-desc-text','desc']].forEach(([id,key])=>{const el=document.getElementById(id);if(el&&h[key])el.textContent=h[key];});}).catch(()=>{});}
+ let photos=[];
+ try {
+   if(typeof DMC!=='undefined'&&DMC.loadProducts) photos=homeProductPhotoList(await DMC.loadProducts({limit:500})).slice(0,12);
+ } catch(e) {}
+ // Gallery data is a fallback if product imagery is temporarily unavailable.
+ if(photos.length<5) {
+   try {
+     if(typeof DMC!=='undefined'&&DMC.loadGallery) {
+       const gallery=await DMC.loadGallery();
+       (gallery||[]).forEach(x=>{
+         const url=x.image||x.imageUrl||x.url;
+         if(url&&!photos.some(v=>v.url===url))photos.push({url,name:x.name||x.title||'ผลงานจาก DMC Studio',product:null});
+       });
+     }
+   } catch(e) {}
  }
- function stop(){if(timer){clearInterval(timer);timer=null;}}function start(){stop();if(paused||!inView||document.hidden||reduced||items.length<2)return;timer=setInterval(()=>show(active+1),5200);}
+ if(!photos.length)photos=HERO_FALLBACK_IMAGES.map(x=>({url:x.url,name:x.name,product:null}));
+ photos=photos.slice(0,12);
+ const cardsPerSlide=Math.min(5,photos.length);
+ const slideCount=Math.min(3,Math.max(1,Math.ceil(photos.length/4)));
+ const copies=[
+  {badge:'เก็บทุกความทรงจำให้มีความหมาย',a:'เปลี่ยนภาพธรรมดา',b:'ให้เป็นของขวัญ',c:'ที่มีความหมาย ♡'},
+  {badge:'งานพิมพ์ในแบบของคุณ',a:'สร้างสรรค์ทุกไอเดีย',b:'ด้วยงานพิมพ์คุณภาพ',c:'DMC Studio ♡'},
+  {badge:'ใส่ใจทุกรายละเอียด',a:'ภาพสวย งานพรีเมียม',b:'ทำได้ตามแบบที่คุณชอบ',c:'ส่งทั่วไทย ♡'}
+ ];
+ const layout=['main','left','upper','right','lower'];
+ let active=0,timer=null,paused=reduced,inView=true;
+ stage.innerHTML='';dotsEl.innerHTML='';
+ for(let slideIndex=0;slideIndex<slideCount;slideIndex++){
+   const slide=document.createElement('div');
+   slide.className='dmc-hero-slide'+(slideIndex===0?' is-active':'');
+   slide.setAttribute('aria-hidden',slideIndex===0?'false':'true');
+   const collage=document.createElement('div');collage.className='dmc-hero-collage';collage.setAttribute('aria-hidden','true');
+   for(let j=0;j<cardsPerSlide;j++){
+     const item=photos[(slideIndex*2+j)%photos.length];
+     const frame=document.createElement('div');frame.className='dmc-hero-photo dmc-hero-photo--'+layout[j];
+     const img=document.createElement('img');
+     img.src=typeof DMC!=='undefined'&&DMC.imgCDN?DMC.imgCDN(item.url,500):item.url;
+     img.alt='';img.loading=slideIndex===0?'eager':'lazy';img.decoding='async';
+     frame.appendChild(img);collage.appendChild(frame);
+   }
+   slide.appendChild(collage);stage.appendChild(slide);
+   const dot=document.createElement('button');dot.type='button';dot.className='dmc-hero-dot'+(slideIndex===0?' is-active':'');
+   dot.setAttribute('aria-label','แสดงแบนเนอร์ที่ '+(slideIndex+1));
+   dot.setAttribute('aria-current',slideIndex===0?'true':'false');
+   dot.addEventListener('click',()=>{show(slideIndex);start();});
+   dotsEl.appendChild(dot);
+ }
+ const slides=Array.from(stage.children),dots=Array.from(dotsEl.children);
+ function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
+ function show(index){
+   active=(index+slides.length)%slides.length;
+   slides.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-hidden',on?'false':'true');});
+   dots.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-current',on?'true':'false');});
+   if(active!==0){
+     const c=copies[active%copies.length];
+     setText('hero-badge-text',c.badge);setText('hero-t1',c.a);setText('hero-t2',c.b);setText('hero-t3',c.c);
+     setText('hero-desc-text','งานพิมพ์สวย ๆ ในแบบของคุณ พร้อมบริการจัดส่งทั่วไทย');
+   }else if(typeof CMS!=='undefined'&&CMS.get){
+     CMS.get().then(data=>{
+       if(active!==0)return;
+       const h=data.hero||{};
+       [['hero-badge-text','badge'],['hero-t1','title1'],['hero-t2','title2'],['hero-t3','title3'],['hero-desc-text','desc']].forEach(([id,key])=>{const el=document.getElementById(id);if(el&&h[key])el.textContent=h[key];});
+     }).catch(()=>{});
+   }
+ }
+ function stop(){if(timer){clearInterval(timer);timer=null;}}
+ function start(){stop();if(paused||!inView||document.hidden||reduced||slides.length<2)return;timer=setInterval(()=>show(active+1),5200);}
  const prev=document.getElementById('dmc-hero-prev'),next=document.getElementById('dmc-hero-next'),pause=document.getElementById('dmc-hero-pause');
- if(prev)prev.addEventListener('click',()=>{show(active-1);start();});if(next)next.addEventListener('click',()=>{show(active+1);start();});
+ if(prev)prev.addEventListener('click',()=>{show(active-1);start();});
+ if(next)next.addEventListener('click',()=>{show(active+1);start();});
  if(pause)pause.addEventListener('click',()=>{paused=!paused;pause.setAttribute('aria-pressed',paused?'true':'false');pause.setAttribute('aria-label',paused?'เล่นสไลด์อัตโนมัติ':'หยุดสไลด์อัตโนมัติ');pause.textContent=paused?'▶':'Ⅱ';start();});
- root.addEventListener('mouseenter',stop);root.addEventListener('mouseleave',start);root.addEventListener('focusin',stop);root.addEventListener('focusout',start);document.addEventListener('visibilitychange',start);
+ root.addEventListener('mouseenter',stop);root.addEventListener('mouseleave',start);
+ root.addEventListener('focusin',stop);root.addEventListener('focusout',start);
+ document.addEventListener('visibilitychange',start);
  if('IntersectionObserver'in window)new IntersectionObserver(entries=>{inView=!!(entries[0]&&entries[0].isIntersecting);start();},{threshold:.1}).observe(root);
  show(0);start();
+}
+
+// Fill the promotional banner with real product photos; text and CTA remain usable if data fails.
+async function initPromoArt() {
+ const wrap=document.getElementById('promo-art-el');
+ if(!wrap||typeof DMC==='undefined'||!DMC.loadProducts)return;
+ try {
+   const products=homeProductPhotoList(await DMC.loadProducts({limit:500}));
+   const selected=products.slice(0,4);
+   if(selected.length<3)return;
+   wrap.innerHTML='';
+   selected.forEach((item,i)=>{
+     const frame=document.createElement('div');frame.className='promo-art-frame promo-art-frame-'+(i+1);
+     const img=document.createElement('img');
+     img.src=DMC.imgCDN?DMC.imgCDN(item.url,360):item.url;
+     img.alt='';img.loading='lazy';img.decoding='async';
+     frame.appendChild(img);wrap.appendChild(frame);
+   });
+ }catch(e){}
 }
 
 // อัปเดตป้ายเวลาส่งล่าสุด: CMS.lastDeliveredAt → รูปแกลเลอรีล่าสุด → ข้อความทั่วไป
