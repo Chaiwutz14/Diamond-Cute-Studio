@@ -137,7 +137,7 @@ try {
       check(`${name}: mobile hamburger remains available`, metrics.hamburgerDisplay !== 'none', metrics.hamburgerDisplay);
       check(`${name}: visual hero omits fixed heading and keeps CTA inside banner`, !metrics.hasFixedHeroCopy && metrics.heroCta && metrics.heroCta.width > 0 && metrics.heroCta.height > 0 && metrics.heroCtaWithinHero, JSON.stringify({cta:metrics.heroCta,hasFixedHeroCopy:metrics.hasFixedHeroCopy,ctaWithinHero:metrics.heroCtaWithinHero,hero:metrics.hero}));
       check(`${name}: category shortcuts form a horizontal row`, metrics.categoryDisplay === 'flex' && metrics.categoryScrollWidth >= metrics.categoryClientWidth, `display=${metrics.categoryDisplay}, scroll=${metrics.categoryScrollWidth}, client=${metrics.categoryClientWidth}`);
-      check(`${name}: popular categories appear only on mobile`, metrics.popularMobileVisible, String(metrics.popularMobileVisible));
+      check(`${name}: duplicate mobile category shelf is removed`, !metrics.popularMobileVisible, String(metrics.popularMobileVisible));
     } else if (width <= 1180) {
       check(`${name}: tablet uses compact nav`, metrics.linksDisplay === 'none' && metrics.hamburgerDisplay !== 'none', `links=${metrics.linksDisplay}, hamburger=${metrics.hamburgerDisplay}`);
       const headerNoOverlap = metrics.logo && metrics.search && metrics.actions && metrics.logo.right <= metrics.search.left + 2 && metrics.search.right <= metrics.actions.left + 2;
