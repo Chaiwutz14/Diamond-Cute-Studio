@@ -127,7 +127,7 @@
     if (b) return b;
     b = document.createElement('div');
     b.id = 'dmc-snapshot-banner';
-    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9990;background:linear-gradient(135deg,#7c5cff,#a855f7);color:#fff;padding:.7rem 1rem;display:none;gap:.8rem;align-items:center;justify-content:center;flex-wrap:wrap;box-shadow:0 -6px 24px rgba(0,0,0,.18);font-family:var(--font-display,sans-serif)';
+    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9990;background:linear-gradient(135deg,#1689d2,#e94f98);color:#fff;padding:.7rem 1rem;display:none;gap:.8rem;align-items:center;justify-content:center;flex-wrap:wrap;box-shadow:0 -6px 24px rgba(0,0,0,.18);font-family:var(--font-display,sans-serif)';
     const txt = document.createElement('span');
     txt.style.cssText = 'font-size:.86rem';
     txt.textContent = '📦 ข้อมูลสินค้า/แกลเลอรีเปลี่ยนแล้ว — กดเผยแพร่เพื่ออัปเดตหน้าเว็บลูกค้า';

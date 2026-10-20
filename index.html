@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th" data-theme="sky">
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <!-- V3 Security headers (meta). frame-ancestors/X-Frame-Options ทำงานเฉพาะผ่าน HTTP header — ใช้ frame-buster ใน theme-init.js เสริม -->
@@ -10,7 +10,7 @@
   <meta name="description" content="Diamond Cute Studio 💎 บริการพิมพ์ภาพโพลารอยด์ นามบัตร บัตรแขวนคอ ป้ายร้านค้า QR Code คุณภาพระดับมืออาชีพ ส่งทั่วไทย">
   <title>Diamond Cute Studio 💎 — หน้าแรก</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#7c5cff">
+  <meta name="theme-color" content="#F4F9FE">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -65,56 +65,64 @@
 
 <!-- Responsive banner carousel -->
 <section class="dmc-hero" id="dmc-home-hero" aria-label="บริการเด่นของ DMC Studio">
- <div class="dmc-hero-slides" id="dmc-hero-slides" aria-live="off"></div><div class="dmc-hero-overlay" aria-hidden="true"></div>
- <div class="dmc-hero-content" aria-label="เริ่มเลือกสินค้า">
-  <a href="catalog.html" class="dmc-hero-primary">เริ่มสั่งเลย <span aria-hidden="true">→</span></a>
- </div>
+ <div class="dmc-hero-slides" id="dmc-hero-slides" aria-live="off"></div>
  <div class="dmc-hero-controls" aria-label="ควบคุมแบนเนอร์"><button type="button" id="dmc-hero-prev" aria-label="แบนเนอร์ก่อนหน้า">‹</button><div id="dmc-hero-dots" class="dmc-hero-dots"></div><button type="button" id="dmc-hero-next" aria-label="แบนเนอร์ถัดไป">›</button><button type="button" id="dmc-hero-pause" aria-label="หยุดสไลด์อัตโนมัติ" aria-pressed="false">Ⅱ</button></div>
  <span hidden id="stat-orders">500+</span><span hidden id="stat-rating">4.9/5</span><span hidden id="stat-days">1-3</span>
 </section>
 
-<!-- Custom SVG category illustrations -->
+<!-- Authored category artwork -->
 <section class="hp-section hp-category-shortcuts" aria-label="เลือกประเภทสินค้า"><div class="hp-chips" id="categories-grid">
-<a href="catalog.html?cat=polaroid" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-polaroid.svg" alt="" width="164" height="164"></span><span class="cat-name">โพลารอยด์</span><span class="cat-count">ภาพเล็ก ความทรงจำยิ่งใหญ่</span></a>
-<a href="catalog.html" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-photo.svg" alt="" width="164" height="164"></span><span class="cat-name">โฟโต้</span><span class="cat-count">พิมพ์ภาพคุณภาพสูง</span></a>
-<a href="catalog.html?cat=business-card" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-business.svg" alt="" width="164" height="164"></span><span class="cat-name">นามบัตร</span><span class="cat-count">สวย เรียบ ดูดี</span></a>
-<a href="catalog.html?cat=lanyard" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-staff.svg" alt="" width="164" height="164"></span><span class="cat-name">บัตรพนักงาน</span><span class="cat-count">โปรไฟล์มืออาชีพ</span></a>
-<a href="catalog.html?cat=doll-tag" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-premium.svg" alt="" width="164" height="164"></span><span class="cat-name">ของพรีเมียม</span><span class="cat-count">ของขวัญสุดพิเศษ</span></a>
-<a href="catalog.html?cat=qrcode" class="cat-card"><span class="cat-icon"><img src="assets/categories/category-qr.svg" alt="" width="164" height="164"></span><span class="cat-name">ป้าย QR Code</span><span class="cat-count">ครบ จบ ในชิ้นเดียว</span></a>
+<a href="catalog.html?cat=polaroid" class="cat-card"><span class="cat-icon"><img src="assets/categories/Poraroid.png" alt="" width="328" height="328"></span><span class="cat-name">โพลารอยด์</span><span class="cat-count">ภาพเล็ก ความทรงจำยิ่งใหญ่</span></a>
+<a href="catalog.html" class="cat-card"><span class="cat-icon"><img src="assets/categories/Photo.png" alt="" width="328" height="328"></span><span class="cat-name">โฟโต้</span><span class="cat-count">พิมพ์ภาพคุณภาพสูง</span></a>
+<a href="catalog.html?cat=business-card" class="cat-card"><span class="cat-icon"><img src="assets/categories/Busines card.png" alt="" width="328" height="328"></span><span class="cat-name">นามบัตร</span><span class="cat-count">สวย เรียบ ดูดี</span></a>
+<a href="catalog.html?cat=lanyard" class="cat-card"><span class="cat-icon"><img src="assets/categories/Employee card.png" alt="" width="328" height="328"></span><span class="cat-name">บัตรพนักงาน</span><span class="cat-count">โปรไฟล์มืออาชีพ</span></a>
+<a href="catalog.html?cat=doll-tag" class="cat-card"><span class="cat-icon"><img src="assets/categories/Premium gift.png" alt="" width="328" height="328"></span><span class="cat-name">ของพรีเมียม</span><span class="cat-count">ของขวัญสุดพิเศษ</span></a>
+<a href="catalog.html?cat=qrcode" class="cat-card"><span class="cat-icon"><img src="assets/categories/QR Code.png" alt="" width="328" height="328"></span><span class="cat-name">สินค้าพร้อม QR</span><span class="cat-count">ครบ จบ ในชิ้นเดียว</span></a>
 </div></section>
 
 <!-- Trust strip -->
 <section class="dmc-trust-strip" aria-label="จุดเด่นของบริการ">
- <div class="dmc-trust-item"><span class="dmc-trust-icon" aria-hidden="true">◇</span><span><strong>คุณภาพพรีเมียม</strong><small>คมชัด สีสวย ทนทาน</small></span></div>
- <div class="dmc-trust-item"><span class="dmc-trust-icon" aria-hidden="true">♧</span><span><strong>จัดส่งทั่วไทย</strong><small>ติดตามพัสดุได้</small></span></div>
- <div class="dmc-trust-item"><span class="dmc-trust-icon" aria-hidden="true">♡</span><span><strong>ใส่ใจทุกงาน</strong><small>ดูแลตั้งแต่ต้นจนจบ</small></span></div>
- <div class="dmc-trust-item"><span class="dmc-trust-icon" aria-hidden="true">☏</span><span><strong>ติดต่อสะดวก</strong><small>พร้อมให้คำปรึกษา</small></span></div>
+ <div class="dmc-trust-item"><span class="dmc-trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 7 3v5c0 4.7-2.9 8-7 10-4.1-2-7-5.3-7-10V6l7-3Z"/><path d="m8.5 12 2.2 2.2 4.8-4.8"/></svg></span><span><strong>คุณภาพพรีเมียม</strong><small>คมชัด สีสวย ทนทาน</small></span></div>
+ <div class="dmc-trust-item"><span class="dmc-trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"/><circle cx="7.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/><path d="M14 13h6"/></svg></span><span><strong>จัดส่งทั่วไทย</strong><small>ติดตามพัสดุได้</small></span></div>
+ <div class="dmc-trust-item"><span class="dmc-trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 8.8c0 5.1-8 10.2-8 10.2S4 13.9 4 8.8A4.3 4.3 0 0 1 12 6.4a4.3 4.3 0 0 1 8 2.4Z"/><path d="m9 11.5 2 2 4-4"/></svg></span><span><strong>ใส่ใจทุกงาน</strong><small>ดูแลตั้งแต่ต้นจนจบ</small></span></div>
+ <div class="dmc-trust-item"><span class="dmc-trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><path d="M4 12H3v6h4v-5H4Zm16 0h1v6h-4v-5h3ZM17 19c-1 1.3-2.5 2-5 2"/></svg></span><span><strong>ติดต่อสะดวก</strong><small>พร้อมให้คำปรึกษา</small></span></div>
 </section>
 <!-- Featured products -->
 <section class="hp-section">
   <div class="hp-sec-head">
-    <div><h2 class="hp-h2">ยอด<span class="text-accent">นิยม</span> </h2><p class="hp-sub2">คัดที่ลูกค้าชอบที่สุด</p></div>
+    <div class="hp-featured-heading">
+      <span class="hp-featured-crown" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 8 5 4 4-7 4 7 5-4-2 11H5L3 8Z"/><path d="M5.5 16.5h13M7.5 21h9"/></svg></span>
+      <span><h2 class="hp-h2">สินค้าขายดี</h2><p class="hp-sub2">ยอดนิยมที่ลูกค้าของเรารักมากที่สุด</p></span>
+    </div>
     <a href="catalog.html" class="hp-see">ดูทั้งหมด →</a>
   </div>
   <div class="product-grid hp-products" id="featured-products"></div>
 </section>
 
-<!-- ═══ PROMO BANNER ═══ -->
+<!-- Designed promotional artwork. -->
 <div class="promo-section" id="promo-section-el">
-  <div class="promo-banner">
-    <div class="promo-inner">
-      <div class="promo-art" id="promo-art-el" aria-hidden="true"></div>
-      <div class="promo-copy">
-        <div class="promo-tag" id="promo-tag-el">🎁 โปรโมชั่นพิเศษ</div>
-        <h3 id="promo-title-el">ออเดอร์แรก ลด 15%</h3>
-        <p id="promo-desc-el">สั่งครั้งแรกรับส่วนลดทันที ไม่มีขั้นต่ำ ส่งทั่วประเทศไทย</p>
-      </div>
-      <a href="catalog.html" class="hp-btn hp-btn-onpromo"><span id="promo-btn-el">สั่งเลย →</span></a>
-    </div>
-  </div>
+  <a href="catalog.html" class="promo-image-link" id="promo-image-slot" aria-label="ดูสินค้า DMC Studio">
+    <picture class="promo-picture">
+      <source media="(max-width: 760px)" srcset="assets/banners/CMS-800x364.png">
+      <img class="promo-image" src="assets/banners/CMS-2752x380.png" width="2752" height="380" alt="" decoding="async" loading="lazy">
+    </picture>
+  </a>
 </div>
 
-<!-- Duplicate mobile category shelf removed; the shared SVG rail adapts to screen size. -->
+<!-- Popular categories follow the campaign banner on every screen size. -->
+<section class="hp-section hp-popular-section" id="home-popular-categories" aria-label="หมวดหมู่ยอดนิยม">
+  <div class="hp-sec-head">
+    <div><h2 class="hp-h2">หมวดหมู่ยอดนิยม</h2></div>
+    <a href="catalog.html" class="hp-see">ดูทั้งหมด <span aria-hidden="true">→</span></a>
+  </div>
+  <div class="hp-popular-grid">
+    <a class="hp-popular-card" href="catalog.html?cat=polaroid"><img src="assets/categories/Poraroid.png" alt=""><strong>โพลารอยด์</strong></a>
+    <a class="hp-popular-card" href="catalog.html?cat=business-card"><img src="assets/categories/Busines card.png" alt=""><strong>นามบัตร</strong></a>
+    <a class="hp-popular-card" href="catalog.html?cat=lanyard"><img src="assets/categories/Employee card.png" alt=""><strong>บัตรพนักงาน</strong></a>
+    <a class="hp-popular-card" href="catalog.html?cat=doll-tag"><img src="assets/categories/Premium gift.png" alt=""><strong>ของพรีเมียม</strong></a>
+    <a class="hp-popular-card" href="catalog.html?cat=qrcode"><img src="assets/categories/QR Code.png" alt=""><strong>สินค้าพร้อม QR</strong></a>
+  </div>
+</section>
 
 <!-- ═══ GALLERY STRIP (ผลงานจริง) ═══ -->
 <section class="hp-section" id="home-gallery-section">
@@ -162,7 +170,6 @@
 <script src="js/navbar.js" defer></script>
 <script src="js/footer.js" defer></script>
 <script src="js/bottom-nav.js" defer></script>
-<script src="js/theme-switcher.js" defer></script>
 <script src="js/admin-access.js" defer></script>
 <script src="js/inline-editor.js" defer></script>
 <script src="js/home.js" defer></script>

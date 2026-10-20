@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════
-   Diamond Cute Studio 💎 — Navbar JS  v2
-   Mobile-first · theme-switcher ready
+   Diamond Cute Studio — Storefront navbar
+   Homepage-only global search, responsive links and retained mobile drawer
 ═══════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -40,7 +40,19 @@
        </a>`
     ).join('');
 
-    const searchMarkup = (page === 'index.html' || page === '') ? '<form class="nav-search" action="catalog.html" method="get" role="search" aria-label="ค้นหาสินค้า"><label class="nav-search-label" for="nav-search-input">ค้นหาสินค้า</label><span class="nav-search-icon" aria-hidden="true">⌕</span><input id="nav-search-input" name="q" type="search" maxlength="120" placeholder="ค้นหาสินค้า เช่น โพลารอยด์ นามบัตร…" autocomplete="off"><button type="submit" aria-label="ค้นหา"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button></form>' : '';
+    const isHome = page === 'index.html' || page === '';
+    const homeSearchMarkup = isHome ? `
+      <div class="nav-search-wrap" id="nav-search-wrap">
+        <button class="nav-search-toggle" id="nav-search-toggle" type="button" aria-label="เปิดค้นหาสินค้า" aria-controls="nav-search-form" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+        </button>
+        <form class="nav-search" id="nav-search-form" action="catalog.html" method="get" role="search" aria-label="ค้นหาสินค้า">
+          <label class="nav-search-label" for="nav-search-input">ค้นหาสินค้า</label>
+          <span class="nav-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></span>
+          <input id="nav-search-input" name="q" type="search" maxlength="120" placeholder="ค้นหาสินค้า เช่น โพลารอยด์ นามบัตร…" autocomplete="off">
+          <button type="submit" aria-label="ค้นหา"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button>
+        </form>
+      </div>` : '';
 
     if (isAdmin) {
       getMountEl().innerHTML = `
@@ -59,23 +71,23 @@
     }
 
     getMountEl().innerHTML = `
-      <nav class="navbar" id="main-nav">
+      <nav class="navbar ${isHome ? 'navbar-home' : 'navbar-subpage'}" id="main-nav">
         <div class="nav-inner">
           <a href="index.html" class="nav-logo">
             <img class="nav-logo-image" src="assets/dmc-logo.svg" alt="DMC Studio">
           </a>
 
           <ul class="nav-links" role="list">${desktopLinks}</ul>
-${searchMarkup}
+          ${homeSearchMarkup}
           <div class="nav-actions">
-            <!-- theme switcher injected here by theme-switcher.js -->
-            <a href="#" id="nav-line-btn"
-               target="_blank" rel="noopener"
-               class="btn btn-line btn-sm hide-mobile">💬 LINE</a>
-            <a href="cart.html" class="nav-icon-btn" aria-label="ตะกร้าสินค้า" title="ตะกร้า">
-              🛒<span class="nav-cart-badge" style="display:none">0</span>
+            <a href="orders.html" class="nav-icon-btn nav-account-btn" aria-label="ติดตามออเดอร์" title="ติดตามออเดอร์">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.7-3.5 3.1-5.3 7-5.3s6.3 1.8 7 5.3"/></svg>
             </a>
-            <button class="nav-hamburger" id="hamburger-btn" aria-label="เมนู" aria-expanded="false">
+            <a href="cart.html" class="nav-icon-btn nav-cart-btn" aria-label="ตะกร้าสินค้า" title="ตะกร้า">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.8 4h2.5l2.3 11.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.5l1.6-6.6H6.2"/><circle cx="9.8" cy="20" r="1.4"/><circle cx="17.1" cy="20" r="1.4"/></svg>
+              <span class="nav-cart-badge" style="display:none">0</span>
+            </a>
+            <button class="nav-hamburger" id="hamburger-btn" type="button" aria-label="เมนู" aria-controls="mobile-drawer" aria-expanded="false">
               <span class="hamburger-line"></span>
               <span class="hamburger-line"></span>
               <span class="hamburger-line"></span>
@@ -102,12 +114,26 @@ ${searchMarkup}
   }
 
   function initHeaderSearch() {
+    var wrap = document.getElementById('nav-search-wrap');
+    var toggle = document.getElementById('nav-search-toggle');
     var input = document.getElementById('nav-search-input');
-    if (!input) return;
-    if ((location.pathname.split('/').pop() || '') === 'catalog.html') {
-      var q = new URLSearchParams(location.search).get('q');
-      if (q) input.value = q.slice(0, 120);
+    if (!wrap || !toggle || !input) return;
+    function close() {
+      wrap.classList.remove('is-open');
+      toggle.setAttribute('aria-expanded', 'false');
     }
+    toggle.addEventListener('click', function () {
+      var open = !wrap.classList.contains('is-open');
+      wrap.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      if (open) input.focus();
+    });
+    document.addEventListener('click', function (event) {
+      if (!wrap.contains(event.target) && window.innerWidth > 900) close();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') close();
+    });
   }
 
   function applyAnnounce() {
@@ -157,9 +183,7 @@ ${searchMarkup}
     if (typeof CMS === 'undefined') return;
     CMS.get().then(function(c){
       var href = CMS.lineChat ? CMS.lineChat(c.contact) : ((c.contact && c.contact.line) || '#');
-      var b1 = document.getElementById('nav-line-btn');
       var b2 = document.getElementById('drawer-line-btn');
-      if (b1) b1.href = href;
       if (b2) b2.href = href;
     }).catch(function(){});
   }
@@ -213,8 +237,8 @@ ${searchMarkup}
     });
     drawer?.querySelectorAll('.drawer-link').forEach(l => l.addEventListener('click', () => setOpen(false)));
 
-    // Close on resize ≥ 900
-    window.addEventListener('resize', () => { if (open && window.innerWidth >= 900) setOpen(false); }, { passive: true });
+    // Close the drawer once desktop links return.
+    window.addEventListener('resize', () => { if (open && window.innerWidth > 1040) setOpen(false); }, { passive: true });
 
     // Escape key
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) setOpen(false); });
