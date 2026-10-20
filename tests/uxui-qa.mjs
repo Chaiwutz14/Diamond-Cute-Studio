@@ -63,39 +63,54 @@ try {
       const img = document.querySelector('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art');
       return !!img && img.complete && img.naturalWidth > 0;
     }, null, { timeout: 18000 });
-    await page.waitForFunction(() => document.querySelectorAll('#promo-art-el .promo-art-frame img').length >= 3, null, { timeout: 12000 });
+    await page.waitForSelector('#promo-image-slot .promo-image');
     await page.waitForTimeout(250);
     const metrics = await page.evaluate(() => {
       const rect = el => { if (!el) return null; const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, top: r.top, right: r.right, bottom: r.bottom, left: r.left, width: r.width, height: r.height }; };
       const nav = document.querySelector('#main-nav'), hero = document.querySelector('#dmc-home-hero');
-      const logo = document.querySelector('.nav-logo'), links = document.querySelector('.nav-links'), search = document.querySelector('.nav-search');
+      const logo = document.querySelector('.nav-logo'), links = document.querySelector('.nav-links'), search = document.querySelector('.nav-search-wrap'), searchToggle = document.querySelector('.nav-search-toggle');
       const actions = document.querySelector('.nav-actions'), hamburger = document.querySelector('#hamburger-btn'), bottom = document.querySelector('#dcs-bottom-nav');
+      const fab = document.querySelector('#dcs-fab-line');
       const ids = [...document.querySelectorAll('[id]')].map(el => el.id).filter(Boolean);
       return {
         viewport: { width: innerWidth, height: innerHeight }, scrollWidth: document.documentElement.scrollWidth, bodyScrollWidth: document.body.scrollWidth,
-        nav: rect(nav), hero: rect(hero), heroCta: rect(document.querySelector('.dmc-hero-primary')), heroCollage: rect(document.querySelector('.dmc-hero-collage')), hasFixedHeroCopy: !!document.querySelector('.dmc-hero-title, .dmc-hero-desc'), heroCtaWithinHero: (()=>{const h=hero?.getBoundingClientRect(),c=document.querySelector('.dmc-hero-primary')?.getBoundingClientRect();return !!(h&&c&&c.top>=h.top&&c.bottom<=h.bottom&&c.left>=h.left&&c.right<=h.right)})(), logo: rect(logo), links: rect(links), search: rect(search), actions: rect(actions), hamburger: rect(hamburger), bottom: rect(bottom),
+        nav: rect(nav), hero: rect(hero), heroRatio: hero ? hero.getBoundingClientRect().width / hero.getBoundingClientRect().height : 0,
+        heroBorderRadius: hero ? parseFloat(getComputedStyle(hero).borderTopLeftRadius) : 0,
+        heroLinkCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-picture[href="catalog.html"]').length,
+        heroImageFit: document.querySelector('.dmc-hero-art') ? getComputedStyle(document.querySelector('.dmc-hero-art')).objectFit : 'missing',
+        logo: rect(logo), links: rect(links), search: rect(search), searchForm: rect(document.querySelector('.nav-search')), searchToggle: rect(searchToggle), actions: rect(actions), hamburger: rect(hamburger), bottom: rect(bottom), fab: rect(fab),
         linksDisplay: links ? getComputedStyle(links).display : 'missing',
         hamburgerDisplay: hamburger ? getComputedStyle(hamburger).display : 'missing',
         bottomDisplay: bottom ? getComputedStyle(bottom).display : 'missing',
         activeSlides: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide.is-active').length,
         slideCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide').length,
         categoryCount: document.querySelectorAll('#categories-grid .cat-card').length,
+        categoryChildBounds: [...document.querySelectorAll('#categories-grid .cat-card')].map(el => { const r=el.getBoundingClientRect(); return {left:r.left,right:r.right,width:r.width}; }),
+        featuredColumnCount: document.querySelector('#featured-products') ? getComputedStyle(document.querySelector('#featured-products')).gridTemplateColumns.split(' ').filter(Boolean).length : 0,
+        featuredVisibleCount: [...document.querySelectorAll('#featured-products .product-card')].filter(el => getComputedStyle(el).display !== 'none').length,
+        featuredAddButton: rect(document.querySelector('#featured-products .btn-add-cart')),
         featuredCount: document.querySelectorAll('#featured-products .product-card').length,
         trustStrip: !!document.querySelector('.dmc-trust-strip'),
         categoryDisplay: document.querySelector('#categories-grid') ? getComputedStyle(document.querySelector('#categories-grid')).display : 'missing',
         categoryScrollWidth: document.querySelector('#categories-grid')?.scrollWidth || 0,
         categoryClientWidth: document.querySelector('#categories-grid')?.clientWidth || 0,
-        popularMobileVisible: document.querySelector('.hp-popular-mobile') ? getComputedStyle(document.querySelector('.hp-popular-mobile')).display !== 'none' : false,
+        popularVisible: document.querySelector('.hp-popular-section') ? getComputedStyle(document.querySelector('.hp-popular-section')).display !== 'none' : false,
+        popularCount: document.querySelectorAll('.hp-popular-grid .hp-popular-card').length,
         heroPhotoCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art').length,
         heroAssetCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-art').length,
         heroArtSrc: document.querySelector('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art')?.currentSrc || '',
-        categoryImageCount: document.querySelectorAll('#categories-grid .cat-card img[src*="assets/categories/category-"]').length,
+        categoryImageCount: document.querySelectorAll('#categories-grid .cat-card img[src*="assets/categories/"]').length,
         categoryAssets: [...document.querySelectorAll('#categories-grid .cat-card img')].map(img=>img.getAttribute('src')),
         categoryLoadedCount: [...document.querySelectorAll('#categories-grid .cat-card img')].filter(img=>img.complete&&img.naturalWidth>0).length,
         logoImageLoaded: !!(document.querySelector('.nav-logo-image')?.complete && document.querySelector('.nav-logo-image')?.naturalWidth>0),
+        globalSearchCount: document.querySelectorAll('.nav-search').length,
         desktopVectorIconCount: document.querySelectorAll('.nav-link-icon svg').length,
         mobileVectorIconCount: document.querySelectorAll('#dcs-bottom-nav .ic svg').length,
-        promoImageCount: document.querySelectorAll('#promo-art-el .promo-art-frame img').length,
+        promoImageCount: document.querySelectorAll('#promo-image-slot .promo-image').length,
+        promoDesktopAsset: document.querySelector('#promo-image-slot .promo-image')?.getAttribute('src') || '',
+        promoMobileAsset: document.querySelector('#promo-image-slot source')?.getAttribute('srcset') || '',
+        promoHasCopy: !!document.querySelector('#promo-tag-el,#promo-title-el,#promo-desc-el,#promo-btn-el'),
+        promoSectionHidden: !!document.querySelector('#promo-section-el')?.hidden,
         duplicates: [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))]
       };
     });
@@ -116,7 +131,7 @@ try {
         ? [
             ['services-trust', '#categories-grid'],
             ['bestsellers', '#featured-products'],
-            ['mobile-popular-categories', '.hp-popular-mobile']
+            ['mobile-popular-categories', '.hp-popular-section']
           ]
         : [];
     for (const [suffix, selector] of slices) {
@@ -130,36 +145,56 @@ try {
       report.screenshots.push(shot);
     }
     await page.evaluate(() => window.scrollTo(0, 0));
-    check(`${name}: hero/nav layout`, metrics.hero && metrics.nav && metrics.hero.top >= metrics.nav.bottom - 1, `hero top=${metrics.hero?.top}, navbar bottom=${metrics.nav?.bottom}`);
+    check(`${name}: banner has a clear gap below the navbar`, metrics.hero && metrics.nav && metrics.hero.top >= metrics.nav.bottom + 8, `hero top=${metrics.hero?.top}, navbar bottom=${metrics.nav?.bottom}`);
     check(`${name}: no horizontal overflow`, metrics.scrollWidth <= width + 2 && metrics.bodyScrollWidth <= width + 2, `document=${metrics.scrollWidth}, body=${metrics.bodyScrollWidth}, viewport=${width}`);
     check(`${name}: carousel has exactly one active slide`, metrics.activeSlides === 1, `active=${metrics.activeSlides}, total=${metrics.slideCount}`);
     check(`${name}: no duplicate IDs`, metrics.duplicates.length === 0, metrics.duplicates.join(', ') || 'none');
     check(`${name}: homepage category/product/trust sections rendered`, metrics.categoryCount === 6 && metrics.featuredCount >= 1 && metrics.trustStrip, `categories=${metrics.categoryCount}, products=${metrics.featuredCount}, trust=${metrics.trustStrip}`);
-    check(`${name}: hero uses custom-designed three-banner carousel`, metrics.heroAssetCount === 3 && metrics.heroPhotoCount === 1, `banner assets=${metrics.heroAssetCount}, active banner=${metrics.heroPhotoCount}`);
-    check(`${name}: banner artwork matches viewport`, width <= 760 ? metrics.heroArtSrc.endsWith('-mobile.svg') : !metrics.heroArtSrc.endsWith('-mobile.svg'), metrics.heroArtSrc);
-    check(`${name}: category shortcuts use six authored SVG illustrations`, metrics.categoryCount === 6 && metrics.categoryImageCount === 6 && metrics.categoryLoadedCount === 6 && metrics.categoryAssets.every(src=>src && src.startsWith('assets/categories/category-')), `category art=${metrics.categoryImageCount}, loaded=${metrics.categoryLoadedCount}`);
+    check(`${name}: hero uses all four authored banners`, metrics.heroAssetCount === 4 && metrics.heroPhotoCount === 1 && metrics.heroLinkCount === 4, `banners=${metrics.heroAssetCount}, active=${metrics.heroPhotoCount}, catalog links=${metrics.heroLinkCount}`);
+    check(`${name}: banner keeps the supplied full image ratio`, metrics.heroImageFit === 'contain' && Math.abs(metrics.heroRatio - (1730 / 909)) < .03, `fit=${metrics.heroImageFit}, ratio=${metrics.heroRatio.toFixed(3)}`);
+    if (width <= 760) {
+      check(`${name}: banner has rounded corners and side gutters`, metrics.heroBorderRadius >= 14 && metrics.hero.left >= 8 && metrics.hero.right <= width - 8, `radius=${metrics.heroBorderRadius}px, left=${metrics.hero.left}, right=${metrics.hero.right}, viewport=${width}`);
+    } else {
+      check(`${name}: desktop and tablet banner stays within a centered content width`, metrics.hero.width <= 1280 && Math.abs((width - metrics.hero.width) / 2 - metrics.hero.left) < 2, `width=${metrics.hero.width}, left=${metrics.hero.left}, viewport=${width}`);
+    }
+    const expectedCategories = ['assets/categories/Poraroid.png','assets/categories/Photo.png','assets/categories/Busines card.png','assets/categories/Employee card.png','assets/categories/Premium gift.png','assets/categories/QR Code.png'];
+    check(`${name}: six authored PNG category images load`, metrics.categoryCount === 6 && metrics.categoryImageCount === 6 && metrics.categoryLoadedCount === 6 && expectedCategories.every(src=>metrics.categoryAssets.includes(src)), `category art=${metrics.categoryImageCount}, loaded=${metrics.categoryLoadedCount}, paths=${metrics.categoryAssets.join('|')}`);
+    check(`${name}: five popular categories remain visible after promotion`, metrics.popularVisible && metrics.popularCount === 5, `visible=${metrics.popularVisible}, cards=${metrics.popularCount}`);
     check(`${name}: compact DMC wordmark loads`, metrics.logoImageLoaded, String(metrics.logoImageLoaded));
-    check(`${name}: promotion banner uses product photos`, metrics.promoImageCount >= 3, `promo art photos=${metrics.promoImageCount}`);
+    check(`${name}: authored promotion artwork loads without CMS copy`, metrics.promoImageCount === 1 && !metrics.promoSectionHidden && !metrics.promoHasCopy && metrics.promoDesktopAsset.endsWith('CMS-2752x380.png') && metrics.promoMobileAsset.endsWith('CMS-800x364.png'), `desktop=${metrics.promoDesktopAsset}, mobile=${metrics.promoMobileAsset}, copy=${metrics.promoHasCopy}, hidden=${metrics.promoSectionHidden}`);
     if (width <= 760) {
       check(`${name}: mobile navigation uses five custom vector icons`, metrics.mobileVectorIconCount === 5, `icons=${metrics.mobileVectorIconCount}`);
       check(`${name}: floating bottom nav geometry`, metrics.bottom && metrics.bottomDisplay !== 'none' && metrics.bottom.left > 0 && metrics.bottom.right < width && metrics.bottom.bottom <= height + 1, JSON.stringify(metrics.bottom));
       check(`${name}: mobile hamburger remains available`, metrics.hamburgerDisplay !== 'none', metrics.hamburgerDisplay);
-      check(`${name}: visual hero omits fixed heading and keeps CTA inside banner`, !metrics.hasFixedHeroCopy && metrics.heroCta && metrics.heroCta.width > 0 && metrics.heroCta.height > 0 && metrics.heroCta.height < 48 && metrics.heroCtaWithinHero, JSON.stringify({cta:metrics.heroCta,hasFixedHeroCopy:metrics.hasFixedHeroCopy,ctaWithinHero:metrics.heroCtaWithinHero,hero:metrics.hero}));
-      check(`${name}: category shortcuts form a horizontal row`, metrics.categoryDisplay === 'flex' && metrics.categoryScrollWidth >= metrics.categoryClientWidth, `display=${metrics.categoryDisplay}, scroll=${metrics.categoryScrollWidth}, client=${metrics.categoryClientWidth}`);
-      check(`${name}: duplicate mobile category shelf is removed`, !metrics.popularMobileVisible, String(metrics.popularMobileVisible));
+      check(`${name}: floating LINE button is visible above bottom navigation`, metrics.fab && metrics.fab.width >= 44 && metrics.fab.height >= 44 && metrics.fab.bottom < metrics.bottom.top, JSON.stringify({fab:metrics.fab,bottom:metrics.bottom}));
+      const allCategoriesFit = metrics.categoryChildBounds.length === 6 && metrics.categoryChildBounds.every(item => item.width > 0 && item.left >= metrics.hero.left - 4 && item.right <= width - 8);
+      check(`${name}: all six category shortcuts fit across one row`, metrics.categoryDisplay === 'grid' && metrics.categoryScrollWidth <= metrics.categoryClientWidth + 2 && allCategoriesFit, `display=${metrics.categoryDisplay}, scroll=${metrics.categoryScrollWidth}, client=${metrics.categoryClientWidth}, items=${metrics.categoryChildBounds.length}`);
+      check(`${name}: mobile best sellers show four larger cards in two columns`, metrics.featuredColumnCount === 2 && metrics.featuredVisibleCount === 4, `columns=${metrics.featuredColumnCount}, visible=${metrics.featuredVisibleCount}`);
+      check(`${name}: add-to-cart button remains proportionate`, metrics.featuredAddButton && metrics.featuredAddButton.width <= 32 && metrics.featuredAddButton.height <= 32, JSON.stringify(metrics.featuredAddButton));
+      check(`${name}: homepage search is visible in the compact header`, metrics.globalSearchCount === 1 && metrics.search.width > 0, `search count=${metrics.globalSearchCount}, width=${metrics.search?.width}`);
+      const touchTargets = await page.locator('#dcs-bottom-nav .dcs-bn-item').evaluateAll(items=>items.every(item=>{const r=item.getBoundingClientRect();return r.width>=44&&r.height>=44}));
+      check(`${name}: bottom navigation keeps 44px touch targets`, touchTargets, String(touchTargets));
     } else if (width <= 1180) {
       check(`${name}: tablet uses compact nav`, metrics.linksDisplay === 'none' && metrics.hamburgerDisplay !== 'none', `links=${metrics.linksDisplay}, hamburger=${metrics.hamburgerDisplay}`);
       const headerNoOverlap = metrics.logo && metrics.search && metrics.actions && metrics.logo.right <= metrics.search.left + 2 && metrics.search.right <= metrics.actions.left + 2;
       check(`${name}: tablet header has no overlap`, headerNoOverlap, JSON.stringify({logo:metrics.logo,search:metrics.search,actions:metrics.actions}));
+      check(`${name}: homepage search is present on tablet`, metrics.globalSearchCount === 1 && metrics.search.width > 0, `search count=${metrics.globalSearchCount}, width=${metrics.search?.width}`);
     } else {
       check(`${name}: desktop nav links visible`, metrics.linksDisplay !== 'none', metrics.linksDisplay);
       check(`${name}: desktop navigation uses custom vector icons`, metrics.desktopVectorIconCount >= 6, `icons=${metrics.desktopVectorIconCount}`);
-      const noOverlap = metrics.logo && metrics.links && metrics.search && metrics.actions && metrics.logo.right <= metrics.links.left + 2 && metrics.links.right <= metrics.search.left + 2 && metrics.search.right <= metrics.actions.left + 2;
-      check(`${name}: desktop header items do not overlap`, noOverlap, JSON.stringify({ logo: metrics.logo, links: metrics.links, search: metrics.search, actions: metrics.actions }));
+      const noOverlap = metrics.logo && metrics.links && metrics.searchToggle && metrics.actions && metrics.logo.right <= metrics.links.left + 2 && metrics.links.right <= metrics.searchToggle.left + 2 && metrics.searchToggle.right <= metrics.actions.left + 2;
+      check(`${name}: desktop header items do not overlap`, noOverlap, JSON.stringify({ logo: metrics.logo, links: metrics.links, searchToggle: metrics.searchToggle, actions: metrics.actions }));
+      check(`${name}: desktop homepage search opens from its icon`, metrics.globalSearchCount === 1 && metrics.searchForm.width === 0 && metrics.searchToggle.width >= 40, `form width=${metrics.searchForm?.width}, toggle=${metrics.searchToggle?.width}`);
     }
   }
 
   await loadHomeAt('desktop-1440', 1440, 1000);
+  currentRoute = 'desktop-header-regression';
+  check('desktop account icon links to order tracking', await page.locator('.nav-account-btn').getAttribute('href') === 'orders.html', 'orders.html');
+  await page.locator('#nav-search-toggle').click();
+  check('desktop homepage search opens from its icon', await page.locator('#nav-search-toggle').getAttribute('aria-expanded') === 'true' && await page.locator('.nav-search').isVisible(), 'search form should open and receive focus');
+  await page.keyboard.press('Escape');
+  check('desktop homepage search closes on Escape', await page.locator('#nav-search-toggle').getAttribute('aria-expanded') === 'false', 'search form should close');
   currentRoute = 'home-cart-interaction';
   const addButton = page.locator('#featured-products .btn-add-cart').first();
   await addButton.scrollIntoViewIfNeeded();
@@ -185,6 +220,10 @@ try {
   currentRoute = 'mobile-menu-regression';
   await page.locator('#hamburger-btn').click();
   check('mobile menu opens', await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open')), 'drawer should have open class');
+  check('mobile drawer retains navigation and LINE actions', await page.locator('#mobile-drawer .drawer-link').count() >= 6 && await page.locator('#drawer-line-btn').count() === 1, 'drawer links and LINE action are present');
+  await page.locator('#dmc-hero-pause').click({ force: true });
+  check('mobile menu closes on outside click', !(await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open'))), 'outside click should close the drawer');
+  await page.locator('#hamburger-btn').click();
   await page.keyboard.press('Escape');
   check('mobile menu closes on Escape', !(await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open'))), 'drawer should be closed');
 
@@ -214,6 +253,13 @@ try {
     await page.waitForSelector('#main-nav');
     check(`${name}: page marker exists`, await page.locator(marker).count() > 0, marker);
     check(`${name}: global navbar search is omitted outside Home`, await page.locator('.nav-search').count() === 0, 'page-specific controls remain');
+    if (name === 'catalog' || name === 'cart') {
+      const navActionsRight = await page.locator('#main-nav .nav-actions').evaluate(el => {
+        const actions=el.getBoundingClientRect(), inner=el.closest('.nav-inner').getBoundingClientRect();
+        return {right:actions.right, innerRight:inner.right, isSubpage:el.closest('#main-nav').classList.contains('navbar-subpage')};
+      });
+      check(`${name}: mobile cart and hamburger stay aligned to the right`, navActionsRight.isSubpage && navActionsRight.innerRight - navActionsRight.right < 2, JSON.stringify(navActionsRight));
+    }
   }
 
   check('no uncaught application JavaScript page errors', report.pageErrors.length === 0, JSON.stringify(report.pageErrors));

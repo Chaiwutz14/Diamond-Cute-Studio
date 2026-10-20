@@ -17,12 +17,11 @@ function homeCoverOf(p) {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-  applyCMSContent();    // เนื้อหาจากหลังบ้าน (hero/promo/stats) — V24: อ่าน snapshot ก่อน ไม่บังคับโหลด Firebase
+  applyCMSContent();    // เนื้อหาจากหลังบ้าน (hero/stats) — V24: อ่าน snapshot ก่อน ไม่บังคับโหลด Firebase
   loadHomeReviews();    // รีวิวจริง — V24: อ่าน snapshot (data/reviews.json) ไม่บังคับโหลด Firebase
   loadCategoryCounts(); // นับจำนวนสินค้าจริงต่อหมวด (เจ้าของ #categories-grid)
   loadHomeGallery();    // Gallery strip with existing shared loader
   initHeroShowcase();   // Responsive collage from real product photos
-  initPromoArt();       // Real product photography for the promotional banner
   initTypewriter();     // V25: ข้อความจุดเด่นแบบพิมพ์/ลบวนลูป (อ่านค่าจาก #stat-* ที่ CMS เขียนได้)
 
   // ─── V24/PERF-B: โหลดสินค้าจาก snapshot โดยตรง (ไม่ await getFirebaseReady ก่อน) ──
@@ -257,15 +256,13 @@ function initScrollAnimations() {
     entries.forEach(e => {
       if (e.isIntersecting) {
         e.target.style.opacity = '1';
-        // V25: เคลียร์ inline transform (แทนการตั้ง translateY(0) ค้างไว้)
-        //   → คืนค่า transform จาก CSS เช่น rotate ของป้ายแท็กหมวดหมู่ (.hp-chips .cat-card)
         e.target.style.transform = '';
         obs.unobserve(e.target);
       }
     });
   }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
-  document.querySelectorAll('.cat-card, .product-card, .feature-card').forEach((el, i) => {
+  document.querySelectorAll('.product-card, .feature-card').forEach((el, i) => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(20px)';
     el.style.transition = `opacity 0.5s ease ${i * 0.05}s, transform 0.5s ease ${i * 0.05}s`;
@@ -301,17 +298,6 @@ async function applyCMSContent() {
     set('stat-rating', c.stats.rating);
     set('stat-days',   c.stats.days);
 
-    const promoWrap = document.getElementById('promo-section-el');
-    if (promoWrap) {
-      if (c.promo.active === false) {
-        promoWrap.style.display = 'none';
-      } else {
-        set('promo-tag-el',   c.promo.tag);
-        set('promo-title-el', c.promo.title);
-        set('promo-desc-el',  c.promo.desc);
-        set('promo-btn-el',   c.promo.btnText);
-      }
-    }
   } catch (e) { /* ใช้ข้อความเดิมในไฟล์ */ }
 }
 
@@ -401,12 +387,13 @@ function initHeroShowcase() {
  const root=document.getElementById('dmc-home-hero'),stage=document.getElementById('dmc-hero-slides'),dotsEl=document.getElementById('dmc-hero-dots');if(!root||!stage||!dotsEl)return;
  const reduced=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
  const banners=[
-  {src:'assets/banners/file_00000000652c8207a3e23daa43427fa9.png',alt:'DMC Studio — แบนเนอร์ประชาสัมพันธ์ 1'},
-  {src:'assets/banners/file_0000000099308211a72c8d60eab1c02a.png',alt:'DMC Studio — แบนเนอร์ประชาสัมพันธ์ 2'},
-  {src:'assets/banners/file_00000000e08882118d6d60ae1e9b2a0d.png',alt:'DMC Studio — แบนเนอร์ประชาสัมพันธ์ 3'}
+  {src:'assets/banners/1.png',alt:'DMC Studio — เปลี่ยนภาพความทรงจำให้เป็นของขวัญที่มีความหมาย'},
+  {src:'assets/banners/2.png',alt:'DMC Studio — เก็บทุกโมเมนต์ให้เป็นมากกว่ารูปภาพ'},
+  {src:'assets/banners/3.png',alt:'DMC Studio — ภาพพิมพ์และของขวัญดีไซน์พิเศษ'},
+  {src:'assets/banners/4.png',alt:'DMC Studio — ผลงานพิมพ์ภาพและสินค้าสั่งทำ'}
  ];
  let active=0,timer=null,paused=reduced,inView=true;stage.innerHTML='';dotsEl.innerHTML='';
- banners.forEach((banner,i)=>{const slide=document.createElement('div');slide.className='dmc-hero-slide'+(i===0?' is-active':'');slide.setAttribute('aria-hidden',i===0?'false':'true');const img=document.createElement('img');img.className='dmc-hero-art';img.src=banner.src;img.alt=banner.alt;img.width=1536;img.height=562;img.loading=i===0?'eager':'lazy';img.decoding='async';if(i===0)img.fetchPriority='high';slide.appendChild(img);stage.appendChild(slide);const dot=document.createElement('button');dot.type='button';dot.className='dmc-hero-dot'+(i===0?' is-active':'');dot.setAttribute('aria-label','แสดงแบนเนอร์ที่ '+(i+1));dot.setAttribute('aria-current',i===0?'true':'false');dot.addEventListener('click',()=>{show(i);start();});dotsEl.appendChild(dot);});
+ banners.forEach((banner,i)=>{const slide=document.createElement('div');slide.className='dmc-hero-slide'+(i===0?' is-active':'');slide.setAttribute('aria-hidden',i===0?'false':'true');const link=document.createElement('a');link.className='dmc-hero-picture';link.href='catalog.html';link.setAttribute('aria-label','เลือกดูสินค้า DMC Studio');const img=document.createElement('img');img.className='dmc-hero-art';img.src=banner.src;img.alt=banner.alt;img.width=1730;img.height=909;img.loading=i===0?'eager':'lazy';img.decoding='async';if(i===0)img.fetchPriority='high';link.appendChild(img);slide.appendChild(link);stage.appendChild(slide);const dot=document.createElement('button');dot.type='button';dot.className='dmc-hero-dot'+(i===0?' is-active':'');dot.setAttribute('aria-label','แสดงแบนเนอร์ที่ '+(i+1));dot.setAttribute('aria-current',i===0?'true':'false');dot.addEventListener('click',()=>{show(i);start();});dotsEl.appendChild(dot);});
  const slides=Array.from(stage.children),dots=Array.from(dotsEl.children);
  function show(index){active=(index+slides.length)%slides.length;slides.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-hidden',on?'false':'true');});dots.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-current',on?'true':'false');});}
  function stop(){if(timer){clearInterval(timer);timer=null;}}function start(){stop();if(paused||!inView||document.hidden||reduced||slides.length<2)return;timer=setInterval(()=>show(active+1),6000);}
@@ -415,25 +402,6 @@ function initHeroShowcase() {
  if(pause)pause.addEventListener('click',()=>{paused=!paused;pause.setAttribute('aria-pressed',paused?'true':'false');pause.setAttribute('aria-label',paused?'เล่นสไลด์อัตโนมัติ':'หยุดสไลด์อัตโนมัติ');pause.textContent=paused?'▶':'Ⅱ';start();});
  root.addEventListener('mouseenter',stop);root.addEventListener('mouseleave',start);root.addEventListener('focusin',stop);root.addEventListener('focusout',start);document.addEventListener('visibilitychange',start);
  if('IntersectionObserver'in window)new IntersectionObserver(entries=>{inView=!!(entries[0]&&entries[0].isIntersecting);start();},{threshold:.1}).observe(root);show(0);start();
-}
-
-// Fill the promotional banner with real product photos; text and CTA remain usable if data fails.
-async function initPromoArt() {
- const wrap=document.getElementById('promo-art-el');
- if(!wrap||typeof DMC==='undefined'||!DMC.loadProducts)return;
- try {
-   const products=homeProductPhotoList(await DMC.loadProducts({limit:500}));
-   const selected=products.slice(0,4);
-   if(selected.length<3)return;
-   wrap.innerHTML='';
-   selected.forEach((item,i)=>{
-     const frame=document.createElement('div');frame.className='promo-art-frame promo-art-frame-'+(i+1);
-     const img=document.createElement('img');
-     img.src=DMC.imgCDN?DMC.imgCDN(item.url,360):item.url;
-     img.alt='';img.loading='lazy';img.decoding='async';
-     frame.appendChild(img);wrap.appendChild(frame);
-   });
- }catch(e){}
 }
 
 // อัปเดตป้ายเวลาส่งล่าสุด: CMS.lastDeliveredAt → รูปแกลเลอรีล่าสุด → ข้อความทั่วไป

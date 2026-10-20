@@ -9,8 +9,8 @@
    - ไม่แตะ Firebase / ImgBB / API (ให้ผ่านตรงเสมอ)
 ═══════════════════════════════════════════════ */
 
-const CACHE_VERSION = 'dcs-v40-user-banner-images';
-const CACHE_NAME = 'dmc-studio-uxui-v2' + CACHE_VERSION;
+const CACHE_VERSION = 'dcs-v41-fixed-blue-pink-ui';
+const CACHE_NAME = 'dmc-studio-' + CACHE_VERSION;
 
 // ไฟล์หลักที่ pre-cache ตอนติดตั้ง (โหลดครั้งแรกเร็วขึ้น + ออฟไลน์ได้)
 const PRECACHE = [
@@ -28,7 +28,6 @@ const PRECACHE = [
   './assets/icon-192.png',
   './assets/icon-512.png',
   './css/core.css',
-  './css/themes.css',
   './css/loading.css',
   './css/main.css',
   './css/navbar.css',
@@ -50,7 +49,6 @@ const PRECACHE = [
   './js/bottom-nav.js',
   './js/custom-select.js',
   './js/skeleton.js',
-  './js/theme-switcher.js',
   './js/admin-access.js',
   './js/inline-editor.js',
   './js/home.js',

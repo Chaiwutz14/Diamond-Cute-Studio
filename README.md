@@ -106,9 +106,8 @@ Diamond-Cute-Studio/
 ├── orders.html             # ติดตามออเดอร์
 ├── about.html / contact.html
 │
-├── css/                    # สไตล์ + ระบบธีม (design tokens)
-│   ├── core.css            #   สไตล์หลัก (รวมไฟล์เพื่อลด requests)
-│   ├── themes.css          #   ระบบ 6 ธีมสี
+├── css/                    # สไตล์ + design tokens
+│   ├── core.css            #   สไตล์หลักและชุดสีฟ้า–ชมพูแบบคงที่
 │   └── ...
 │
 ├── js/                     # ตรรกะฝั่ง client (modular)

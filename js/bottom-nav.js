@@ -42,43 +42,27 @@
 
   function injectCSS() {
     if (document.getElementById('dcs-bottomnav-style')) return;
-    var css = ''
-      // Bottom nav — แสดงเฉพาะจอ <= 760px
-      + '#dcs-bottom-nav{display:none}'
+    var css = '#dcs-bottom-nav{display:none}'
       + '@media(max-width:760px){'
-      +   '#dcs-bottom-nav{display:flex;box-sizing:border-box;position:fixed;left:0;right:0;bottom:0;z-index:9000;'
-      +     'background:var(--bg-card);border-top:1px solid var(--border);'
-      +     'box-shadow:0 -3px 16px rgba(0,0,0,.07);padding:.3rem .25rem calc(.3rem + env(safe-area-inset-bottom,0));'
-      +     'backdrop-filter:saturate(180%) blur(8px)}'
-      +   '.dcs-bn-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;'
-      +     'padding:.35rem .1rem;text-decoration:none;color:var(--text-3);position:relative;transition:color .15s;box-sizing:border-box}'
-      +   '.dcs-bn-item .ic{line-height:0;transition:transform .15s;display:flex;align-items:center;justify-content:center}'
-      +   '.dcs-bn-item .ic svg{width:25px;height:25px;display:block;transition:filter .18s,transform .18s}' + '.dcs-bn-item.active .ic svg{filter:drop-shadow(0 2px 4px rgba(236,73,153,.18))}' + '.dcs-bn-item.active .ic svg path:first-child{fill:rgba(236,73,153,.12)}'
-      +   '.dcs-bn-item.active .ic svg{stroke-width:2.1}'
-      +   '.dcs-bn-item .lb{font-size:.64rem;font-family:var(--font-display,sans-serif);font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
-      +   '.dcs-bn-item.active{color:var(--accent)}'
-      +   '.dcs-bn-item.active .ic{transform:translateY(-2px) scale(1.1)}'
-      +   '.dcs-bn-item.active::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}'
-      +   '.dcs-bn-badge{position:absolute;top:.1rem;left:calc(50% + 5px);min-width:16px;height:16px;padding:0 4px;'
-      +     'background:var(--rose,#fb7185);color:#fff;border-radius:8px;font-size:.62rem;font-weight:800;'
-      +     'display:flex;align-items:center;justify-content:center;font-family:var(--font-display,sans-serif)}'
-      +   'body{padding-bottom:62px !important}'
+      + '#dcs-bottom-nav{--dcs-nav-height:56px;display:flex;box-sizing:border-box;position:fixed;left:12px;right:12px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9000;width:auto;max-width:660px;margin:0 auto;min-height:var(--dcs-nav-height);align-items:stretch;padding:4px 8px;border:1px solid rgba(35,111,174,.12);border-radius:17px;background:rgba(255,255,255,.97);box-shadow:0 5px 18px rgba(24,63,108,.12);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}'
+      + '.dcs-bn-item{position:relative;box-sizing:border-box;flex:1 1 0;min-width:0;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px 2px;border-radius:10px;color:#7188a3;text-decoration:none;transition:color .15s}'
+      + '.dcs-bn-item:focus-visible{outline:3px solid rgba(22,137,210,.38);outline-offset:1px}'
+      + '.dcs-bn-item .ic{display:flex;align-items:center;justify-content:center;line-height:0}.dcs-bn-item .ic svg{display:block;width:22px;height:22px}'
+      + '.dcs-bn-item .lb{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 .62rem/1.15 var(--font-display,sans-serif)}'
+      + '.dcs-bn-item.active{color:#e94f98}.dcs-bn-item.active .ic svg{stroke-width:2}.dcs-bn-item.active::before{content:"";position:absolute;top:0;left:50%;width:22px;height:2px;border-radius:0 0 2px 2px;background:#e94f98;transform:translateX(-50%)}'
+      + '.dcs-bn-badge{position:absolute;top:1px;left:calc(50% + 4px);min-width:15px;height:15px;padding:0 3px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:#e94f98;color:#fff;font:700 .58rem/1 var(--font-display,sans-serif)}'
+      + 'body{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px)) !important}'
+      + '#dcs-fab-line{right:14px;bottom:calc(68px + env(safe-area-inset-bottom,0px));width:48px;height:48px}'
+      + '#dcs-fab-line svg{width:25px;height:25px}'
       + '}'
-      // Floating LINE
-      + '#dcs-fab-line{position:fixed;right:16px;bottom:20px;z-index:8999;width:54px;height:54px;border-radius:50%;'
-      +   'background:#06c755;box-shadow:0 6px 18px rgba(6,199,85,.45);display:flex;align-items:center;justify-content:center;'
-      +   'cursor:pointer;transition:transform .18s,box-shadow .18s;text-decoration:none}'
-      + '#dcs-fab-line:hover{transform:scale(1.08);box-shadow:0 8px 24px rgba(6,199,85,.6)}'
-      + '#dcs-fab-line svg{width:30px;height:30px;fill:#fff}'
-      + '#dcs-fab-line .fab-pulse{position:absolute;inset:0;border-radius:50%;border:2px solid #06c755;animation:fabPulse 2s ease infinite;pointer-events:none}'
-      + '@keyframes fabPulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.5);opacity:0}}'
-      + '@media(max-width:760px){#dcs-fab-line{bottom:74px;width:50px;height:50px}#dcs-fab-line svg{width:27px;height:27px}}'
-      + '@media(prefers-reduced-motion:reduce){.fab-pulse{animation:none}}';
-    css += ''
-      + '@media(max-width:760px){'
-      + '#dcs-bottom-nav{left:12px;right:12px;bottom:calc(8px + env(safe-area-inset-bottom,0px));width:auto;max-width:660px;margin:0 auto;border:1px solid color-mix(in srgb,var(--border) 85%,#fff);border-radius:22px;box-shadow:0 8px 30px rgba(24,62,100,.14);padding:.38rem .28rem calc(.38rem + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--bg-card) 91%,transparent)}'
-      + 'body{padding-bottom:104px !important}.dcs-bn-item{border-radius:15px;gap:3px;padding:.38rem .1rem}.dcs-bn-item.active::before{top:auto;bottom:0;width:30px;height:3px;border-radius:3px 3px 0 0}.dcs-bn-item.active .ic{transform:translateY(-1px) scale(1.06)}#dcs-fab-line{display:none !important}}'
-      + '@media(max-width:380px){#dcs-bottom-nav{left:7px;right:7px;border-radius:18px}.dcs-bn-item .lb{font-size:.61rem}}';
+      + '@media(min-width:761px){#dcs-fab-line{display:none!important}}'
+      + '@media(max-width:360px){#dcs-bottom-nav{padding-inline:4px}.dcs-bn-item .lb{font-size:.58rem}.dcs-bn-item .ic svg{width:21px;height:21px}#dcs-fab-line{right:10px;width:46px;height:46px}}'
+      + '#dcs-fab-line{position:fixed;z-index:8999;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#06c755;box-shadow:0 5px 14px rgba(6,199,85,.34);text-decoration:none;transition:transform .18s,box-shadow .18s}'
+      + '#dcs-fab-line:hover{transform:scale(1.06);box-shadow:0 7px 18px rgba(6,199,85,.42)}#dcs-fab-line svg{fill:#fff}'
+      + '#dcs-fab-line .fab-pulse{position:absolute;inset:0;border:2px solid #06c755;border-radius:50%;animation:fabPulse 2.2s ease infinite;pointer-events:none}'
+      + '@keyframes fabPulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.55);opacity:0}}'
+      + '@media(prefers-reduced-motion:reduce){#dcs-fab-line .fab-pulse{animation:none}}'
+      + '@media(min-width:761px){#dcs-fab-line{display:none!important}}';
     var st = document.createElement('style');
     st.id = 'dcs-bottomnav-style';
     st.textContent = css;
@@ -123,14 +107,13 @@
 
   function renderFAB(lineUrl) {
     if (document.getElementById('dcs-fab-line')) return;
-    if (!lineUrl || lineUrl === '#') return;   // V.upgrade1: ไม่โชว์ปุ่ม LINE ที่ยังไม่ตั้งค่า
+    var hasLine = !!lineUrl && lineUrl !== '#';
     var a = document.createElement('a');
     a.id = 'dcs-fab-line';
-    a.href = lineUrl || '#';
-    a.target = '_blank';
-    a.rel = 'noopener';
-    a.title = 'แชทกับร้านทาง LINE';
-    a.setAttribute('aria-label', 'แชท LINE');
+    a.href = hasLine ? lineUrl : 'contact.html';
+    if (hasLine) { a.target = '_blank'; a.rel = 'noopener'; }
+    a.title = hasLine ? 'แชทกับร้านทาง LINE' : 'ดูช่องทางติดต่อร้าน';
+    a.setAttribute('aria-label', hasLine ? 'แชท LINE' : 'ดูช่องทางติดต่อร้าน');
     a.innerHTML = '<span class="fab-pulse"></span>' + LINE_SVG;
     document.body.appendChild(a);
   }
