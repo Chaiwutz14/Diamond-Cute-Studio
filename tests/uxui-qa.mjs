@@ -57,38 +57,53 @@ try {
     await page.setViewportSize({ width, height });
     await page.goto(BASE + '/index.html', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#main-nav');
-    await page.waitForSelector('#dmc-home-hero');
+    await page.waitForSelector('#dmc-home-hero', { state: 'attached' });
     await page.waitForFunction(() => document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide').length > 0, null, { timeout: 18000 });
-    await page.waitForFunction(() => {
-      const img = document.querySelector('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art');
-      return !!img && img.complete && img.naturalWidth > 0;
-    }, null, { timeout: 18000 });
+    if (width <= 760) {
+      await page.waitForSelector('.dmc-mobile-hero-cta');
+      await page.waitForSelector('.dmc-mobile-hero-illustration', { state: 'attached' });
+    } else {
+      await page.waitForFunction(() => {
+        const img = document.querySelector('#dmc-hero-slides .dmc-hero-slide.is-active .dmc-hero-art');
+        return !!img && img.complete && img.naturalWidth > 0;
+      }, null, { timeout: 18000 });
+    }
     await page.waitForSelector('#promo-image-slot .promo-image');
     await page.waitForTimeout(250);
     const metrics = await page.evaluate(() => {
       const rect = el => { if (!el) return null; const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, top: r.top, right: r.right, bottom: r.bottom, left: r.left, width: r.width, height: r.height }; };
       const nav = document.querySelector('#main-nav'), hero = document.querySelector('#dmc-home-hero');
+      const mobileHero = document.querySelector('.dmc-mobile-hero');
       const logo = document.querySelector('.nav-logo'), links = document.querySelector('.nav-links'), search = document.querySelector('.nav-search-wrap'), searchToggle = document.querySelector('.nav-search-toggle');
       const actions = document.querySelector('.nav-actions'), hamburger = document.querySelector('#hamburger-btn'), bottom = document.querySelector('#dcs-bottom-nav');
       const fab = document.querySelector('#dcs-fab-line');
       const ids = [...document.querySelectorAll('[id]')].map(el => el.id).filter(Boolean);
       return {
         viewport: { width: innerWidth, height: innerHeight }, scrollWidth: document.documentElement.scrollWidth, bodyScrollWidth: document.body.scrollWidth,
-        nav: rect(nav), hero: rect(hero), heroRatio: hero ? hero.getBoundingClientRect().width / hero.getBoundingClientRect().height : 0,
+        nav: rect(nav), hero: rect(hero), heroDisplay: hero ? getComputedStyle(hero).display : 'missing', heroRatio: hero ? hero.getBoundingClientRect().width / hero.getBoundingClientRect().height : 0,
+        mobileHero: rect(mobileHero), mobileHeroDisplay: mobileHero ? getComputedStyle(mobileHero).display : 'missing', mobileHeroRadius: mobileHero ? parseFloat(getComputedStyle(mobileHero).borderTopLeftRadius) : 0,
+        mobileHeroTitle: mobileHero?.querySelector('h1')?.textContent?.trim() || '', mobileHeroCta: rect(mobileHero?.querySelector('.dmc-mobile-hero-cta')),
+        mobileHeroCtaHref: mobileHero?.querySelector('.dmc-mobile-hero-cta')?.getAttribute('href') || '',
+        mobileHeroIllustration: !!mobileHero?.querySelector('.dmc-mobile-hero-illustration'),
         heroBorderRadius: hero ? parseFloat(getComputedStyle(hero).borderTopLeftRadius) : 0,
         heroLinkCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-picture[href="catalog.html"]').length,
         heroImageFit: document.querySelector('.dmc-hero-art') ? getComputedStyle(document.querySelector('.dmc-hero-art')).objectFit : 'missing',
-        logo: rect(logo), links: rect(links), search: rect(search), searchForm: rect(document.querySelector('.nav-search')), searchToggle: rect(searchToggle), actions: rect(actions), hamburger: rect(hamburger), bottom: rect(bottom), fab: rect(fab),
+        logo: rect(logo), links: rect(links), search: rect(search), searchForm: rect(document.querySelector('.nav-search')), searchInputFontSize: parseFloat(getComputedStyle(document.querySelector('#nav-search-input') || document.body).fontSize), searchSubmit: rect(document.querySelector('.nav-search-submit')), searchToggle: rect(searchToggle), actions: rect(actions), cartAction: rect(document.querySelector('.nav-cart-btn')), hamburger: rect(hamburger), bottom: rect(bottom), fab: rect(fab),
         linksDisplay: links ? getComputedStyle(links).display : 'missing',
         hamburgerDisplay: hamburger ? getComputedStyle(hamburger).display : 'missing',
-        bottomDisplay: bottom ? getComputedStyle(bottom).display : 'missing',
+        bottomDisplay: bottom ? getComputedStyle(bottom).display : 'missing', bottomHeight: rect(bottom)?.height || 0,
+        bodyPaddingBottom: parseFloat(getComputedStyle(document.body).paddingBottom) || 0,
+        fabNavGap: bottom && fab ? bottom.getBoundingClientRect().top - fab.getBoundingClientRect().bottom : null,
         activeSlides: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide.is-active').length,
         slideCount: document.querySelectorAll('#dmc-hero-slides .dmc-hero-slide').length,
         categoryCount: document.querySelectorAll('#categories-grid .cat-card').length,
-        categoryChildBounds: [...document.querySelectorAll('#categories-grid .cat-card')].map(el => { const r=el.getBoundingClientRect(); return {left:r.left,right:r.right,width:r.width}; }),
+        categoryChildBounds: [...document.querySelectorAll('#categories-grid .cat-card')].map(el => { const r=el.getBoundingClientRect(); return {left:r.left,right:r.right,width:r.width,height:r.height}; }),
+        categoryIcon: rect(document.querySelector('#categories-grid .cat-icon')),
+        categoryLabelFontSize: parseFloat(getComputedStyle(document.querySelector('#categories-grid .cat-name') || document.body).fontSize),
         featuredColumnCount: document.querySelector('#featured-products') ? getComputedStyle(document.querySelector('#featured-products')).gridTemplateColumns.split(' ').filter(Boolean).length : 0,
         featuredVisibleCount: [...document.querySelectorAll('#featured-products .product-card')].filter(el => getComputedStyle(el).display !== 'none').length,
         featuredAddButton: rect(document.querySelector('#featured-products .btn-add-cart')),
+        featuredWishButton: rect(document.querySelector('#featured-products .product-wish')),
         featuredCount: document.querySelectorAll('#featured-products .product-card').length,
         trustStrip: !!document.querySelector('.dmc-trust-strip'),
         categoryDisplay: document.querySelector('#categories-grid') ? getComputedStyle(document.querySelector('#categories-grid')).display : 'missing',
@@ -127,11 +142,11 @@ try {
           ['promo-gallery', '#promo-section-el'],
           ['gallery-reviews', '#home-gallery-section']
         ]
-      : width === 390
+      : width === 393
         ? [
             ['services-trust', '#categories-grid'],
             ['bestsellers', '#featured-products'],
-            ['mobile-popular-categories', '.hp-popular-section']
+            ['mobile-products', '#featured-products']
           ]
         : [];
     for (const [suffix, selector] of slices) {
@@ -145,33 +160,51 @@ try {
       report.screenshots.push(shot);
     }
     await page.evaluate(() => window.scrollTo(0, 0));
-    check(`${name}: banner has a clear gap below the navbar`, metrics.hero && metrics.nav && metrics.hero.top >= metrics.nav.bottom + 8, `hero top=${metrics.hero?.top}, navbar bottom=${metrics.nav?.bottom}`);
+    if (width <= 760) {
+      check(`${name}: mobile hero has a clear gap below the navbar`, metrics.mobileHero && metrics.nav && metrics.mobileHero.top >= metrics.nav.bottom + 8, `hero top=${metrics.mobileHero?.top}, navbar bottom=${metrics.nav?.bottom}`);
+      check(`${name}: mobile hero is visible with one catalog CTA`, metrics.mobileHeroDisplay !== 'none' && metrics.mobileHero.width >= width - 32 && metrics.mobileHeroTitle.length > 0 && metrics.mobileHeroIllustration && metrics.mobileHeroCta?.height >= 44 && metrics.mobileHeroCtaHref === 'catalog.html', JSON.stringify({display:metrics.mobileHeroDisplay,width:metrics.mobileHero?.width,illustration:metrics.mobileHeroIllustration,cta:metrics.mobileHeroCta,href:metrics.mobileHeroCtaHref}));
+      check(`${name}: desktop carousel is hidden on mobile`, metrics.heroDisplay === 'none', metrics.heroDisplay);
+    } else {
+      check(`${name}: desktop banner has a clear gap below the navbar`, metrics.hero && metrics.nav && metrics.hero.top >= metrics.nav.bottom + 8, `hero top=${metrics.hero?.top}, navbar bottom=${metrics.nav?.bottom}`);
+      check(`${name}: mobile hero remains hidden outside mobile layout`, metrics.mobileHeroDisplay === 'none', metrics.mobileHeroDisplay);
+    }
     check(`${name}: no horizontal overflow`, metrics.scrollWidth <= width + 2 && metrics.bodyScrollWidth <= width + 2, `document=${metrics.scrollWidth}, body=${metrics.bodyScrollWidth}, viewport=${width}`);
     check(`${name}: carousel has exactly one active slide`, metrics.activeSlides === 1, `active=${metrics.activeSlides}, total=${metrics.slideCount}`);
     check(`${name}: no duplicate IDs`, metrics.duplicates.length === 0, metrics.duplicates.join(', ') || 'none');
     check(`${name}: homepage category/product/trust sections rendered`, metrics.categoryCount === 6 && metrics.featuredCount >= 1 && metrics.trustStrip, `categories=${metrics.categoryCount}, products=${metrics.featuredCount}, trust=${metrics.trustStrip}`);
+    if (width >= 1024) check(`${name}: desktop product grid uses four columns`, metrics.featuredColumnCount === 4, `columns=${metrics.featuredColumnCount}`);
+    else if (width > 760) check(`${name}: tablet product grid uses three columns`, metrics.featuredColumnCount === 3, `columns=${metrics.featuredColumnCount}`);
     check(`${name}: hero uses all four authored banners`, metrics.heroAssetCount === 4 && metrics.heroPhotoCount === 1 && metrics.heroLinkCount === 4, `banners=${metrics.heroAssetCount}, active=${metrics.heroPhotoCount}, catalog links=${metrics.heroLinkCount}`);
-    check(`${name}: banner keeps the supplied full image ratio`, metrics.heroImageFit === 'contain' && Math.abs(metrics.heroRatio - (1730 / 909)) < .03, `fit=${metrics.heroImageFit}, ratio=${metrics.heroRatio.toFixed(3)}`);
+    if (width > 760) check(`${name}: desktop banner keeps the supplied full image ratio`, metrics.heroImageFit === 'contain' && Math.abs(metrics.heroRatio - (1730 / 909)) < .03, `fit=${metrics.heroImageFit}, ratio=${metrics.heroRatio.toFixed(3)}`);
     if (width <= 760) {
-      check(`${name}: banner has rounded corners and side gutters`, metrics.heroBorderRadius >= 14 && metrics.hero.left >= 8 && metrics.hero.right <= width - 8, `radius=${metrics.heroBorderRadius}px, left=${metrics.hero.left}, right=${metrics.hero.right}, viewport=${width}`);
+      check(`${name}: mobile hero has rounded corners and side gutters`, metrics.mobileHero && metrics.mobileHeroRadius >= 16 && metrics.mobileHero.left >= 8 && metrics.mobileHero.right <= width - 8, `radius=${metrics.mobileHeroRadius}px, left=${metrics.mobileHero?.left}, right=${metrics.mobileHero?.right}, viewport=${width}`);
     } else {
       check(`${name}: desktop and tablet banner stays within a centered content width`, metrics.hero.width <= 1280 && Math.abs((width - metrics.hero.width) / 2 - metrics.hero.left) < 2, `width=${metrics.hero.width}, left=${metrics.hero.left}, viewport=${width}`);
     }
     const expectedCategories = ['assets/categories/Poraroid.png','assets/categories/Photo.png','assets/categories/Busines card.png','assets/categories/Employee card.png','assets/categories/Premium gift.png','assets/categories/QR Code.png'];
     check(`${name}: six authored PNG category images load`, metrics.categoryCount === 6 && metrics.categoryImageCount === 6 && metrics.categoryLoadedCount === 6 && expectedCategories.every(src=>metrics.categoryAssets.includes(src)), `category art=${metrics.categoryImageCount}, loaded=${metrics.categoryLoadedCount}, paths=${metrics.categoryAssets.join('|')}`);
-    check(`${name}: five popular categories remain visible after promotion`, metrics.popularVisible && metrics.popularCount === 5, `visible=${metrics.popularVisible}, cards=${metrics.popularCount}`);
+    if (width > 760) check(`${name}: five popular categories remain visible after promotion`, metrics.popularVisible && metrics.popularCount === 5, `visible=${metrics.popularVisible}, cards=${metrics.popularCount}`);
+    else check(`${name}: duplicate popular category row is hidden on mobile`, !metrics.popularVisible, `visible=${metrics.popularVisible}`);
     check(`${name}: compact DMC wordmark loads`, metrics.logoImageLoaded, String(metrics.logoImageLoaded));
     check(`${name}: authored promotion artwork loads without CMS copy`, metrics.promoImageCount === 1 && !metrics.promoSectionHidden && !metrics.promoHasCopy && metrics.promoDesktopAsset.endsWith('CMS-2752x380.png') && metrics.promoMobileAsset.endsWith('CMS-800x364.png'), `desktop=${metrics.promoDesktopAsset}, mobile=${metrics.promoMobileAsset}, copy=${metrics.promoHasCopy}, hidden=${metrics.promoSectionHidden}`);
     if (width <= 760) {
       check(`${name}: mobile navigation uses five custom vector icons`, metrics.mobileVectorIconCount === 5, `icons=${metrics.mobileVectorIconCount}`);
+      const headerNoOverlap = metrics.logo && metrics.search && metrics.actions && metrics.logo.right <= metrics.search.left + 2 && metrics.search.right <= metrics.actions.left + 2;
+      check(`${name}: mobile header fits without overlap`, headerNoOverlap, JSON.stringify({logo:metrics.logo,search:metrics.search,actions:metrics.actions}));
       check(`${name}: floating bottom nav geometry`, metrics.bottom && metrics.bottomDisplay !== 'none' && metrics.bottom.left > 0 && metrics.bottom.right < width && metrics.bottom.bottom <= height + 1, JSON.stringify(metrics.bottom));
       check(`${name}: mobile hamburger remains available`, metrics.hamburgerDisplay !== 'none', metrics.hamburgerDisplay);
-      check(`${name}: floating LINE button is visible above bottom navigation`, metrics.fab && metrics.fab.width >= 44 && metrics.fab.height >= 44 && metrics.fab.bottom < metrics.bottom.top, JSON.stringify({fab:metrics.fab,bottom:metrics.bottom}));
-      const allCategoriesFit = metrics.categoryChildBounds.length === 6 && metrics.categoryChildBounds.every(item => item.width > 0 && item.left >= metrics.hero.left - 4 && item.right <= width - 8);
-      check(`${name}: all six category shortcuts fit across one row`, metrics.categoryDisplay === 'grid' && metrics.categoryScrollWidth <= metrics.categoryClientWidth + 2 && allCategoriesFit, `display=${metrics.categoryDisplay}, scroll=${metrics.categoryScrollWidth}, client=${metrics.categoryClientWidth}, items=${metrics.categoryChildBounds.length}`);
+      check(`${name}: cart and menu actions meet 44px touch targets`, metrics.cartAction?.width >= 44 && metrics.cartAction?.height >= 44 && metrics.hamburger?.width >= 44 && metrics.hamburger?.height >= 44, JSON.stringify({cart:metrics.cartAction,hamburger:metrics.hamburger}));
+      check(`${name}: floating LINE keeps a 16px gap above bottom navigation`, metrics.fab && metrics.fab.width >= 48 && metrics.fab.height >= 48 && Math.abs(metrics.fabNavGap - 16) <= 1, JSON.stringify({fab:metrics.fab,bottom:metrics.bottom,gap:metrics.fabNavGap}));
+      check(`${name}: content reserves space for floating controls`, metrics.bodyPaddingBottom >= metrics.bottomHeight + 70, `padding=${metrics.bodyPaddingBottom}px, nav=${metrics.bottomHeight}px`);
+      const categoryTargets = metrics.categoryChildBounds.length === 6 && metrics.categoryChildBounds.every(item => item.width >= 88 && item.width <= 104 && item.height >= 88);
+      check(`${name}: category shortcuts scroll horizontally with readable targets`, metrics.categoryDisplay === 'flex' && metrics.categoryScrollWidth > metrics.categoryClientWidth && categoryTargets && metrics.categoryIcon?.width >= 60 && metrics.categoryLabelFontSize >= 12, `display=${metrics.categoryDisplay}, scroll=${metrics.categoryScrollWidth}, client=${metrics.categoryClientWidth}, icon=${metrics.categoryIcon?.width}, label=${metrics.categoryLabelFontSize}px`);
       check(`${name}: mobile best sellers show four larger cards in two columns`, metrics.featuredColumnCount === 2 && metrics.featuredVisibleCount === 4, `columns=${metrics.featuredColumnCount}, visible=${metrics.featuredVisibleCount}`);
-      check(`${name}: add-to-cart button remains proportionate`, metrics.featuredAddButton && metrics.featuredAddButton.width <= 32 && metrics.featuredAddButton.height <= 32, JSON.stringify(metrics.featuredAddButton));
+      check(`${name}: add-to-cart button meets the 44px touch target`, metrics.featuredAddButton && metrics.featuredAddButton.width >= 44 && metrics.featuredAddButton.height >= 44, JSON.stringify(metrics.featuredAddButton));
+      check(`${name}: favorite control meets the 40px touch target`, metrics.featuredWishButton && metrics.featuredWishButton.width >= 40 && metrics.featuredWishButton.height >= 40, JSON.stringify(metrics.featuredWishButton));
       check(`${name}: homepage search is visible in the compact header`, metrics.globalSearchCount === 1 && metrics.search.width > 0, `search count=${metrics.globalSearchCount}, width=${metrics.search?.width}`);
+      check(`${name}: mobile search submit is a 44px touch target`, metrics.searchSubmit && metrics.searchSubmit.width >= 44 && metrics.searchSubmit.height >= 44, JSON.stringify(metrics.searchSubmit));
+      check(`${name}: mobile search text avoids browser auto-zoom`, metrics.searchInputFontSize >= 16, `${metrics.searchInputFontSize}px`);
+      if (width <= 520) check(`${name}: compact logo fits the narrow header`, metrics.logo && metrics.logo.width >= 76 && metrics.logo.width <= 86, `${metrics.logo?.width}px`);
       const touchTargets = await page.locator('#dcs-bottom-nav .dcs-bn-item').evaluateAll(items=>items.every(item=>{const r=item.getBoundingClientRect();return r.width>=44&&r.height>=44}));
       check(`${name}: bottom navigation keeps 44px touch targets`, touchTargets, String(touchTargets));
     } else if (width <= 1180) {
@@ -215,13 +248,15 @@ try {
   } else check('carousel interaction has multiple slides', false, `only ${totalSlides} slide(s) rendered`);
 
   await loadHomeAt('tablet-1024', 1024, 900);
-  await loadHomeAt('mobile-390', 390, 844);
-  await loadHomeAt('small-mobile-320', 320, 740);
+  await loadHomeAt('tablet-768', 768, 900);
+  await loadHomeAt('mobile-430', 430, 932);
+  await loadHomeAt('mobile-393', 393, 852);
+  await loadHomeAt('mobile-360', 360, 800);
   currentRoute = 'mobile-menu-regression';
   await page.locator('#hamburger-btn').click();
   check('mobile menu opens', await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open')), 'drawer should have open class');
   check('mobile drawer retains navigation and LINE actions', await page.locator('#mobile-drawer .drawer-link').count() >= 6 && await page.locator('#drawer-line-btn').count() === 1, 'drawer links and LINE action are present');
-  await page.locator('#dmc-hero-pause').click({ force: true });
+  await page.locator('#nav-search-input').click();
   check('mobile menu closes on outside click', !(await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open'))), 'outside click should close the drawer');
   await page.locator('#hamburger-btn').click();
   await page.keyboard.press('Escape');
