@@ -31,11 +31,11 @@
     ];
 
     const desktopLinks = links.map(l =>
-      `<a href="${l.href}" class="nav-link ${page === l.href ? 'active' : ''}"><span class="nav-link-icon">${navVector(l.href)}</span><span>${l.label}</span></a>`
+      `<a href="${l.href}" class="nav-link ${page === l.href ? 'active' : ''}"${page === l.href ? ' aria-current="page"' : ''}><span class="nav-link-icon">${navVector(l.href)}</span><span>${l.label}</span></a>`
     ).join('');
 
     const drawerLinks = links.map(l =>
-      `<a href="${l.href}" class="drawer-link ${page === l.href ? 'active' : ''}">
+      `<a href="${l.href}" class="drawer-link ${page === l.href ? 'active' : ''}"${page === l.href ? ' aria-current="page"' : ''}>
          <span>${l.icon}</span> ${l.label}
        </a>`
     ).join('');
@@ -48,9 +48,8 @@
         </button>
         <form class="nav-search" id="nav-search-form" action="catalog.html" method="get" role="search" aria-label="ค้นหาสินค้า">
           <label class="nav-search-label" for="nav-search-input">ค้นหาสินค้า</label>
-          <span class="nav-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></span>
           <input id="nav-search-input" name="q" type="search" maxlength="120" placeholder="ค้นหาสินค้า เช่น โพลารอยด์ นามบัตร…" autocomplete="off">
-          <button type="submit" aria-label="ค้นหา"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button>
+          <button type="submit" aria-label="ค้นหา" class="nav-search-submit"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button>
         </form>
       </div>` : '';
 
@@ -97,15 +96,14 @@
       </nav>
 
       <!-- Mobile Drawer -->
-      <div class="mobile-drawer" id="mobile-drawer" role="navigation" aria-label="เมนูมือถือ">
+      <nav class="mobile-drawer" id="mobile-drawer" aria-label="เมนูมือถือ" aria-hidden="true">
         <div class="drawer-links">${drawerLinks}</div>
         <div class="drawer-actions">
-          <a href="#" id="drawer-line-btn"
-             target="_blank" rel="noopener"
+          <a href="contact.html" id="drawer-line-btn"
              class="btn btn-line btn-md" style="flex:1">💬 ติดต่อ LINE</a>
           <a href="cart.html" class="btn btn-secondary btn-md" style="flex:1">🛒 ตะกร้า</a>
         </div>
-      </div>`;
+      </nav>`;
 
     initBehavior();
     applyLineLinks();
@@ -118,21 +116,28 @@
     var toggle = document.getElementById('nav-search-toggle');
     var input = document.getElementById('nav-search-input');
     if (!wrap || !toggle || !input) return;
-    function close() {
-      wrap.classList.remove('is-open');
-      toggle.setAttribute('aria-expanded', 'false');
+    var searchIcon = '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>';
+    var closeIcon = '<path d="m6 6 12 12M18 6 6 18"/>';
+    function setOpen(open) {
+      wrap.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'ปิดช่องค้นหา' : 'เปิดค้นหาสินค้า');
+      toggle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + (open ? closeIcon : searchIcon) + '</svg>';
+    }
+    function close(restoreFocus) {
+      setOpen(false);
+      if (restoreFocus) toggle.focus();
     }
     toggle.addEventListener('click', function () {
       var open = !wrap.classList.contains('is-open');
-      wrap.classList.toggle('is-open', open);
-      toggle.setAttribute('aria-expanded', String(open));
+      setOpen(open);
       if (open) input.focus();
     });
     document.addEventListener('click', function (event) {
-      if (!wrap.contains(event.target) && window.innerWidth > 900) close();
+      if (!wrap.contains(event.target) && window.innerWidth > 900) close(false);
     });
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') close();
+      if (event.key === 'Escape' && wrap.classList.contains('is-open')) close(true);
     });
   }
 
@@ -144,20 +149,14 @@
       var a = c.announce || {};
       if (!a.active || !a.text) return;
       if (document.getElementById('dmc-announce-bar')) return;
-      if (!document.getElementById('dmc-announce-style')) {
-        var st = document.createElement('style');
-        st.id = 'dmc-announce-style';
-        st.textContent = '#dmc-announce-bar{position:fixed;top:0;left:0;right:0;z-index:901;background:linear-gradient(90deg,var(--accent,#0EA5E9),var(--accent-dark,#0369A1));color:#fff;font-family:var(--font-display),sans-serif;font-size:.78rem;font-weight:600;text-align:center;padding:.45rem 2.3rem .45rem 1rem;line-height:1.4}#dmc-announce-bar .dmc-an-x{position:absolute;right:.55rem;top:50%;transform:translateY(-50%);cursor:pointer;opacity:.85;font-size:.95rem;line-height:1;padding:.2rem}';
-        document.head.appendChild(st);
-      }
       var bar = document.createElement('div');
       bar.id = 'dmc-announce-bar';
       var span = document.createElement('span');
       span.textContent = a.text;                      // textContent — กัน XSS
       bar.appendChild(span);
-      var x = document.createElement('span');
-      x.className = 'dmc-an-x'; x.textContent = '✕';
-      x.setAttribute('role', 'button'); x.setAttribute('aria-label', 'ปิดประกาศ');
+      var x = document.createElement('button');
+      x.type = 'button'; x.className = 'dmc-an-x'; x.textContent = '✕';
+      x.setAttribute('aria-label', 'ปิดประกาศ');
       bar.appendChild(x);
       document.body.insertAdjacentElement('afterbegin', bar);
 
@@ -182,10 +181,19 @@
   function applyLineLinks() {
     if (typeof CMS === 'undefined') return;
     CMS.get().then(function(c){
-      var href = CMS.lineChat ? CMS.lineChat(c.contact) : ((c.contact && c.contact.line) || '#');
+      var href = CMS.lineChat ? CMS.lineChat(c.contact) : ((c.contact && c.contact.line) || 'contact.html');
       var b2 = document.getElementById('drawer-line-btn');
-      if (b2) b2.href = href;
-    }).catch(function(){});
+      if (b2) {
+        try {
+          var url = new URL(href);
+          var host = url.hostname.toLowerCase().replace(/^www\./, '');
+          var safeLine = url.protocol === 'https:' && (host === 'line.me' || host === 'lin.ee') && url.pathname !== '/';
+          b2.href = safeLine ? url.href : 'contact.html';
+          if (safeLine) { b2.target = '_blank'; b2.rel = 'noopener noreferrer'; b2.textContent = '💬 ติดต่อ LINE'; }
+          else { b2.removeAttribute('target'); b2.removeAttribute('rel'); b2.textContent = '💬 ดูช่องทางติดต่อ'; }
+        } catch (e) { b2.href = 'contact.html'; b2.removeAttribute('target'); b2.removeAttribute('rel'); b2.textContent = '💬 ดูช่องทางติดต่อ'; }
+      }
+    }).catch(function(){ var b2 = document.getElementById('drawer-line-btn'); if (b2) { b2.href = 'contact.html'; b2.removeAttribute('target'); b2.removeAttribute('rel'); b2.textContent = '💬 ดูช่องทางติดต่อ'; } });
   }
 
   function getMountEl() {
@@ -214,6 +222,7 @@
     function setOpen(val) {
       open = val;
       drawer?.classList.toggle('open', open);
+      drawer?.setAttribute('aria-hidden', String(!open));
       hamburger?.setAttribute('aria-expanded', open);
       const lines = hamburger?.querySelectorAll('.hamburger-line');
       if (lines) {
@@ -227,6 +236,7 @@
           lines[2].style.transform = '';
         }
       }
+      if (open) drawer?.querySelector('.drawer-link')?.focus();
     }
 
     hamburger?.addEventListener('click', () => setOpen(!open));
@@ -241,7 +251,9 @@
     window.addEventListener('resize', () => { if (open && window.innerWidth > 1040) setOpen(false); }, { passive: true });
 
     // Escape key
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) setOpen(false); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && open) { setOpen(false); hamburger?.focus(); }
+    });
   }
 
   if (document.readyState === 'loading') {

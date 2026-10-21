@@ -236,6 +236,9 @@
   --nav-h: 64px;
   --r-sm:  6px;  --r-md: 10px; --r-lg: 14px;
   --r-xl:  18px; --r-2xl:24px; --r-pill:9999px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-7: 28px; --space-8: 32px;
+  --radius-card: 16px; --radius-banner: 20px; --radius-pill: 999px;
   --t-fast: 0.15s ease;
   --t-normal: 0.25s ease;
   --t-slow: 0.4s ease;
@@ -522,6 +525,13 @@ button:focus-visible, a:focus-visible {
   text-decoration: none;
 }
 .skip-link:focus { top: 0; }
+
+/* Keep page headings available to assistive technology when the visual layout has no room for them. */
+.visually-hidden {
+  position: absolute !important; width: 1px !important; height: 1px !important;
+  padding: 0 !important; margin: -1px !important; overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important;
+}
 
 /* ─── Print styles ─── */
 @media print {

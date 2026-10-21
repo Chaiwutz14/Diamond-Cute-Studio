@@ -9,7 +9,7 @@
    - ไม่แตะ Firebase / ImgBB / API (ให้ผ่านตรงเสมอ)
 ═══════════════════════════════════════════════ */
 
-const CACHE_VERSION = 'dcs-v41-fixed-blue-pink-ui';
+const CACHE_VERSION = 'dcs-v43-mobile-homepage-audit';
 const CACHE_NAME = 'dmc-studio-' + CACHE_VERSION;
 
 // ไฟล์หลักที่ pre-cache ตอนติดตั้ง (โหลดครั้งแรกเร็วขึ้น + ออฟไลน์ได้)
