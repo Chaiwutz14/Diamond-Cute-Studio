@@ -62,7 +62,7 @@ window.Reviews = (function(){
     const today = new Date().toISOString().slice(0, 10);
     if (data.date !== today) data = { date: today, total: 0, products: {} };
 
-    if (data.products[productId]) return { ok: false, reason: 'คุณรีวิวสินค้านี้ไปแล้ววันนี้ ขอบคุณครับ 🙏' };
+    if (data.products[productId]) return { ok: false, reason: 'คุณรีวิวสินค้านี้ไปแล้ววันนี้ ขอบคุณครับ' };
     if (data.total >= 3)          return { ok: false, reason: 'รีวิวได้สูงสุด 3 ครั้งต่อวัน' };
     return { ok: true, data };
   }
@@ -135,7 +135,7 @@ window.Reviews = (function(){
   function starsHtml(rating) {
     const r = Math.round(Number(rating) || 0);
     let html = '';
-    for (let i = 1; i <= 5; i++) html += '<span class="rv-star ' + (i <= r ? 'on' : '') + '">★</span>';
+    for (let i = 1; i <= 5; i++) html += '<span class="rv-star ' + (i <= r ? 'on' : '') + '">' + DMC.iconSvg('star', 'rv-star-icon') + '</span>';
     return '<span class="rv-stars" aria-label="' + r + ' ดาว">' + html + '</span>';
   }
 
@@ -151,7 +151,7 @@ window.Reviews = (function(){
     if (r.createdAt?.toDate)       date = DMC.formatDate(r.createdAt);
     else if (r.createdAt?.seconds) date = DMC.formatDate(new Date(r.createdAt.seconds * 1000));
     const badge = r.source === 'admin'
-      ? '<span class="rv-badge-shop">🏪 รีวิวจากร้าน</span>'
+      ? '<span class="rv-badge-shop">' + DMC.iconSvg('grid') + ' รีวิวจากร้าน</span>'
       : '<span class="rv-badge-verified">✓ ลูกค้า</span>';
     return [
       '<div class="rv-card">',
@@ -163,7 +163,7 @@ window.Reviews = (function(){
           '</div>',
         '</div>',
         '<div class="rv-text">' + DMC.escapeHtml(r.text || '') + '</div>',
-        (r.productName && !r._hideProduct ? '<div class="rv-product">📦 ' + DMC.escapeHtml(r.productName) + '</div>' : ''),
+        (r.productName && !r._hideProduct ? '<div class="rv-product">' + DMC.iconSvg('package') + ' ' + DMC.escapeHtml(r.productName) + '</div>' : ''),
       '</div>'
     ].join('');
   }

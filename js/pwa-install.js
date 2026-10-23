@@ -35,7 +35,7 @@
     var bar = document.createElement('div');
     bar.id = 'pwa-install-banner';
     bar.innerHTML =
-      '<div class="pwa-ib-icon">💎</div>'
+      '<div class="pwa-ib-icon">' + DMC.iconSvg('sparkle') + '</div>'
       + '<div class="pwa-ib-text"><strong>ติดตั้งแอป Diamond Cute Studio</strong>'
       + '<span>เปิดใช้งานเร็วขึ้น เหมือนแอปจริง</span></div>'
       + '<button class="pwa-ib-install" id="pwa-ib-install">ติดตั้ง</button>'

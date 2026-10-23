@@ -8,14 +8,14 @@ var CAT_LABELS = {};
 
 // ─── รูปตัวอย่าง demo (ใช้เฉพาะตอนร้านยังไม่เพิ่มรูปจริง) ───
 var DEMO_ITEMS = [
-  { cat:'polaroid', name:'โพลารอยด์ขอบขาว', emoji:'📸', size:'tall', _demo:true },
-  { cat:'business-card', name:'นามบัตรเคลือบมัน', emoji:'💼', size:'wide', _demo:true },
-  { cat:'qrcode', name:'ป้าย QR PromptPay', emoji:'📱', _demo:true },
-  { cat:'business-card', name:'นามบัตรด้าน Matte', emoji:'🗒️', _demo:true },
-  { cat:'polaroid', name:'โพลารอยด์ Square', emoji:'📷', _demo:true },
-  { cat:'shop-sign', name:'ป้ายชื่อร้าน', emoji:'🏪', size:'tall', _demo:true },
-  { cat:'doll-tag', name:'ป้ายตุ๊กตาหัวดุ๊กดิ๊ก', emoji:'🧸', _demo:true },
-  { cat:'lanyard', name:'บัตรนักเรียน', emoji:'🪪', _demo:true },
+  { cat:'polaroid', name:'โพลารอยด์ขอบขาว', size:'tall', _demo:true },
+  { cat:'business-card', name:'นามบัตรเคลือบมัน', size:'wide', _demo:true },
+  { cat:'qrcode', name:'ป้าย QR PromptPay', _demo:true },
+  { cat:'business-card', name:'นามบัตรด้าน Matte', _demo:true },
+  { cat:'polaroid', name:'โพลารอยด์ Square', _demo:true },
+  { cat:'shop-sign', name:'ป้ายชื่อร้าน', size:'tall', _demo:true },
+  { cat:'doll-tag', name:'ป้ายตุ๊กตาหัวดุ๊กดิ๊ก', _demo:true },
+  { cat:'lanyard', name:'บัตรนักเรียน', _demo:true },
 ];
 
 var GALLERY_ITEMS = DEMO_ITEMS.slice();
@@ -28,7 +28,6 @@ function normItem(raw, id) {
     cat: raw.cat || raw.category || 'other',
     name: raw.name || raw.title || 'ผลงาน',
     image: raw.image || raw.imageUrl || raw.url || '',
-    emoji: raw.emoji || '🖼️',
     size: raw.size || '',
     createdAt: raw.createdAt || null,
   };
@@ -42,7 +41,7 @@ function renderGallery(cat) {
 
   if (items.length === 0) {
     grid.innerHTML = '<div class="empty-gallery" style="grid-column:1/-1;text-align:center;padding:2.5rem 1rem;color:var(--text-2)">'
-      + '<div style="font-size:2.5rem;margin-bottom:.75rem">🔍</div>'
+      + '<div class="gallery-empty-icon" aria-hidden="true">' + DMC.iconSvg('search') + '</div>'
       + '<h3>ยังไม่มีตัวอย่างงานในหมวดนี้</h3>'
       + '<p style="margin-top:.4rem">ติดต่อเราผ่าน LINE เพื่อดูตัวอย่างเพิ่มเติม</p></div>';
     return;
@@ -50,11 +49,11 @@ function renderGallery(cat) {
 
   grid.innerHTML = items.map(function(item, i){
     var inner = item.image
-      ? '<img src="'+DMC.imgCDN(item.image, 520)+'" data-full="'+esc(item.image)+'" alt="'+esc(item.name)+'" loading="lazy" decoding="async" data-emoji="'+esc(item.emoji)+'">'
-      : '<span class="gallery-emoji-ph">'+item.emoji+'</span>';
+      ? '<img src="'+DMC.imgCDN(item.image, 520)+'" data-full="'+esc(item.image)+'" alt="'+esc(item.name)+'" loading="lazy" decoding="async">'
+      : '<span class="gallery-emoji-ph" aria-hidden="true">'+DMC.iconSvg('image','gallery-placeholder-icon')+'</span>';
     return '<div class="gallery-item" data-idx="'+i+'" data-cat="'+esc(item.cat)+'">'
       + '<div class="gallery-img '+(item.size||'')+'">' + inner + '</div>'
-      + '<div class="gallery-overlay"><div class="gallery-overlay-text">🔍 ดูเต็ม</div></div>'
+      + '<div class="gallery-overlay"><div class="gallery-overlay-text">'+DMC.iconSvg('search')+' ดูเต็ม</div></div>'
       + '<div class="gallery-caption">'
       + '<div class="gallery-cat">'+esc(CAT_LABELS[item.cat]||item.cat)+'</div>'
       + '<div class="gallery-name">'+esc(item.name)+'</div>'
@@ -69,7 +68,7 @@ function renderGallery(cat) {
       var lbc = document.getElementById('lightbox-content');
       lbc.innerHTML = item.image
         ? '<img class="lightbox-img" src="'+item.image+'" alt="'+esc(item.name)+'">'
-        : '<div class="lightbox-emoji">'+item.emoji+'</div>';
+        : '<div class="lightbox-emoji" aria-hidden="true">'+DMC.iconSvg('image','gallery-placeholder-icon')+'</div>';
       document.getElementById('lightbox').classList.add('open');
     });
   });
@@ -84,7 +83,7 @@ function rebuildTabs(cats) {
   var html = '<button class="gallery-tab active" data-cat="all">ทั้งหมด</button>';
   cats.forEach(function(cat){
     CAT_LABELS[cat.id] = cat.name;
-    html += '<button class="gallery-tab" data-cat="'+esc(cat.id)+'">'+(cat.emoji?cat.emoji+' ':'')+esc(cat.name)+'</button>';
+    html += '<button class="gallery-tab" data-cat="'+esc(cat.id)+'"><span class="gallery-tab-icon" aria-hidden="true">'+DMC.iconSvg(cat.icon || 'grid')+'</span><span>'+esc(cat.name)+'</span></button>';
   });
   wrap.innerHTML = html;
   bindTabs();
@@ -126,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function(){
       try {
         if (window.DMCCat) {
           var allCats = await DMCCat.loadAll(db);
-          rebuildTabs(allCats.map(function(c){ return { id: c.slug, name: c.name, emoji: c.emoji }; }));
+          rebuildTabs(allCats.map(function(c){ return { id: c.slug, name: c.name, icon: c.icon }; }));
         }
       } catch(e) {}
 

@@ -29,7 +29,7 @@
     var css = ''
       + '.footer{background:var(--bg-mid);border-top:1px solid var(--border);margin-top:2rem}'
       + '.footer-main{max-width:1200px;margin:0 auto;padding:2.5rem 1.5rem 1.75rem;display:grid;grid-template-columns:1.6fr 1fr 1fr 1.2fr;gap:2.5rem}'
-      + '.footer-brand .logo-text{font-family:var(--font-display);font-weight:800;font-size:1.12rem;background:linear-gradient(135deg,var(--accent),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.55rem;display:block;text-decoration:none}'
+      + '.footer-brand .logo-text{font-family:var(--font-display);font-weight:800;font-size:1.12rem;background:linear-gradient(135deg,var(--accent),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.55rem;display:inline-flex;align-items:center;gap:.5rem;text-decoration:none}.footer-brand .logo-text img{width:32px;height:32px;object-fit:contain;flex:0 0 32px}'
       + '.footer-brand p{font-size:.82rem;color:var(--text-2);line-height:1.7;max-width:240px;margin-bottom:1.05rem}'
       + '.footer-socials{display:flex;gap:.55rem;flex-wrap:wrap}'
       + '.social-btn{width:38px;height:38px;border-radius:var(--r-md);background:var(--glass,rgba(125,125,125,.08));border:1px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all var(--t-fast,.2s);color:var(--text-2)}'
@@ -79,7 +79,7 @@
       + '<footer class="footer">'
       +   '<div class="footer-main">'
       +     '<div class="footer-brand">'
-      +       '<a href="index.html" class="logo-text">💎 Diamond Cute Studio</a>'
+      +       '<a href="index.html" class="logo-text"><img src="assets/dmc-logo.svg" alt="" aria-hidden="true"><span>Diamond Cute Studio</span></a>'
       +       '<p>บริการพิมพ์ภาพและสิ่งพิมพ์คุณภาพ<br>รับออเดอร์ทุกวัน ส่งทั่วประเทศไทย</p>'
       +       '<div class="footer-socials">'
       +         social('line','line',lineHref(),'LINE')
@@ -91,27 +91,27 @@
       +     '</div>'
       +     '<div class="footer-col">'
       +       '<h4>สินค้า</h4>'
-      +       '<a href="catalog.html?cat=polaroid">📸 รูปโพลารอยด์</a>'
-      +       '<a href="catalog.html?cat=lanyard">🪪 บัตรแขวนคอ</a>'
-      +       '<a href="catalog.html?cat=business-card">💼 นามบัตร</a>'
-      +       '<a href="catalog.html?cat=qrcode">📱 QR Code</a>'
+      +       '<a href="catalog.html?cat=polaroid">' + DMC.iconSvg('image') + ' รูปโพลารอยด์</a>'
+      +       '<a href="catalog.html?cat=lanyard">' + DMC.iconSvg('card') + ' บัตรแขวนคอ</a>'
+      +       '<a href="catalog.html?cat=business-card">' + DMC.iconSvg('card') + ' นามบัตร</a>'
+      +       '<a href="catalog.html?cat=qrcode">' + DMC.iconSvg('grid') + ' QR Code</a>'
       +     '</div>'
       +     '<div class="footer-col">'
       +       '<h4>ข้อมูล</h4>'
-      +       '<a href="about.html">📋 วิธีสั่งซื้อ</a>'
-      +       '<a href="orders.html">📦 ติดตามออเดอร์</a>'
-      +       '<a href="gallery.html">🖼️ ตัวอย่างงาน</a>'
-      +       '<a href="contact.html">💬 ติดต่อเรา</a>'
+      +       '<a href="about.html">' + DMC.iconSvg('document') + ' วิธีสั่งซื้อ</a>'
+      +       '<a href="orders.html">' + DMC.iconSvg('package') + ' ติดตามออเดอร์</a>'
+      +       '<a href="gallery.html">' + DMC.iconSvg('image') + ' ตัวอย่างงาน</a>'
+      +       '<a href="contact.html">' + DMC.iconSvg('chat') + ' ติดต่อเรา</a>'
       +     '</div>'
       +     '<div class="footer-col">'
       +       '<h4>ติดต่อเรา</h4>'
-      +       '<a href="' + lineHref() + '" target="_blank" rel="noopener">💬 แชท LINE</a>'
-      +       '<a href="about.html#faq">❓ คำถามที่พบบ่อย</a>'
-      +       '<a href="about.html#policy">🔒 นโยบายความเป็นส่วนตัว</a>'
+      +       '<a href="' + lineHref() + '" target="_blank" rel="noopener">' + DMC.iconSvg('chat') + ' แชท LINE</a>'
+      +       '<a href="about.html#faq">' + DMC.iconSvg('document') + ' คำถามที่พบบ่อย</a>'
+      +       '<a href="about.html#policy">' + DMC.iconSvg('document') + ' นโยบายความเป็นส่วนตัว</a>'
       +     '</div>'
       +   '</div>'
       +   '<div class="footer-bottom">'
-      +     '<span>© 2026 Diamond Cute Studio 💎 — All rights reserved.</span>'
+      +     '<span>© 2026 Diamond Cute Studio — All rights reserved.</span>'
       +     '<span id="footer-catalog-fresh" style="opacity:.8"></span>'
       +     '<span>Powered by Firebase + Cloudflare</span>'
       +   '</div>'
@@ -130,7 +130,7 @@
           if (!j || !j.generatedAt) return;
           var d = new Date(j.generatedAt);
           var ago = (window.DMC && DMC.timeAgo) ? DMC.timeAgo(d) : '';
-          el.textContent = '🗓️ อัปเดตแคตตาล็อก' + (ago ? ' ' + ago : '');
+          el.innerHTML = DMC.iconSvg('clock') + ' อัปเดตแคตตาล็อก' + (ago ? ' ' + ago : '');
         })
         .catch(function(){});
     } catch (e) {}

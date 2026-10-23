@@ -15,29 +15,14 @@ function catalogCoverOf(p) {
 }
 
 
-const PLACEHOLDER_PRODUCTS = [
-  { id:'p1', name:'รูปโพลารอยด์ 3×4 นิ้ว',      shortDesc:'กระดาษ Fuji Crystal Archive สีสดใส ทนทาน', price:29,  unit:'ใบ',    emoji:'📸', category:'polaroid',      isHot:true  },
-  { id:'p2', name:'รูปโพลารอยด์ 4×6 นิ้ว',      shortDesc:'ขนาดใหญ่ เหมาะตกแต่งห้อง คุณภาพสูง',    price:39,  unit:'ใบ',    emoji:'🖼️', category:'polaroid',      isNew:true  },
-  { id:'p3', name:'โพลารอยด์ Square 3×3',        shortDesc:'ทรงสี่เหลี่ยมจัตุรัส สไตล์มินิมอล',       price:35,  unit:'ใบ',    emoji:'📷', category:'polaroid'                  },
-  { id:'p4', name:'บัตรแขวนคอนักเรียน',          shortDesc:'PVC อย่างดี พร้อมซองใส+สายคล้อง',        price:59,  unit:'ใบ',    emoji:'🪪', category:'lanyard',       isNew:true  },
-  { id:'p5', name:'บัตรแขวนคอพนักงาน',           shortDesc:'PVC พรีเมียม พร้อมซองใส ปรับแต่งได้',    price:69,  unit:'ใบ',    emoji:'🪪', category:'lanyard'                   },
-  { id:'p6', name:'นามบัตรพรีเมียม (เคลือบมัน)',  shortDesc:'กระดาษ 350 แกรม เคลือบมันเงา',           price:199, unit:'100 ใบ',emoji:'💼', category:'business-card', isSale:true },
-  { id:'p7', name:'นามบัตรด้าน (Matte)',          shortDesc:'กระดาษ 350 แกรม เคลือบด้าน ดูสุภาพ',    price:219, unit:'100 ใบ',emoji:'💼', category:'business-card'             },
-  { id:'p8', name:'ป้ายชื่อร้านอะคริลิก',          shortDesc:'อะคริลิก UV กันน้ำ ทนแดด หลายขนาด',     price:299, unit:'ชิ้น',  emoji:'🏪', category:'shop-sign',     isHot:true  },
-  { id:'p9', name:'ป้ายเมนูร้านค้า',              shortDesc:'พิมพ์ UV บนอะคริลิก คมชัด ทนทาน',        price:199, unit:'ชิ้น',  emoji:'🏪', category:'shop-sign'                 },
-  { id:'p10',name:'ป้าย QR สแกนจ่าย',            shortDesc:'PromptPay + TrueMoney อะคริลิกกันน้ำ',   price:149, unit:'ชิ้น',  emoji:'📱', category:'qrcode'                    },
-  { id:'p11',name:'ป้าย QR ไวไฟร้าน',            shortDesc:'QR Wifi พร้อมขาตั้ง ดีไซน์สวย',          price:129, unit:'ชิ้น',  emoji:'📶', category:'qrcode',        isNew:true  },
-  { id:'p12',name:'ป้ายตุ๊กตาหัวดุ๊กดิ๊ก',        shortDesc:'น่ารัก ทำมือ สกรีนสีสด ทนทาน',          price:49,  unit:'ชิ้น',  emoji:'🧸', category:'doll-tag'                  },
-  { id:'p13',name:'ป้ายตุ๊กตาแขวนกระเป๋า',        shortDesc:'PVC ใส พิมพ์ทั้ง 2 ด้าน',               price:39,  unit:'ชิ้น',  emoji:'🎀', category:'doll-tag',      isNew:true  },
-  { id:'p14',name:'บัตรนักเรียน (ม.ต้น)',         shortDesc:'PVC คุณภาพสูง พร้อมซองใส',               price:55,  unit:'ใบ',    emoji:'🎓', category:'student-card'              },
-  { id:'p15',name:'บัตรนักเรียน (ม.ปลาย)',        shortDesc:'ขนาด CR80 PVC ทนทาน ปรับแต่งได้',        price:55,  unit:'ใบ',    emoji:'🎓', category:'student-card',  isSale:true },
-];
+
 
 let allProducts = [];
 let filteredProducts = [];
 let currentCat = '';
 let currentSort = 'relevance';    // V36: ค่าเริ่มต้น = เกี่ยวข้อง (ไม่มีคำค้น = ยอดนิยม)
 let db = null;
+let catalogLoadFailed = false;
 
 // ═══ V36: Search Engine state ═══
 let searchReady = false;          // ดัชนีพร้อมหรือยัง
@@ -55,20 +40,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const initialSearchInput = document.getElementById('search-input');
   if (initialSearchInput && initialQuery) initialSearchInput.value = initialQuery;
 
-  // Mark active category filter
-  if (currentCat) {
-    document.querySelectorAll('.filter-item[data-cat]').forEach(el => {
-      el.classList.toggle('active', el.dataset.cat === currentCat);
-    });
-  }
+  // Keep the category filter's visual and announced state in sync with the URL.
+  document.querySelectorAll('.filter-item[data-cat]').forEach(el => {
+    const active = el.dataset.cat === currentCat;
+    el.classList.toggle('active', active);
+    el.setAttribute('aria-pressed', String(active));
+  });
 
-  // Try Firebase, fall back to placeholder
+  // Load actual catalog data; do not present sample products as items for sale.
   try {
     db = await DMC.getFirebaseReady();
     await loadFromFirebase();
-  } catch {
-    allProducts = PLACEHOLDER_PRODUCTS;
-    applyFiltersAndRender();
+  } catch (error) {
+    console.warn('Catalog load error:', error);
+    catalogLoadFailed = true;
+    renderCatalogLoadError();
   }
 
   bindEvents();
@@ -76,13 +62,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ─── Firebase Load ───
 async function loadFromFirebase() {
-  try {
-    // V16: ใช้ตัวโหลดกลาง (snapshot → cache → Firestore) — แชร์แคชกับหน้าแรก ลดการอ่านซ้ำ
-    const list = await DMC.loadProducts({ limit: 500 });
-    allProducts = (list && list.length) ? list : PLACEHOLDER_PRODUCTS;
-  } catch {
-    allProducts = PLACEHOLDER_PRODUCTS;
-  }
+  // V16: ใช้ตัวโหลดกลาง (snapshot → cache → Firestore) — แชร์แคชกับหน้าแรก ลดการอ่านซ้ำ
+  const list = await DMC.loadProducts({ limit: 500 });
+  allProducts = Array.isArray(list) ? list.filter(product => product && product.active !== false) : [];
+  catalogLoadFailed = false;
   // โหลดหมวดหมู่ (รวม custom) ให้ DMCCat.matches เทียบ slug↔ชื่อไทยได้ครบ
   try { if (window.DMCCat && DMCCat.loadAll) await DMCCat.loadAll(db); } catch(e) {}
   await buildSearchIndex();       // V36: สร้างดัชนีค้นหา (รวม synonym/alias ของแอดมิน)
@@ -131,9 +114,12 @@ function bindEvents() {
   document.getElementById('cat-filter-list')?.addEventListener('click', e => {
     const item = e.target.closest('.filter-item[data-cat]');
     if (!item) return;
-    document.querySelectorAll('.filter-item[data-cat]').forEach(el => el.classList.remove('active'));
-    item.classList.add('active');
     currentCat = item.dataset.cat;
+    document.querySelectorAll('.filter-item[data-cat]').forEach(el => {
+      const active = el.dataset.cat === currentCat;
+      el.classList.toggle('active', active);
+      el.setAttribute('aria-pressed', String(active));
+    });
     applyFiltersAndRender();
   });
 
@@ -191,10 +177,13 @@ function bindEvents() {
     mobileSelect.addEventListener('change', function(){
       currentCat = mobileSelect.value;
       document.querySelectorAll('.filter-item[data-cat]').forEach(function(el){
-        el.classList.toggle('active', el.dataset.cat === currentCat);
+        const active = el.dataset.cat === currentCat;
+        el.classList.toggle('active', active);
+        el.setAttribute('aria-pressed', String(active));
       });
       applyFiltersAndRender();
     });
+    if (currentCat) mobileSelect.dispatchEvent(new Event('change', { bubbles: true }));
   }
 }
 
@@ -348,6 +337,18 @@ function renderProducts(search) {
   const grid = document.getElementById('catalog-grid');
   if (!grid) return;
 
+  if (catalogLoadFailed) {
+    renderCatalogLoadError();
+    updateLoadMore();
+    return;
+  }
+
+  if (!allProducts.length) {
+    grid.innerHTML = '<div class="catalog-state" role="status"><h2>ขณะนี้ยังไม่มีสินค้า</h2><p>กรุณากลับมาเยี่ยมชมอีกครั้งในภายหลัง</p></div>';
+    updateLoadMore();
+    return;
+  }
+
   if (filteredProducts.length === 0) {
     renderNoResults(grid, search);
     updateLoadMore();
@@ -373,6 +374,26 @@ function renderProducts(search) {
   });
 }
 
+function renderCatalogLoadError() {
+  const grid = document.getElementById('catalog-grid');
+  if (!grid) return;
+  grid.innerHTML = '<div class="catalog-state" role="alert"><h2>โหลดสินค้าไม่สำเร็จ</h2><p>ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</p><button type="button" class="btn btn-primary btn-md" id="retry-catalog-load">ลองอีกครั้ง</button></div>';
+  document.getElementById('retry-catalog-load')?.addEventListener('click', async function (event) {
+    const retry = event.currentTarget;
+    retry.disabled = true;
+    retry.textContent = 'กำลังโหลด...';
+    grid.innerHTML = '<div class="catalog-state" role="status">กำลังโหลดสินค้า...</div>';
+    try {
+      db = await DMC.getFirebaseReady();
+      await loadFromFirebase();
+    } catch (error) {
+      console.warn('Catalog retry error:', error);
+      catalogLoadFailed = true;
+      renderCatalogLoadError();
+    }
+  });
+}
+
 // ═══ V36: No Result Handling — Did you mean + คำใกล้เคียง + สินค้าขายดี + หมวดหมู่ ═══
 function renderNoResults(grid, search) {
   const dym    = (search && searchReady) ? DCSearch.didYouMean(search) : null;
@@ -382,7 +403,7 @@ function renderNoResults(grid, search) {
 
   let html = `
     <div style="grid-column:1/-1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2.5rem 1.25rem;color:var(--text-3)">
-      <div style="font-size:2.5rem;margin-bottom:.75rem">🔍</div>
+      <div class="catalog-empty-icon">${DMC.iconSvg('search')}</div>
       <p style="margin:0 0 .35rem;font-weight:700;color:var(--text-2)">${search ? 'ไม่พบสินค้าที่ตรงกับ "' + DMC.escapeHtml(search) + '"' : 'ไม่พบสินค้าที่ตรงกับเงื่อนไข'}</p>`;
 
   if (dym) html += `
@@ -403,7 +424,7 @@ function renderNoResults(grid, search) {
 
   if (hot.length) html += `
     <div style="grid-column:1/-1;width:100%;margin-top:.25rem">
-      <div style="font-family:var(--font-display);font-weight:800;color:var(--text-2);margin:0 0 .8rem">🔥 สินค้าขายดี — เผื่อถูกใจ</div>
+      <div class="catalog-hot-title">${DMC.iconSvg('package')} สินค้าขายดี — เผื่อถูกใจ</div>
     </div>
     ${hot.map(p => buildCard(p, '')).join('')}`;
 
@@ -444,45 +465,51 @@ function loadMore() {
 }
 
 function buildCard(p, search) {
+  const productId = DMC.escapeHtml(p.id);
   // V36: ไฮไลต์คำที่ค้นในชื่อ/คำอธิบาย (escape ปลอดภัยในตัว)
   const hlName = (search && searchReady) ? DCSearch.highlight(p.name, search) : DMC.escapeHtml(p.name);
   const hlDesc = (search && searchReady) ? DCSearch.highlight(p.shortDesc || '', search) : DMC.escapeHtml(p.shortDesc || '');
   const badges = [];
-  if (p.isNew)  badges.push('<span class="badge badge-new">✨ ใหม่</span>');
-  if (p.isHot)  badges.push('<span class="badge badge-hot">🔥 ขายดี</span>');
-  if (p.isSale) badges.push('<span class="badge badge-sale">💰 ลด</span>');
+  if (p.isNew)  badges.push(`<span class="badge badge-new">${DMC.iconSvg('sparkle')} ใหม่</span>`);
+  if (p.isHot)  badges.push(`<span class="badge badge-hot">${DMC.iconSvg('check')} ขายดี</span>`);
+  if (p.isSale) badges.push(`<span class="badge badge-sale">${DMC.iconSvg('card')} ลด</span>`);
   // V29: ป้าย "ออกแบบได้" ย้ายเป็นแถบทึบชิดขอบล่างรูป (design-strip) — อ่านออกชัดบนภาพทุกโทนสี
   const oldPrice = p.oldPrice ? `<span class="product-price-old">${DMC.formatPrice(p.oldPrice)}</span>` : '';
 
   return `
-    <a href="product.html?id=${p.id}" class="product-card" data-id="${p.id}">
+    <article class="product-card" data-id="${productId}">
+      <a href="product.html?id=${encodeURIComponent(p.id)}" class="product-card-link">
       <div class="product-img-wrap">
-        ${catalogCoverOf(p) ? `<img src="${DMC.imgCDN(catalogCoverOf(p), 440)}" data-full="${DMC.escapeHtml(catalogCoverOf(p))}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">` : `<span>${p.emoji||'📦'}</span>`}
+        ${catalogCoverOf(p) ? `<img src="${DMC.imgCDN(catalogCoverOf(p), 440)}" data-full="${DMC.escapeHtml(catalogCoverOf(p))}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">` : `<span class="catalog-card-placeholder">${DMC.iconSvg('package')}</span>`}
         <div class="product-img-overlay"></div>
         ${badges.length ? `<div class="product-badges">${badges.join('')}</div>` : ''}
-        ${p.hasPreview ? '<div class="design-strip"><span class="design-strip-ico">🎨</span> ออกแบบเองได้ · ฟรี</div>' : ''}
-        <button class="product-wish" data-id="${p.id}" aria-label="บันทึก" title="บันทึก">♡</button>
+        ${p.hasPreview ? `<div class="design-strip"><span class="design-strip-ico">${DMC.iconSvg('palette')}</span> ออกแบบเองได้ · ฟรี</div>` : ''}
       </div>
       <div class="product-info">
-        <div class="product-name">${hlName}</div>
+        <h3 class="product-name">${hlName}</h3>
         <div class="product-desc">${hlDesc}</div>
+      </div>
+      </a>
+      <button type="button" class="product-wish" data-id="${productId}" aria-label="บันทึก ${DMC.escapeHtml(p.name)}" title="บันทึก ${DMC.escapeHtml(p.name)}" aria-pressed="false">${DMC.iconSvg('heart')}</button>
+      <div class="product-info product-actions">
         <div class="product-footer">
           <div>
             <div class="product-price">${DMC.formatPrice(p.price)}<span class="unit">/${p.unit||'ชิ้น'}</span></div>
             ${oldPrice}
           </div>
-          <button class="btn-add-cart" data-id="${p.id}" aria-label="ใส่ตะกร้า" title="ใส่ตะกร้า">+</button>
+          <button type="button" class="btn-add-cart" data-id="${productId}" aria-label="เพิ่ม ${DMC.escapeHtml(p.name)} ลงตะกร้า" title="เพิ่ม ${DMC.escapeHtml(p.name)} ลงตะกร้า">${DMC.iconSvg('plus')}</button>
         </div>
       </div>
-    </a>
+    </article>
   `;
 }
 
 function bindCardEvents(container) {
   // V36: Analytics CTR — คลิกเข้าดูสินค้าหลังค้นหา
-  container.querySelectorAll('.product-card').forEach(card => {
-    if (card.dataset.ctrBound) return;
-    card.dataset.ctrBound = '1';
+  container.querySelectorAll('.product-card-link').forEach(card => {
+    const productCard = card.closest('.product-card');
+    if (!productCard || productCard.dataset.ctrBound) return;
+    productCard.dataset.ctrBound = '1';
     card.addEventListener('click', logSearchClick);
   });
   container.querySelectorAll('.btn-add-cart').forEach(btn => {
@@ -492,16 +519,19 @@ function bindCardEvents(container) {
       if (!p) return;
       // bug-fix: เพิ่ม image field → ตะกร้าโชว์รูปสินค้าจริง (รองรับ p.images[0] ของสินค้าใหม่ + p.image ของสินค้าเก่า)
       const image = (Array.isArray(p.images) && p.images[0] && (p.images[0].url || p.images[0])) || p.image || '';
-      DMC.addToCart({ id:p.id, name:p.name, price:p.price, unit:p.unit||'ชิ้น', emoji:p.emoji||'📦', image, qty:1 });
-      btn.textContent = '✓';
-      setTimeout(() => btn.textContent = '+', 1200);
+      DMC.addToCart({ id:p.id, name:p.name, price:p.price, unit:p.unit||'ชิ้น', image, qty:1 });
+      btn.innerHTML = DMC.iconSvg('check');
+      btn.setAttribute('aria-label', `เพิ่ม ${p.name} ลงตะกร้าแล้ว`);
+      setTimeout(() => { btn.innerHTML = DMC.iconSvg('plus'); btn.setAttribute('aria-label', `เพิ่ม ${p.name} ลงตะกร้า`); }, 1200);
     });
   });
   container.querySelectorAll('.product-wish').forEach(btn => {
     btn.addEventListener('click', e => {
       e.preventDefault(); e.stopPropagation();
       btn.classList.toggle('active');
-      btn.textContent = btn.classList.contains('active') ? '♥' : '♡';
+      const active = btn.classList.contains('active');
+      btn.innerHTML = DMC.iconSvg('heart');
+      btn.setAttribute('aria-pressed', String(active));
     });
   });
 }
@@ -509,14 +539,14 @@ function bindCardEvents(container) {
 // ─── Result Count ───
 function updateResultCount() {
   const el = document.getElementById('result-count');
-  if (el) el.textContent = filteredProducts.length;
+  if (el) el.textContent = catalogLoadFailed ? '—' : filteredProducts.length;
   // Show cross-category hint when searching with category active
   const search = document.getElementById('search-input')?.value.trim();
   const hintEl = document.getElementById('search-cat-hint');
   if (hintEl) {
     if (search && currentCat) {
       hintEl.style.display = '';
-      hintEl.textContent = '🔍 ค้นหาจากทุกหมวดหมู่เนื่องจากมีคำค้นหา';
+      hintEl.innerHTML = DMC.iconSvg('search') + ' ค้นหาจากทุกหมวดหมู่เนื่องจากมีคำค้นหา';
     } else {
       hintEl.style.display = 'none';
     }
@@ -528,12 +558,12 @@ function updateActiveFilterTags(search, priceMin, priceMax, filterNew, filterHot
   const wrap = document.getElementById('active-filters');
   if (!wrap) return;
   const tags = [];
-  if (search)            tags.push({ label:`🔍 "${search}"`, clear:() => { document.getElementById('search-input').value=''; applyFiltersAndRender(); } });
+  if (search)            tags.push({ label:`${DMC.iconSvg('search')} "${DMC.escapeHtml(search)}"`, clear:() => { document.getElementById('search-input').value=''; applyFiltersAndRender(); } });
   if (priceMin > 0)      tags.push({ label:`ราคา ≥ ${DMC.formatPrice(priceMin)}`, clear:() => { document.getElementById('price-min').value=''; applyFiltersAndRender(); } });
   if (priceMax < Infinity)tags.push({ label:`ราคา ≤ ${DMC.formatPrice(priceMax)}`, clear:() => { document.getElementById('price-max').value=''; applyFiltersAndRender(); } });
-  if (filterNew)         tags.push({ label:'✨ ใหม่', clear:() => { document.getElementById('filter-new').checked=false; applyFiltersAndRender(); } });
-  if (filterHot)         tags.push({ label:'🔥 ขายดี', clear:() => { document.getElementById('filter-hot').checked=false; applyFiltersAndRender(); } });
-  if (filterSale)        tags.push({ label:'💰 ลด', clear:() => { document.getElementById('filter-sale').checked=false; applyFiltersAndRender(); } });
+  if (filterNew)         tags.push({ label:`${DMC.iconSvg('sparkle')} ใหม่`, clear:() => { document.getElementById('filter-new').checked=false; applyFiltersAndRender(); } });
+  if (filterHot)         tags.push({ label:`${DMC.iconSvg('check')} ขายดี`, clear:() => { document.getElementById('filter-hot').checked=false; applyFiltersAndRender(); } });
+  if (filterSale)        tags.push({ label:`${DMC.iconSvg('card')} ลด`, clear:() => { document.getElementById('filter-sale').checked=false; applyFiltersAndRender(); } });
 
   if (tags.length === 0) { wrap.style.display = 'none'; return; }
   wrap.style.display = 'flex';
@@ -547,7 +577,11 @@ function updateActiveFilterTags(search, priceMin, priceMax, filterNew, filterHot
 
 function clearFilters() {
   currentCat = '';
-  document.querySelectorAll('.filter-item[data-cat]').forEach(el => el.classList.toggle('active', el.dataset.cat === ''));
+  document.querySelectorAll('.filter-item[data-cat]').forEach(el => {
+    const active = el.dataset.cat === '';
+    el.classList.toggle('active', active);
+    el.setAttribute('aria-pressed', String(active));
+  });
   if (document.getElementById('search-input'))   document.getElementById('search-input').value = '';
   if (document.getElementById('price-min'))      document.getElementById('price-min').value = '';
   if (document.getElementById('price-max'))      document.getElementById('price-max').value = '';
@@ -608,14 +642,14 @@ async function renderSuggest() {
     // ยังไม่พิมพ์ → คำค้นล่าสุด + ยอดนิยม
     const recent = getRecentSearches().slice(0, 5);
     if (recent.length) {
-      rows.push({ header: '🕘 ค้นหาล่าสุด' });
+      rows.push({ header: `${DMC.iconSvg('clock')} ค้นหาล่าสุด` });
       recent.forEach(t => rows.push({ text: t, type: 'recent' }));
     }
     const pop = await getPopularSearches();
     // กันแข่งกับผู้ใช้พิมพ์ระหว่างรอ await
     if (inp.value.trim()) return;
     if (pop.length) {
-      rows.push({ header: '🔥 คำค้นยอดนิยม' });
+      rows.push({ header: `${DMC.iconSvg('search')} คำค้นยอดนิยม` });
       pop.filter(t => !recent.includes(t)).slice(0, 6).forEach(t => rows.push({ text: t, type: 'popular' }));
     }
   } else {
@@ -637,12 +671,12 @@ async function renderSuggest() {
   _suggestItems = rows.filter(r => !r.header).map(r => r.text);
   _suggestActive = -1;
 
-  const ICON = { recent: '🕘', popular: '🔥', product: '🔍', term: '🔍', dym: '💡' };
+  const ICON = { recent: 'clock', popular: 'search', product: 'search', term: 'search', dym: 'search' };
   box.innerHTML = rows.map(r => {
     if (r.header) return `<div class="suggest-header">${r.header}</div>`;
     const label = (r.type === 'dym') ? `คุณหมายถึง "<b>${DMC.escapeHtml(r.text)}</b>"?` : DMC.escapeHtml(r.text);
     return `<div class="suggest-item" role="option" data-term="${DMC.escapeHtml(r.text)}">
-      <span class="suggest-ico">${ICON[r.type] || '🔍'}</span><span class="suggest-txt">${label}</span></div>`;
+      <span class="suggest-ico">${DMC.iconSvg(ICON[r.type] || 'search')}</span><span class="suggest-txt">${label}</span></div>`;
   }).join('');
   box.style.display = '';
 

@@ -6,13 +6,13 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com https://www.gstatic.com https://challenges.cloudflare.com; frame-src https://www.google.com https://*.firebaseapp.com https://challenges.cloudflare.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta property="og:title" content="ติดต่อเรา — Diamond Cute Studio 💎">
-  <meta property="og:description" content="Diamond Cute Studio 💎 — ติดต่อเราผ่าน LINE Facebook Instagram หรือส่งข้อความโดยตรง">
+    <meta property="og:title" content="ติดต่อเรา — Diamond Cute Studio">
+  <meta property="og:description" content="Diamond Cute Studio — ติดต่อผ่านช่องทางที่แสดงในหน้าเว็บ หรือส่งข้อความถึงร้านโดยตรง">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
-  <meta name="description" content="Diamond Cute Studio 💎 — ติดต่อเราผ่าน LINE Facebook Instagram หรือส่งข้อความโดยตรง">
+  <meta name="description" content="Diamond Cute Studio — ติดต่อผ่านช่องทางที่แสดงในหน้าเว็บ หรือส่งข้อความถึงร้านโดยตรง">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ติดต่อเรา — Diamond Cute Studio 💎</title>
+  <title>ติดต่อเรา — Diamond Cute Studio</title>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#F4F9FE">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -33,42 +33,46 @@
   <link rel="stylesheet" href="css/core.css">
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/home.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+  <link rel="icon" type="image/png" href="assets/icon-192.png">
   <style>
-    .contact-wrapper { max-width: 900px; margin: 0 auto; padding: calc(var(--nav-h) + 2rem) 1.5rem 4rem; }
-    .page-hero { text-align: center; margin-bottom: 2.5rem; }
-    .page-hero h1 { font-size: clamp(1.8rem,4vw,2.5rem); font-weight: 800; margin-bottom: .6rem; }
-    .page-hero p  { color: var(--text-2); }
+    .contact-wrapper { max-width: 980px; margin: 0 auto; padding: calc(var(--nav-h) + .9rem) 1.5rem 2.5rem; }
+    .contact-page-title { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+    .page-hero { text-align: center; margin: 0 auto .85rem; max-width: 680px; }
+    .page-hero p  { color: var(--text-2); font-size: .87rem; line-height: 1.5; margin: 0; }
 
-    .contact-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .contact-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
 
     /* Channel cards */
     .channel-list { display: flex; flex-direction: column; gap: .85rem; }
     .channel-card {
       background: var(--bg-card); border: 1.5px solid var(--border);
-      border-radius: var(--r-xl); padding: 1.25rem;
+      border-radius: var(--r-lg); padding: .9rem 1rem;
       display: flex; align-items: center; gap: 1rem;
       text-decoration: none; color: inherit;
       transition: all .2s;
     }
     .channel-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-hover); }
-    .channel-icon { width: 52px; height: 52px; border-radius: var(--r-lg); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
-    .channel-icon.line { background: #06C755; }
-    .channel-icon.fb   { background: #1877F2; }
-    .channel-icon.ig   { background: linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); }
-    .channel-icon.tt   { background: #010101; }
+    .channel-card:focus-visible { outline: 3px solid rgba(22,137,210,.42); outline-offset: 3px; }
+    .channel-icon { width: 44px; height: 44px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+    .channel-icon.line { background: #06C755; color: #fff; }
+    .channel-icon.fb   { background: #1877F2; color: #fff; }
+    .channel-icon.ig   { background: linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); color: #fff; }
+    .channel-icon.tt   { background: #010101; color: #fff; }
+    .channel-icon svg { width: 28px; height: 28px; display: block; }
     .channel-icon.mail { background: var(--glass); border: 1.5px solid var(--border); }
+    .channel-icon.phone { background: var(--glass); border: 1.5px solid var(--border); color: var(--text-2); }
     .channel-info {}
-    .channel-name  { font-family: var(--font-display); font-weight: 700; font-size: 1rem; margin-bottom: .15rem; }
+    .channel-name  { font-family: var(--font-display); font-weight: 700; font-size: 1rem; margin: 0 0 .15rem; }
     .channel-handle{ font-size: .83rem; color: var(--text-3); }
     .channel-arrow { margin-left: auto; color: var(--text-3); font-size: .85rem; }
+    .channel-card[hidden], .hours-card[hidden] { display: none !important; }
 
     /* Hours */
     .hours-card {
       background: var(--bg-card); border: 1.5px solid var(--border);
-      border-radius: var(--r-xl); padding: 1.5rem; margin-top: .85rem;
+      border-radius: var(--r-lg); padding: 1rem; margin-top: .65rem;
     }
-    .hours-title { font-family: var(--font-display); font-weight: 700; font-size: .95rem; margin-bottom: 1rem; display: flex; align-items: center; gap: .4rem; }
+    .hours-title { font-family: var(--font-display); font-weight: 700; font-size: .9rem; margin: 0 0 .55rem; display: flex; align-items: center; gap: .4rem; }
     .hours-row   { display: flex; justify-content: space-between; padding: .4rem 0; font-size: .88rem; border-bottom: 1px solid var(--border); }
     .hours-row:last-child { border: none; }
     .hours-day { color: var(--text-2); }
@@ -78,97 +82,95 @@
     /* Form */
     .contact-form-card {
       background: var(--bg-card); border: 1.5px solid var(--border);
-      border-radius: var(--r-xl); padding: 1.75rem;
+      border-radius: var(--r-lg); padding: 1.1rem;
     }
-    .contact-form-title { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: .4rem; }
+    .contact-form-title { font-family: var(--font-display); font-weight: 700; font-size: 1rem; margin: 0 0 .8rem; display: flex; align-items: center; gap: .4rem; }
 
-    .online-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); display: inline-block; animation: pulse-glow 2s infinite; }
-
-    @media(max-width:768px){ .contact-layout{ grid-template-columns: 1fr; } }
+    @media(max-width:768px){ .contact-layout{ grid-template-columns: 1fr; gap: .85rem; } }
+    @media(max-width:760px){ .contact-wrapper{padding:calc(var(--nav-h) + .55rem) .75rem 1.5rem}.page-hero{margin-bottom:.65rem}.channel-list{gap:.5rem}.channel-card{padding:.75rem}.hours-card{padding:.85rem}.contact-form-card{padding:.9rem} }
   </style>
 </head>
 <body>
 <a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
 <div id="navbar-mount"></div>
 
-<div class="contact-wrapper" id="main-content" tabindex="-1">
+<main class="contact-wrapper" id="main-content" tabindex="-1">
+  <h1 class="contact-page-title">ติดต่อเรา</h1>
   <div class="page-hero anim-fade-up">
-    <div style="font-size:3rem;margin-bottom:.75rem">💬</div>
-    <h1>ติดต่อเรา</h1>
-    <p>ยินดีให้บริการทุกวัน ตอบเร็ว ใจดี ไม่มีค่าใช้จ่าย</p>
+    <p>เลือกช่องทางที่สะดวก หรือต้องการสอบถามรายละเอียดส่งข้อความถึงเราได้</p>
   </div>
 
   <div class="contact-layout">
     <!-- Left: Channels + Hours -->
     <div>
       <div class="channel-list">
-        <a href="https://line.me/R/ti/p/YOUR_LINE_OA" target="_blank" rel="noopener" class="channel-card" id="ch-line">
-          <div class="channel-icon line">💬</div>
+        <a class="channel-card" id="ch-line" target="_blank" rel="noopener noreferrer" hidden>
+          <div class="channel-icon line" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 5.7 2 10.27c0 3.84 3.13 7.08 7.5 8.02-.08.73-.42 1.75-1.04 2.56-.23.3-.1.66.27.62 2.87-.32 5.48-2.02 7.25-3.55C19.26 16.1 22 13.5 22 10.27 22 5.7 17.52 2 12 2Z"/><path fill="#fff" d="M6.5 8.1h1.1v4.1h2v1H6.5zm4 0h1.1v5.1h-1.1zm2.2 0h1l2.2 3.1V8.1H17v5.1h-1l-2.2-3.1v3.1h-1.1zm5.2 0h3v1h-1.9v1h1.8v1h-1.8v1.1h2v1h-3.1z"/></svg></div>
           <div class="channel-info">
-            <div class="channel-name">LINE Official Account</div>
-            <div class="channel-handle"><span id="ch-line-label">ช่องทางหลัก ตอบเร็วที่สุด</span> <span class="online-dot"></span></div>
+            <h2 class="channel-name">LINE Official Account</h2>
+            <div class="channel-handle"><span id="ch-line-label">LINE</span></div>
           </div>
-          <span class="channel-arrow">→</span>
+          <span class="channel-arrow" aria-hidden="true">→</span>
         </a>
-        <a href="https://facebook.com/YOUR_PAGE" target="_blank" rel="noopener" class="channel-card" id="ch-fb">
-          <div class="channel-icon fb">📘</div>
+        <a target="_blank" rel="noopener noreferrer" class="channel-card" id="ch-fb" hidden>
+          <div class="channel-icon fb" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M13.4 21v-8h2.7l.4-3.1h-3.1v-2c0-.9.3-1.5 1.6-1.5h1.7V3.6c-.3 0-1.3-.1-2.4-.1-2.5 0-4.2 1.5-4.2 4.3v2.1H7.3V13h2.8v8z"/></svg></div>
           <div class="channel-info">
-            <div class="channel-name">Facebook</div>
-            <div class="channel-handle">Diamond Cute Studio</div>
+            <h2 class="channel-name">Facebook</h2>
+            <div class="channel-handle">เปิดหน้า Facebook</div>
           </div>
-          <span class="channel-arrow">→</span>
+          <span class="channel-arrow" aria-hidden="true">→</span>
         </a>
-        <a href="https://instagram.com/YOUR_ACCOUNT" target="_blank" rel="noopener" class="channel-card" id="ch-ig">
-          <div class="channel-icon ig">📸</div>
+        <a target="_blank" rel="noopener noreferrer" class="channel-card" id="ch-ig" hidden>
+          <div class="channel-icon ig" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.6" cy="6.7" r="1.2" fill="currentColor"/></svg></div>
           <div class="channel-info">
-            <div class="channel-name">Instagram</div>
-            <div class="channel-handle">@diamondcutestudio</div>
+            <h2 class="channel-name">Instagram</h2>
+            <div class="channel-handle">เปิดหน้า Instagram</div>
           </div>
-          <span class="channel-arrow">→</span>
+          <span class="channel-arrow" aria-hidden="true">→</span>
         </a>
-        <a href="https://tiktok.com/@YOUR_ACCOUNT" target="_blank" rel="noopener" class="channel-card" id="ch-tt">
-          <div class="channel-icon tt">🎵</div>
+        <a target="_blank" rel="noopener noreferrer" class="channel-card" id="ch-tt" hidden>
+          <div class="channel-icon tt" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M16.7 3c.3 2.1 1.5 3.4 3.3 3.6v3.1a8 8 0 0 1-3.3-1v6.4c0 3.2-2.2 5.6-5.6 5.6a5.5 5.5 0 0 1 0-11 6 6 0 0 1 1.5.2v3.3a3 3 0 0 0-1.4-.4 2.4 2.4 0 1 0 2.4 2.4V3z"/></svg></div>
           <div class="channel-info">
-            <div class="channel-name">TikTok</div>
-            <div class="channel-handle">@diamondcutestudio</div>
+            <h2 class="channel-name">TikTok</h2>
+            <div class="channel-handle">เปิดหน้า TikTok</div>
           </div>
-          <span class="channel-arrow">→</span>
+          <span class="channel-arrow" aria-hidden="true">→</span>
         </a>
-        <a href="mailto:YOUR_EMAIL@gmail.com" class="channel-card" id="ch-mail">
-          <div class="channel-icon mail">📧</div>
+        <a class="channel-card" id="ch-mail" hidden>
+          <div class="channel-icon mail" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <div class="channel-info">
-            <div class="channel-name">อีเมล</div>
-            <div class="channel-handle" id="ch-mail-label">YOUR_EMAIL@gmail.com</div>
+            <h2 class="channel-name">อีเมล</h2>
+            <div class="channel-handle" id="ch-mail-label">อีเมล</div>
           </div>
-          <span class="channel-arrow">→</span>
+          <span class="channel-arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="channel-card" id="ch-phone" hidden>
+          <div class="channel-icon phone" aria-hidden="true"><span class="dmc-icon-slot" data-dmc-icon="phone" aria-hidden="true"></span></div>
+          <div class="channel-info"><h2 class="channel-name">โทรศัพท์</h2><div class="channel-handle" id="ch-phone-label">โทรหาเรา</div></div>
+          <span class="channel-arrow" aria-hidden="true">→</span>
         </a>
       </div>
 
-      <div class="hours-card">
-        <div class="hours-title">🕐 เวลาทำการ</div>
-        <div class="hours-row"><span class="hours-day">จันทร์ – ศุกร์</span><span class="hours-time">09:00 – 20:00</span></div>
-        <div class="hours-row"><span class="hours-day">เสาร์</span><span class="hours-time">09:00 – 18:00</span></div>
-        <div class="hours-row"><span class="hours-day">อาทิตย์</span><span class="hours-time closed">หยุด</span></div>
-        <div style="margin-top:.85rem;padding:.65rem .85rem;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:var(--r-md);font-size:.82rem;color:var(--emerald)">
-          ✅ ตอบ LINE ภายใน 30 นาที ในเวลาทำการ
-        </div>
+      <div class="hours-card" id="contact-hours-card" hidden>
+        <h2 class="hours-title"><span class="dmc-icon-slot" data-dmc-icon="clock" aria-hidden="true"></span> เวลาทำการ</h2>
+        <div class="hours-row"><span class="hours-day" id="contact-hours" role="status"></span></div>
       </div>
     </div>
 
     <!-- Right: Quick contact form -->
-    <div class="contact-form-card">
-      <div class="contact-form-title">✉️ ส่งข้อความถึงเรา</div>
+    <form class="contact-form-card" id="contact-form">
+      <h2 class="contact-form-title"><span class="dmc-icon-slot" data-dmc-icon="mail" aria-hidden="true"></span> ส่งข้อความถึงเรา</h2>
       <div class="form-group">
         <label class="form-label" for="cf-name">ชื่อของคุณ</label>
-        <input class="form-input" id="cf-name" placeholder="กรอกชื่อของคุณ">
+        <input class="form-input" id="cf-name" name="name" autocomplete="name" placeholder="กรอกชื่อของคุณ" required>
       </div>
       <div class="form-group">
         <label class="form-label" for="cf-contact">เบอร์โทร / LINE ID</label>
-        <input class="form-input" id="cf-contact" placeholder="เบอร์โทรหรือ LINE ID">
+        <input class="form-input" id="cf-contact" name="contact" autocomplete="tel" placeholder="เบอร์โทรหรือ LINE ID">
       </div>
       <div class="form-group">
         <label class="form-label" for="cf-topic">หัวข้อ</label>
-        <select class="form-input form-select" id="cf-topic" data-custom data-title="หัวข้อ">
+        <select class="form-input form-select" id="cf-topic" name="topic" data-custom data-title="หัวข้อ">
           <option>สอบถามสินค้า</option>
           <option>สอบถามราคา</option>
           <option>ติดตามออเดอร์</option>
@@ -178,18 +180,15 @@
       </div>
       <div class="form-group">
         <label class="form-label" for="cf-msg">ข้อความ</label>
-        <textarea class="form-input form-textarea" id="cf-msg" placeholder="พิมพ์ข้อความที่ต้องการสอบถาม..." style="min-height:110px"></textarea>
+        <textarea class="form-input form-textarea" id="cf-msg" name="message" placeholder="พิมพ์ข้อความที่ต้องการสอบถาม..." style="min-height:110px" required></textarea>
       </div>
-      <button class="btn btn-primary btn-block btn-lg" id="cf-submit">
-        💬 ส่งข้อความ
+      <button type="submit" class="btn btn-primary btn-block btn-lg" id="cf-submit">
+        <span class="dmc-icon-slot" data-dmc-icon="chat" aria-hidden="true"></span> ส่งข้อความ
       </button>
-      <div id="cf-result" style="display:none;margin-top:.75rem;text-align:center;font-family:var(--font-display);font-size:.88rem"></div>
-      <div style="text-align:center;margin-top:.85rem;font-size:.78rem;color:var(--text-3)">
-        หรือเพิ่มเพื่อน LINE เพื่อติดต่อโดยตรง ตอบเร็วกว่า 💬
-      </div>
-    </div>
+      <div id="cf-result" role="status" aria-live="polite" style="display:none;margin-top:.75rem;text-align:center;font-family:var(--font-display);font-size:.88rem"></div>
+    </form>
   </div>
-</div>
+</main>
 
 <div id="footer-mount"></div>
 <div id="toast-container"></div>

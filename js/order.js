@@ -89,21 +89,21 @@ function renderCart() {
     const minQ = Math.max(1, Number(item.minQty) || 1);
     return `
     <div class="cart-item" data-cart-id="${item.cartItemId}">
-      <div class="cart-item-thumb">${item.image ? `<img src="${DMC.escapeHtml(item.image)}" alt="${DMC.escapeHtml(item.name||'')}" loading="lazy" data-emoji="${DMC.escapeHtml(item.emoji||'📦')}">` : DMC.escapeHtml(item.emoji || '📦')}</div>
+      <div class="cart-item-thumb">${item.image ? `<img src="${DMC.escapeHtml(item.image)}" alt="${DMC.escapeHtml(item.name||'')}" loading="lazy">` : DMC.iconSvg('package')}</div>
       <div class="cart-item-body">
         <div class="cart-item-name">${DMC.escapeHtml(item.name)}</div>
         <div class="cart-item-spec">${item.options ? DMC.escapeHtml(item.options) : ''}</div>
-        ${item.customDetails ? `<div class="cart-item-spec" style="margin-top:.2rem;color:var(--accent);font-size:.8rem;line-height:1.45">📝 ${DMC.escapeHtml(item.customDetails)}</div>` : ''}
+        ${item.customDetails ? `<div class="cart-item-spec" style="margin-top:.2rem;color:var(--accent);font-size:.8rem;line-height:1.45">${DMC.iconSvg('edit')} ${DMC.escapeHtml(item.customDetails)}</div>` : ''}
         <div class="cart-qty-ctrl" data-cart-id="${item.cartItemId}">
-          <button type="button" class="cart-qty-btn" data-act="dec" aria-label="ลดจำนวน" ${item.qty <= minQ ? 'disabled' : ''}>−</button>
-          <span class="cart-qty-val">${item.qty}</span>
-          <button type="button" class="cart-qty-btn" data-act="inc" aria-label="เพิ่มจำนวน">+</button>
+          <button type="button" class="cart-qty-btn" data-act="dec" aria-label="ลดจำนวน ${DMC.escapeHtml(item.name)}" ${item.qty <= minQ ? 'disabled' : ''}>−</button>
+          <span class="cart-qty-val" aria-live="polite" aria-atomic="true">${item.qty}</span>
+          <button type="button" class="cart-qty-btn" data-act="inc" aria-label="เพิ่มจำนวน ${DMC.escapeHtml(item.name)}">+</button>
           <span class="cart-qty-unit">${DMC.escapeHtml(item.unit || 'ชิ้น')}${minQ > 1 ? ` · ขั้นต่ำ ${minQ}` : ''}</span>
         </div>
       </div>
       <div class="cart-item-right">
         <div class="cart-item-price">${DMC.formatPrice(item.price * item.qty)}</div>
-        <button class="cart-item-remove" data-cart-id="${item.cartItemId}">🗑️ ลบ</button>
+        <button type="button" class="cart-item-remove" data-cart-id="${item.cartItemId}" aria-label="นำ ${DMC.escapeHtml(item.name)} ออกจากตะกร้า">${DMC.iconSvg('trash')} ลบ</button>
       </div>
     </div>`;
   }).join('');
@@ -122,6 +122,7 @@ function renderCart() {
     btn.addEventListener('click', () => {
       const wrap = btn.closest('.cart-qty-ctrl');
       const id = wrap?.dataset.cartId;
+      const action = btn.dataset.act;
       const fresh = DMC.getCart();
       const it = fresh.find(i => i.cartItemId === id);
       if (!it) return;
@@ -134,6 +135,13 @@ function renderCart() {
       }
       DMC.saveCart(fresh);
       renderCart();
+      list.querySelectorAll('.cart-qty-ctrl').forEach(control => {
+        if (control.dataset.cartId === id) {
+          let target = control.querySelector(`[data-act="${action}"]`);
+          if (target?.disabled) target = control.querySelector('[data-act="inc"]');
+          target?.focus({ preventScroll: true });
+        }
+      });
     });
   });
 
@@ -167,7 +175,7 @@ async function checkCartPrices(cart) {
   const box = document.createElement('div');
   box.id = 'cart-price-warning';
   box.style.cssText = 'background:var(--bg-card2,#fff7ed);border:1.5px solid #f59e0b;border-radius:12px;padding:.85rem 1rem;margin:0 0 1rem;font-size:.85rem;line-height:1.6;color:var(--text-1,#7c2d12)';
-  box.innerHTML = '⚠️ <strong>ราคาบางรายการมีการอัปเดต</strong><br>' +
+  box.innerHTML = DMC.iconSvg('alert') + ' <strong>ราคาบางรายการมีการอัปเดต</strong><br>' +
     changed.map(c => '• ' + DMC.escapeHtml(c.name) + ': ' + DMC.formatPrice(c.was) + ' → <strong>' + DMC.formatPrice(c.now) + '</strong>').join('<br>') +
     '<br><button id="cart-sync-price" type="button" style="margin-top:.6rem;padding:.5rem 1rem;border:none;border-radius:9px;background:#f59e0b;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer;font-family:var(--font-display),sans-serif">อัปเดตราคาเป็นปัจจุบัน</button>';
   host.parentElement.insertBefore(box, host);
@@ -252,7 +260,7 @@ async function updatePromptpayQR(amount) {
         };
       }
     } else {
-      wrap.innerHTML = '<div style="font-size:.82rem;color:var(--text-3);padding:1rem">⚠️ ร้านยังไม่ตั้งค่า PromptPay<br>กรุณาสอบถามทาง LINE</div>';
+      wrap.innerHTML = `<div style="font-size:.82rem;color:var(--text-3);padding:1rem">${DMC.iconSvg('alert')} ร้านยังไม่ตั้งค่า PromptPay<br>กรุณาสอบถามทาง LINE</div>`;
       if (saveBtn) saveBtn.style.display = 'none';
     }
   } catch (e) { /* แสดง placeholder เดิม */ }
@@ -288,8 +296,9 @@ function goToStep(n) {
     const step = document.getElementById(`step-${i}`);
     if (!step) continue;
     step.classList.remove('active', 'done');
-    if (i < n)  step.classList.add('done');
-    if (i === n) step.classList.add('active');
+    step.removeAttribute('aria-current');
+    if (i < n) step.classList.add('done');
+    if (i === n) { step.classList.add('active'); step.setAttribute('aria-current', 'step'); }
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -323,10 +332,10 @@ function highlightError(id, message) {
 // ─── Payment Methods ───
 // ─── ช่องทางชำระเงิน (เมตาดาต้า) ───
 const PAY_METHODS_META = {
-  promptpay: { icon: '📱', name: 'PromptPay QR',          desc: 'สแกน QR Code แล้วแนบสลิปโอนเงิน' },
-  cod:       { icon: '🚚', name: 'เก็บเงินปลายทาง (COD)', desc: 'ชำระเมื่อได้รับสินค้า มีค่าธรรมเนียมเพิ่ม' },
-  truemoney: { icon: '💰', name: 'TrueMoney Wallet',      desc: 'ชำระผ่านทรูมันนี่ วอลเล็ท' },
-  credit:    { icon: '💳', name: 'บัตรเครดิต/เดบิต',       desc: 'Visa · Mastercard · JCB' },
+  promptpay: { icon: 'phone', name: 'PromptPay QR',          desc: 'สแกน QR Code แล้วแนบสลิปโอนเงิน' },
+  cod:       { icon: 'truck', name: 'เก็บเงินปลายทาง (COD)', desc: 'ชำระเมื่อได้รับสินค้า มีค่าธรรมเนียมเพิ่ม' },
+  truemoney: { icon: 'card', name: 'TrueMoney Wallet',      desc: 'ชำระผ่านทรูมันนี่ วอลเล็ท' },
+  credit:    { icon: 'card', name: 'บัตรเครดิต/เดบิต',       desc: 'Visa · Mastercard · JCB' },
 };
 
 async function renderPaymentMethods() {
@@ -348,7 +357,13 @@ async function renderPaymentMethods() {
   if (visible.length === 0) visible.push('promptpay');  // กันว่าง
 
   // เลือกตัวแรกที่ "พร้อมใช้งาน" เป็นค่าเริ่มต้น
-  const firstReady = visible.find(k => cfg[k] && cfg[k].ready) || visible[0];
+  const firstReady = visible.find(k => cfg[k] && cfg[k].ready);
+  if (!firstReady) {
+    selectedPayment = '';
+    wrap.innerHTML = '<p class="payment-unavailable" role="status">ขณะนี้ยังไม่มีช่องทางชำระเงินที่พร้อมใช้งาน กรุณา <a href="contact.html">ติดต่อร้าน</a></p>';
+    updatePaymentUI();
+    return;
+  }
   selectedPayment = firstReady;
 
   wrap.innerHTML = visible.map(key => {
@@ -356,14 +371,14 @@ async function renderPaymentMethods() {
     const ready = !!(cfg[key] && cfg[key].ready);
     const isSel = (key === firstReady);
     return `
-      <div class="payment-method ${isSel ? 'selected' : ''} ${ready ? '' : 'pay-disabled'}" data-method="${key}" ${ready ? '' : 'data-disabled="1"'}>
-        <div class="pay-icon-wrap">${meta.icon}</div>
+      <button type="button" class="payment-method ${isSel ? 'selected' : ''} ${ready ? '' : 'pay-disabled'}" role="radio" aria-checked="${isSel}" tabindex="${isSel && ready ? '0' : '-1'}" data-method="${key}" ${ready ? '' : 'disabled aria-disabled="true"'}>
+        <div class="pay-icon-wrap">${DMC.iconSvg(meta.icon)}</div>
         <div class="pay-info">
-          <div class="pay-name">${meta.name}${ready ? '' : ' <span class="pay-soon">🔜 เร็วๆ นี้</span>'}</div>
+          <div class="pay-name">${meta.name}${ready ? '' : ' <span class="pay-soon">เร็วๆ นี้</span>'}</div>
           <div class="pay-desc">${meta.desc}</div>
         </div>
         <div class="pay-radio"></div>
-      </div>`;
+      </button>`;
   }).join('');
 
   bindPaymentMethods();
@@ -371,18 +386,32 @@ async function renderPaymentMethods() {
 }
 
 function bindPaymentMethods() {
-  const methods = document.querySelectorAll('.payment-method');
+  const methods = Array.from(document.querySelectorAll('.payment-method'));
+  function selectMethod(method, moveFocus) {
+    if (method.disabled) return;
+    methods.forEach(item => {
+      const selected = item === method;
+      item.classList.toggle('selected', selected);
+      item.setAttribute('aria-checked', String(selected));
+      item.tabIndex = selected ? 0 : -1;
+    });
+    selectedPayment = method.dataset.method;
+    updatePaymentUI();
+    renderSummary();
+    if (moveFocus) method.focus();
+  }
   methods.forEach(m => {
-    m.addEventListener('click', () => {
-      if (m.dataset.disabled) {            // ช่องทางที่ยังไม่พร้อม — กดไม่ได้
-        DMC.toast('ช่องทางนี้กำลังเปิดให้บริการเร็วๆ นี้ 🔜', 'info');
-        return;
-      }
-      methods.forEach(x => x.classList.remove('selected'));
-      m.classList.add('selected');
-      selectedPayment = m.dataset.method;
-      updatePaymentUI();
-      renderSummary();
+    m.addEventListener('click', () => selectMethod(m, false));
+    m.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const available = methods.filter(item => !item.disabled);
+      if (!available.length) return;
+      let index = available.indexOf(m);
+      if (event.key === 'Home') index = 0;
+      else if (event.key === 'End') index = available.length - 1;
+      else index = (index + (['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1) + available.length) % available.length;
+      selectMethod(available[index], true);
     });
   });
 }
@@ -401,13 +430,14 @@ function bindFileUpload() {
   const zone  = document.getElementById('files-upload-zone');
   const input = document.getElementById('files-input');
   const preview = document.getElementById('file-preview-list');
+  const status = document.getElementById('files-upload-status');
+  const maxBytes = 50 * 1024 * 1024;
 
-  zone?.addEventListener('click', () => input?.click());
   zone?.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('active'); });
   zone?.addEventListener('dragleave', () => zone.classList.remove('active'));
   zone?.addEventListener('drop', e => {
     e.preventDefault(); zone.classList.remove('active');
-    handleFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')));
+    handleFiles(Array.from(e.dataTransfer.files || []));
   });
 
   input?.addEventListener('change', () => {
@@ -417,34 +447,82 @@ function bindFileUpload() {
 
   function handleFiles(files) {
     if (!files.length) return;
-    const room = 20 - window._orderFiles.filter(Boolean).length;
-    if (room <= 0) { DMC.toast('อัพโหลดได้สูงสุด 20 ไฟล์', 'warning'); return; }
-    if (files.length > room) { DMC.toast('อัพโหลดได้สูงสุด 20 ไฟล์', 'warning'); files = files.slice(0, room); }
+    const existing = window._orderFiles.filter(Boolean);
+    let remainingBytes = maxBytes - existing.reduce((sum, file) => sum + file.size, 0);
+    let remainingCount = Math.max(0, 20 - existing.length);
+    const accepted = [];
+    const rejected = [];
+    const mimeByExtension = {
+      jpg: ['image/jpeg', 'image/jpg', 'image/pjpeg'], jpeg: ['image/jpeg', 'image/jpg', 'image/pjpeg'],
+      png: ['image/png'],
+      heic: ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'],
+      heif: ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'],
+    };
 
     files.forEach(file => {
-      window._orderFiles.push(file);                 // ← เก็บ File จริงไว้สำหรับอัปตอน submit
-      const idx = window._orderFiles.length - 1;
-      const reader = new FileReader();
-      reader.onload = e => {
-        const item = document.createElement('div');
-        item.className = 'file-preview-item';
-        item.dataset.fileIdx = String(idx);
-        item.innerHTML = `
-          <img src="${e.target.result}" alt="${DMC.escapeHtml(file.name)}">
-          <button class="file-preview-remove" aria-label="ลบ">✕</button>
-        `;
-        item.querySelector('.file-preview-remove').addEventListener('click', ev => {
-          ev.stopPropagation();
-          window._orderFiles[idx] = null;            // mark ว่าลบแล้ว (คง index เดิมของไฟล์อื่น)
-          item.remove();
-        });
-        item.querySelector('img').addEventListener('click', () => openCartLightbox(e.target.result));  // V28: กดดูเต็มจอ
-        preview?.appendChild(item);
-      };
-      reader.readAsDataURL(file);
+      const extension = (file.name.split('.').pop() || '').toLowerCase();
+      const allowedMimes = mimeByExtension[extension];
+      const mime = (file.type || '').toLowerCase();
+      if (!allowedMimes || (mime && !allowedMimes.includes(mime))) {
+        rejected.push(`${file.name}: รองรับเฉพาะ JPG, PNG และ HEIC`);
+        return;
+      }
+      if (remainingCount <= 0) {
+        rejected.push(`${file.name}: แนบได้สูงสุด 20 ไฟล์`);
+        return;
+      }
+      if (!file.size || file.size > remainingBytes) {
+        rejected.push(`${file.name}: ขนาดรวมเกิน 50 MB`);
+        return;
+      }
+      accepted.push(file);
+      remainingCount--;
+      remainingBytes -= file.size;
     });
 
-    DMC.toast(`เพิ่ม ${files.length} ไฟล์แล้ว`, 'success');
+    accepted.forEach(file => {
+      window._orderFiles.push(file);                 // ← เก็บ File จริงไว้สำหรับอัปตอน submit
+      const idx = window._orderFiles.length - 1;
+      const item = document.createElement('div');
+      const objectUrl = URL.createObjectURL(file);
+      item.className = 'file-preview-item';
+      item.dataset.fileIdx = String(idx);
+      item.title = file.name;
+      item.innerHTML = `<button type="button" class="file-preview-open" aria-label="ดูตัวอย่างไฟล์ ${DMC.escapeHtml(file.name)}"><img src="${objectUrl}" alt=""></button><button type="button" class="file-preview-remove" aria-label="นำไฟล์ ${DMC.escapeHtml(file.name)} ออกจากรายการ">✕</button>`;
+      item.querySelector('.file-preview-remove').addEventListener('click', ev => {
+        ev.stopPropagation();
+        window._orderFiles[idx] = null;
+        URL.revokeObjectURL(objectUrl);
+        item.remove();
+        updateSummary();
+      });
+      item.querySelector('.file-preview-open').addEventListener('click', () => openCartLightbox(objectUrl));
+      item.querySelector('img').addEventListener('error', event => {
+        event.currentTarget.hidden = true;
+        const previewButton = item.querySelector('.file-preview-open');
+        previewButton.disabled = true;
+        previewButton.setAttribute('aria-label', `ไฟล์ ${file.name} แนบแล้ว แต่เบราว์เซอร์นี้แสดงตัวอย่างไม่ได้`);
+        const fallback = document.createElement('span');
+        fallback.className = 'file-preview-fallback';
+        fallback.textContent = (file.name.split('.').pop() || 'IMG').toUpperCase();
+        fallback.setAttribute('aria-hidden', 'true');
+        item.querySelector('.file-preview-open').appendChild(fallback);
+      }, { once: true });
+      preview?.appendChild(item);
+    });
+
+    updateSummary(rejected);
+  }
+
+  function updateSummary(rejected) {
+    if (!status) return;
+    const selected = window._orderFiles.filter(Boolean);
+    const bytes = selected.reduce((sum, file) => sum + file.size, 0);
+    const amount = (bytes / (1024 * 1024)).toFixed(1).replace(/\.0$/, '');
+    const summary = selected.length ? `แนบแล้ว ${selected.length}/20 ไฟล์ · ${amount}/50 MB` : 'ยังไม่ได้แนบไฟล์';
+    status.textContent = rejected && rejected.length
+      ? `${summary} — ${rejected.join(' · ')}`
+      : selected.length ? summary : 'ยังไม่ได้แนบไฟล์';
   }
 }
 
@@ -470,7 +548,7 @@ function renderPendingDesigns() {
     const note = document.createElement('div');
     note.id = 'attached-design-note';
     note.style.cssText = 'background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.28);border-radius:var(--r-md);padding:.6rem .85rem;margin-bottom:.7rem;font-size:.82rem;color:var(--emerald);font-family:var(--font-display)';
-    note.innerHTML = '🎨 มีแบบที่คุณออกแบบไว้ ' + designs.length + ' รูป แนบไปกับออเดอร์นี้แล้ว <span style="color:var(--text-3);font-weight:400">(กดที่รูปเพื่อดูขนาดเต็ม)</span>';
+    note.innerHTML = DMC.iconSvg('palette') + ' มีแบบที่คุณออกแบบไว้ ' + designs.length + ' รูป แนบไปกับออเดอร์นี้แล้ว <span style="color:var(--text-3);font-weight:400">(กดที่รูปเพื่อดูขนาดเต็ม)</span>';
     zone.parentNode.insertBefore(note, zone);
   }
 
@@ -482,7 +560,7 @@ function renderPendingDesigns() {
     item.innerHTML = `
       <img src="${d.url}" alt="${DMC.escapeHtml(d.name || 'แบบที่ออกแบบ')}" style="cursor:zoom-in">
       <span style="position:absolute;bottom:0;left:0;right:0;background:rgba(16,185,129,.85);color:#fff;font-size:.5rem;text-align:center;font-family:var(--font-display)">แบบที่ออกแบบ</span>
-      <button class="file-preview-remove" aria-label="ลบ">✕</button>`;
+      <button class="file-preview-remove" aria-label="ลบ">${DMC.iconSvg('close')}</button>`;
     item.querySelector('img').addEventListener('click', () => openCartLightbox(d.url));
     item.querySelector('.file-preview-remove').addEventListener('click', ev => {
       ev.stopPropagation();
@@ -508,8 +586,8 @@ function showDesignUndoBar() {
   const bar = document.createElement('div');
   bar.id = 'design-undo-bar';
   bar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:.6rem;background:var(--bg-card);border:1.5px dashed var(--border-hover,var(--border));border-radius:var(--r-md);padding:.55rem .85rem;margin-bottom:.7rem;font-size:.8rem;color:var(--text-2);font-family:var(--font-display)';
-  bar.innerHTML = '<span>🗑️ ลบ "' + DMC.escapeHtml((_lastRemovedDesign.name || 'แบบที่ออกแบบ')) + '" ออกแล้ว</span>' +
-    '<button type="button" id="design-undo-btn" style="flex-shrink:0;border:none;background:var(--accent);color:#fff;font-family:var(--font-display);font-weight:700;font-size:.78rem;padding:.4rem .9rem;border-radius:99px;cursor:pointer">↩️ เรียกคืน</button>';
+  bar.innerHTML = '<span>' + DMC.iconSvg('trash') + ' ลบ "' + DMC.escapeHtml((_lastRemovedDesign.name || 'แบบที่ออกแบบ')) + '" ออกแล้ว</span>' +
+    '<button type="button" id="design-undo-btn" style="flex-shrink:0;border:none;background:var(--accent);color:#fff;font-family:var(--font-display);font-weight:700;font-size:.78rem;padding:.4rem .9rem;border-radius:99px;cursor:pointer">' + DMC.iconSvg('refresh') + ' เรียกคืน</button>';
   zone.parentNode.insertBefore(bar, zone);
   const timer = setTimeout(() => { bar.remove(); _lastRemovedDesign = null; }, 12000);
   document.getElementById('design-undo-btn')?.addEventListener('click', () => {
@@ -531,24 +609,34 @@ function showDesignUndoBar() {
 // Lightbox ดูรูปเต็มจอ (หน้าตะกร้า) — สร้างครั้งเดียว ใช้ซ้ำ
 function openCartLightbox(url) {
   let lb = document.getElementById('cart-lightbox');
+  const trigger = document.activeElement;
   if (!lb) {
     lb = document.createElement('div');
     lb.id = 'cart-lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.setAttribute('aria-label', 'ดูรูปภาพแนบขนาดเต็ม');
+    lb.tabIndex = -1;
     lb.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;backdrop-filter:blur(4px)';
     const img = document.createElement('img');
     img.id = 'cart-lightbox-img';
+    img.alt = 'รูปภาพแนบขนาดเต็ม';
     img.style.cssText = 'max-width:95vw;max-height:92vh;border-radius:12px;object-fit:contain';
     const close = document.createElement('button');
+    close.type = 'button';
+    close.setAttribute('aria-label', 'ปิดรูปภาพ');
     close.textContent = '✕';
     close.style.cssText = 'position:absolute;top:1rem;right:1rem;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.3rem;cursor:pointer';
-    close.addEventListener('click', () => { lb.style.display = 'none'; });
+    close.addEventListener('click', () => { lb.style.display = 'none'; lb._returnFocus?.focus(); });
     lb.appendChild(img); lb.appendChild(close);
-    lb.addEventListener('click', e => { if (e.target === lb) lb.style.display = 'none'; });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') lb.style.display = 'none'; });
+    lb.addEventListener('click', e => { if (e.target === lb) { lb.style.display = 'none'; lb._returnFocus?.focus(); } });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && lb.style.display !== 'none') { lb.style.display = 'none'; lb._returnFocus?.focus(); } });
     document.body.appendChild(lb);
   }
+  lb._returnFocus = trigger;
   document.getElementById('cart-lightbox-img').src = url;
   lb.style.display = 'flex';
+  lb.querySelector('button')?.focus();
 }
 
 // ─── Slip Upload ───
@@ -558,17 +646,19 @@ function bindSlipUpload() {
   const previewWrap = document.getElementById('slip-preview');
   const previewImg  = document.getElementById('slip-img');
 
-  zone?.addEventListener('click', () => input?.click());
   zone?.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('active'); });
   zone?.addEventListener('dragleave', () => zone.classList.remove('active'));
   zone?.addEventListener('drop', e => {
     e.preventDefault(); zone.classList.remove('active');
     const file = e.dataTransfer.files[0];
     if (file?.type.startsWith('image/')) handleSlipFile(file);
+    else if (file) DMC.toast('กรุณาเลือกรูปภาพสลิป', 'warning');
   });
   input?.addEventListener('change', () => {
     const file = input.files[0];
-    if (file) handleSlipFile(file);
+    if (file?.type.startsWith('image/')) handleSlipFile(file);
+    else if (file) DMC.toast('กรุณาเลือกรูปภาพสลิป', 'warning');
+    input.value = '';
   });
 
   // ลบสลิป → กลับไปหน้าอัปโหลด (กันลูกค้าเลือกสลิปผิดแล้วแก้ไม่ได้)
@@ -628,14 +718,14 @@ async function runSlipVerify(file) {
 
   if (r.status === 'passed') {
     box.style.color = 'var(--emerald-light)';
-    box.innerHTML = '✅ ' + (r.reason || 'ตรวจสลิปอัตโนมัติผ่าน');
+    box.innerHTML = DMC.iconSvg('check') + ' ' + DMC.escapeHtml(r.reason || 'ตรวจสลิปอัตโนมัติผ่าน');
   } else if (r.status === 'failed') {
     box.style.color = 'var(--amber, #f59e0b)';
-    box.innerHTML = '⚠️ ' + DMC.escapeHtml(r.reason || 'สลิปอาจไม่ถูกต้อง') +
+    box.innerHTML = DMC.iconSvg('alert') + ' ' + DMC.escapeHtml(r.reason || 'สลิปอาจไม่ถูกต้อง') +
       '<br><span style="color:var(--text-3)">ยังสั่งซื้อได้ตามปกติ — ทางร้านจะตรวจสลิปอีกครั้งก่อนจัดส่ง</span>';
   } else {
     box.style.color = 'var(--text-3)';
-    box.innerHTML = 'ℹ️ ' + DMC.escapeHtml(r.reason || 'ข้ามการตรวจอัตโนมัติ');
+    box.innerHTML = DMC.iconSvg('info') + ' ' + DMC.escapeHtml(r.reason || 'ข้ามการตรวจอัตโนมัติ');
   }
 }
 
@@ -665,7 +755,7 @@ function bindInlineValidation() {
       const ok = f.test(input.value);
       input.classList.toggle('input-valid', ok && input.value.trim() !== '');
       input.classList.toggle('input-invalid', !ok && touched);
-      if (!ok && touched) { msg.textContent = '⚠ ' + f.err; msg.className = 'field-msg err'; }
+  if (!ok && touched) { msg.textContent = f.err; msg.className = 'field-msg err'; }
       else if (ok && input.value.trim() !== '') { msg.textContent = '✓ ใช้ได้'; msg.className = 'field-msg ok'; }
       else { msg.textContent = ''; msg.className = 'field-msg'; }
       return ok;
@@ -716,8 +806,8 @@ async function applyCoupon() {
     renderSummary();
     const t = computeTotals();
     const msg = appliedCoupon.type === 'freeship' ? 'ส่งฟรี' : DMC.formatPrice(t.discount);
-    DMC.toast(`✅ ใช้โค้ด ${code} สำเร็จ — ${msg}`, 'success');
-    if (appliedCoupon.firstOrderOnly) DMC.toast('ℹ️ คูปองนี้สำหรับลูกค้าใหม่ (เช็กจากเบอร์ตอนสั่งซื้อ)', 'info', 4500);
+    DMC.toast(`ใช้โค้ด ${code} สำเร็จ — ${msg}`, 'success');
+    if (appliedCoupon.firstOrderOnly) DMC.toast('คูปองนี้สำหรับลูกค้าใหม่ (เช็กจากเบอร์ตอนสั่งซื้อ)', 'info', 4500);
     if (input) input.disabled = true;
     _markCouponApplied(true);
   } catch (e) {
@@ -731,7 +821,7 @@ function failCoupon(reason) {
   appliedCoupon = null;
   renderSummary();
   _markCouponApplied(false);
-  DMC.toast('❌ ' + reason, 'error');
+  DMC.toast(reason, 'error');
 }
 
 function removeCoupon() {
@@ -766,6 +856,11 @@ async function submitOrder() {
   if (!btn) return;
   if (_orderSubmitting) return;   // กำลังส่งอยู่ — ไม่สร้างออเดอร์ซ้ำ
 
+  if (!selectedPayment) {
+    DMC.toast('ยังไม่มีช่องทางชำระเงินที่พร้อมใช้งาน กรุณาติดต่อร้าน', 'error');
+    return;
+  }
+
   if (selectedPayment === 'promptpay' && !slipUrl) {
     DMC.toast('กรุณาแนบสลิปโอนเงินก่อน', 'error');
     return;
@@ -779,11 +874,11 @@ async function submitOrder() {
         if (!db) db = await DMC.getFirebaseReady();
         if (appliedCoupon.firstOrderOnly) {
           const d = await db.collection('couponGuard').doc('cust__' + _ph).get();
-          if (d.exists) { DMC.toast('คูปอง ' + appliedCoupon.code + ' สำหรับลูกค้าใหม่เท่านั้น — เบอร์นี้เคยสั่งซื้อแล้ว 🙏', 'error', 5500); return; }
+    if (d.exists) { DMC.toast('คูปอง ' + appliedCoupon.code + ' สำหรับลูกค้าใหม่เท่านั้น — เบอร์นี้เคยสั่งซื้อแล้ว', 'error', 5500); return; }
         }
         if (appliedCoupon.oncePerPhone) {
           const d = await db.collection('couponGuard').doc(appliedCoupon.code + '__' + _ph).get();
-          if (d.exists) { DMC.toast('เบอร์นี้ใช้คูปอง ' + appliedCoupon.code + ' ไปแล้ว 🙏', 'error', 5500); return; }
+    if (d.exists) { DMC.toast('เบอร์นี้ใช้คูปอง ' + appliedCoupon.code + ' ไปแล้ว', 'error', 5500); return; }
         }
       } catch (e) { console.warn('coupon guard check skipped:', e.message); }   // fail-open: เน็ตมีปัญหาก็ให้สั่งได้
     }
@@ -794,6 +889,8 @@ async function submitOrder() {
   btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:0.4rem"></span> กำลังส่งออเดอร์...';
 
   const orderId = DMC.generateOrderId();   // V3: สร้างก่อน เพื่อใช้เป็น path ของไฟล์ private
+  let slipUploadFailed = false;
+  let uploadFailureCount = 0;
 
   // V16: อัปสลิปผ่าน uploadSensitive → ถ้าเปิด Firebase Storage จะเป็น private (ไม่งั้น fallback ImgBB อัตโนมัติ)
   if (selectedPayment === 'promptpay' && window._slipFile) {
@@ -803,7 +900,7 @@ async function submitOrder() {
     } catch (e) {
       console.warn('slip upload failed:', e);
       slipUrl = '';
-      DMC.toast('⚠️ อัปสลิปไม่สำเร็จ ระบบจะรับออเดอร์ไว้ก่อน รบกวนส่งสลิปทาง LINE อีกครั้งครับ', 'warning', 5000);
+      slipUploadFailed = true;
     }
   }
 
@@ -822,10 +919,14 @@ async function submitOrder() {
         const up = await DMC.uploadSensitive(pendingFiles[i], 'orders/' + orderId);
         if (up && up.url) uploadedFileUrls.push(up.url); else failed++;
       } catch (e) { failed++; console.warn('upload file failed', e); }
-      if (bar) bar.style.width = Math.round(((i + 1) / pendingFiles.length) * 100) + '%';
+      if (bar) {
+        const percent = Math.round(((i + 1) / pendingFiles.length) * 100);
+        bar.style.width = percent + '%';
+        bar.setAttribute('aria-valuenow', String(percent));
+      }
     }
     if (prog) prog.style.display = 'none';
-    if (failed) DMC.toast(`⚠️ มี ${failed} รูปอัปไม่สำเร็จ ส่งเพิ่มทาง LINE ได้หลังสั่งซื้อครับ`, 'warning', 5000);
+    uploadFailureCount = failed;
   }
 
   // V2: รวมแบบที่ลูกค้าออกแบบจากหน้าสินค้า (เป็น URL ImgBB — แสดงให้ลูกค้าเห็นได้)
@@ -853,7 +954,7 @@ async function submitOrder() {
     note:            document.getElementById('customer-note')?.value.trim() || '',
     paymentMethod:   selectedPayment,
     items:           cart,
-    itemsSummary:    cart.map(i => `${i.name} ×${i.qty}${i.customDetails ? ' [📝 '+i.customDetails+']' : ''}`).join(', '),
+    itemsSummary:    cart.map(i => `${i.name} ×${i.qty}${i.customDetails ? ' [รายละเอียด: '+i.customDetails+']' : ''}`).join(', '),
     subtotal,
     shipping,
     surcharge,
@@ -897,8 +998,8 @@ async function submitOrder() {
         _couponReservedRef = ref;                    // จองสำเร็จ → ถ้าออเดอร์ล้มจะคืนสิทธิ์
       } catch (e) {
         if (String(e && e.message).indexOf('COUPON_EXHAUSTED') !== -1) {
-          DMC.toast('ขออภัย คูปอง ' + appliedCoupon.code + ' ถูกใช้ครบจำนวนแล้ว 🙏 กรุณานำส่วนลดออกแล้วลองใหม่', 'error', 6000);
-          btn.disabled = false; btn.innerHTML = '✅ ยืนยันออเดอร์'; _orderSubmitting = false;
+    DMC.toast('ขออภัย คูปอง ' + appliedCoupon.code + ' ถูกใช้ครบจำนวนแล้ว กรุณานำส่วนลดออกแล้วลองใหม่', 'error', 6000);
+    btn.disabled = false; btn.innerHTML = DMC.iconSvg('check') + ' ยืนยันออเดอร์'; _orderSubmitting = false;
           return;
         }
         console.warn('coupon reserve skipped (network/permission):', e.message);  // เน็ต/สิทธิ์มีปัญหา → ไม่บล็อกการสั่ง
@@ -964,11 +1065,15 @@ async function submitOrder() {
     DMC.saveCart([]);
     window._slipFile = null; window._slipVerify = null;   // เคลียร์สลิป/ผลตรวจ
     window._orderFiles = [];   // V.upgrade1: เคลียร์ไฟล์ที่อัปแล้ว
+    document.querySelectorAll('#file-preview-list img').forEach(image => {
+      if (image.src.startsWith('blob:')) URL.revokeObjectURL(image.src);
+    });
+    document.getElementById('file-preview-list')?.replaceChildren();
     window._attachedDesignUrls = [];                     // V2
     try { localStorage.removeItem('dmc_pending_designs'); } catch(e){}  // V2: เคลียร์แบบที่แนบ
 
     // Show success
-    showSuccess(orderId, total);
+    showSuccess(orderId, total, { slipUploadFailed, uploadFailureCount });
 
     // Note: ระบบแจ้งเตือนลูกค้าทาง LINE ต้องทำผ่านหน้า Admin
     // (ส่ง LINE Push ถึงลูกค้าได้เมื่อมี User ID ของลูกค้า)
@@ -989,15 +1094,31 @@ async function submitOrder() {
     }
     DMC.toast('เกิดข้อผิดพลาด กรุณาลองใหม่หรือติดต่อ LINE', 'error');
     btn.disabled = false;
-    btn.innerHTML = '✅ ยืนยันออเดอร์';
+    btn.innerHTML = DMC.iconSvg('check') + ' ยืนยันออเดอร์';
     _orderSubmitting = false;   // V16: ปลดล็อกให้ลองส่งใหม่ได้
   }
 }
 
-async function showSuccess(orderId, total) {
+async function showSuccess(orderId, total, uploadStatus = {}) {
   document.getElementById('order-wrapper').style.display = 'none';
   document.getElementById('success-page').style.display  = '';
   document.getElementById('success-order-id').textContent = orderId;
+  const failedImageCount = Number(uploadStatus.uploadFailureCount || 0);
+  const warning = document.getElementById('success-upload-warning');
+  const lineButton = document.getElementById('success-line-btn');
+  if (lineButton) {
+    lineButton.href = 'contact.html';
+    lineButton.removeAttribute('target');
+    lineButton.removeAttribute('rel');
+    lineButton.textContent = 'ดูช่องทางติดต่อร้าน';
+  }
+  if (warning && (uploadStatus.slipUploadFailed || failedImageCount)) {
+    const issues = [];
+    if (uploadStatus.slipUploadFailed) issues.push('สลิป');
+    if (failedImageCount) issues.push(`รูป ${failedImageCount} ไฟล์`);
+    warning.textContent = `รับออเดอร์แล้ว แต่${issues.join('และ')}อัปโหลดไม่สำเร็จ กรุณาเปิดช่องทางติดต่อร้านด้านล่าง แล้วแนบไฟล์ที่ยังส่งไม่สำเร็จ`;
+    warning.hidden = false;
+  } else if (warning) warning.hidden = true;
   // V16: ปุ่มคัดลอกเลขออเดอร์ (ลูกค้าใช้เลขนี้ติดตามภายหลัง — เน้นให้บันทึกไว้)
   try {
     const idEl = document.getElementById('success-order-id');
@@ -1005,13 +1126,13 @@ async function showSuccess(orderId, total) {
       const cp = document.createElement('button');
       cp.id = 'copy-order-id-btn';
       cp.type = 'button';
-      cp.textContent = '📋 คัดลอกเลขออเดอร์';
+      cp.innerHTML = DMC.iconSvg('copy') + ' คัดลอกเลขออเดอร์';
       cp.style.cssText = 'margin-top:.7rem;display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1rem;border:1.5px solid var(--border,#e5e7eb);background:var(--bg-card,#fff);color:var(--text-2);border-radius:var(--r-lg,12px);font-family:var(--font-display),sans-serif;font-weight:600;font-size:.85rem;cursor:pointer';
       cp.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(orderId);
-          cp.textContent = '✓ คัดลอกแล้ว';
-          setTimeout(() => { cp.textContent = '📋 คัดลอกเลขออเดอร์'; }, 1600);
+          cp.innerHTML = DMC.iconSvg('check') + ' คัดลอกแล้ว';
+          setTimeout(() => { cp.innerHTML = DMC.iconSvg('copy') + ' คัดลอกเลขออเดอร์'; }, 1600);
         } catch (e) { DMC.toast('กรุณาจดเลข ' + orderId + ' ไว้นะครับ', 'info', 4000); }
       });
       idEl.parentElement.appendChild(cp);
@@ -1026,20 +1147,37 @@ async function showSuccess(orderId, total) {
       const content = await CMS.get();
       const ct = content.contact || {};
       const amountTxt = (typeof total === 'number') ? (' ยอด ฿' + total.toLocaleString()) : '';
-      const msg = 'สวัสดีครับ แจ้งออเดอร์ #' + orderId + amountTxt + ' ขอส่งไฟล์รูป/สอบถามรายละเอียดเพิ่มเติมครับ 🙏';
+      const failedFiles = Number(uploadStatus.uploadFailureCount || 0);
+      const followup = uploadStatus.slipUploadFailed || failedFiles
+        ? ` อัปโหลด${uploadStatus.slipUploadFailed ? 'สลิป' : ''}${uploadStatus.slipUploadFailed && failedFiles ? 'และ' : ''}${failedFiles ? `รูป ${failedFiles} ไฟล์` : ''} ไม่สำเร็จ กำลังส่งไฟล์เพิ่มเติมครับ`
+        : ' ขอส่งไฟล์รูป/สอบถามรายละเอียดเพิ่มเติมครับ';
+      const msg = 'สวัสดีครับ แจ้งออเดอร์ #' + orderId + amountTxt + followup;
       // ดึง LINE ID (@xxx) จาก lineLabel หรือ line URL
       let oaId = (ct.lineLabel || '').trim();
-      if (!oaId && ct.line) {
-        const m = ct.line.match(/@[\w.-]+/) || ct.line.match(/ti\/p\/([^/?]+)/);
+      if (!/^@[\w.-]{1,40}$/.test(oaId)) oaId = '';
+      let safeLine = '';
+      try {
+        const lineUrl = new URL(ct.line);
+        const host = lineUrl.hostname.toLowerCase().replace(/^www\./, '');
+        if (lineUrl.protocol === 'https:' && (host === 'line.me' || host === 'lin.ee') && lineUrl.pathname !== '/') safeLine = lineUrl.href;
+      } catch (e) {}
+      if (!oaId && safeLine) {
+        const m = safeLine.match(/@[\w.-]+/) || safeLine.match(/ti\/p\/([^/?]+)/);
         if (m) oaId = m[0].indexOf('@') === 0 ? m[0] : '@' + m[1];
       }
       if (oaId) {
         const at = oaId.indexOf('@') === 0 ? oaId : '@' + oaId;
         // LINE OA deep link พร้อมข้อความร่าง (เปิดหน้าแชท OA)
         btn.href = 'https://line.me/R/oaMessage/' + encodeURIComponent(at) + '/?' + encodeURIComponent(msg);
-      } else if (ct.line) {
-        btn.href = ct.line;  // fallback เปิดแชทปกติ
+        btn.target = '_blank';
+        btn.rel = 'noopener noreferrer';
+      btn.textContent = (uploadStatus.slipUploadFailed || failedFiles) ? 'ส่งไฟล์ที่เหลือทาง LINE' : 'แจ้งร้านทาง LINE';
+      } else if (safeLine) {
+        btn.href = safeLine;  // fallback เปิดแชทปกติ
+        btn.target = '_blank';
+        btn.rel = 'noopener noreferrer';
+      btn.textContent = (uploadStatus.slipUploadFailed || failedFiles) ? 'ส่งไฟล์ที่เหลือทาง LINE' : 'แจ้งร้านทาง LINE';
       }
-    }
+  } else if (btn) btn.textContent = 'ดูช่องทางติดต่อร้าน';
   } catch(e) { /* ใช้ลิงก์เดิม */ }
 }

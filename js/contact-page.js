@@ -1,69 +1,140 @@
-/* Diamond Cute Studio 💎 — แยกจาก contact.html (V15: Separation of Concerns) */
-document.getElementById('cf-submit').addEventListener('click', async function(){
-  var name    = document.getElementById('cf-name').value.trim();
-  var contact = document.getElementById('cf-contact').value.trim();
-  var topic   = document.getElementById('cf-topic').value;
-  var msg     = document.getElementById('cf-msg').value.trim();
-  var result  = document.getElementById('cf-result');
+/* Diamond Cute Studio 💎 — contact form and CMS contact channels */
+'use strict';
 
-  if (!name || !msg) { DMC.toast('กรุณากรอกชื่อและข้อความ', 'error'); return; }
+const contactForm = document.getElementById('contact-form');
+contactForm?.addEventListener('submit', async function (event) {
+  event.preventDefault();
+  if (!contactForm.reportValidity()) return;
 
-  var btn = document.getElementById('cf-submit');
-  if (typeof Loading !== 'undefined') Loading.buttonLoad(btn);
-  else { btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:.4rem"></span> กำลังส่ง...'; }
+  const name = document.getElementById('cf-name').value.trim();
+  const contact = document.getElementById('cf-contact').value.trim();
+  const topic = document.getElementById('cf-topic').value;
+  const message = document.getElementById('cf-msg').value.trim();
+  const result = document.getElementById('cf-result');
+  const button = document.getElementById('cf-submit');
+  const initialLabel = button.textContent;
+
+  button.disabled = true;
+  button.textContent = 'กำลังส่งข้อความ…';
+  result.style.display = 'block';
+  result.style.color = 'var(--text-2)';
+  result.textContent = 'กำลังบันทึกข้อความของคุณ';
 
   try {
-    // Save to Firestore
-    var db = await DMC.getFirebaseReady();
+    const db = await DMC.getFirebaseReady();
     await db.collection('contacts').add({
-      name, contact, topic, message: msg,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      name,
+      contact,
+      topic,
+      message,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Notify LINE
-    await DMC.sendLineNotify({
-      orderId: 'CONTACT',
-      customerName: name,
-      customerPhone: contact,
-      itemsSummary: '['+topic+'] '+msg,
-      total: 0,
-      paymentMethod: 'contact_form'
-    });
-
-    result.style.display = 'block';
     result.style.color = 'var(--emerald)';
-    result.innerHTML = '✅ ส่งข้อความสำเร็จแล้ว! เราจะติดต่อกลับเร็วๆ นี้';
-    if (typeof Loading !== 'undefined') { Loading.buttonDone(btn); btn.innerHTML = '✅ ส่งแล้ว'; btn.disabled = true; }
-    else btn.innerHTML = '✅ ส่งแล้ว';
+    result.textContent = 'ส่งข้อความเรียบร้อยแล้ว ขอบคุณที่ติดต่อเรา';
+    button.textContent = 'ส่งข้อความแล้ว';
 
-  } catch(e) {
-    DMC.toast('เกิดข้อผิดพลาด กรุณาติดต่อผ่าน LINE โดยตรง', 'error');
-    if (typeof Loading !== 'undefined') Loading.buttonDone(btn);
-    else { btn.disabled = false; btn.innerHTML = '💬 ส่งข้อความ'; }
+    // The contact is saved first; a notification outage must not make the customer resubmit it.
+    try {
+      DMC.sendLineNotify({
+        orderId: 'CONTACT',
+        customerName: name,
+        customerPhone: contact,
+        itemsSummary: '[' + topic + '] ' + message,
+        total: 0,
+        paymentMethod: 'contact_form',
+      }).catch(() => {});
+    } catch (error) {}
+  } catch (error) {
+    result.style.color = 'var(--rose)';
+    result.textContent = 'ส่งข้อความไม่สำเร็จ กรุณาลองอีกครั้ง หรือติดต่อผ่านช่องทางที่แสดงไว้';
+    button.disabled = false;
+    button.textContent = initialLabel;
   }
 });
 
-// ── ช่องทางติดต่อจากหลังบ้าน (CMS) ──
-(function(){
-  if (typeof CMS === 'undefined') return;
-  CMS.get().then(function(c){
-    var ct = c.contact || {};
-    function setHref(id, url){ var el = document.getElementById(id); if (el && url) el.href = url; }
-    setHref('ch-line', CMS.lineChat ? CMS.lineChat(ct) : ct.line);
-    setHref('ch-fb',   ct.facebook);
-    setHref('ch-ig',   ct.instagram);
-    setHref('ch-tt',   ct.tiktok);
-    if (ct.email) {
-      var m = document.getElementById('ch-mail');
-      if (m) m.href = ct.email.indexOf('mailto:') === 0 ? ct.email : 'mailto:' + ct.email;
-      var ml = document.getElementById('ch-mail-label');
-      if (ml) ml.textContent = ct.email.replace('mailto:','');
+function verifiedHttpsLink(value, hosts, pathIsRequired) {
+  if (!value) return '';
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (url.protocol !== 'https:' || !hosts.includes(host)) return '';
+    if (pathIsRequired && !url.pathname.split('/').filter(Boolean).length) return '';
+    return url.href;
+  } catch (error) { return ''; }
+}
+
+function showExternalChannel(id, href) {
+  const link = document.getElementById(id);
+  if (!link) return;
+  if (!href) {
+    link.removeAttribute('href');
+    link.hidden = true;
+    return;
+  }
+  link.href = href;
+  link.hidden = false;
+}
+
+function applyContactContent(content) {
+  const contact = content?.contact || {};
+  let lineValue = contact.line;
+  try {
+    if (typeof CMS !== 'undefined' && CMS.lineChat) lineValue = CMS.lineChat(contact);
+  } catch (error) {
+    // A malformed optional LINE setting should not hide other contact channels.
+  }
+  const lineUrl = verifiedHttpsLink(
+    lineValue,
+    ['line.me', 'lin.ee'],
+    true,
+  );
+  showExternalChannel('ch-line', lineUrl);
+  const lineLabel = document.getElementById('ch-line-label');
+  if (lineLabel) lineLabel.textContent = contact.lineLabel || 'เปิดแชท LINE';
+
+  showExternalChannel('ch-fb', verifiedHttpsLink(contact.facebook, ['facebook.com', 'fb.com'], true));
+  showExternalChannel('ch-ig', verifiedHttpsLink(contact.instagram, ['instagram.com'], true));
+  const tiktok = verifiedHttpsLink(contact.tiktok, ['tiktok.com'], true);
+  showExternalChannel('ch-tt', tiktok && /^\/@[^/]+(?:\/|$)/i.test(new URL(tiktok).pathname) ? tiktok : '');
+
+  const email = String(contact.email || '').replace(/^mailto:/i, '').trim();
+  const mailLink = document.getElementById('ch-mail');
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (mailLink) {
+      mailLink.href = 'mailto:' + email;
+      mailLink.hidden = false;
     }
-    if (ct.lineLabel) {
-      var ll = document.getElementById('ch-line-label');
-      if (ll) ll.textContent = ct.lineLabel + ' · ตอบเร็วที่สุด';
+    const label = document.getElementById('ch-mail-label');
+    if (label) label.textContent = email;
+  } else if (mailLink) {
+    mailLink.removeAttribute('href');
+    mailLink.hidden = true;
+  }
+
+  const phone = String(contact.phone || '').trim();
+  const digits = phone.replace(/[^\d+]/g, '');
+  const phoneLink = document.getElementById('ch-phone');
+  if (/^\+?\d{8,15}$/.test(digits)) {
+    if (phoneLink) {
+      phoneLink.href = 'tel:' + digits;
+      phoneLink.hidden = false;
     }
-    var hrs = document.getElementById('contact-hours');
-    if (hrs && ct.hours) hrs.textContent = ct.hours;
-  }).catch(function(){});
-})();
+    const label = document.getElementById('ch-phone-label');
+    if (label) label.textContent = phone;
+  } else if (phoneLink) {
+    phoneLink.removeAttribute('href');
+    phoneLink.hidden = true;
+  }
+
+  const hoursCard = document.getElementById('contact-hours-card');
+  const hours = document.getElementById('contact-hours');
+  if (hoursCard && hours) {
+    hours.textContent = String(contact.hours || '').trim();
+    hoursCard.hidden = !hours.textContent;
+  }
+}
+
+if (typeof CMS !== 'undefined') {
+  CMS.get().then(applyContactContent).catch(() => {});
+}
