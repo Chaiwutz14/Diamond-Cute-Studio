@@ -43,7 +43,7 @@
       + 'background:#1f2937;color:#fff;padding:.7rem 1rem;border-radius:999px;'
       + 'box-shadow:0 6px 20px rgba(0,0,0,.25);display:flex;align-items:center;gap:.75rem;'
       + 'font-size:.85rem;font-family:var(--font-display,sans-serif);max-width:92vw';
-    bar.innerHTML = '✨ มีเวอร์ชันใหม่'
+    bar.innerHTML = DMC.iconSvg('sparkle') + ' มีเวอร์ชันใหม่'
       + '<button id="sw-update-btn" style="background:#06c755;color:#fff;border:none;border-radius:999px;'
       + 'padding:.35rem .9rem;font-weight:700;cursor:pointer;font-family:inherit">อัปเดต</button>';
     document.body.appendChild(bar);

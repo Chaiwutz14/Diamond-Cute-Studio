@@ -16,10 +16,10 @@ let _countdownTimer = null;
 
 // ─── สถานะออเดอร์ → ขั้นที่ (stepper) ───
 const STATUS_STEPS = [
-  { key: 'pending',    label: 'รับออเดอร์',  icon: '📥' },
-  { key: 'processing', label: 'จัดเตรียม',   icon: '🛠️' },
-  { key: 'shipping',   label: 'กำลังส่ง',    icon: '🚚' },
-  { key: 'done',       label: 'ส่งสำเร็จ',   icon: '🎉' },
+  { key: 'pending',    label: 'รับออเดอร์',  icon: 'document' },
+  { key: 'processing', label: 'จัดเตรียม',   icon: 'settings' },
+  { key: 'shipping',   label: 'กำลังส่ง',    icon: 'truck' },
+  { key: 'done',       label: 'ส่งสำเร็จ',   icon: 'check' },
 ];
 
 function statusIndex(status) {
@@ -40,16 +40,35 @@ const CARRIERS = {
 
 document.addEventListener('DOMContentLoaded', async () => {
   initTabs();
+  connectTracking();
+});
+
+let otpInitialized = false;
+async function connectTracking() {
+  const wrap = document.getElementById('device-orders-list');
+  const phoneTab = document.getElementById('tab-phone');
   try {
     db = await DMC.getFirebaseReady();
+    if (phoneTab) phoneTab.disabled = false;
+    await loadDeviceOrders();
+    if (!otpInitialized) { initOTPFlow(); otpInitialized = true; }
   } catch (e) {
-    document.getElementById('device-orders-list').innerHTML =
-      '<div class="track-empty">⚠️ เชื่อมต่อระบบไม่ได้ กรุณาลองใหม่ภายหลัง</div>';
-    return;
+    if (phoneTab) phoneTab.disabled = true;
+    showLoadError(wrap, 'เชื่อมต่อระบบไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง', connectTracking);
   }
-  loadDeviceOrders();
-  initOTPFlow();
-});
+}
+
+function showLoadError(wrap, message, retry) {
+  if (!wrap) return;
+  wrap.innerHTML = `<div class="track-error" role="alert"><p>${DMC.escapeHtml(message)}</p><button type="button" class="btn btn-primary btn-md track-retry">ลองอีกครั้ง</button></div>`;
+  wrap.querySelector('.track-retry')?.addEventListener('click', async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.textContent = 'กำลังลอง...';
+    try { await retry(); }
+    catch (e) { showLoadError(wrap, 'ยังโหลดข้อมูลไม่ได้ กรุณาลองอีกครั้ง', retry); }
+  });
+}
 
 // ══════════════════════════════════════════════
 //  TABS
@@ -62,15 +81,28 @@ function initTabs() {
 
   function activate(which) {
     const isDevice = which === 'device';
+    if (!isDevice && tabPhone.disabled) return;
     tabDevice.classList.toggle('active', isDevice);
     tabPhone.classList.toggle('active', !isDevice);
     tabDevice.setAttribute('aria-selected', isDevice);
     tabPhone.setAttribute('aria-selected', !isDevice);
+    tabDevice.tabIndex = isDevice ? 0 : -1;
+    tabPhone.tabIndex = isDevice ? -1 : 0;
     pDevice.classList.toggle('active', isDevice);
     pPhone.classList.toggle('active', !isDevice);
+    pDevice.hidden = !isDevice;
+    pPhone.hidden = isDevice;
   }
   tabDevice.addEventListener('click', () => activate('device'));
   tabPhone.addEventListener('click',  () => activate('phone'));
+  [tabDevice, tabPhone].forEach(tab => tab.addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const next = event.key === 'Home' ? tabDevice : event.key === 'End' ? tabPhone : tab === tabDevice ? tabPhone : tabDevice;
+    if (next.disabled) return;
+    activate(next === tabDevice ? 'device' : 'phone');
+    next.focus();
+  }));
 }
 
 // ══════════════════════════════════════════════
@@ -83,11 +115,11 @@ async function loadDeviceOrders() {
   if (!mine.length) {
     wrap.innerHTML = `
       <div class="track-empty">
-        <div class="track-empty-icon">🗂️</div>
+        <div class="track-empty-icon">${DMC.iconSvg('document')}</div>
         <div class="track-empty-title">ยังไม่มีออเดอร์ในเครื่องนี้</div>
         <p>ออเดอร์ที่สั่งจากเครื่อง/เบราว์เซอร์นี้จะแสดงที่นี่อัตโนมัติ<br>
         หากสั่งจากเครื่องอื่น ใช้แท็บ <strong>"ค้นหาด้วยเบอร์โทร"</strong> ได้เลยครับ</p>
-        <a href="catalog.html" class="btn btn-primary btn-md" style="margin-top:1rem">🛍️ เลือกซื้อสินค้า</a>
+        <a href="catalog.html" class="btn btn-primary btn-md" style="margin-top:1rem">${DMC.iconSvg('bag')} เลือกซื้อสินค้า</a>
       </div>`;
     return;
   }
@@ -98,17 +130,23 @@ async function loadDeviceOrders() {
     const results = await Promise.all(mine.map(async (m) => {
       try {
         const doc = await db.collection('orders').doc(m.docId).get();
-        return doc.exists ? { id: doc.id, ...doc.data() } : null;
-      } catch (e) { return null; }
+        return doc.exists ? { order: { id: doc.id, ...doc.data() } } : { missing: true };
+      } catch (error) { return { error }; }
     }));
-    const orders = results.filter(Boolean);
+    const orders = results.filter(result => result.order).map(result => result.order);
+    const errors = results.filter(result => result.error).length;
     if (!orders.length) {
-      wrap.innerHTML = '<div class="track-empty">ไม่พบข้อมูลออเดอร์ (อาจถูกลบจากระบบแล้ว)</div>';
+      if (errors) {
+        showLoadError(wrap, 'โหลดออเดอร์ไม่สำเร็จ กรุณาลองอีกครั้ง', loadDeviceOrders);
+        return;
+      }
+      wrap.innerHTML = '<div class="track-empty" role="status">ไม่พบข้อมูลออเดอร์ (อาจถูกลบจากระบบแล้ว)</div>';
       return;
     }
     renderOrderCards(wrap, orders);
+    if (errors) wrap.insertAdjacentHTML('afterbegin', '<p class="track-partial-warning" role="status">โหลดได้บางออเดอร์ รายการอื่นลองเปิดหน้านี้ใหม่อีกครั้ง</p>');
   } catch (e) {
-    wrap.innerHTML = '<div class="track-empty">⚠️ โหลดไม่สำเร็จ: ' + DMC.escapeHtml(e.message) + '</div>';
+    showLoadError(wrap, 'โหลดออเดอร์ไม่สำเร็จ กรุณาลองอีกครั้ง', loadDeviceOrders);
   }
 }
 
@@ -150,11 +188,11 @@ function initOTPFlow() {
     const digits = DMC.normalizePhone(raw);
 
     if (!/^0[0-9]{8,9}$/.test(digits)) {
-      errEl.textContent = '❌ กรุณากรอกเบอร์โทรให้ถูกต้อง เช่น 0812345678';
+    errEl.textContent = 'กรุณากรอกเบอร์โทรให้ถูกต้อง เช่น 0812345678';
       return;
     }
     if (!firebase.auth) {
-      errEl.textContent = '❌ ระบบ OTP ยังไม่พร้อม กรุณาติดต่อร้านทาง LINE';
+    errEl.textContent = 'ระบบ OTP ยังไม่พร้อม กรุณาติดต่อร้านทาง LINE';
       return;
     }
 
@@ -179,7 +217,7 @@ function initOTPFlow() {
       if (e.code === 'auth/too-many-requests')      msg = 'ส่งรหัสบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่';
       else if (e.code === 'auth/invalid-phone-number') msg = 'รูปแบบเบอร์โทรไม่ถูกต้อง';
       else if (e.code === 'auth/billing-not-enabled' || /billing/i.test(e.message || '')) msg = 'ระบบ OTP ยังไม่เปิดใช้งาน กรุณาติดต่อร้านทาง LINE เพื่อสอบถามออเดอร์';
-      errEl.textContent = '❌ ' + msg;
+    errEl.textContent = msg;
       // reset recaptcha เพื่อให้ลองใหม่ได้
       try { _recaptcha.clear(); } catch (err) {}
       _recaptcha = null;
@@ -193,7 +231,7 @@ function initOTPFlow() {
     errEl.textContent = '';
     const code = codeIn.value.trim();
     if (!/^[0-9]{6}$/.test(code)) {
-      errEl.textContent = '❌ กรุณากรอกรหัส 6 หลัก';
+    errEl.textContent = 'กรุณากรอกรหัส 6 หลัก';
       return;
     }
     if (!_confirmation) { resetToPhoneStep(); return; }
@@ -207,10 +245,12 @@ function initOTPFlow() {
       try { sessionStorage.setItem('dmc_verified_phone', digits); } catch (e) {}
       showResults(digits);
     } catch (e) {
-      console.error('OTP verify error:', e);
+      if (e.code !== 'auth/invalid-verification-code' && e.code !== 'auth/code-expired') console.error('OTP verification failed:', e);
       errEl.textContent = e.code === 'auth/invalid-verification-code'
-        ? '❌ รหัสไม่ถูกต้อง ลองอีกครั้ง'
-        : '❌ ยืนยันไม่สำเร็จ: ' + (e.message || 'ลองใหม่อีกครั้ง');
+        ? 'รหัสไม่ถูกต้อง ลองอีกครั้ง'
+        : e.code === 'auth/code-expired'
+          ? 'รหัสหมดอายุแล้ว กรุณารอจนปุ่มส่งรหัสใหม่เปิดใช้งาน'
+          : 'ยืนยันไม่สำเร็จ: ' + (e.message || 'ลองใหม่อีกครั้ง');
     } finally {
       if (typeof Loading !== 'undefined') Loading.buttonDone(verifyBtn);
     }
@@ -255,31 +295,38 @@ async function showResults(phoneDigits) {
 
   try {
     // ค้นจาก phoneSearch (ออเดอร์ V12+) และ fallback customerPhone ตรงตัว (ออเดอร์เก่า)
-    const [snapNew, snapOld] = await Promise.all([
+    const queries = await Promise.allSettled([
       db.collection('orders').where('phoneSearch', '==', phoneDigits).get(),
       db.collection('orders').where('customerPhone', '==', phoneDigits).get(),
     ]);
+    const snaps = queries.filter(query => query.status === 'fulfilled').map(query => query.value);
+    const errors = queries.filter(query => query.status === 'rejected').length;
     const seen = new Set();
     const orders = [];
-    [snapNew, snapOld].forEach(snap => snap.forEach(doc => {
+    snaps.forEach(snap => snap.forEach(doc => {
       if (seen.has(doc.id)) return;
       seen.add(doc.id);
       orders.push({ id: doc.id, ...doc.data() });
     }));
     orders.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
+    if (errors === 2 || (errors && !orders.length)) {
+      showLoadError(wrap, 'ค้นหาออเดอร์ไม่สำเร็จ กรุณาลองอีกครั้ง', () => showResults(phoneDigits));
+      return;
+    }
     if (!orders.length) {
       wrap.innerHTML = `
         <div class="track-empty">
-          <div class="track-empty-icon">🔍</div>
+        <div class="track-empty-icon">${DMC.iconSvg('search')}</div>
           <div class="track-empty-title">ไม่พบออเดอร์ของเบอร์นี้</div>
           <p>หากแน่ใจว่าเคยสั่งซื้อ อาจกรอกเบอร์ไว้คนละรูปแบบ<br>ติดต่อร้านทาง LINE เพื่อให้ช่วยตรวจสอบได้เลยครับ</p>
         </div>`;
       return;
     }
     renderOrderCards(wrap, orders);
+    if (errors) wrap.insertAdjacentHTML('afterbegin', '<p class="track-partial-warning" role="status">แสดงผลการค้นหาบางส่วน กรุณาลองค้นหาอีกครั้งเพื่อโหลดให้ครบ</p>');
   } catch (e) {
-    wrap.innerHTML = '<div class="track-empty">⚠️ โหลดไม่สำเร็จ: ' + DMC.escapeHtml(e.message) + '</div>';
+    showLoadError(wrap, 'ค้นหาออเดอร์ไม่สำเร็จ กรุณาลองอีกครั้ง', () => showResults(phoneDigits));
   }
 }
 
@@ -295,7 +342,7 @@ function renderOrderCards(wrap, orders) {
     btn.addEventListener('click', () => {
       const text = btn.getAttribute('data-copy');
       navigator.clipboard?.writeText(text)
-        .then(() => DMC.toast('คัดลอกเลขพัสดุแล้ว ✅', 'success'))
+    .then(() => DMC.toast('คัดลอกเลขพัสดุแล้ว', 'success'))
         .catch(() => DMC.toast('คัดลอกไม่สำเร็จ', 'error'));
     });
   });
@@ -338,11 +385,11 @@ function buildOrderCard(o) {
 
   // Stepper
   const stepper = isCancelled
-    ? `<div class="track-cancelled">❌ ออเดอร์ถูกยกเลิก ${o.cancelReason ? '· ' + DMC.escapeHtml(o.cancelReason) : ''}</div>`
+    ? `<div class="track-cancelled">${DMC.iconSvg('close')} ออเดอร์ถูกยกเลิก ${o.cancelReason ? '· ' + DMC.escapeHtml(o.cancelReason) : ''}</div>`
     : `<div class="track-stepper">
         ${STATUS_STEPS.map((s, i) => `
           <div class="track-step ${i < idx ? 'done' : ''} ${i === idx ? 'current' : ''}">
-            <div class="track-step-dot">${i < idx ? '✓' : s.icon}</div>
+            <div class="track-step-dot">${DMC.iconSvg(i < idx ? 'check' : s.icon)}</div>
             <div class="track-step-label">${s.label}</div>
           </div>
           ${i < STATUS_STEPS.length - 1 ? `<div class="track-step-line ${i < idx ? 'done' : ''}"></div>` : ''}
@@ -361,12 +408,12 @@ function buildOrderCard(o) {
     trackingHtml = `
       <div class="track-shipping-box">
         <div class="track-shipping-row">
-          <span class="track-shipping-label">🚚 ${DMC.escapeHtml(label)}</span>
+          <span class="track-shipping-label">${DMC.iconSvg('truck')} ${DMC.escapeHtml(label)}</span>
           <span class="track-shipping-no">${DMC.escapeHtml(o.trackingNo)}</span>
-          <button class="track-copy-btn" data-copy="${DMC.escapeHtml(o.trackingNo)}" title="คัดลอก">📋</button>
+          <button class="track-copy-btn" data-copy="${DMC.escapeHtml(o.trackingNo)}" title="คัดลอกเลขพัสดุ" aria-label="คัดลอกเลขพัสดุ">${DMC.iconSvg('copy')}</button>
         </div>
-        <a class="btn btn-secondary btn-sm" style="border-radius:var(--r-md);margin-top:.5rem" href="${url}" target="_blank" rel="noopener">🔎 ตรวจสอบสถานะพัสดุ →</a>
-        ${known && known.paste ? '<div style="font-size:.72rem;color:var(--text-3);margin-top:.35rem">💡 กดปุ่ม 📋 คัดลอกเลข แล้วไปวางในช่องค้นหาบนหน้าเช็คพัสดุได้เลย</div>' : ''}
+        <a class="btn btn-secondary btn-sm" style="border-radius:var(--r-md);margin-top:.5rem" href="${url}" target="_blank" rel="noopener">${DMC.iconSvg('search')} ตรวจสอบสถานะพัสดุ →</a>
+        ${known && known.paste ? `<div style="font-size:.72rem;color:var(--text-3);margin-top:.35rem">${DMC.iconSvg('info')} กดปุ่มคัดลอกเลข แล้วไปวางในช่องค้นหาบนหน้าเช็คพัสดุได้เลย</div>` : ''}
       </div>`;
   }
 
@@ -375,15 +422,15 @@ function buildOrderCard(o) {
   ).join('') || `<div class="track-item-row"><span>${DMC.escapeHtml(o.itemsSummary || '—')}</span></div>`;
 
   // ── V26: รายละเอียดออเดอร์แบบเต็ม (กดดูได้ — <details> พื้นฐานเบราว์เซอร์ ไม่พึ่ง JS) ──
-  const SHIP_LABELS = { any:'📦 ขนส่งใดก็ได้ (ให้ร้านเลือก)', kerry:'Kerry Express', flash:'Flash Express', jandt:'J&T Express', jt:'J&T Express', thaipost:'ไปรษณีย์ไทย' };
-  const payLabel  = o.paymentMethod === 'promptpay' ? '📱 โอนผ่าน PromptPay' : '🚚 เก็บเงินปลายทาง (COD)';
+  const SHIP_LABELS = { any:'ขนส่งใดก็ได้ (ให้ร้านเลือก)', kerry:'Kerry Express', flash:'Flash Express', jandt:'J&T Express', jt:'J&T Express', thaipost:'ไปรษณีย์ไทย' };
+  const payLabel  = o.paymentMethod === 'promptpay' ? 'โอนผ่าน PromptPay' : 'เก็บเงินปลายทาง (COD)';
   const shipLabel = SHIP_LABELS[o.shippingMethod] || (o.shippingMethod ? DMC.escapeHtml(o.shippingMethod) : '—');
   const knownC       = CARRIERS[o.carrier] || null;
   const carrierLabel = knownC ? knownC.name : (o.carrier || '');
   const fullItems = (o.items || []).map(it => {
     const qty = it.qty || 1, unit = it.price || 0;
     return `<div class="track-detail-item">
-        <span>${DMC.escapeHtml(it.name || '')}${it.customDetails ? `<small>📝 ${DMC.escapeHtml(it.customDetails)}</small>` : ''}</span>
+        <span>${DMC.escapeHtml(it.name || '')}${it.customDetails ? `<small>${DMC.iconSvg('edit')} ${DMC.escapeHtml(it.customDetails)}</small>` : ''}</span>
         <span>${DMC.formatPrice(unit)} × ${qty} = <b>${DMC.formatPrice(unit * qty)}</b></span>
       </div>`;
   }).join('') || `<div class="track-detail-item"><span>${DMC.escapeHtml(o.itemsSummary || '—')}</span></div>`;
@@ -393,7 +440,7 @@ function buildOrderCard(o) {
   // ── V28: รูปที่ลูกค้าแนบมากับออเดอร์ (แบบที่ออกแบบ + รูปที่อัปโหลด) — กดดูขนาดเต็มได้ ──
   const fileUrls = Array.isArray(o.fileUrls) ? o.fileUrls.filter(u => /^https?:\/\//.test(String(u || ''))) : [];
   const attachedHtml = fileUrls.length ? `
-        <div class="track-detail-sec">🖼️ รูปที่แนบมากับออเดอร์ (${fileUrls.length})</div>
+        <div class="track-detail-sec">${DMC.iconSvg('image')} รูปที่แนบมากับออเดอร์ (${fileUrls.length})</div>
         <div class="track-files-grid">
           ${fileUrls.map((u, i) => `<img class="track-file-thumb" src="${DMC.escapeHtml(DMC.imgCDN ? DMC.imgCDN(u, 200) : u)}" data-full="${DMC.escapeHtml(u)}" alt="รูปแนบที่ ${i + 1}" loading="lazy">`).join('')}
         </div>` : '';
@@ -405,31 +452,31 @@ function buildOrderCard(o) {
   if (o.paymentMethod === 'promptpay') {
     const slipOk = /^https?:\/\//.test(String(o.slipUrl || ''));
     slipHtml = slipOk ? `
-        <div class="track-detail-sec">🧾 สลิปการชำระเงิน</div>
+        <div class="track-detail-sec">${DMC.iconSvg('document')} สลิปการชำระเงิน</div>
         <div class="track-files-grid">
           <img class="track-file-thumb" src="${DMC.escapeHtml(DMC.imgCDN ? DMC.imgCDN(o.slipUrl, 200) : o.slipUrl)}" data-full="${DMC.escapeHtml(o.slipUrl)}" alt="สลิปการชำระเงิน" loading="lazy">
         </div>` : `
-        <div class="track-detail-sec">🧾 สลิปการชำระเงิน</div>
-        <div class="track-slip-pending">🔒 การแสดงสลิปยังไม่พร้อมใช้งานชั่วคราว — ร้านได้รับสลิปของคุณเรียบร้อยแล้ว (ระบบจัดเก็บแบบส่วนตัวกำลังจะเปิดใช้เร็วๆ นี้)</div>`;
+        <div class="track-detail-sec">${DMC.iconSvg('document')} สลิปการชำระเงิน</div>
+        <div class="track-slip-pending">${DMC.iconSvg('shield')} การแสดงสลิปยังไม่พร้อมใช้งานชั่วคราว — ร้านได้รับสลิปของคุณเรียบร้อยแล้ว (ระบบจัดเก็บแบบส่วนตัวกำลังจะเปิดใช้เร็วๆ นี้)</div>`;
   }
   const detailHtml = `
     <details class="track-detail">
-      <summary>📋 ดูรายละเอียดออเดอร์ทั้งหมด</summary>
+      <summary>${DMC.iconSvg('document')} ดูรายละเอียดออเดอร์ทั้งหมด</summary>
       <div class="track-detail-body">
-        <div class="track-detail-sec">🛍️ รายการสินค้า</div>
+        <div class="track-detail-sec">${DMC.iconSvg('bag')} รายการสินค้า</div>
         ${fullItems}
         ${moneyRow('ยอดสินค้า', o.subtotal)}
         ${moneyRow('ค่าจัดส่ง', o.shipping)}
         ${o.surcharge ? moneyRow('ค่าธรรมเนียมเก็บเงินปลายทาง', o.surcharge) : ''}
         ${o.couponDiscount ? `<div class="track-detail-row discount"><span>ส่วนลดคูปอง${o.couponCode ? ' (' + DMC.escapeHtml(o.couponCode) + ')' : ''}</span><span>−${DMC.formatPrice(o.couponDiscount)}</span></div>` : ''}
         <div class="track-detail-row total"><span>รวมทั้งหมด</span><span>${DMC.formatPrice(o.total || 0)}</span></div>
-        <div class="track-detail-sec">🚚 การจัดส่ง &amp; ชำระเงิน</div>
+        <div class="track-detail-sec">${DMC.iconSvg('truck')} การจัดส่ง &amp; ชำระเงิน</div>
         <div class="track-detail-row"><span>สั่งเมื่อ</span><span>${dateStr}</span></div>
         <div class="track-detail-row"><span>ขนส่งที่เลือกตอนสั่ง</span><span>${shipLabel}</span></div>
         ${carrierLabel ? `<div class="track-detail-row"><span>จัดส่งจริงโดย</span><span>${DMC.escapeHtml(carrierLabel)}${o.trackingNo ? ' · ' + DMC.escapeHtml(o.trackingNo) : ''}</span></div>` : ''}
         <div class="track-detail-row"><span>ชำระเงิน</span><span>${payLabel}</span></div>
-        ${o.address ? `<div class="track-detail-row addr"><span>📍 ที่อยู่จัดส่ง</span><span>${DMC.escapeHtml(o.address)}</span></div>` : ''}
-        ${o.note ? `<div class="track-detail-row addr"><span>📝 หมายเหตุ</span><span>${DMC.escapeHtml(o.note)}</span></div>` : ''}
+        ${o.address ? `<div class="track-detail-row addr"><span>${DMC.iconSvg('home')} ที่อยู่จัดส่ง</span><span>${DMC.escapeHtml(o.address)}</span></div>` : ''}
+        ${o.note ? `<div class="track-detail-row addr"><span>${DMC.iconSvg('edit')} หมายเหตุ</span><span>${DMC.escapeHtml(o.note)}</span></div>` : ''}
         ${attachedHtml}
         ${slipHtml}
       </div>
@@ -454,10 +501,10 @@ function buildOrderCard(o) {
 
 function statusThaiLabel(s) {
   return {
-    pending:    '📥 รับออเดอร์แล้ว',
-    processing: '🛠️ กำลังจัดเตรียม',
-    shipping:   '🚚 กำลังจัดส่ง',
-    done:       '🎉 ส่งสำเร็จ',
-    cancelled:  '❌ ยกเลิก',
-  }[s] || '📥 รับออเดอร์แล้ว';
+    pending:    'รับออเดอร์แล้ว',
+    processing: 'กำลังจัดเตรียม',
+    shipping:   'กำลังจัดส่ง',
+    done:       'ส่งสำเร็จ',
+    cancelled:  'ยกเลิก',
+  }[s] || 'รับออเดอร์แล้ว';
 }

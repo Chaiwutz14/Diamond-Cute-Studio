@@ -6,13 +6,13 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com https://www.gstatic.com https://challenges.cloudflare.com; frame-src https://www.google.com https://*.firebaseapp.com https://challenges.cloudflare.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta property="og:title" content="ตัวอย่างงาน — Diamond Cute Studio 💎">
-  <meta property="og:description" content="Diamond Cute Studio 💎 — ตัวอย่างผลงานจริงจากลูกค้า โพลารอยด์ นามบัตร บัตรแขวนคอ">
+    <meta property="og:title" content="ตัวอย่างงาน — Diamond Cute Studio">
+  <meta property="og:description" content="Diamond Cute Studio — ตัวอย่างผลงานจริงจากลูกค้า โพลารอยด์ นามบัตร บัตรแขวนคอ">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
-  <meta name="description" content="Diamond Cute Studio 💎 — ตัวอย่างผลงานจริงจากลูกค้า โพลารอยด์ นามบัตร บัตรแขวนคอ">
+  <meta name="description" content="Diamond Cute Studio — ตัวอย่างผลงานจริงจากลูกค้า โพลารอยด์ นามบัตร บัตรแขวนคอ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ตัวอย่างงาน — Diamond Cute Studio 💎</title>
+  <title>ตัวอย่างงาน — Diamond Cute Studio</title>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#F4F9FE">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="css/core.css">
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/home.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+  <link rel="icon" type="image/png" href="assets/icon-192.png">
   <style>
     .gallery-wrapper { max-width: 1200px; margin: 0 auto; padding: calc(var(--nav-h) + 2rem) 1.5rem 4rem; }
     .page-hero { text-align: center; margin-bottom: 2.5rem; }
@@ -77,6 +77,11 @@
       font-size: 3.5rem;
     }
     .gallery-emoji-ph { font-size: 3.5rem; line-height: 1; }
+    .gallery-placeholder-icon { width: 3.5rem; height: 3.5rem; color: var(--text-3); }
+    .gallery-empty-icon { margin-bottom: .75rem; color: var(--text-3); }
+    .gallery-empty-icon svg { width: 2.5rem; height: 2.5rem; }
+    .gallery-tab-icon { display: inline-flex; align-items: center; line-height: 0; }
+    .gallery-tab-icon svg, .gallery-overlay-text svg { width: 1.1em; height: 1.1em; }
     .gallery-img.tall  { aspect-ratio: 3/4; }
     .gallery-img.wide  { aspect-ratio: 4/3; }
     .gallery-img img   { width: 100%; height: 100%; object-fit: cover; }
@@ -111,7 +116,8 @@
       transition: background .15s;
     }
     .lightbox-close:hover { background: rgba(255,255,255,.25); }
-    .lightbox-emoji { font-size: 8rem; }
+    .lightbox-emoji { display: grid; place-items: center; }
+    .lightbox-emoji svg { width: min(32vw, 10rem); height: min(32vw, 10rem); color: #dceaf4; }
 
     .empty-gallery {
       text-align: center; padding: 4rem 1.5rem; color: var(--text-3);
@@ -130,7 +136,7 @@
 
 <div class="gallery-wrapper" id="main-content" tabindex="-1">
   <div class="page-hero anim-fade-up">
-    <div style="font-size:3rem;margin-bottom:.75rem">🖼️</div>
+    <div style="font-size:3rem;margin-bottom:.75rem"><span class="dmc-icon-slot" data-dmc-icon="image" aria-hidden="true"></span></div>
     <h1 data-edit="pages.gallery.title" data-edit-label="หัวข้อหน้า">ตัวอย่างงาน</h1>
     <p data-edit="pages.gallery.subtitle" data-edit-label="คำโปรย">ผลงานจริงจากลูกค้า คุณภาพที่คุณมั่นใจได้</p>
   </div>
@@ -138,12 +144,12 @@
   <!-- Tabs -->
   <div class="gallery-tabs" id="gallery-tabs">
     <button class="gallery-tab active" data-cat="all">ทั้งหมด</button>
-    <button class="gallery-tab" data-cat="polaroid">📸 โพลารอยด์</button>
-    <button class="gallery-tab" data-cat="lanyard">🪪 บัตรแขวนคอ</button>
-    <button class="gallery-tab" data-cat="business-card">💼 นามบัตร</button>
-    <button class="gallery-tab" data-cat="shop-sign">🏪 ป้ายร้านค้า</button>
-    <button class="gallery-tab" data-cat="qrcode">📱 QR Code</button>
-    <button class="gallery-tab" data-cat="doll-tag">🧸 ป้ายตุ๊กตา</button>
+    <button class="gallery-tab" data-cat="polaroid"><span class="dmc-icon-slot" data-dmc-icon="image" aria-hidden="true"></span> โพลารอยด์</button>
+    <button class="gallery-tab" data-cat="lanyard"><span class="dmc-icon-slot" data-dmc-icon="card" aria-hidden="true"></span> บัตรแขวนคอ</button>
+    <button class="gallery-tab" data-cat="business-card"><span class="dmc-icon-slot" data-dmc-icon="card" aria-hidden="true"></span> นามบัตร</button>
+    <button class="gallery-tab" data-cat="shop-sign"><span class="dmc-icon-slot" data-dmc-icon="grid" aria-hidden="true"></span> ป้ายร้านค้า</button>
+    <button class="gallery-tab" data-cat="qrcode"><span class="dmc-icon-slot" data-dmc-icon="phone" aria-hidden="true"></span> QR Code</button>
+    <button class="gallery-tab" data-cat="doll-tag"><span class="dmc-icon-slot" data-dmc-icon="box" aria-hidden="true"></span> ป้ายตุ๊กตา</button>
   </div>
 
   <!-- Gallery Grid -->

@@ -12,13 +12,13 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com https://www.gstatic.com https://challenges.cloudflare.com; frame-src https://www.google.com https://*.firebaseapp.com https://challenges.cloudflare.com https://www.youtube.com https://www.youtube-nocookie.com https://www.tiktok.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta property="og:title" content="รายละเอียดสินค้า — Diamond Cute Studio 💎">
-  <meta property="og:description" content="Diamond Cute Studio 💎 — สินค้าพิมพ์ภาพคุณภาพสูง โพลารอยด์ นามบัตร บัตรแขวนคอ">
+    <meta property="og:title" content="รายละเอียดสินค้า — Diamond Cute Studio">
+  <meta property="og:description" content="Diamond Cute Studio — สินค้าพิมพ์ภาพคุณภาพสูง โพลารอยด์ นามบัตร บัตรแขวนคอ">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
-  <meta name="description" content="Diamond Cute Studio 💎 — สินค้าพิมพ์ภาพคุณภาพสูง โพลารอยด์ นามบัตร บัตรแขวนคอ">
+  <meta name="description" content="Diamond Cute Studio — สินค้าพิมพ์ภาพคุณภาพสูง โพลารอยด์ นามบัตร บัตรแขวนคอ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>รายละเอียดสินค้า — Diamond Cute Studio 💎</title>
+  <title>รายละเอียดสินค้า — Diamond Cute Studio</title>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#F4F9FE">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -34,7 +34,7 @@
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/home.css">
   <link rel="stylesheet" href="css/product.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+  <link rel="icon" type="image/png" href="assets/icon-192.png">
 </head>
 <body class="page-product">
 <a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
@@ -69,7 +69,7 @@
       <div class="gallery-main" id="gallery-main">
         <div class="gallery-main-overlay"></div>
         <div class="gallery-badge" id="gallery-badge"></div>
-        <span id="gallery-emoji" style="font-size:5.5rem;position:relative;z-index:1">📦</span>
+        <span id="gallery-emoji" style="font-size:5.5rem;position:relative;z-index:1"><span class="dmc-icon-slot" data-dmc-icon="package" aria-hidden="true"></span></span>
       </div>
       <div class="gallery-thumbs" id="gallery-thumbs"></div>
     </div>
@@ -97,38 +97,38 @@
         </div>
         <div class="price-tiers" id="price-tiers"></div>
         <!-- V2: แจ้งค่าส่งตั้งแต่ต้น (ลดเซอร์ไพรส์ตอน checkout) -->
-        <div class="price-shipping-hint" id="price-shipping-hint">🚚 ค่าจัดส่งเริ่ม ฿50 · เก็บเงินปลายทาง ฿80</div>
+        <div class="price-shipping-hint" id="price-shipping-hint"><span class="dmc-icon-slot" data-dmc-icon="truck" aria-hidden="true"></span> ค่าจัดส่งเริ่ม ฿50 · เก็บเงินปลายทาง ฿80</div>
       </div>
 
       <!-- V35: Variant Options — แบบสินค้า (จากชื่อแบบที่แอดมินตั้งให้รูป) -->
       <div class="options-group" id="variant-group" style="display:none">
-        <div class="options-label">🎨 แบบ: <strong id="variant-selected">—</strong></div>
+        <div class="options-label"><span class="dmc-icon-slot" data-dmc-icon="palette" aria-hidden="true"></span> แบบ: <strong id="variant-selected">—</strong></div>
         <div class="options-chips" id="variant-chips"></div>
       </div>
 
       <!-- Size Options -->
       <div class="options-group" id="size-group" style="display:none">
-        <div class="options-label">📐 ขนาด: <strong id="size-selected">—</strong></div>
+        <div class="options-label"><span class="dmc-icon-slot" data-dmc-icon="ruler" aria-hidden="true"></span> ขนาด: <strong id="size-selected">—</strong></div>
         <div class="options-chips" id="size-chips"></div>
       </div>
 
       <!-- Material Options -->
       <div class="options-group" id="material-group" style="display:none">
-        <div class="options-label">🗒️ วัสดุ/การเคลือบ: <strong id="material-selected">—</strong></div>
+        <div class="options-label"><span class="dmc-icon-slot" data-dmc-icon="edit" aria-hidden="true"></span> วัสดุ/การเคลือบ: <strong id="material-selected">—</strong></div>
         <div class="options-chips" id="material-chips"></div>
       </div>
 
       <!-- Canvas Preview Tool -->
       <div class="preview-tool" id="preview-tool">
         <div class="preview-tool-header">
-          <div class="preview-tool-title">🎨 ลองดูตัวอย่างก่อนสั่ง</div>
+          <div class="preview-tool-title"><span class="dmc-icon-slot" data-dmc-icon="palette" aria-hidden="true"></span> ลองดูตัวอย่างก่อนสั่ง</div>
         </div>
         <div id="preview-tool-container"></div>
       </div>
 
       <!-- Quantity -->
       <div class="options-group">
-        <div class="options-label">🔢 จำนวน: <strong id="qty-display">1</strong> <span id="qty-unit" style="font-weight:400;color:var(--text-muted)">ชิ้น</span></div>
+        <div class="options-label"><span class="dmc-icon-slot" data-dmc-icon="grid" aria-hidden="true"></span> จำนวน: <strong id="qty-display">1</strong> <span id="qty-unit" style="font-weight:400;color:var(--text-muted)">ชิ้น</span></div>
         <div class="qty-wrap">
           <button class="qty-btn" id="qty-minus" aria-label="ลดจำนวน">−</button>
           <span class="qty-val" id="qty-val">1</span>
@@ -146,27 +146,27 @@
       <!-- V4.6: รายละเอียดเพิ่มเติม (โลโก้/ชื่อ/ข้อมูลส่วนตัว) -->
       <div class="form-group" style="margin-bottom:1rem">
         <label class="form-label" for="product-details" style="display:flex;align-items:center;gap:.4rem;font-size:.92rem">
-          📝 รายละเอียดเพิ่มเติม <span style="font-weight:400;color:var(--text-3);font-size:.78rem">(ไม่บังคับ)</span>
+          <span class="dmc-icon-slot" data-dmc-icon="edit" aria-hidden="true"></span> รายละเอียดเพิ่มเติม <span style="font-weight:400;color:var(--text-3);font-size:.78rem">(ไม่บังคับ)</span>
         </label>
         <textarea id="product-details" class="form-input" rows="3" maxlength="500"
           style="resize:vertical;min-height:80px;font-family:inherit;line-height:1.55"
           placeholder="ใส่ข้อมูลที่ต้องการ เช่น ชื่อ-ตำแหน่ง (นามบัตร), ชื่อเด็ก-ห้อง (บัตรนักเรียน), โลโก้ — หรือส่งไฟล์/ข้อมูลทาง LINE ภายหลังก็ได้ครับ"></textarea>
-        <div style="font-size:.72rem;color:var(--text-3);margin-top:.3rem;line-height:1.5">💡 สำหรับสินค้าที่ต้องระบุข้อมูลส่วนตัว (นามบัตร · บัตรแขวนคอ · บัตรนักเรียน) — ใส่ที่นี่หรือส่งผ่าน LINE ก็ได้</div>
+        <div style="font-size:.72rem;color:var(--text-3);margin-top:.3rem;line-height:1.5"><span class="dmc-icon-slot" data-dmc-icon="info" aria-hidden="true"></span> สำหรับสินค้าที่ต้องระบุข้อมูลส่วนตัว (นามบัตร · บัตรแขวนคอ · บัตรนักเรียน) — ใส่ที่นี่หรือส่งผ่าน LINE ก็ได้</div>
       </div>
 
       <!-- Action Buttons -->
       <div class="detail-actions">
         <button class="btn btn-secondary btn-lg btn-to-cart" id="add-to-cart-btn" style="flex:1">
-          🛒 ใส่ตะกร้า
+          <span class="dmc-icon-slot" data-dmc-icon="cart" aria-hidden="true"></span> ใส่ตะกร้า
         </button>
         <a href="cart.html" class="btn btn-primary btn-lg btn-to-order" id="order-now-btn" style="flex:1">
-          ⚡ สั่งเลย
+          <span class="dmc-icon-slot" data-dmc-icon="sparkle" aria-hidden="true"></span> สั่งเลย
         </a>
       </div>
 
       <!-- LINE contact -->
       <div class="line-contact">
-        💬 มีคำถามเพิ่มเติม?
+        <span class="dmc-icon-slot" data-dmc-icon="chat" aria-hidden="true"></span> มีคำถามเพิ่มเติม?
         <a href="https://line.me/R/ti/p/YOUR_LINE_OA" target="_blank" rel="noopener">
           ติดต่อผ่าน LINE ได้เลย →
         </a>
@@ -174,7 +174,7 @@
 
       <!-- Description -->
       <div id="product-desc-section" style="margin-top:1.5rem;display:none">
-        <div style="font-family:var(--font-display);font-weight:600;font-size:0.9rem;margin-bottom:0.6rem;color:var(--text-secondary)">📋 รายละเอียดสินค้า</div>
+        <div style="font-family:var(--font-display);font-weight:600;font-size:0.9rem;margin-bottom:0.6rem;color:var(--text-secondary)"><span class="dmc-icon-slot" data-dmc-icon="document" aria-hidden="true"></span> รายละเอียดสินค้า</div>
         <div id="product-desc-text" style="font-size:0.88rem;color:var(--text-muted);line-height:1.75"></div>
       </div>
     </div>
@@ -193,14 +193,14 @@
   <!-- ═══ รีวิวสินค้า ═══ -->
   <section class="product-reviews-section" id="reviews-section">
     <div class="rv-section-head">
-      <h2 class="rv-section-title">⭐ รีวิวจากลูกค้า</h2>
+      <h2 class="rv-section-title"><span class="dmc-icon-slot" data-dmc-icon="sparkle" aria-hidden="true"></span> รีวิวจากลูกค้า</h2>
       <div class="rv-summary" id="rv-summary"></div>
     </div>
     <div id="rv-list" class="rv-list"></div>
 
     <!-- ฟอร์มรีวิว -->
     <div class="rv-form-card" id="rv-form-card">
-      <div class="rv-form-title">✍️ เขียนรีวิวสินค้านี้</div>
+      <div class="rv-form-title"><span class="dmc-icon-slot" data-dmc-icon="edit" aria-hidden="true"></span> เขียนรีวิวสินค้านี้</div>
       <p class="rv-form-note">รีวิวจะแสดงหลังร้านตรวจสอบและอนุมัติ เพื่อความเหมาะสมของเนื้อหา</p>
       <div class="form-row" style="margin-bottom:.85rem">
         <div class="form-group" style="margin:0">
@@ -219,14 +219,14 @@
         <textarea class="form-input form-textarea" id="rv-text" maxlength="500" placeholder="เล่าประสบการณ์การสั่งซื้อ คุณภาพงาน การจัดส่ง..."></textarea>
         <div class="rv-char-count"><span id="rv-char">0</span>/500</div>
       </div>
-      <button class="btn btn-primary btn-md" id="rv-submit-btn">📨 ส่งรีวิว</button>
+      <button class="btn btn-primary btn-md" id="rv-submit-btn"><span class="dmc-icon-slot" data-dmc-icon="mail" aria-hidden="true"></span> ส่งรีวิว</button>
     </div>
   </div>
 </div>
 
 <!-- Error State -->
 <div id="product-error" style="display:none;text-align:center;padding:4rem 1.5rem;color:var(--text-muted)">
-  <div style="font-size:3rem;margin-bottom:1rem">😕</div>
+  <div style="font-size:3rem;margin-bottom:1rem"><span class="dmc-icon-slot" data-dmc-icon="info" aria-hidden="true"></span></div>
   <h2 style="font-size:1.2rem;margin-bottom:0.5rem">ไม่พบสินค้านี้</h2>
   <p style="margin-bottom:1.5rem">อาจถูกลบหรือ URL ไม่ถูกต้อง</p>
   <a href="catalog.html" class="btn btn-primary btn-lg">← กลับดูสินค้าทั้งหมด</a>
@@ -238,8 +238,8 @@
     <span class="sticky-buy-label">รวม</span>
     <span class="sticky-buy-value" id="sticky-buy-value">—</span>
   </div>
-  <button class="btn btn-secondary btn-md" id="sticky-add-cart">🛒 ใส่ตะกร้า</button>
-  <button class="btn btn-primary btn-md" id="sticky-order-now">⚡ สั่งเลย</button>
+  <button class="btn btn-secondary btn-md" id="sticky-add-cart"><span class="dmc-icon-slot" data-dmc-icon="cart" aria-hidden="true"></span> ใส่ตะกร้า</button>
+  <button class="btn btn-primary btn-md" id="sticky-order-now"><span class="dmc-icon-slot" data-dmc-icon="sparkle" aria-hidden="true"></span> สั่งเลย</button>
 </div>
 
 <div id="footer-mount"></div>

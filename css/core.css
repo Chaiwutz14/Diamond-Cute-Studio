@@ -739,3 +739,8 @@ button:focus-visible, a:focus-visible {
 
 /* section title underline accent */
 .section-title { position: relative; }
+
+/* Shared authored inline icon sizing */
+.dmc-icon{display:inline-block;width:1.15em;height:1.15em;flex:0 0 auto;vertical-align:-.2em}
+.dmc-icon-slot{display:inline-flex;align-items:center;justify-content:center;line-height:0;vertical-align:middle}
+.dmc-icon-slot .dmc-icon{display:block}

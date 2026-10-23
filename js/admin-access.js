@@ -19,7 +19,7 @@
       transition: opacity .2s;
       font-family: var(--font-display);
     `;
-    link.textContent = '⚙';
+    link.innerHTML = DMC.iconSvg('settings');
     link.title = 'Admin';
     link.setAttribute('aria-label', 'Admin');
     link.addEventListener('mouseenter', () => link.style.opacity = '.8');

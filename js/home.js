@@ -10,11 +10,14 @@ function homeCoverOf(p) {
   if (Array.isArray(p.images) && p.images.length) {
     const i = (typeof p.coverIndex === 'number' && p.images[p.coverIndex]) ? p.coverIndex : 0;
     const im = p.images[i];                                  // V.fix(A4): guard กัน null/undefined ใน array
-    return im ? (typeof im === 'string' ? im : (im.url || '')) : '';
+    const selected = im ? (typeof im === 'string' ? im : (im.url || '')) : '';
+    return selected || p.image || '';
   }
   return p.image || '';
 }
 
+
+const homeProductsById = new Map();
 
 document.addEventListener('DOMContentLoaded', async () => {
   applyCMSContent();    // เนื้อหาจากหลังบ้าน (hero/stats) — V24: อ่าน snapshot ก่อน ไม่บังคับโหลด Firebase
@@ -27,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ─── V24/PERF-B: โหลดสินค้าจาก snapshot โดยตรง (ไม่ await getFirebaseReady ก่อน) ──
   //   loadFeaturedProducts ใช้ DMC.loadProducts() (snapshot → cache → Firestore) อยู่แล้ว
   //   ผล: หน้าแรกเรนเดอร์สินค้าได้ทันทีจากไฟล์ CDN ไม่ต้องรอ Firebase SDK
-  loadFeaturedProducts().catch(() => renderPlaceholderProducts());
+  loadFeaturedProducts().catch(() => renderProductState('error'));
 
   // ─── Intersection Observer (scroll animations) ───
   initScrollAnimations();
@@ -133,7 +136,7 @@ async function loadFeaturedProducts() {
   try {
     // V16: ใช้ตัวโหลดกลาง (snapshot → cache → Firestore) — อ่านสินค้า "ครั้งเดียว/เซสชัน" หรือ 0 (snapshot)
     const all = await DMC.loadProducts();
-    if (!all || !all.length) { renderPlaceholderProducts(); return; }
+    if (!all || !all.length) { renderProductState('empty'); return; }
 
     let items = all.slice();
     items.sort((a, b) => {
@@ -143,6 +146,8 @@ async function loadFeaturedProducts() {
     });
     items = items.slice(0, 8);
 
+    homeProductsById.clear();
+    items.forEach(p => homeProductsById.set(String(p.id), p));
     container.innerHTML = '';
     items.forEach(p => container.insertAdjacentHTML('beforeend', buildProductCard(p)));
 
@@ -150,8 +155,187 @@ async function loadFeaturedProducts() {
 
   } catch (e) {
     console.warn('Products load error:', e);
-    renderPlaceholderProducts();
+    renderProductState('error');
   }
+}
+
+function homeOptionGroups(product) {
+  const cleanList = values => [...new Map(
+    (Array.isArray(values) ? values : [])
+      .map(value => String(value == null ? '' : value).trim())
+      .filter(Boolean)
+      .map(value => [value.toLocaleLowerCase(), value])
+  ).values()];
+  const sizes = cleanList(product.sizes);
+  const materials = cleanList(product.materials);
+  const existing = new Set([...sizes, ...materials].map(value => value.toLocaleLowerCase()));
+  const variants = cleanList((Array.isArray(product.images) ? product.images : [])
+    .filter(image => image && typeof image === 'object' && image.url)
+    .map(image => image.label)
+    .filter(label => label && !existing.has(String(label).trim().toLocaleLowerCase())));
+  return [
+    { key: 'variant', label: 'แบบ', values: variants },
+    { key: 'size', label: 'ขนาด', values: sizes },
+    { key: 'material', label: 'วัสดุ', values: materials },
+  ].filter(group => group.values.length);
+}
+
+function homeMinimumQuantity(product) {
+  const value = Number(product.minQty);
+  return Number.isFinite(value) && value > 1 ? Math.ceil(value) : 1;
+}
+
+function homeCartItem(product, selection, quantity) {
+  const options = [
+    selection.variant ? 'แบบ: ' + selection.variant : '',
+    selection.size || '',
+    selection.material || '',
+  ].filter(Boolean).join(' · ');
+  const selectedImage = selection.variant && Array.isArray(product.images)
+    ? product.images.find(image => image && typeof image === 'object' && image.url &&
+      String(image.label || '').trim().toLocaleLowerCase() === selection.variant.trim().toLocaleLowerCase())
+    : null;
+  return {
+    id: product.id,
+    name: product.name,
+    price: Number(product.price) || 0,
+    qty: quantity,
+    unit: product.unit || 'ชิ้น',
+    minQty: homeMinimumQuantity(product),
+    options,
+    customDetails: '',
+    image: selectedImage ? selectedImage.url : homeCoverOf(product),
+  };
+}
+
+function addHomeProduct(product, selection, quantity, button) {
+  try {
+    DMC.addToCart(homeCartItem(product, selection, quantity));
+    if (button) {
+      const name = product.name || '';
+      button.innerHTML = DMC.iconSvg('check');
+      button.setAttribute('aria-label', `เพิ่ม ${name} ลงตะกร้าแล้ว`);
+      window.setTimeout(() => {
+        if (!button.isConnected) return;
+        button.innerHTML = DMC.iconSvg('plus');
+        button.setAttribute('aria-label', `เพิ่ม ${name} ลงตะกร้า`);
+      }, 1200);
+    }
+    return true;
+  } catch (error) {
+    console.error('Home add-to-cart error:', error);
+    return false;
+  }
+}
+
+function openHomeOptionDialog(product, groups, trigger) {
+  closeHomeOptionDialog(false);
+  const selection = { variant: '', size: '', material: '' };
+  groups.forEach(group => {
+    if (group.values.length === 1) selection[group.key] = group.values[0];
+  });
+  const requiredGroups = groups.filter(group => group.values.length > 1);
+  const minQty = homeMinimumQuantity(product);
+  const overlay = document.createElement('div');
+  overlay.className = 'home-option-backdrop';
+  overlay.innerHTML = `
+    <section class="home-option-dialog" role="dialog" aria-modal="true" aria-labelledby="home-option-title" aria-describedby="home-option-description" tabindex="-1">
+      <header class="home-option-header">
+        <div><p class="home-option-eyebrow">เลือกให้ตรงใจ</p><h2 id="home-option-title">${DMC.escapeHtml(product.name || 'ตัวเลือกสินค้า')}</h2></div>
+        <button type="button" class="home-option-close" aria-label="ปิดหน้าต่าง">${DMC.iconSvg('close')}</button>
+      </header>
+      <p id="home-option-description" class="home-option-description">เลือกตัวเลือกและจำนวนก่อนเพิ่มสินค้าลงตะกร้า</p>
+      <div class="home-option-groups">${groups.map(group => `
+        <div class="home-option-group" role="group" aria-labelledby="home-option-label-${group.key}">
+          <h3 id="home-option-label-${group.key}">${group.label}</h3>
+          <div class="home-option-choices">${group.values.map((value, index) => `
+            <button type="button" class="home-option-choice" data-group="${group.key}" data-index="${index}" aria-pressed="${selection[group.key] === value}">${DMC.escapeHtml(value)}</button>
+          `).join('')}</div>
+        </div>`).join('')}
+      </div>
+      <div class="home-option-quantity-row">
+        <label for="home-option-quantity">จำนวน <span>${DMC.escapeHtml(product.unit || 'ชิ้น')}</span></label>
+        <input id="home-option-quantity" type="number" inputmode="numeric" min="${minQty}" step="1" value="${minQty}" aria-describedby="home-option-minimum">
+      </div>
+      <p id="home-option-minimum" class="home-option-minimum">${minQty > 1 ? `สั่งขั้นต่ำ ${minQty} ${DMC.escapeHtml(product.unit || 'ชิ้น')}` : `ราคาเริ่มต้น ${DMC.formatPrice(product.price || 0)} ต่อ ${DMC.escapeHtml(product.unit || 'ชิ้น')}`}</p>
+      <p class="home-option-error" role="status" aria-live="polite"></p>
+      <footer class="home-option-footer"><span>รวม <strong class="home-option-total"></strong></span><button type="button" class="home-option-confirm btn btn-primary btn-md" disabled>เพิ่มลงตะกร้า</button></footer>
+    </section>`;
+  document.body.appendChild(overlay);
+  document.body.classList.add('home-option-open');
+  const dialog = overlay.querySelector('[role="dialog"]');
+  const quantityInput = overlay.querySelector('#home-option-quantity');
+  const confirmButton = overlay.querySelector('.home-option-confirm');
+  const total = overlay.querySelector('.home-option-total');
+  const error = overlay.querySelector('.home-option-error');
+
+  function updateQuantity(commit = true) {
+    const parsed = Number.parseInt(quantityInput.value, 10);
+    const quantity = Number.isFinite(parsed) ? Math.max(minQty, parsed) : minQty;
+    if (commit) quantityInput.value = String(quantity);
+    total.textContent = DMC.formatPrice((Number(product.price) || 0) * quantity);
+    return quantity;
+  }
+  function syncChoices() {
+    overlay.querySelectorAll('.home-option-choice').forEach(button => {
+      const chosen = selection[button.dataset.group] === groups.find(group => group.key === button.dataset.group)?.values[Number(button.dataset.index)];
+      button.classList.toggle('is-selected', chosen);
+      button.setAttribute('aria-pressed', String(chosen));
+    });
+    confirmButton.disabled = requiredGroups.some(group => !selection[group.key]);
+    error.textContent = '';
+  }
+  overlay.addEventListener('click', event => {
+    if (event.target === overlay) closeHomeOptionDialog();
+    const choice = event.target.closest('.home-option-choice');
+    if (!choice) return;
+    const group = groups.find(item => item.key === choice.dataset.group);
+    if (!group) return;
+    selection[group.key] = group.values[Number(choice.dataset.index)] || '';
+    syncChoices();
+  });
+  overlay.querySelector('.home-option-close').addEventListener('click', () => closeHomeOptionDialog());
+  quantityInput.addEventListener('input', () => updateQuantity(false));
+  quantityInput.addEventListener('change', () => updateQuantity());
+  let confirmed = false;
+  confirmButton.addEventListener('click', () => {
+    if (confirmed || confirmButton.disabled) return;
+    if (requiredGroups.some(group => !selection[group.key])) {
+      error.textContent = 'กรุณาเลือกตัวเลือกที่ต้องการให้ครบ';
+      return;
+    }
+    confirmButton.disabled = true;
+    if (addHomeProduct(product, selection, updateQuantity(), trigger)) {
+      confirmed = true;
+      closeHomeOptionDialog();
+    } else {
+      confirmButton.disabled = false;
+      error.textContent = 'เพิ่มสินค้าไม่สำเร็จ กรุณาลองอีกครั้ง';
+    }
+  });
+  overlay.addEventListener('keydown', event => {
+    if (event.key === 'Escape') { event.preventDefault(); closeHomeOptionDialog(); return; }
+    if (event.key !== 'Tab') return;
+    const focusable = [...dialog.querySelectorAll('button:not(:disabled), input:not(:disabled)')];
+    if (!focusable.length) return;
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
+  updateQuantity();
+  syncChoices();
+  dialog.focus();
+  homeOptionDialogState = { overlay, trigger };
+}
+
+let homeOptionDialogState = null;
+function closeHomeOptionDialog(restoreFocus = true) {
+  if (!homeOptionDialogState) return;
+  const { overlay, trigger } = homeOptionDialogState;
+  homeOptionDialogState = null;
+  overlay.remove();
+  document.body.classList.remove('home-option-open');
+  if (restoreFocus && trigger?.isConnected) trigger.focus();
 }
 
 // V.fix(A5): ลบ loadCategories() ที่เป็น dead code ออก
@@ -159,10 +343,11 @@ async function loadFeaturedProducts() {
 
 // ─── Build Product Card HTML ───
 function buildProductCard(p) {
+  const productId = DMC.escapeHtml(p.id);
   const badges = [];
-  if (p.isNew)  badges.push('<span class="badge badge-new">✨ ใหม่</span>');
-  if (p.isHot)  badges.push('<span class="badge badge-hot">🔥 ขายดี</span>');
-  if (p.isSale) badges.push('<span class="badge badge-sale">💰 ลด</span>');
+  if (p.isNew)  badges.push(`<span class="badge badge-new">${DMC.iconSvg('sparkle')} ใหม่</span>`);
+  if (p.isHot)  badges.push(`<span class="badge badge-hot">${DMC.iconSvg('check')} ขายดี</span>`);
+  if (p.isSale) badges.push(`<span class="badge badge-sale">${DMC.iconSvg('card')} ลด</span>`);
   // V29: ป้าย "ออกแบบได้" ย้ายเป็นแถบทึบชิดขอบล่างรูป (design-strip) — อ่านออกชัดบนภาพทุกโทนสี
 
   const oldPrice = p.oldPrice
@@ -170,20 +355,23 @@ function buildProductCard(p) {
     : '';
 
   return `
-    <a href="product.html?id=${p.id}" class="product-card" data-id="${p.id}">
+    <article class="product-card" data-id="${productId}">
+      <a href="product.html?id=${encodeURIComponent(p.id)}" class="product-card-link">
       <div class="product-img-wrap">
         ${homeCoverOf(p)
           ? `<img src="${DMC.imgCDN(homeCoverOf(p), 440)}" data-full="${DMC.escapeHtml(homeCoverOf(p))}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">`
-          : `<span>${p.emoji || '📦'}</span>`
+          : `<span class="product-card-placeholder">${DMC.iconSvg('package')}</span>`
         }
         <div class="product-img-overlay"></div>
         ${badges.length ? `<div class="product-badges">${badges.join('')}</div>` : ''}
-        ${p.hasPreview ? '<div class="design-strip"><span class="design-strip-ico">🎨</span> ออกแบบเองได้ · ฟรี</div>' : ''}
-        <button class="product-wish" data-id="${p.id}" title="บันทึก" aria-label="Wishlist">♡</button>
+        ${p.hasPreview ? `<div class="design-strip"><span class="design-strip-ico">${DMC.iconSvg('palette')}</span> ออกแบบเองได้ · ฟรี</div>` : ''}
       </div>
       <div class="product-info">
-        <div class="product-name">${DMC.escapeHtml(p.name)}</div>
-        <div class="product-desc">${DMC.escapeHtml(p.shortDesc || '')}</div>
+        <h3 class="product-name">${DMC.escapeHtml(p.name)}</h3>
+      </div>
+      </a>
+      <button type="button" class="product-wish" data-id="${productId}" title="บันทึก ${DMC.escapeHtml(p.name)}" aria-label="บันทึก ${DMC.escapeHtml(p.name)}" aria-pressed="false">${DMC.iconSvg('heart')}</button>
+      <div class="product-info product-actions">
         <div class="product-footer">
           <div>
             <div class="product-price">
@@ -192,10 +380,10 @@ function buildProductCard(p) {
             </div>
             ${oldPrice}
           </div>
-          <button class="btn-add-cart" data-id="${p.id}" title="ใส่ตะกร้า" aria-label="Add to cart">+</button>
+          <button type="button" class="btn-add-cart" data-id="${productId}" title="เพิ่ม ${DMC.escapeHtml(p.name)} ลงตะกร้า" aria-label="เพิ่ม ${DMC.escapeHtml(p.name)} ลงตะกร้า">${DMC.iconSvg('plus')}</button>
         </div>
       </div>
-    </a>
+    </article>
   `;
 }
 
@@ -207,15 +395,16 @@ function bindProductCardEvents(container) {
       e.preventDefault();
       e.stopPropagation();
       const id = btn.dataset.id;
-      const card = btn.closest('.product-card');
-      const name = card?.querySelector('.product-name')?.textContent || '';
-      const priceText = card?.querySelector('.product-price')?.textContent || '0';
-      const price = parseInt(priceText.replace(/[^0-9]/g, '')) || 0;
-      // bug-fix: เดิมไม่ส่ง image → ตะกร้าโชว์เป็น emoji กล่อง 📦 · ตอนนี้อ่านจาก <img> ในการ์ด
-      const image = card?.querySelector('.product-card-img img, .product-img img, img')?.src || '';
-      DMC.addToCart({ id, name, price, image, qty: 1 });
-      btn.textContent = '✓';
-      setTimeout(() => btn.textContent = '+', 1200);
+      const product = homeProductsById.get(String(id));
+      if (!product) return;
+      const groups = homeOptionGroups(product);
+      if (groups.some(group => group.values.length > 1)) {
+        openHomeOptionDialog(product, groups, btn);
+        return;
+      }
+      const selection = { variant: '', size: '', material: '' };
+      groups.forEach(group => { selection[group.key] = group.values[0] || ''; });
+      addHomeProduct(product, selection, homeMinimumQuantity(product), btn);
     });
   });
 
@@ -225,32 +414,28 @@ function bindProductCardEvents(container) {
       e.preventDefault();
       e.stopPropagation();
       btn.classList.toggle('active');
-      btn.textContent = btn.classList.contains('active') ? '♥' : '♡';
+      const active = btn.classList.contains('active');
+      btn.innerHTML = DMC.iconSvg('heart');
+      btn.setAttribute('aria-pressed', String(active));
     });
   });
 }
 
-// ─── Placeholder Products (before Firebase configured) ───
-function renderPlaceholderProducts() {
+// Render explicit empty/error states instead of sample products.
+function renderProductState(state) {
   const container = document.getElementById('featured-products');
   if (!container) return;
-
-  const PRODUCTS = [
-    { id: 'p1', name: 'รูปโพลารอยด์ 3×4 นิ้ว', shortDesc: 'กระดาษพรีเมียม คุณภาพสูง ทนทาน', price: 29, unit: 'ใบ', emoji: '📸', isHot: true },
-    { id: 'p2', name: 'บัตรแขวนคอนักเรียน',      shortDesc: 'PVC อย่างดี พร้อมสายคล้อง',     price: 59, unit: 'ใบ', emoji: '🪪', isNew: true },
-    { id: 'p3', name: 'นามบัตรพรีเมียม',         shortDesc: 'เคลือบมัน/ด้าน ขั้นต่ำ 100 ใบ', price: 199, unit: '100 ใบ', emoji: '💼', isSale: true },
-    { id: 'p4', name: 'ป้าย QR Code',            shortDesc: 'อะคริลิก กันน้ำ พร้อมขาตั้ง',   price: 149, unit: 'ชิ้น', emoji: '📱' },
-    { id: 'p5', name: 'ป้ายตุ๊กตาหัวดุ๊กดิ๊ก',   shortDesc: 'น่ารัก ทำมือ สกรีนสี',          price: 49,  unit: 'ชิ้น', emoji: '🧸', isNew: true },
-    { id: 'p6', name: 'บัตรแขวนคอพนักงาน',      shortDesc: 'PVC พร้อมซองใส+สายคล้อง',      price: 69,  unit: 'ใบ', emoji: '🪪' },
-    { id: 'p7', name: 'ป้ายชื่อร้านค้า',         shortDesc: 'อะคริลิก UV กันน้ำ ทนแดด',     price: 299, unit: 'ชิ้น', emoji: '🏪', isHot: true },
-    { id: 'p8', name: 'โพลารอยด์ขนาดใหญ่ 4×6', shortDesc: 'ขนาดใหญ่ เหมาะตกแต่งห้อง',     price: 39,  unit: 'ใบ', emoji: '🖼️' },
-  ];
-
-  container.innerHTML = PRODUCTS.map(buildProductCard).join('');
-  bindProductCardEvents(container);
+  if (state === 'error') {
+    container.innerHTML = '<div class="home-products-message" role="alert"><p>โหลดสินค้าไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</p><button type="button" class="btn btn-ghost btn-md" id="retry-home-products">ลองอีกครั้ง</button></div>';
+    container.querySelector('#retry-home-products')?.addEventListener('click', async function (event) {
+      event.currentTarget.disabled = true;
+      event.currentTarget.textContent = 'กำลังโหลด...';
+      await loadFeaturedProducts();
+    });
+    return;
+  }
+  container.innerHTML = '<div class="home-products-message" role="status"><p>ขณะนี้ยังไม่มีสินค้าแนะนำ</p></div>';
 }
-
-// ─── Scroll Animations ───
 function initScrollAnimations() {
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => {
@@ -383,25 +568,176 @@ async function loadHomeGallery() {
 // ══════════════════════════════════════════════
 //  V16 — Hero Showcase (coverflow) · เฉพาะเดสก์ท็อป
 // ══════════════════════════════════════════════
+const DMC_HOME_BANNERS = [
+  { src: 'assets/banners/1.png', alt: 'DMC Studio — เปลี่ยนภาพความทรงจำให้เป็นของขวัญที่มีความหมาย', href: 'catalog.html' },
+  { src: 'assets/banners/2.png', alt: 'DMC Studio — เก็บทุกโมเมนต์ให้เป็นมากกว่ารูปภาพ', href: 'catalog.html' },
+  { src: 'assets/banners/3.png', alt: 'DMC Studio — ภาพพิมพ์และของขวัญดีไซน์พิเศษ', href: 'catalog.html' },
+  { src: 'assets/banners/4.png', alt: 'DMC Studio — ผลงานพิมพ์ภาพและสินค้าสั่งทำ', href: 'catalog.html' }
+];
+
 function initHeroShowcase() {
- const root=document.getElementById('dmc-home-hero'),stage=document.getElementById('dmc-hero-slides'),dotsEl=document.getElementById('dmc-hero-dots');if(!root||!stage||!dotsEl)return;
- const reduced=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
- const banners=[
-  {src:'assets/banners/1.png',alt:'DMC Studio — เปลี่ยนภาพความทรงจำให้เป็นของขวัญที่มีความหมาย'},
-  {src:'assets/banners/2.png',alt:'DMC Studio — เก็บทุกโมเมนต์ให้เป็นมากกว่ารูปภาพ'},
-  {src:'assets/banners/3.png',alt:'DMC Studio — ภาพพิมพ์และของขวัญดีไซน์พิเศษ'},
-  {src:'assets/banners/4.png',alt:'DMC Studio — ผลงานพิมพ์ภาพและสินค้าสั่งทำ'}
- ];
- let active=0,timer=null,paused=reduced,inView=true;stage.innerHTML='';dotsEl.innerHTML='';
- banners.forEach((banner,i)=>{const slide=document.createElement('div');slide.className='dmc-hero-slide'+(i===0?' is-active':'');slide.setAttribute('aria-hidden',i===0?'false':'true');const link=document.createElement('a');link.className='dmc-hero-picture';link.href='catalog.html';link.setAttribute('aria-label','เลือกดูสินค้า DMC Studio');const img=document.createElement('img');img.className='dmc-hero-art';img.src=banner.src;img.alt=banner.alt;img.width=1730;img.height=909;img.loading=i===0?'eager':'lazy';img.decoding='async';if(i===0)img.fetchPriority='high';link.appendChild(img);slide.appendChild(link);stage.appendChild(slide);const dot=document.createElement('button');dot.type='button';dot.className='dmc-hero-dot'+(i===0?' is-active':'');dot.setAttribute('aria-label','แสดงแบนเนอร์ที่ '+(i+1));dot.setAttribute('aria-current',i===0?'true':'false');dot.addEventListener('click',()=>{show(i);start();});dotsEl.appendChild(dot);});
- const slides=Array.from(stage.children),dots=Array.from(dotsEl.children);
- function show(index){active=(index+slides.length)%slides.length;slides.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-hidden',on?'false':'true');});dots.forEach((el,i)=>{const on=i===active;el.classList.toggle('is-active',on);el.setAttribute('aria-current',on?'true':'false');});}
- function stop(){if(timer){clearInterval(timer);timer=null;}}function start(){stop();if(paused||!inView||document.hidden||reduced||slides.length<2)return;timer=setInterval(()=>show(active+1),6000);}
- const prev=document.getElementById('dmc-hero-prev'),next=document.getElementById('dmc-hero-next'),pause=document.getElementById('dmc-hero-pause');
- if(prev)prev.addEventListener('click',()=>{show(active-1);start();});if(next)next.addEventListener('click',()=>{show(active+1);start();});
- if(pause)pause.addEventListener('click',()=>{paused=!paused;pause.setAttribute('aria-pressed',paused?'true':'false');pause.setAttribute('aria-label',paused?'เล่นสไลด์อัตโนมัติ':'หยุดสไลด์อัตโนมัติ');pause.textContent=paused?'▶':'Ⅱ';start();});
- root.addEventListener('mouseenter',stop);root.addEventListener('mouseleave',start);root.addEventListener('focusin',stop);root.addEventListener('focusout',start);document.addEventListener('visibilitychange',start);
- if('IntersectionObserver'in window)new IntersectionObserver(entries=>{inView=!!(entries[0]&&entries[0].isIntersecting);start();},{threshold:.1}).observe(root);show(0);start();
+  const desktopRoot = document.getElementById('dmc-home-hero');
+  const desktopStage = document.getElementById('dmc-hero-slides');
+  const desktopDotsEl = document.getElementById('dmc-hero-dots');
+  const mobileRoot = document.getElementById('dmc-mobile-hero-carousel');
+  const mobileStage = document.getElementById('dmc-mobile-hero-slides');
+  const mobileDotsEl = document.getElementById('dmc-mobile-hero-dots');
+  if (!desktopRoot || !desktopStage || !desktopDotsEl) return;
+
+  const banners = DMC_HOME_BANNERS.filter(item => item && item.src && item.alt && item.href);
+  if (!banners.length) return;
+  const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  let active = 0, timer = null, paused = reduced, inView = true;
+  let pointerStart = null, suppressClickUntil = 0;
+
+  function buildSlides(stage, dotsEl, isMobile = false) {
+    if (!stage || !dotsEl) return { slides: [], dots: [] };
+    stage.replaceChildren();
+    dotsEl.replaceChildren();
+    banners.forEach((banner, index) => {
+      const slide = document.createElement('div');
+      slide.className = (isMobile ? 'dmc-mobile-hero-slide' : 'dmc-hero-slide') + (index === 0 ? ' is-active' : '');
+      slide.setAttribute('role', 'group');
+      slide.setAttribute('aria-roledescription', 'slide');
+      slide.setAttribute('aria-label', 'แบนเนอร์ ' + (index + 1) + ' จาก ' + banners.length);
+      slide.setAttribute('aria-hidden', index === 0 ? 'false' : 'true');
+
+      const link = document.createElement('a');
+      link.className = 'dmc-hero-picture';
+      try {
+        const target = new URL(banner.href, window.location.href);
+        if (target.protocol === 'http:' || target.protocol === 'https:') {
+          link.href = banner.href;
+          if (target.origin !== window.location.origin) {
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+          }
+        } else link.href = 'catalog.html';
+      } catch (error) {
+        link.href = 'catalog.html';
+      }
+
+      const image = document.createElement('img');
+      image.className = 'dmc-hero-art';
+      image.src = banner.src;
+      image.alt = banner.alt;
+      image.width = 1200;
+      image.height = 630;
+      image.loading = index === 0 ? 'eager' : 'lazy';
+      image.decoding = 'async';
+      if (index === 0) image.fetchPriority = 'high';
+      link.appendChild(image);
+      slide.appendChild(link);
+      stage.appendChild(slide);
+
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = isMobile ? 'dmc-mobile-hero-dot' : 'dmc-hero-dot';
+      if (index === 0) dot.classList.add('is-active');
+      dot.setAttribute('aria-label', 'แสดงแบนเนอร์ที่ ' + (index + 1));
+      dot.setAttribute('aria-current', index === 0 ? 'true' : 'false');
+      dot.addEventListener('click', () => { show(index); start(); });
+      dotsEl.appendChild(dot);
+    });
+    return { slides: Array.from(stage.children), dots: Array.from(dotsEl.children) };
+  }
+
+  const desktop = buildSlides(desktopStage, desktopDotsEl);
+  const mobile = buildSlides(mobileStage, mobileDotsEl, true);
+  if (!desktop.slides.length) return;
+
+  function show(index) {
+    active = (index + desktop.slides.length) % desktop.slides.length;
+    [desktop, mobile].forEach(group => {
+      group.slides.forEach((slide, i) => {
+        const selected = i === active;
+        slide.classList.toggle('is-active', selected);
+        slide.setAttribute('aria-hidden', selected ? 'false' : 'true');
+        slide.toggleAttribute('inert', !selected);
+      });
+      group.dots.forEach((dot, i) => {
+        const selected = i === active;
+        dot.classList.toggle('is-active', selected);
+        dot.setAttribute('aria-current', selected ? 'true' : 'false');
+      });
+    });
+  }
+  function stop() {
+    if (timer) window.clearInterval(timer);
+    timer = null;
+  }
+  function start() {
+    stop();
+    if (paused || !inView || document.hidden || reduced || desktop.slides.length < 2 ||
+        window.innerWidth <= 760 || desktopRoot.matches(':hover') || desktopRoot.contains(document.activeElement)) return;
+    timer = window.setInterval(() => show(active + 1), 6000);
+  }
+
+  const previous = document.getElementById('dmc-hero-prev');
+  const next = document.getElementById('dmc-hero-next');
+  const pause = document.getElementById('dmc-hero-pause');
+  const mobilePrevious = document.getElementById('dmc-mobile-hero-prev');
+  const mobileNext = document.getElementById('dmc-mobile-hero-next');
+  previous?.addEventListener('click', () => { show(active - 1); start(); });
+  next?.addEventListener('click', () => { show(active + 1); start(); });
+  mobilePrevious?.addEventListener('click', () => { show(active - 1); start(); });
+  mobileNext?.addEventListener('click', () => { show(active + 1); start(); });
+  pause?.addEventListener('click', () => {
+    paused = !paused;
+    pause.setAttribute('aria-pressed', paused ? 'true' : 'false');
+    pause.setAttribute('aria-label', paused ? 'เล่นสไลด์อัตโนมัติ' : 'หยุดสไลด์อัตโนมัติ');
+    pause.innerHTML = DMC.iconSvg(paused ? 'play' : 'pause');
+    start();
+  });
+  if (pause) {
+    pause.setAttribute('aria-pressed', paused ? 'true' : 'false');
+    pause.setAttribute('aria-label', paused ? 'เล่นสไลด์อัตโนมัติ' : 'หยุดสไลด์อัตโนมัติ');
+    pause.innerHTML = DMC.iconSvg(paused ? 'play' : 'pause');
+  }
+
+  function bindSwipe(root, selector) {
+    if (!root) return;
+    const isMobile = root === mobileRoot;
+    root.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'mouse' || !event.target.closest(selector)) return;
+      pointerStart = { x: event.clientX, y: event.clientY, isMobile };
+    }, { passive: true });
+    root.addEventListener('pointerup', event => {
+      if (!pointerStart || pointerStart.isMobile !== isMobile) return;
+      const dx = event.clientX - pointerStart.x, dy = event.clientY - pointerStart.y;
+      pointerStart = null;
+      if (Math.abs(dx) < 42 || Math.abs(dx) <= Math.abs(dy)) return;
+      show(active + (dx < 0 ? 1 : -1));
+      suppressClickUntil = Date.now() + 350;
+      start();
+    }, { passive: true });
+    root.addEventListener('pointercancel', () => { pointerStart = null; }, { passive: true });
+    root.addEventListener('click', event => {
+      if (Date.now() >= suppressClickUntil) return;
+      event.preventDefault();
+      event.stopPropagation();
+    }, true);
+    root.addEventListener('keydown', event => {
+      if (event.key === 'ArrowLeft') { event.preventDefault(); show(active - 1); start(); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); show(active + 1); start(); }
+    });
+  }
+  bindSwipe(desktopRoot, '.dmc-hero-picture');
+  bindSwipe(mobileRoot, '.dmc-hero-picture');
+
+  desktopRoot.addEventListener('mouseenter', stop);
+  desktopRoot.addEventListener('mouseleave', start);
+  desktopRoot.addEventListener('focusin', stop);
+  desktopRoot.addEventListener('focusout', start);
+  document.addEventListener('visibilitychange', start);
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(entries => {
+      inView = !!(entries[0] && entries[0].isIntersecting);
+      start();
+    }, { threshold: 0.1 }).observe(desktopRoot);
+  }
+  show(0);
+  start();
 }
 
 // อัปเดตป้ายเวลาส่งล่าสุด: CMS.lastDeliveredAt → รูปแกลเลอรีล่าสุด → ข้อความทั่วไป
@@ -434,7 +770,7 @@ function relTimeTH(ms) {
 }
 
 const HERO_FALLBACK_IMAGES = [
-  { url: 'https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?w=600&h=750&fit=crop', name: 'โพลารอยด์สุดน่ารัก 📸' },
-  { url: 'https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=600&h=750&fit=crop', name: 'เก็บทุกความทรงจำ 💕' },
-  { url: 'https://images.unsplash.com/photo-1554080353-a576cf803bda?w=600&h=750&fit=crop', name: 'งานพิมพ์คุณภาพ ✨' },
+  { url: 'https://images.unsplash.com/photo-1606293459339-aa5d34a7b0e1?w=600&h=750&fit=crop', name: 'โพลารอยด์สุดน่ารัก' },
+  { url: 'https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=600&h=750&fit=crop', name: 'เก็บทุกความทรงจำ' },
+  { url: 'https://images.unsplash.com/photo-1554080353-a576cf803bda?w=600&h=750&fit=crop', name: 'งานพิมพ์คุณภาพ' },
 ];

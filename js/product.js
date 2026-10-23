@@ -109,7 +109,7 @@ function showLoadError() {
   l.style.display = '';
   l.innerHTML =
     '<div style="grid-column:1/-1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 1.5rem;color:var(--text-2)">'
-    + '<div style="font-size:2.6rem;margin-bottom:.6rem">📡</div>'
+    + '<div class="product-load-icon">' + DMC.iconSvg('info') + '</div>'
     + '<p style="margin:0 0 .35rem;font-weight:700;font-size:1.05rem">โหลดข้อมูลไม่สำเร็จ</p>'
     + '<p style="margin:0 0 1.2rem;color:var(--text-3)">เน็ตอาจช้าหรือหลุดชั่วคราว ลองอีกครั้งได้เลย</p>'
     + '<button id="retry-product-btn" class="btn btn-primary btn-md" style="border-radius:var(--r-lg)">↻ ลองอีกครั้ง</button>'
@@ -139,10 +139,10 @@ function renderProduct() {
   const sh = (window.DMC_CONFIG || {}).SHIPPING || {};
   const shipEl = document.getElementById('price-shipping-hint');
   if (shipEl && (sh.transfer != null || sh.cod != null)) {
-    shipEl.textContent = `🚚 ค่าจัดส่งเริ่ม ฿${sh.transfer ?? 50} · เก็บเงินปลายทาง ฿${sh.cod ?? 80}`;
+    shipEl.innerHTML = DMC.iconSvg('truck') + ` ค่าจัดส่งเริ่ม ฿${sh.transfer ?? 50} · เก็บเงินปลายทาง ฿${sh.cod ?? 80}`;
   }
 
-  document.title = product.name + ' — Diamond Cute Studio 💎';
+  document.title = product.name + ' — Diamond Cute Studio';
   setText('breadcrumb-name', product.name);
   setText('product-title', product.name);
 
@@ -159,7 +159,7 @@ function renderProduct() {
   const tiersEl = document.getElementById('price-tiers');
   if (tiersEl && product.priceTiers?.length) {
     tiersEl.innerHTML = product.priceTiers.map(t =>
-      `<span class="price-tier-chip">🎁 ${DMC.escapeHtml(t)}</span>`).join('');
+      `<span class="price-tier-chip">${DMC.iconSvg('gift')} ${DMC.escapeHtml(t)}</span>`).join('');
   }
 
   // ── ยอดสั่งซื้อ ──
@@ -168,9 +168,9 @@ function renderProduct() {
   // ── Badge ──
   const badgeEl = document.getElementById('gallery-badge');
   if (badgeEl) {
-    if (product.isNew)       badgeEl.innerHTML = '<span class="badge badge-new">✨ ใหม่</span>';
-    else if (product.isHot)  badgeEl.innerHTML = '<span class="badge badge-hot">🔥 ขายดี</span>';
-    else if (product.isSale) badgeEl.innerHTML = '<span class="badge badge-sale">💰 ลด</span>';
+    if (product.isNew)       badgeEl.innerHTML = `<span class="badge badge-new">${DMC.iconSvg('sparkle')} ใหม่</span>`;
+    else if (product.isHot)  badgeEl.innerHTML = `<span class="badge badge-hot">${DMC.iconSvg('check')} ขายดี</span>`;
+    else if (product.isSale) badgeEl.innerHTML = `<span class="badge badge-sale">${DMC.iconSvg('card')} ลด</span>`;
   }
 
   // ── Gallery (multi-image + video) ──
@@ -309,7 +309,7 @@ function renderGallery() {
   mainEl.querySelectorAll('.gallery-media, .gallery-track, .gallery-counter').forEach(el => el.remove());
 
   if (!galleryItems.length) {
-    if (emojiEl) { emojiEl.style.display = ''; emojiEl.textContent = product.emoji || '📦'; }
+  if (emojiEl) { emojiEl.style.display = ''; emojiEl.innerHTML = DMC.iconSvg('package'); }
     if (thumbsEl) thumbsEl.innerHTML = '';
     return;
   }
@@ -339,14 +339,14 @@ function renderGallery() {
       a.className = 'gallery-video-open';
       a.href = item.url; a.target = '_blank'; a.rel = 'noopener';
       const isTT = /tiktok/i.test(item.url);
-      a.innerHTML = '<span class="gvo-play">▶</span><span class="gvo-text">ดูวิดีโอบน ' + (isTT ? 'TikTok' : 'YouTube') + '</span><span class="gvo-sub">แตะเพื่อเปิดดูวิดีโอ</span>';
+  a.innerHTML = '<span class="gvo-play">' + DMC.iconSvg('play') + '</span><span class="gvo-text">ดูวิดีโอบน ' + (isTT ? 'TikTok' : 'YouTube') + '</span><span class="gvo-sub">แตะเพื่อเปิดดูวิดีโอ</span>';
       slide.appendChild(a);
     } else {
       // วิดีโอฝัง: แสดง tile กดเล่นก่อน (iframe กิน gesture ปัด) → กดแล้วค่อยใส่ iframe
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'gallery-video-open gallery-video-playbtn';
-      btn.innerHTML = '<span class="gvo-play">▶</span><span class="gvo-text">เล่นวิดีโอ</span><span class="gvo-sub">แตะเพื่อเล่นตรงนี้</span>';
+  btn.innerHTML = '<span class="gvo-play">' + DMC.iconSvg('play') + '</span><span class="gvo-text">เล่นวิดีโอ</span><span class="gvo-sub">แตะเพื่อเล่นตรงนี้</span>';
       btn.addEventListener('click', () => {
         const wrap = document.createElement('div');
         wrap.className = 'gallery-video-wrap' + (item.vertical ? ' vertical' : '');
@@ -391,7 +391,7 @@ function renderGallery() {
           t.appendChild(im);
           if (g.label) t.title = g.label;
         } else {
-          t.innerHTML = '<span class="gallery-thumb-video">▶</span>';
+    t.innerHTML = '<span class="gallery-thumb-video">' + DMC.iconSvg('play') + '</span>';
           t.title = 'วิดีโอ';
         }
         t.addEventListener('click', () => goToSlide(i, true));
@@ -569,7 +569,6 @@ function addToCart(goToCart) {
     minQty: Math.max(1, product.minQty || 1),   // V28: ให้ตะกร้าเคารพขั้นต่ำตอนกด +/-
     options,
     customDetails,                                                                          // V4.6: เก็บใน cart
-    emoji: product.emoji || '📦',
     image: (variantImg || galleryItems.find(g => g.type === 'image') || {}).url || product.image || '',
   });
   // V.upgrade1: ตัด toast ซ้ำออก — DMC.addToCart() แจ้งเตือนให้แล้ว
@@ -611,7 +610,7 @@ async function loadRelated() {
       return `
       <a class="product-card" href="product.html?id=${p.id}">
         <div class="product-img-wrap">
-          ${cover ? `<img src="${DMC.imgCDN(cover, 440)}" data-full="${DMC.escapeHtml(cover)}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">` : `<span>${p.emoji || '📦'}</span>`}
+          ${cover ? `<img src="${DMC.imgCDN(cover, 440)}" data-full="${DMC.escapeHtml(cover)}" alt="${DMC.escapeHtml(p.name)}" loading="lazy" decoding="async">` : `<span class="product-card-placeholder">${DMC.iconSvg('package')}</span>`}
         </div>
         <div class="product-card-body">
           <div class="product-card-name">${DMC.escapeHtml(p.name)}</div>
@@ -648,7 +647,7 @@ async function initReviews() {
       const s = document.createElement('button');
       s.type = 'button';
       s.className = 'rv-star-btn';
-      s.textContent = '★';
+      s.innerHTML = DMC.iconSvg('star', 'rv-star-icon');
       s.setAttribute('aria-label', i + ' ดาว');
       s.addEventListener('click', () => {
         rvRating = i;
@@ -687,7 +686,7 @@ async function loadApprovedReviews() {
     if (typeof Loading !== 'undefined') Loading.staggerItems('#rv-list .rv-card', 60);
   } else {
     setText('review-count', 'ยังไม่มีรีวิว');
-    if (sumEl) sumEl.innerHTML = '<span style="color:var(--text-3);font-size:.88rem">เป็นคนแรกที่รีวิวสินค้านี้ ⭐</span>';
+    if (sumEl) sumEl.innerHTML = '<span style="color:var(--text-3);font-size:.88rem">เป็นคนแรกที่รีวิวสินค้านี้ ' + DMC.iconSvg('star') + '</span>';
     listEl.innerHTML = '';
   }
 }
@@ -709,14 +708,14 @@ async function submitReview() {
       honeypot: res.honeypot,
     });
     if (out.ok) {
-      DMC.toast('ส่งรีวิวแล้ว 🙏 จะแสดงหลังร้านอนุมัติครับ', 'success', 4500);
+      DMC.toast('ส่งรีวิวแล้ว จะแสดงหลังร้านอนุมัติครับ', 'success', 4500);
       document.getElementById('rv-name').value = '';
       document.getElementById('rv-text').value = '';
       setText('rv-char', '0');
       rvRating = 0;
       document.querySelectorAll('#rv-star-input .rv-star-btn').forEach(b => b.classList.remove('on'));
     } else {
-      DMC.toast('❌ ' + out.reason, 'error', 4000);
+      DMC.toast(out.reason, 'error', 4000);
     }
   } finally {
     if (typeof Loading !== 'undefined') Loading.buttonDone(btn);
