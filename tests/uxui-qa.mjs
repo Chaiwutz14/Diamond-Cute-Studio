@@ -410,7 +410,7 @@ try {
   await page.locator('#hamburger-btn').click();
   check('mobile menu opens', await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open')), 'drawer should have open class');
   check('mobile drawer retains navigation and LINE actions', await page.locator('#mobile-drawer .drawer-link').count() >= 6 && await page.locator('#drawer-line-btn').count() === 1, 'drawer links and LINE action are present');
-  await page.locator('.hp-why-section .hp-h2').click();
+  await page.locator('#featured-products').dispatchEvent('click');
   check('mobile menu closes on outside click', !(await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open'))), 'outside click should close the drawer');
   await page.locator('#hamburger-btn').click();
   await page.keyboard.press('Escape');
