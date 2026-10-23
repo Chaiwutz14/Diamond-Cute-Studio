@@ -134,10 +134,15 @@
       setOpen(false);
       if (restoreFocus) toggle.focus();
     }
-    toggle.addEventListener('click', function () {
+    toggle.addEventListener('click', function (event) {
+      event.preventDefault();
       var open = !wrap.classList.contains('is-open');
       setOpen(open);
-      if (open) input.focus();
+      if (open) {
+        window.requestAnimationFrame(function () {
+          if (wrap.classList.contains('is-open')) input.focus({ preventScroll: true });
+        });
+      }
     });
     document.addEventListener('click', function (event) {
       if (!wrap.contains(event.target) && window.innerWidth > 900) close(false);

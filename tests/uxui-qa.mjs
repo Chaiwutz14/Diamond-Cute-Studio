@@ -228,7 +228,7 @@ try {
       check(`${name}: category shortcuts scroll horizontally with readable targets and no visible scrollbar`, metrics.categoryDisplay === 'flex' && metrics.categoryScrollWidth > metrics.categoryClientWidth && categoryTargets && metrics.categoryIcon?.width >= 60 && metrics.categoryLabelFontSize >= 12 && metrics.categoryScrollbarWidth === 'none', `display=${metrics.categoryDisplay}, scroll=${metrics.categoryScrollWidth}, client=${metrics.categoryClientWidth}, icon=${metrics.categoryIcon?.width}, label=${metrics.categoryLabelFontSize}px`);
       check(`${name}: mobile best sellers show four larger cards in two columns`, metrics.featuredColumnCount === 2 && metrics.featuredVisibleCount === 4, `columns=${metrics.featuredColumnCount}, visible=${metrics.featuredVisibleCount}`);
       check(`${name}: add-to-cart button meets the 44px touch target`, metrics.featuredAddButton && metrics.featuredAddButton.width >= 44 && metrics.featuredAddButton.height >= 44, JSON.stringify(metrics.featuredAddButton));
-      check(`${name}: featured cards hide long copy and use contain-fit artwork with a compact square action`, metrics.featuredDescriptionDisplay === 'none' && metrics.featuredImageFit === 'contain' && metrics.featuredAddRadius >= 8 && metrics.featuredAddRadius <= 16, JSON.stringify({description:metrics.featuredDescriptionDisplay,imageFit:metrics.featuredImageFit,buttonRadius:metrics.featuredAddRadius}));
+      check(`${name}: featured cards hide long copy and use contain-fit artwork with a compact square action`, (metrics.featuredDescriptionDisplay === 'none' || metrics.featuredDescriptionDisplay === 'missing') && metrics.featuredImageFit === 'contain' && metrics.featuredAddRadius >= 8 && metrics.featuredAddRadius <= 16, JSON.stringify({description:metrics.featuredDescriptionDisplay,imageFit:metrics.featuredImageFit,buttonRadius:metrics.featuredAddRadius}));
       check(`${name}: favorite control meets the 40px touch target`, metrics.featuredWishButton && metrics.featuredWishButton.width >= 40 && metrics.featuredWishButton.height >= 40, JSON.stringify(metrics.featuredWishButton));
       check(`${name}: homepage search is visible in the compact header`, metrics.globalSearchCount === 1 && metrics.search.width > 0, `search count=${metrics.globalSearchCount}, width=${metrics.search?.width}`);
       check(`${name}: mobile search submit is a 44px touch target`, metrics.searchSubmit && metrics.searchSubmit.width >= 44 && metrics.searchSubmit.height >= 44, JSON.stringify(metrics.searchSubmit));
@@ -254,7 +254,15 @@ try {
   currentRoute = 'desktop-header-regression';
   check('desktop account icon links to order tracking', await page.locator('.nav-account-btn').getAttribute('href') === 'orders.html', 'orders.html');
   await page.locator('#nav-search-toggle').click();
-  check('desktop homepage search opens from its icon', await page.locator('#nav-search-toggle').getAttribute('aria-expanded') === 'true' && await page.locator('.nav-search').isVisible(), 'search form should open and receive focus');
+  await page.waitForFunction(() => document.activeElement?.id === 'nav-search-input', null, { timeout: 2000 }).catch(() => {});
+  const desktopSearchState = await page.evaluate(() => {
+    const wrap = document.getElementById('nav-search-wrap');
+    const form = document.getElementById('nav-search-form');
+    const input = document.getElementById('nav-search-input');
+    const rect = form?.getBoundingClientRect();
+    return { open: wrap?.classList.contains('is-open'), expanded: document.getElementById('nav-search-toggle')?.getAttribute('aria-expanded'), display: form ? getComputedStyle(form).display : 'missing', width: Math.round(rect?.width || 0), focused: document.activeElement === input };
+  });
+  check('desktop homepage search opens, stays visible, and receives focus', desktopSearchState.open && desktopSearchState.expanded === 'true' && desktopSearchState.display === 'flex' && desktopSearchState.width > 0 && desktopSearchState.focused, JSON.stringify(desktopSearchState));
   await page.keyboard.press('Escape');
   check('desktop homepage search closes on Escape', await page.locator('#nav-search-toggle').getAttribute('aria-expanded') === 'false', 'search form should close');
   currentRoute = 'home-banner-destination';
@@ -402,7 +410,7 @@ try {
   await page.locator('#hamburger-btn').click();
   check('mobile menu opens', await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open')), 'drawer should have open class');
   check('mobile drawer retains navigation and LINE actions', await page.locator('#mobile-drawer .drawer-link').count() >= 6 && await page.locator('#drawer-line-btn').count() === 1, 'drawer links and LINE action are present');
-  await page.locator('#nav-search-input').click();
+  await page.locator('.hp-why-section .hp-h2').click();
   check('mobile menu closes on outside click', !(await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open'))), 'outside click should close the drawer');
   await page.locator('#hamburger-btn').click();
   await page.keyboard.press('Escape');
@@ -474,7 +482,7 @@ try {
         await page.locator('#otp-step-code').waitFor({ state: 'visible' });
         await page.locator('#otp-code').fill('123456');
         await page.locator('#otp-verify-btn').click();
-        check('orders: expired OTP reports an error without revealing order data', /Code expired/.test(await page.locator('#otp-code-error').textContent()) && await page.locator('#otp-step-results').isHidden(), await page.locator('#otp-code-error').textContent());
+        check('orders: expired OTP reports an error without revealing order data', /หมดอายุ/.test(await page.locator('#otp-code-error').textContent()) && await page.locator('#otp-step-results').isHidden(), await page.locator('#otp-code-error').textContent());
       }
     }
     if (name === 'contact') {

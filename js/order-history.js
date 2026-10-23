@@ -245,10 +245,12 @@ function initOTPFlow() {
       try { sessionStorage.setItem('dmc_verified_phone', digits); } catch (e) {}
       showResults(digits);
     } catch (e) {
-      console.error('OTP verify error:', e);
+      if (e.code !== 'auth/invalid-verification-code' && e.code !== 'auth/code-expired') console.error('OTP verification failed:', e);
       errEl.textContent = e.code === 'auth/invalid-verification-code'
-    ? 'รหัสไม่ถูกต้อง ลองอีกครั้ง'
-    : 'ยืนยันไม่สำเร็จ: ' + (e.message || 'ลองใหม่อีกครั้ง');
+        ? 'รหัสไม่ถูกต้อง ลองอีกครั้ง'
+        : e.code === 'auth/code-expired'
+          ? 'รหัสหมดอายุแล้ว กรุณารอจนปุ่มส่งรหัสใหม่เปิดใช้งาน'
+          : 'ยืนยันไม่สำเร็จ: ' + (e.message || 'ลองใหม่อีกครั้ง');
     } finally {
       if (typeof Loading !== 'undefined') Loading.buttonDone(verifyBtn);
     }
