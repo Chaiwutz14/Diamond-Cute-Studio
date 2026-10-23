@@ -118,40 +118,50 @@
   }
 
   function initHeaderSearch() {
-    var wrap = document.getElementById('nav-search-wrap');
-    var toggle = document.getElementById('nav-search-toggle');
-    var input = document.getElementById('nav-search-input');
-    if (!wrap || !toggle || !input) return;
+    if (document.documentElement.dataset.dmcHeaderSearchReady === 'true') return;
+    document.documentElement.dataset.dmcHeaderSearchReady = 'true';
+
     var searchIcon = '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>';
     var closeIcon = '<path d="m6 6 12 12M18 6 6 18"/>';
     function setOpen(open) {
+      var wrap = document.getElementById('nav-search-wrap');
+      var toggle = document.getElementById('nav-search-toggle');
+      if (!wrap || !toggle) return;
       wrap.classList.toggle('is-open', open);
       toggle.setAttribute('aria-expanded', String(open));
       toggle.setAttribute('aria-label', open ? 'ปิดช่องค้นหา' : 'เปิดค้นหาสินค้า');
       toggle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + (open ? closeIcon : searchIcon) + '</svg>';
     }
-    function close(restoreFocus) {
-      setOpen(false);
-      if (restoreFocus) toggle.focus();
-    }
-    toggle.addEventListener('click', function (event) {
-      event.preventDefault();
-      var open = !wrap.classList.contains('is-open');
-      setOpen(open);
-      if (open) {
-        window.requestAnimationFrame(function () {
-          if (wrap.classList.contains('is-open')) input.focus({ preventScroll: true });
-        });
+
+    // Delegate from the document so a re-rendered header keeps working.
+    document.addEventListener('click', function (event) {
+      var wrap = document.getElementById('nav-search-wrap');
+      var input = document.getElementById('nav-search-input');
+      var target = event.target && event.target.closest ? event.target.closest('#nav-search-toggle') : null;
+      if (!wrap) return;
+      if (target) {
+        event.preventDefault();
+        var open = !wrap.classList.contains('is-open');
+        setOpen(open);
+        if (open) {
+          window.requestAnimationFrame(function () {
+            if (wrap.isConnected && wrap.classList.contains('is-open')) input && input.focus({ preventScroll: true });
+          });
+        }
+        return;
+      }
+      if (!wrap.contains(event.target) && window.innerWidth > 900) setOpen(false);
+    }, true);
+
+    document.addEventListener('keydown', function (event) {
+      var wrap = document.getElementById('nav-search-wrap');
+      var toggle = document.getElementById('nav-search-toggle');
+      if (event.key === 'Escape' && wrap && wrap.classList.contains('is-open')) {
+        setOpen(false);
+        toggle && toggle.focus();
       }
     });
-    document.addEventListener('click', function (event) {
-      if (!wrap.contains(event.target) && window.innerWidth > 900) close(false);
-    });
-    document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && wrap.classList.contains('is-open')) close(true);
-    });
   }
-
   function applyAnnounce() {
     if (typeof CMS === 'undefined') return;
     var page = location.pathname.split('/').pop() || 'index.html';
