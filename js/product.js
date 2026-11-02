@@ -134,12 +134,16 @@ function renderProduct() {
   document.getElementById('product-detail').style.display  = '';
   if (typeof Loading !== 'undefined') Loading.progressDone();
 
-  // V2: เปิดแถบสั่งซื้อลอย (มือถือ) + เติมค่าส่งจริงจาก config
+  // V2: เปิดแถบสั่งซื้อลอย (มือถือ)
   document.getElementById('sticky-buy-bar')?.classList.add('show');
-  const sh = (window.DMC_CONFIG || {}).SHIPPING || {};
-  const shipEl = document.getElementById('price-shipping-hint');
-  if (shipEl && (sh.transfer != null || sh.cod != null)) {
-    shipEl.innerHTML = DMC.iconSvg('truck') + ` ค่าจัดส่งเริ่ม ฿${sh.transfer ?? 50} · เก็บเงินปลายทาง ฿${sh.cod ?? 80}`;
+  renderProductShipping({});
+  if (typeof CMS !== 'undefined') {
+    CMS.get().then(content => {
+      renderProductShipping(content.fees || {});
+      renderProductLineContact(content.contact || {});
+    }).catch(() => renderProductLineContact({}));
+  } else {
+    renderProductLineContact({});
   }
 
   document.title = product.name + ' — Diamond Cute Studio';
@@ -241,6 +245,34 @@ function renderProduct() {
       previewToolEl.style.display = 'none';
     }
   }
+}
+
+function renderProductShipping(fees) {
+  const shipEl = document.getElementById('price-shipping-hint');
+  if (!shipEl || typeof DMCShippingDisplay === 'undefined') return;
+  const config = (window.DMC_CONFIG || {}).SHIPPING || {};
+  shipEl.innerHTML = DMC.iconSvg('truck') + ' ' + DMC.escapeHtml(DMCShippingDisplay.format(fees, config));
+}
+
+function renderProductLineContact(contact) {
+  const link = document.getElementById('product-line-contact');
+  if (!link) return;
+  let href = '';
+  try {
+    const value = typeof CMS !== 'undefined' && CMS.lineChat ? CMS.lineChat(contact) : contact.line;
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    const validHost = host === 'line.me' || host === 'lin.ee';
+    const hasPath = url.pathname.split('/').filter(Boolean).length > 0;
+    if (url.protocol === 'https:' && validHost && hasPath) href = url.href;
+  } catch (error) {}
+  if (!href) {
+    link.removeAttribute('href');
+    link.hidden = true;
+    return;
+  }
+  link.href = href;
+  link.hidden = false;
 }
 
 function setText(id, text) {

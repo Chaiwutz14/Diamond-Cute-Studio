@@ -73,14 +73,15 @@
     .faq-item { background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
     .faq-q {
       padding: 1rem 1.25rem; font-family: var(--font-display); font-weight: 600; font-size: .93rem;
+      width: 100%; border: 0; background: transparent; color: inherit; text-align: left;
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      user-select: none;
+      user-select: none; list-style: none;
     }
+    .faq-q::-webkit-details-marker { display: none; }
     .faq-q:hover { background: var(--glass); }
     .faq-q .arrow { transition: transform .25s; font-size: .75rem; color: var(--text-3); }
-    .faq-item.open .faq-q .arrow { transform: rotate(180deg); }
-    .faq-a { display: none; padding: 0 1.25rem 1rem; font-size: .87rem; color: var(--text-2); line-height: 1.7; border-top: 1px solid var(--border); padding-top: .75rem; }
-    .faq-item.open .faq-a { display: block; }
+    .faq-item[open] .faq-q .arrow { transform: rotate(180deg); }
+    .faq-a { padding: .75rem 1.25rem 1rem; font-size: .87rem; color: var(--text-2); line-height: 1.7; border-top: 1px solid var(--border); }
 
     .cta-box {
       background: linear-gradient(135deg, var(--accent), var(--accent-dark));
@@ -167,7 +168,7 @@
     <div class="info-grid">
       <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="sparkle" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info5Title" data-edit-label="หัวข้อย่อย 5">ระยะเวลาผลิต</div><div class="info-text" data-edit="pages.about.info5Text" data-edit-label="รายละเอียด 5">1-3 วันทำการ (จันทร์-เสาร์) มีบริการด่วนสำหรับงานเร่ง</div></div></div>
       <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="package" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info6Title" data-edit-label="หัวข้อย่อย 6">ขนส่ง</div><div class="info-text" data-edit="pages.about.info6Text" data-edit-label="รายละเอียด 6">Kerry Express, Flash Express, J&T, ไปรษณีย์ไทย</div></div></div>
-      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="card" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info7Title" data-edit-label="หัวข้อย่อย 7">ค่าส่ง</div><div class="info-text" data-edit="pages.about.info7Text" data-edit-label="รายละเอียด 7">ทั่วไทย ฿50 / COD เพิ่ม ฿30 / สั่งเกิน ฿500 ส่งฟรี!</div></div></div>
+      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="card" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info7Title" data-edit-label="หัวข้อย่อย 7">ค่าส่ง</div><div class="info-text" id="about-shipping-summary" data-edit="pages.about.info7Text" data-edit-label="รายละเอียด 7">แสดงค่าจัดส่งตามข้อมูลล่าสุดของร้าน</div></div></div>
       <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="home" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info8Title" data-edit-label="หัวข้อย่อย 8">ติดตามพัสดุ</div><div class="info-text" data-edit="pages.about.info8Text" data-edit-label="รายละเอียด 8">แจ้งเลขติดตามทาง LINE หลังจัดส่ง ติดตามได้ตลอด 24 ชม.</div></div></div>
     </div>
   </div>
@@ -176,26 +177,26 @@
   <div class="info-section" id="faq">
     <h2><span class="dmc-icon-slot" data-dmc-icon="info" aria-hidden="true"></span> คำถามที่พบบ่อย</h2>
     <div class="faq-list" id="faq-list">
-      <div class="faq-item">
-        <div class="faq-q">ส่งไฟล์ภาพมาแบบไหนได้บ้าง? <span class="arrow">▼</span></div>
+      <details class="faq-item">
+        <summary class="faq-q">ส่งไฟล์ภาพมาแบบไหนได้บ้าง? <span class="arrow" aria-hidden="true">▼</span></summary>
         <div class="faq-a">รองรับ JPG, PNG, HEIC ไฟล์ความละเอียดสูง 300 DPI ขึ้นไป อัพโหลดได้โดยตรงในหน้าสั่งซื้อ หรือส่งผ่าน LINE ก็ได้ครับ</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q">ถ้าไม่พอใจผลงานทำยังไงได้บ้าง? <span class="arrow">▼</span></div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">ถ้าไม่พอใจผลงานทำยังไงได้บ้าง? <span class="arrow" aria-hidden="true">▼</span></summary>
         <div class="faq-a">รับประกันความพอใจ 100% ถ้าผลงานไม่ตรงตามที่สั่ง หรือมีความเสียหายจากการผลิต รีพรินท์ให้ใหม่ฟรีครับ ติดต่อ LINE ได้เลย</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q">สั่งขั้นต่ำกี่ชิ้น? <span class="arrow">▼</span></div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">สั่งขั้นต่ำกี่ชิ้น? <span class="arrow" aria-hidden="true">▼</span></summary>
         <div class="faq-a">ขั้นต่ำ 1 ชิ้นสำหรับทุกสินค้า ยิ่งสั่งเยอะยิ่งประหยัด มีส่วนลดตามปริมาณ</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q">มีบริการออกแบบไหม? <span class="arrow">▼</span></div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">มีบริการออกแบบไหม? <span class="arrow" aria-hidden="true">▼</span></summary>
         <div class="faq-a">มีครับ! บริการออกแบบเพิ่มเติม ติดต่อสอบถามราคาผ่าน LINE ได้เลย</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q">ชำระเงินแล้วจะได้รับสินค้าเมื่อไหร่? <span class="arrow">▼</span></div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">ชำระเงินแล้วจะได้รับสินค้าเมื่อไหร่? <span class="arrow" aria-hidden="true">▼</span></summary>
         <div class="faq-a">หลังยืนยันออเดอร์และชำระเงินแล้ว ทีมงานจะเริ่มผลิตทันที ใช้เวลา 1-3 วันทำการ จากนั้นจัดส่งและแจ้งเลขติดตามทาง LINE</div>
-      </div>
+      </details>
     </div>
   </div>
 
@@ -240,6 +241,7 @@
 
 <script src="js/sw-register.js" defer></script>
 <script src="js/pwa-install.js" defer></script>
+<script src="js/shipping-display.js" defer></script>
 <script src="js/about-page.js" defer></script>
 </body>
 </html>

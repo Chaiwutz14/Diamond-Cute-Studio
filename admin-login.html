@@ -49,25 +49,25 @@
     </div>
 
     <!-- Error box -->
-    <div class="login-error" id="login-error"></div>
+    <div class="login-error" id="login-error" role="alert" aria-live="assertive"></div>
 
     <!-- Locked box -->
     <div class="login-locked" id="login-locked"></div>
 
     <!-- Form -->
-    <div id="login-form">
+    <form id="login-form">
       <div class="form-group">
-        <label class="form-label">รหัสผ่าน Admin</label>
+        <label class="form-label" for="login-password">รหัสผ่าน Admin</label>
         <div class="pass-wrap">
           <input class="form-input" type="password" id="login-password"
-                 placeholder="••••••••" autocomplete="current-password" autofocus style="padding-right:3rem">
-          <button type="button" id="toggle-pass" class="pass-eye" aria-label="แสดงรหัสผ่าน" title="แสดง/ซ่อนรหัสผ่าน">👁️</button>
+                 placeholder="••••••••" autocomplete="current-password" autofocus required aria-describedby="login-error" style="padding-right:3rem">
+          <button type="button" id="toggle-pass" class="pass-eye" aria-label="แสดงรหัสผ่าน" aria-pressed="false" title="แสดง/ซ่อนรหัสผ่าน">👁️</button>
         </div>
       </div>
-      <button class="btn btn-primary btn-block btn-lg" id="login-btn" style="margin-top:0.5rem">
+      <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-btn" style="margin-top:0.5rem">
         🔓 เข้าสู่ระบบ
       </button>
-    </div>
+    </form>
 
     <div style="text-align:center;margin-top:1.25rem">
       <a href="index.html" style="font-size:0.8rem;color:var(--text-muted);font-family:var(--font-display)">

@@ -49,7 +49,7 @@
     nav.id = 'admin-bottom-nav';
     nav.setAttribute('aria-label', 'เมนูหลังบ้าน');
     nav.innerHTML = NAV.map(function(n){
-      return '<button class="abn-item" data-sec="' + n.sec + '">'
+      return '<button type="button" class="abn-item" data-sec="' + n.sec + '" aria-pressed="false">'
         + '<span class="ic">' + n.icon + '</span>'
         + '<span class="lb">' + n.label + '</span></button>';
     }).join('');
@@ -73,7 +73,9 @@
 
   function syncActive(sec) {
     document.querySelectorAll('.abn-item').forEach(function(b){
-      b.classList.toggle('active', b.dataset.sec === sec);
+      var selected = b.dataset.sec === sec;
+      b.classList.toggle('active', selected);
+      b.setAttribute('aria-pressed', String(selected));
     });
   }
 

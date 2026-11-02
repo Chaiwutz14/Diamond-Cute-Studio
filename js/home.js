@@ -571,7 +571,6 @@ async function loadHomeGallery() {
 const DMC_HOME_BANNERS = [
   { src: 'assets/banners/1.png', alt: 'DMC Studio — เปลี่ยนภาพความทรงจำให้เป็นของขวัญที่มีความหมาย', href: 'catalog.html' },
   { src: 'assets/banners/2.png', alt: 'DMC Studio — เก็บทุกโมเมนต์ให้เป็นมากกว่ารูปภาพ', href: 'catalog.html' },
-  { src: 'assets/banners/3.png', alt: 'DMC Studio — ภาพพิมพ์และของขวัญดีไซน์พิเศษ', href: 'catalog.html' },
   { src: 'assets/banners/4.png', alt: 'DMC Studio — ผลงานพิมพ์ภาพและสินค้าสั่งทำ', href: 'catalog.html' }
 ];
 

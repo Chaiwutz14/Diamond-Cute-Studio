@@ -66,10 +66,44 @@ async function loadFromFirebase() {
   const list = await DMC.loadProducts({ limit: 500 });
   allProducts = Array.isArray(list) ? list.filter(product => product && product.active !== false) : [];
   catalogLoadFailed = false;
-  // โหลดหมวดหมู่ (รวม custom) ให้ DMCCat.matches เทียบ slug↔ชื่อไทยได้ครบ
-  try { if (window.DMCCat && DMCCat.loadAll) await DMCCat.loadAll(db); } catch(e) {}
+  // โหลดหมวดหมู่จริง แล้วแสดงเฉพาะตัวเลือกที่มีสินค้าใน catalog ชุดเดียวกัน
+  let categoryList = [];
+  try { if (window.DMCCat && DMCCat.loadAll) categoryList = await DMCCat.loadAll(db); } catch(e) {}
+  renderAvailableCategoryFilters(categoryList);
   await buildSearchIndex();       // V36: สร้างดัชนีค้นหา (รวม synonym/alias ของแอดมิน)
   applyFiltersAndRender();
+}
+
+function renderAvailableCategoryFilters(categoryList) {
+  const list = document.getElementById('cat-filter-list');
+  if (!list || !window.DMCCategoryAvailability || !Array.isArray(categoryList)) return;
+
+  const categories = DMCCategoryAvailability.summarize(categoryList, allProducts);
+  const available = categories.filter(category => category.count > 0 || category.slug === currentCat);
+  const fragment = document.createDocumentFragment();
+
+  function createFilter(slug, label, icon, count, isActive) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `filter-item${isActive ? ' active' : ''}`;
+    button.dataset.cat = slug;
+    button.setAttribute('aria-pressed', String(isActive));
+    if (icon) button.insertAdjacentHTML('afterbegin', DMC.iconSvg(icon));
+    const name = document.createElement('span');
+    name.className = 'filter-item-label';
+    name.textContent = label;
+    const total = document.createElement('span');
+    total.className = 'filter-item-count';
+    total.textContent = String(count);
+    button.append(name, total);
+    return button;
+  }
+
+  fragment.append(createFilter('', 'ทั้งหมด', 'grid', allProducts.length, !currentCat));
+  available.forEach(category => {
+    fragment.append(createFilter(category.slug, category.name, category.icon, category.count, category.slug === currentCat));
+  });
+  list.replaceChildren(fragment);
 }
 
 // ═══ V36: สร้างดัชนีค้นหา — รวมพจนานุกรมคำพ้องที่แอดมินตั้งใน settings/search ═══

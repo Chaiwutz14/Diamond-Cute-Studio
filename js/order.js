@@ -41,27 +41,14 @@ function getFees() {
 
 // ─── V4: คำนวณค่าส่ง + ค่าธรรมเนียมช่องทาง + ส่วนลดคูปอง → ยอดรวม (แหล่งเดียว) ───
 function computeTotals() {
-  const subtotal = DMC.getCartTotal();
-  const fees = getFees();
-  let shipping  = selectedPayment === 'cod' ? fees.shipCod : fees.shipTransfer;
-  const surcharge = selectedPayment === 'cod' ? fees.surchargeCod : fees.surchargePromptpay;
-
-  let discount = 0, freeship = false;
-  if (appliedCoupon) {
-    if (appliedCoupon.type === 'percent') {
-      discount = Math.floor(subtotal * Number(appliedCoupon.value) / 100);
-      const cap = Number(appliedCoupon.maxDiscount || 0);
-      if (cap > 0) discount = Math.min(discount, cap);
-    } else if (appliedCoupon.type === 'fixed') {
-      discount = Math.min(Number(appliedCoupon.value), subtotal);
-    } else if (appliedCoupon.type === 'freeship') {
-      freeship = true;
-    }
-  }
-  if (freeship || (fees.freeShipMin > 0 && subtotal >= fees.freeShipMin)) shipping = 0;
-
-  const total = Math.max(0, subtotal + shipping + surcharge - discount);
-  return { subtotal, shipping, surcharge, discount, freeship, total };
+  const cart = DMC.getCart();
+  return DMCOrderCalculations.computeTotals({
+    itemCount: cart.length,
+    subtotal: DMC.getCartTotal(),
+    fees: getFees(),
+    payment: selectedPayment,
+    coupon: appliedCoupon,
+  });
 }
 
 // ─── Render Cart List ───
@@ -1006,37 +993,19 @@ async function submitOrder() {
       }
     }
 
-    // Save order — V17: ถ้าเปิด SERVER_ORDER ให้ Worker คำนวณยอดจากราคาจริง+เขียน Firestore (ปิดช่องโหว่ CRIT-01)
-    //   ถ้าไม่เปิด / Worker ตอบ fallback / ผิดพลาด → เขียน Firestore ตรงแบบเดิม (เช็คเอาต์ไม่มีวันพัง)
+    // Order persistence must be confirmed by the trusted Worker before the cart can be cleared.
     let savedDocId = null;
-    let serverOk = false;
+    let savedOrder = null;
     const _SO = (window.DMC_CONFIG || {}).SERVER_ORDER || {};
-    if (_SO.enabled) {
-      try {
-        const _wk = (window.DMC_CONFIG || {}).CF_WORKER_URL || '';
-        const _res = await fetch(_wk + '/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(typeof dmcWorkerKeyHeader === 'function' ? dmcWorkerKeyHeader() : {}) },
-          body: JSON.stringify(orderData),
-        });
-        const _j = await _res.json().catch(() => ({}));
-        if (_j && _j.ok && _j.docId) {
-          savedDocId = _j.docId;
-          serverOk = true;
-          if (_j.total != null) orderData.total = _j.total;   // ใช้ยอดจากเซิร์ฟเวอร์ในการแจ้งเตือน/แสดงผล
-        }
-        // _j.fallback === true หรือ error → ไหลไปเขียนตรงด้านล่าง
-      } catch (e) { console.warn('server order failed, fallback to client write:', e.message); }
-    }
-
-    // เขียน Firestore ตรง (เมื่อไม่ได้ใช้เซิร์ฟเวอร์ หรือเซิร์ฟเวอร์ใช้ไม่ได้)
-    if (!serverOk && db) {
-      const docRef = await db.collection('orders').add({
-        ...orderData,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      savedDocId = docRef.id;
-    }
+    if (!_SO.enabled) throw Object.assign(new Error('Trusted order service is not enabled'), { code: 'ORDER_SERVICE_UNAVAILABLE' });
+    savedOrder = await DMCOrderPersistence.createFromWorker({
+      workerUrl: (window.DMC_CONFIG || {}).CF_WORKER_URL || '',
+      payload: orderData,
+      fetcher: window.fetch.bind(window),
+      headers: typeof dmcWorkerKeyHeader === 'function' ? dmcWorkerKeyHeader() : {},
+    });
+    savedDocId = savedOrder.docId;
+    orderData.total = savedOrder.total;
 
     // V4.4: บันทึก marker เบอร์ลง couponGuard (existence = เคยสั่ง/เคยใช้คูปอง) — ใช้เช็กครั้งหน้า
     if (db && orderData.phoneSearch) {
@@ -1073,7 +1042,7 @@ async function submitOrder() {
     try { localStorage.removeItem('dmc_pending_designs'); } catch(e){}  // V2: เคลียร์แบบที่แนบ
 
     // Show success
-    showSuccess(orderId, total, { slipUploadFailed, uploadFailureCount });
+    showSuccess(orderId, savedOrder.total, { slipUploadFailed, uploadFailureCount });
 
     // Note: ระบบแจ้งเตือนลูกค้าทาง LINE ต้องทำผ่านหน้า Admin
     // (ส่ง LINE Push ถึงลูกค้าได้เมื่อมี User ID ของลูกค้า)
@@ -1092,7 +1061,10 @@ async function submitOrder() {
       } catch (e) { console.warn('coupon rollback skipped:', e.message); }
       _couponReservedRef = null;
     }
-    DMC.toast('เกิดข้อผิดพลาด กรุณาลองใหม่หรือติดต่อ LINE', 'error');
+    const orderSaveFailed = ['ORDER_SERVICE_UNAVAILABLE', 'ORDER_SAVE_FAILED', 'ORDER_SAVE_NOT_CONFIRMED'].includes(err?.code);
+    DMC.toast(orderSaveFailed
+      ? 'ยังยืนยันการบันทึกออเดอร์ไม่ได้ กรุณาลองอีกครั้ง ตะกร้ายังอยู่ครบ'
+      : 'เกิดข้อผิดพลาด กรุณาลองใหม่หรือติดต่อ LINE', 'error', orderSaveFailed ? 7000 : 5000);
     btn.disabled = false;
     btn.innerHTML = DMC.iconSvg('check') + ' ยืนยันออเดอร์';
     _orderSubmitting = false;   // V16: ปลดล็อกให้ลองส่งใหม่ได้

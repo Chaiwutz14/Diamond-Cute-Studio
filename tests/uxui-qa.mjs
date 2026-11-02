@@ -62,7 +62,7 @@ try {
     if (width <= 760) {
       await page.waitForSelector('.dmc-mobile-hero-cta');
       await page.waitForSelector('.dmc-mobile-hero-illustration', { state: 'attached' });
-      await page.waitForFunction(() => document.querySelectorAll('#dmc-mobile-hero-slides .dmc-mobile-hero-slide').length === 4, null, { timeout: 18000 });
+      await page.waitForFunction(() => document.querySelectorAll('#dmc-mobile-hero-slides .dmc-mobile-hero-slide').length === 3, null, { timeout: 18000 });
       await page.waitForFunction(() => {
         const img = document.querySelector('#dmc-mobile-hero-slides .dmc-mobile-hero-slide.is-active img');
         return !!img && img.complete && img.naturalWidth > 0;
@@ -187,7 +187,7 @@ try {
       check(`${name}: mobile hero has a clear gap below the navbar`, metrics.mobileHero && metrics.nav && metrics.mobileHero.top >= metrics.nav.bottom + 8, `hero top=${metrics.mobileHero?.top}, navbar bottom=${metrics.nav?.bottom}`);
       check(`${name}: mobile hero is visible with one catalog CTA`, metrics.mobileHeroDisplay !== 'none' && metrics.mobileHero.width >= width - 32 && metrics.mobileHeroTitle.length > 0 && metrics.mobileHeroIllustration && metrics.mobileHeroCta?.height >= 44 && metrics.mobileHeroCtaHref === 'catalog.html', JSON.stringify({display:metrics.mobileHeroDisplay,width:metrics.mobileHero?.width,illustration:metrics.mobileHeroIllustration,cta:metrics.mobileHeroCta,href:metrics.mobileHeroCtaHref}));
       check(`${name}: desktop carousel is hidden on mobile`, metrics.heroDisplay === 'none', metrics.heroDisplay);
-      check(`${name}: mobile carousel has four banners and synced controls`, metrics.mobileCarouselDisplay !== 'none' && metrics.mobileCarouselSlides === 4 && metrics.mobileCarouselActive === 1 && metrics.mobileCarouselDots === 4 && metrics.mobileCarouselCurrentDots === 1, JSON.stringify({display:metrics.mobileCarouselDisplay,slides:metrics.mobileCarouselSlides,active:metrics.mobileCarouselActive,dots:metrics.mobileCarouselDots,current:metrics.mobileCarouselCurrentDots}));
+      check(`${name}: mobile carousel has three verified authored banners and synced controls`, metrics.mobileCarouselDisplay !== 'none' && metrics.mobileCarouselSlides === 3 && metrics.mobileCarouselActive === 1 && metrics.mobileCarouselDots === 3 && metrics.mobileCarouselCurrentDots === 1, JSON.stringify({display:metrics.mobileCarouselDisplay,slides:metrics.mobileCarouselSlides,active:metrics.mobileCarouselActive,dots:metrics.mobileCarouselDots,current:metrics.mobileCarouselCurrentDots}));
       check(`${name}: mobile banner preserves artwork ratio and loads`, metrics.mobileCarousel && Math.abs(metrics.mobileCarouselRatio - (1200/630)) < .03 && metrics.mobileCarouselImageFit === 'contain' && metrics.mobileCarouselImageLoaded, JSON.stringify({ratio:metrics.mobileCarouselRatio,fit:metrics.mobileCarouselImageFit,loaded:metrics.mobileCarouselImageLoaded}));
     } else {
       check(`${name}: desktop banner has a clear gap below the navbar`, metrics.hero && metrics.nav && metrics.hero.top >= metrics.nav.bottom + 8, `hero top=${metrics.hero?.top}, navbar bottom=${metrics.nav?.bottom}`);
@@ -201,7 +201,7 @@ try {
     check(`${name}: homepage category/product/trust sections rendered`, metrics.categoryCount === 6 && metrics.featuredCount >= 1 && metrics.trustStrip, `categories=${metrics.categoryCount}, products=${metrics.featuredCount}, trust=${metrics.trustStrip}`);
     if (width >= 1024) check(`${name}: desktop product grid uses four columns`, metrics.featuredColumnCount === 4, `columns=${metrics.featuredColumnCount}`);
     else if (width > 760) check(`${name}: tablet product grid uses three columns`, metrics.featuredColumnCount === 3, `columns=${metrics.featuredColumnCount}`);
-    check(`${name}: hero uses all four authored banners`, metrics.heroAssetCount === 4 && metrics.heroPhotoCount === 1 && metrics.heroLinkCount === 4, `banners=${metrics.heroAssetCount}, active=${metrics.heroPhotoCount}, catalog links=${metrics.heroLinkCount}`);
+    check(`${name}: hero uses all three verified authored banners`, metrics.heroAssetCount === 3 && metrics.heroPhotoCount === 1 && metrics.heroLinkCount === 3, `banners=${metrics.heroAssetCount}, active=${metrics.heroPhotoCount}, catalog links=${metrics.heroLinkCount}`);
     check(`${name}: hero artwork has descriptive alt text and no CTA inside the slides`, metrics.heroAltCount === 8 && metrics.heroEmbeddedCtaCount === 0, `alt images=${metrics.heroAltCount}, embedded buttons=${metrics.heroEmbeddedCtaCount}`);
     if (width > 760) check(`${name}: desktop banner keeps the supplied full image ratio`, metrics.heroImageFit === 'contain' && Math.abs(metrics.heroRatio - (1730 / 909)) < .03, `fit=${metrics.heroImageFit}, ratio=${metrics.heroRatio.toFixed(3)}`);
     if (width <= 760) {
@@ -267,7 +267,7 @@ try {
   check('desktop homepage search closes on Escape', await page.locator('#nav-search-toggle').getAttribute('aria-expanded') === 'false', 'search form should close');
   currentRoute = 'home-banner-destination';
   const bannerHrefs = await page.locator('#dmc-hero-slides .dmc-hero-slide a').evaluateAll(links => links.map(link => link.getAttribute('href')));
-  check('each authored banner has a configured destination', bannerHrefs.length === 4 && bannerHrefs.every(href => href === 'catalog.html'), JSON.stringify(bannerHrefs));
+  check('each verified authored banner has a configured destination', bannerHrefs.length === 3 && bannerHrefs.every(href => href === 'catalog.html'), JSON.stringify(bannerHrefs));
   await page.locator('#dmc-hero-slides .dmc-hero-slide.is-active a').click();
   await page.waitForURL(/catalog\.html/);
   check('clicking the hero banner opens its configured destination', new URL(page.url()).pathname.endsWith('/catalog.html'), page.url());

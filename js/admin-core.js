@@ -101,6 +101,7 @@ function checkFirebaseAdmin() {
 // ══════════════════════════════════════════════
 function initLoginPage() {
   const passInput = document.getElementById('login-password');
+  const loginForm = document.getElementById('login-form');
 
   // ลูกผสม: ถ้าเคย login Firebase ไว้บนเครื่องนี้ → เข้าได้เลยไม่ต้องพิมพ์ซ้ำ
   (async () => {
@@ -175,10 +176,11 @@ function initLoginPage() {
         if (data.count >= DMC.MAX_ATTEMPTS) {
           checkLock();
         } else {
-          errorBox.innerHTML = `❌ รหัสผ่านไม่ถูกต้อง (เหลือ ${DMC.MAX_ATTEMPTS - data.count} ครั้ง)`;
+          errorBox.textContent = `รหัสผ่านไม่ถูกต้อง (เหลือ ${DMC.MAX_ATTEMPTS - data.count} ครั้ง)`;
           errorBox.classList.add('visible');
+          passInput.setAttribute('aria-invalid', 'true');
           passInput.value = ''; passInput.classList.add('error'); passInput.focus();
-          setTimeout(() => { errorBox.classList.remove('visible'); passInput.classList.remove('error'); }, 2500);
+          setTimeout(() => { errorBox.classList.remove('visible'); passInput.classList.remove('error'); passInput.removeAttribute('aria-invalid'); }, 2500);
         }
         if (typeof Loading !== 'undefined') { Loading.buttonDone(btn); Loading.progressDone(); }
         else btn.disabled = false;
@@ -189,8 +191,10 @@ function initLoginPage() {
       else btn.disabled = false;
     }
   }
-  document.getElementById('login-btn')?.addEventListener('click', handleLogin);
-  passInput?.addEventListener('keydown', e => { if (e.key==='Enter') handleLogin(); });
+  loginForm?.addEventListener('submit', event => {
+    event.preventDefault();
+    handleLogin();
+  });
 }
 
 // ══════════════════════════════════════════════
@@ -236,36 +240,59 @@ function bindGlobalDelegation() {
 function doLogout() {
   var existing = document.getElementById('logout-modal');
   if (existing) existing.remove();
+  var trigger = document.activeElement;
 
   var modal = document.createElement('div');
   modal.id = 'logout-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)';
   modal.innerHTML = [
-    '<div style="background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-2xl);padding:2rem;max-width:340px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.3);text-align:center">',
+    '<div role="dialog" aria-modal="true" aria-labelledby="logout-title" tabindex="-1" style="background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-2xl);padding:2rem;max-width:340px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.3);text-align:center">',
       '<div style="font-size:2.5rem;margin-bottom:.75rem">👋</div>',
-      '<div style="font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:var(--text-1);margin-bottom:.4rem">ออกจากระบบ?</div>',
+      '<div id="logout-title" style="font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:var(--text-1);margin-bottom:.4rem">ออกจากระบบ?</div>',
       '<div style="font-size:.87rem;color:var(--text-2);margin-bottom:1.5rem">Session จะถูกลบออก ต้องล็อกอินใหม่</div>',
       '<div style="display:flex;gap:.75rem;justify-content:center">',
-        '<button id="logout-confirm" style="flex:1;padding:.7rem 1.25rem;background:var(--rose);border:none;border-radius:var(--r-lg);color:#fff;font-family:var(--font-display);font-weight:600;font-size:.9rem;cursor:pointer">ออกจากระบบ</button>',
-        '<button id="logout-cancel"  style="flex:1;padding:.7rem 1.25rem;background:var(--bg-mid);border:1.5px solid var(--border);border-radius:var(--r-lg);color:var(--text-2);font-family:var(--font-display);font-weight:600;font-size:.9rem;cursor:pointer">ยกเลิก</button>',
+        '<button type="button" id="logout-confirm" style="flex:1;min-height:44px;padding:.7rem 1.25rem;background:var(--rose);border:none;border-radius:var(--r-lg);color:#fff;font-family:var(--font-display);font-weight:600;font-size:.9rem;cursor:pointer">ออกจากระบบ</button>',
+        '<button type="button" id="logout-cancel" style="flex:1;min-height:44px;padding:.7rem 1.25rem;background:var(--bg-mid);border:1.5px solid var(--border);border-radius:var(--r-lg);color:var(--text-2);font-family:var(--font-display);font-weight:600;font-size:.9rem;cursor:pointer">ยกเลิก</button>',
       '</div>',
     '</div>'
   ].join('');
   document.body.appendChild(modal);
-  document.getElementById('logout-confirm').addEventListener('click', function(){
-    modal.remove(); DMC.clearSession();
+  var confirmButton = document.getElementById('logout-confirm');
+  var cancelButton = document.getElementById('logout-cancel');
+  var focusable = [confirmButton, cancelButton];
+  function dismiss(returnFocus) {
+    document.removeEventListener('keydown', handleKeydown);
+    modal.remove();
+    if (returnFocus && trigger?.isConnected) trigger?.focus();
+  }
+  function handleKeydown(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      dismiss(true);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    var first = focusable[0], last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault(); last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault(); first.focus();
+    }
+  }
+  document.addEventListener('keydown', handleKeydown);
+  cancelButton.focus();
+  confirmButton.addEventListener('click', function(){
+    dismiss(false); DMC.clearSession();
     try { if (firebase.auth) firebase.auth().signOut(); } catch(e) {}
     window.location.href = 'admin-login.html';
   });
-  document.getElementById('logout-cancel').addEventListener('click', function(){ modal.remove(); });
-  modal.addEventListener('click', function(e){ if (e.target === modal) modal.remove(); });
+  cancelButton.addEventListener('click', function(){ dismiss(true); });
+  modal.addEventListener('click', function(e){ if (e.target === modal) dismiss(true); });
 }
 
 function initSidebarNav() {
   document.querySelectorAll('.sidebar-item[data-section]').forEach(item => {
     item.addEventListener('click', async () => {
-      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
       const s = item.dataset.section;
       loadSection(s); location.hash = s;
     });
@@ -276,7 +303,11 @@ function loadSection(name) {
   const content = document.getElementById('admin-content');
   if (!content) return;
   const active = document.querySelector(`.sidebar-item[data-section="${name}"]`);
-  if (active) { document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active')); active.classList.add('active'); }
+  if (active) document.querySelectorAll('.sidebar-item[data-section]').forEach(item => {
+    const selected = item === active;
+    item.classList.toggle('active', selected);
+    item.setAttribute('aria-pressed', String(selected));
+  });
   if (typeof Loading !== 'undefined') Loading.progressStart();
   const map = {
     overview:loadOverview, orders:loadOrders, products:loadProducts,

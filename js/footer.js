@@ -93,7 +93,7 @@
       +       '<h4>สินค้า</h4>'
       +       '<a href="catalog.html?cat=polaroid">' + DMC.iconSvg('image') + ' รูปโพลารอยด์</a>'
       +       '<a href="catalog.html?cat=lanyard">' + DMC.iconSvg('card') + ' บัตรแขวนคอ</a>'
-      +       '<a href="catalog.html?cat=business-card">' + DMC.iconSvg('card') + ' นามบัตร</a>'
+      +       '<a href="catalog.html?cat=student-card">' + DMC.iconSvg('card') + ' บัตรนักเรียน</a>'
       +       '<a href="catalog.html?cat=qrcode">' + DMC.iconSvg('grid') + ' QR Code</a>'
       +     '</div>'
       +     '<div class="footer-col">'
