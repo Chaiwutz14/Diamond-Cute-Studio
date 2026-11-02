@@ -303,7 +303,7 @@ button:focus-visible, a:focus-visible {
 
 /* ─── Print styles ─── */
 @media print {
-  .navbar, .theme-switcher, .nav-theme-wrap,
+  .navbar,
   .btn, footer, .mobile-drawer, #toast-container { display: none !important; }
   body { background: white !important; color: black !important; font-size: 12pt; }
   .order-wrapper { display: block !important; }

@@ -513,32 +513,8 @@ async function loadHomeReviews() {
 
 // ─── นับจำนวนสินค้าจริงต่อหมวด + รองรับหมวด custom ───
 async function loadCategoryCounts() {
-  const grid = document.getElementById('categories-grid');
-  if (!grid) return;
-
-  grid.querySelectorAll('.cat-card img').forEach(img => {
-    img.addEventListener('error', () => img.closest('.cat-icon')?.classList.add('art-fallback'), { once: true });
-  });
-
-  try {
-    const products = await DMC.loadProducts({ limit: 500 });
-    if (!Array.isArray(products) || !products.length) return;
-
-    const categories = window.DMCCat;
-    if (categories?.loadAll) await categories.loadAll(null);
-    if (!categories?.matches) return;
-
-    grid.querySelectorAll('.cat-card[data-cat]').forEach(card => {
-      const categorySlug = card.dataset.cat;
-      const count = products.filter(product => product && product.active !== false && categories.matches(product.category, categorySlug)).length;
-      card.hidden = count === 0;
-      card.dataset.productCount = String(count);
-      const label = card.querySelector('.cat-name')?.textContent.trim();
-      if (label && count > 0) card.setAttribute('aria-label', `ดูหมวด ${label} มี ${count} สินค้า`);
-    });
-  } catch (error) {
-    // Keep authored shortcuts available if the snapshot and live catalog are both unavailable.
-  }
+ const grid=document.getElementById('categories-grid');if(!grid)return;
+ grid.querySelectorAll('.cat-card img').forEach(img=>img.addEventListener('error',()=>img.closest('.cat-icon')?.classList.add('art-fallback'),{once:true}));
 }
 
 function homeProductPriority(product) {

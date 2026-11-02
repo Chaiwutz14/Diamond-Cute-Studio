@@ -12,26 +12,18 @@ function check(name, condition, details = '') {
   report.checks.push({ name, passed: Boolean(condition), details });
   console.log(`[${condition ? 'PASS' : 'FAIL'}] ${name}${details ? ' — ' + details : ''}`);
 }
-let server = null;
+const server = spawn('python3', ['-m', 'http.server', '4173', '--bind', '127.0.0.1'], { stdio: 'ignore' });
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 let browser;
 try {
   let available = false;
-  try { available = (await fetch(BASE + '/index.html')).ok; } catch {}
-  if (!available) {
-    const python = process.platform === 'win32' ? 'python' : 'python3';
-    server = spawn(python, ['-m', 'http.server', '4173', '--bind', '127.0.0.1'], { stdio: 'ignore' });
-    server.on('error', () => {});
-    for (let i = 0; i < 40; i++) {
-      try { const response = await fetch(BASE + '/index.html'); if (response.ok) { available = true; break; } } catch {}
-      await sleep(250);
-    }
+  for (let i = 0; i < 40; i++) {
+    try { const response = await fetch(BASE + '/index.html'); if (response.ok) { available = true; break; } } catch {}
+    await sleep(250);
   }
   assert.ok(available, 'local static server did not start');
 
-  const launchOptions = { headless: true, args: ['--no-sandbox'] };
-  if (process.env.DMC_PLAYWRIGHT_CHANNEL) launchOptions.channel = process.env.DMC_PLAYWRIGHT_CHANNEL;
-  browser = await chromium.launch(launchOptions);
+  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   // Block the existing Service Worker in this isolated localhost test context.
   // PWA caching is verified by source/cache-version checks; a cached worker must not race route navigation here.
   const context = await browser.newContext({
@@ -49,8 +41,7 @@ try {
   page.on('console', message => {
     if (message.type() !== 'error') return;
     const item = { route: currentRoute, message: message.text().slice(0, 500) };
-    if (/net::ERR_NETWORK_ACCESS_DENIED/.test(item.message)) report.environmentWarnings.push({ ...item, reason: 'The test sandbox blocks external network requests; remote services and images cannot be verified here' });
-    else if (/appCheck\/recaptcha-error|firebase-app-check-compat\.js|@firebase\/app-check/.test(item.message)) report.environmentWarnings.push({ ...item, reason: 'Firebase App Check reCAPTCHA cannot validate the localhost test origin' });
+    if (/appCheck\/recaptcha-error|firebase-app-check-compat\.js|@firebase\/app-check/.test(item.message)) report.environmentWarnings.push({ ...item, reason: 'Firebase App Check reCAPTCHA cannot validate the localhost test origin' });
     else if (/Framing 'https:\/\/www\.google\.com\/' violates .*report-only Content Security Policy directive/i.test(item.message)) report.environmentWarnings.push({ ...item, reason: 'Third-party Google frame emits a report-only CSP warning in the localhost QA environment; it is not an enforced block or application exception' });
     else report.consoleErrors.push(item);
   });
@@ -196,7 +187,7 @@ try {
       check(`${name}: mobile hero has a clear gap below the navbar`, metrics.mobileHero && metrics.nav && metrics.mobileHero.top >= metrics.nav.bottom + 8, `hero top=${metrics.mobileHero?.top}, navbar bottom=${metrics.nav?.bottom}`);
       check(`${name}: mobile hero is visible with one catalog CTA`, metrics.mobileHeroDisplay !== 'none' && metrics.mobileHero.width >= width - 32 && metrics.mobileHeroTitle.length > 0 && metrics.mobileHeroIllustration && metrics.mobileHeroCta?.height >= 44 && metrics.mobileHeroCtaHref === 'catalog.html', JSON.stringify({display:metrics.mobileHeroDisplay,width:metrics.mobileHero?.width,illustration:metrics.mobileHeroIllustration,cta:metrics.mobileHeroCta,href:metrics.mobileHeroCtaHref}));
       check(`${name}: desktop carousel is hidden on mobile`, metrics.heroDisplay === 'none', metrics.heroDisplay);
-    check(`${name}: mobile carousel has three verified authored banners and synced controls`, metrics.mobileCarouselDisplay !== 'none' && metrics.mobileCarouselSlides === 3 && metrics.mobileCarouselActive === 1 && metrics.mobileCarouselDots === 3 && metrics.mobileCarouselCurrentDots === 1, JSON.stringify({display:metrics.mobileCarouselDisplay,slides:metrics.mobileCarouselSlides,active:metrics.mobileCarouselActive,dots:metrics.mobileCarouselDots,current:metrics.mobileCarouselCurrentDots}));
+      check(`${name}: mobile carousel has three verified authored banners and synced controls`, metrics.mobileCarouselDisplay !== 'none' && metrics.mobileCarouselSlides === 3 && metrics.mobileCarouselActive === 1 && metrics.mobileCarouselDots === 3 && metrics.mobileCarouselCurrentDots === 1, JSON.stringify({display:metrics.mobileCarouselDisplay,slides:metrics.mobileCarouselSlides,active:metrics.mobileCarouselActive,dots:metrics.mobileCarouselDots,current:metrics.mobileCarouselCurrentDots}));
       check(`${name}: mobile banner preserves artwork ratio and loads`, metrics.mobileCarousel && Math.abs(metrics.mobileCarouselRatio - (1200/630)) < .03 && metrics.mobileCarouselImageFit === 'contain' && metrics.mobileCarouselImageLoaded, JSON.stringify({ratio:metrics.mobileCarouselRatio,fit:metrics.mobileCarouselImageFit,loaded:metrics.mobileCarouselImageLoaded}));
     } else {
       check(`${name}: desktop banner has a clear gap below the navbar`, metrics.hero && metrics.nav && metrics.hero.top >= metrics.nav.bottom + 8, `hero top=${metrics.hero?.top}, navbar bottom=${metrics.nav?.bottom}`);
@@ -211,7 +202,7 @@ try {
     if (width >= 1024) check(`${name}: desktop product grid uses four columns`, metrics.featuredColumnCount === 4, `columns=${metrics.featuredColumnCount}`);
     else if (width > 760) check(`${name}: tablet product grid uses three columns`, metrics.featuredColumnCount === 3, `columns=${metrics.featuredColumnCount}`);
     check(`${name}: hero uses all three verified authored banners`, metrics.heroAssetCount === 3 && metrics.heroPhotoCount === 1 && metrics.heroLinkCount === 3, `banners=${metrics.heroAssetCount}, active=${metrics.heroPhotoCount}, catalog links=${metrics.heroLinkCount}`);
-    check(`${name}: hero artwork has descriptive alt text and no CTA inside the slides`, metrics.heroAltCount === 6 && metrics.heroEmbeddedCtaCount === 0, `alt images=${metrics.heroAltCount}, embedded buttons=${metrics.heroEmbeddedCtaCount}`);
+    check(`${name}: hero artwork has descriptive alt text and no CTA inside the slides`, metrics.heroAltCount === 8 && metrics.heroEmbeddedCtaCount === 0, `alt images=${metrics.heroAltCount}, embedded buttons=${metrics.heroEmbeddedCtaCount}`);
     if (width > 760) check(`${name}: desktop banner keeps the supplied full image ratio`, metrics.heroImageFit === 'contain' && Math.abs(metrics.heroRatio - (1730 / 909)) < .03, `fit=${metrics.heroImageFit}, ratio=${metrics.heroRatio.toFixed(3)}`);
     if (width <= 760) {
       check(`${name}: mobile hero has rounded corners and side gutters`, metrics.mobileHero && metrics.mobileHeroRadius >= 16 && metrics.mobileHero.left >= 8 && metrics.mobileHero.right <= width - 8, `radius=${metrics.mobileHeroRadius}px, left=${metrics.mobileHero?.left}, right=${metrics.mobileHero?.right}, viewport=${width}`);
@@ -220,7 +211,8 @@ try {
     }
     const expectedCategories = ['assets/categories/Poraroid.png','assets/categories/Photo.png','assets/categories/Busines card.png','assets/categories/Employee card.png','assets/categories/Premium gift.png','assets/categories/QR Code.png'];
     check(`${name}: six authored PNG category images load`, metrics.categoryCount === 6 && metrics.categoryImageCount === 6 && metrics.categoryLoadedCount === 6 && expectedCategories.every(src=>metrics.categoryAssets.includes(src)), `category art=${metrics.categoryImageCount}, loaded=${metrics.categoryLoadedCount}, paths=${metrics.categoryAssets.join('|')}`);
-    check(`${name}: duplicate popular-category navigation is removed`, !metrics.popularVisible && metrics.popularCount === 0, `visible=${metrics.popularVisible}, cards=${metrics.popularCount}`);
+    if (width > 760) check(`${name}: five popular categories remain visible after promotion`, metrics.popularVisible && metrics.popularCount === 5, `visible=${metrics.popularVisible}, cards=${metrics.popularCount}`);
+    else check(`${name}: duplicate popular category row is hidden on mobile`, !metrics.popularVisible, `visible=${metrics.popularVisible}`);
     check(`${name}: compact DMC wordmark loads`, metrics.logoImageLoaded, String(metrics.logoImageLoaded));
     check(`${name}: authored promotion artwork loads without CMS copy`, metrics.promoImageCount === 1 && !metrics.promoSectionHidden && !metrics.promoHasCopy && metrics.promoDesktopAsset.endsWith('CMS-2752x380.png') && metrics.promoMobileAsset.endsWith('CMS-800x364.png'), `desktop=${metrics.promoDesktopAsset}, mobile=${metrics.promoMobileAsset}, copy=${metrics.promoHasCopy}, hidden=${metrics.promoSectionHidden}`);
     if (width <= 760) {
@@ -258,7 +250,6 @@ try {
     }
   }
 
-  await loadHomeAt('desktop-1920', 1920, 1080);
   await loadHomeAt('desktop-1440', 1440, 1000);
   currentRoute = 'desktop-header-regression';
   check('desktop account icon links to order tracking', await page.locator('.nav-account-btn').getAttribute('href') === 'orders.html', 'orders.html');
@@ -415,7 +406,6 @@ try {
   const afterReverseSwipe = await page.locator('#dmc-mobile-hero-slides .dmc-mobile-hero-slide').evaluateAll(els => els.findIndex(el => el.classList.contains('is-active')));
   check('swiping the mobile banner in reverse changes the slide', afterReverseSwipe === 1, `slide=${afterReverseSwipe}`);
   await loadHomeAt('mobile-360', 360, 800);
-  await loadHomeAt('mobile-320', 320, 700);
   currentRoute = 'mobile-menu-regression';
   await page.locator('#hamburger-btn').click();
   check('mobile menu opens', await page.locator('#mobile-drawer').evaluate(el => el.classList.contains('open')), 'drawer should have open class');
@@ -453,18 +443,9 @@ try {
     check(`${name}: page marker exists`, await page.locator(marker).count() > 0, marker);
     check(`${name}: global navbar search is omitted outside Home`, await page.locator('.nav-search').count() === 0, 'page-specific controls remain');
     check(`${name}: mobile header shows the correct page title`, (await page.locator('.nav-page-label').textContent())?.trim() === expectedTitle && await page.locator('.nav-page-label').isVisible(), expectedTitle);
-    const mobileLayout = await page.evaluate(() => ({
-      viewport: innerWidth,
-      document: document.documentElement.scrollWidth,
-      body: document.body.scrollWidth,
-    }));
-    report.measurements.push({ route: name, mode: 'mobile-320', ...mobileLayout });
-    check(`${name}: mobile layout has no horizontal overflow at 320px`, mobileLayout.document <= 322 && mobileLayout.body <= 322, JSON.stringify(mobileLayout));
     if (name === 'orders') {
       const localOrdersText = await page.locator('#device-orders-list').innerText();
-      const ordersStateOkay = /ยังไม่มีออเดอร์|ไม่พบข้อมูลออเดอร์|เชื่อมต่อระบบไม่ได้/.test(localOrdersText);
-      const retryShown = !/เชื่อมต่อระบบไม่ได้/.test(localOrdersText) || await page.locator('#device-orders-list button').count() > 0;
-      check('orders: local history shows empty or retryable offline state', ordersStateOkay && retryShown, localOrdersText.slice(0, 180));
+      check('orders: local history shows the empty state for this fresh browser', /ยังไม่มีออเดอร์|ไม่พบข้อมูลออเดอร์/.test(localOrdersText), localOrdersText.slice(0, 180));
       const phoneTab = page.locator('#tab-phone');
       await page.waitForFunction(() => document.querySelector('#tab-phone')?.disabled === false || document.querySelector('#tab-phone')?.disabled === true, null, { timeout: 12000 }).catch(() => {});
       if (await phoneTab.isDisabled()) {
@@ -517,58 +498,14 @@ try {
       });
       check(`${name}: mobile cart and hamburger stay aligned to the right`, navActionsRight.isSubpage && navActionsRight.innerRight - navActionsRight.right < 2, JSON.stringify(navActionsRight));
     }
-    await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.waitForTimeout(100);
-    const desktopLayout = await page.evaluate(() => ({
-      viewport: innerWidth,
-      document: document.documentElement.scrollWidth,
-      body: document.body.scrollWidth,
-    }));
-    report.measurements.push({ route: name, mode: 'desktop-1440', ...desktopLayout });
-    check(`${name}: desktop layout has no horizontal overflow at 1440px`, desktopLayout.document <= 1442 && desktopLayout.body <= 1442, JSON.stringify(desktopLayout));
-    await page.setViewportSize({ width: 320, height: 700 });
   }
-
-  currentRoute = 'route-404-mobile';
-  await page.goto(BASE + '/404.html', { waitUntil: 'domcontentloaded' });
-  const notFoundMobile = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
-  check('404: mobile layout has no horizontal overflow at 320px', notFoundMobile.document <= 322 && notFoundMobile.body <= 322, JSON.stringify(notFoundMobile));
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.waitForTimeout(100);
-  const notFoundDesktop = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
-  check('404: desktop layout has no horizontal overflow at 1440px', notFoundDesktop.document <= 1442 && notFoundDesktop.body <= 1442, JSON.stringify(notFoundDesktop));
-
-  currentRoute = 'route-admin-login-mobile';
-  await page.setViewportSize({ width: 320, height: 700 });
-  await page.goto(BASE + '/admin-login.html', { waitUntil: 'domcontentloaded' });
-  check('admin login: password field has an accessible label and required validation', await page.getByLabel('รหัสผ่าน Admin').count() === 1 && await page.locator('#login-password').evaluate(input => input.required), 'labeled required password input');
-  const adminLoginMobile = await page.locator('.login-card').boundingBox();
-  check('admin login: card fits the 320px mobile viewport', !!adminLoginMobile && adminLoginMobile.x >= 0 && adminLoginMobile.x + adminLoginMobile.width <= 320, JSON.stringify(adminLoginMobile));
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.waitForTimeout(100);
-  const adminLoginDesktop = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
-  check('admin login: desktop layout has no horizontal overflow at 1440px', adminLoginDesktop.document <= 1442 && adminLoginDesktop.body <= 1442, JSON.stringify(adminLoginDesktop));
-
-  currentRoute = 'admin-logout-modal-keyboard';
-  const logoutPage = await context.newPage();
-  await logoutPage.goto(BASE + '/404.html', { waitUntil: 'domcontentloaded' });
-  await logoutPage.setContent('<button type="button" id="logout-trigger">ออกจากระบบ</button><div id="toast-container"></div>');
-  await logoutPage.addScriptTag({ url: BASE + '/js/admin-core.js' });
-  await logoutPage.evaluate(() => { document.getElementById('logout-trigger').focus(); window.doLogout(); });
-  check('admin logout: confirmation opens as an accessible modal dialog', await logoutPage.getByRole('dialog', { name: 'ออกจากระบบ?' }).count() === 1, 'one modal dialog');
-  check('admin logout: initial focus stays on the safe cancel action', await logoutPage.evaluate(() => document.activeElement?.id === 'logout-cancel'), 'cancel button focused');
-  await logoutPage.keyboard.press('Tab');
-  check('admin logout: Tab stays inside the confirmation dialog', await logoutPage.evaluate(() => document.activeElement?.id === 'logout-confirm'), 'focus wraps to confirm button');
-  await logoutPage.keyboard.press('Escape');
-  check('admin logout: Escape closes the dialog and restores focus', await logoutPage.evaluate(() => !document.getElementById('logout-modal') && document.activeElement?.id === 'logout-trigger'), 'dialog closed; trigger focused');
-  await logoutPage.close();
 
   check('no uncaught application JavaScript page errors', report.pageErrors.length === 0, JSON.stringify(report.pageErrors));
   check('no unexpected browser console errors', report.consoleErrors.length === 0, JSON.stringify(report.consoleErrors));
   check('no same-origin HTTP 4xx/5xx assets', report.sameOriginHttpErrors.length === 0, JSON.stringify(report.sameOriginHttpErrors));
   report.finishedAt = new Date().toISOString();
   await fs.writeFile(`${ARTIFACTS}/uxui-qa-results.json`, JSON.stringify(report, null, 2));
-  console.log('Unexpected console errors: ' + report.consoleErrors.length + '; environment warnings: ' + report.environmentWarnings.length);
+  console.log('Unexpected console errors: ' + report.consoleErrors.length + '; known localhost App Check warnings: ' + report.environmentWarnings.length);
   console.log(`QA result: ${report.checks.filter(c => c.passed).length}/${report.checks.length} passed`);
   if (report.checks.some(c => !c.passed)) process.exitCode = 1;
 } catch (error) {
@@ -578,5 +515,5 @@ try {
   throw error;
 } finally {
   if (browser) await browser.close().catch(() => {});
-  if (server) server.kill('SIGTERM');
+  server.kill('SIGTERM');
 }

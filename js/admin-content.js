@@ -128,7 +128,7 @@ async function loadContentCMS(container) {
 
     
 
-    <!-- ตัวเลขความเชื่อมั่น + โปรโมชั่น -->
+    <!-- ตัวเลขความเชื่อมั่น -->
     <div class="admin-box">
       <div class="admin-box-header"><div class="admin-box-title">📊 ตัวเลขความเชื่อมั่น</div></div>
       <div class="form-row" style="margin-bottom:1rem">
@@ -136,14 +136,6 @@ async function loadContentCMS(container) {
         <div class="form-group" style="margin:0"><label class="form-label">คะแนนรีวิว เช่น 4.9/5</label><input class="form-input" id="cms-stat-rating" value="${v(content.stats.rating)}"></div>
       </div>
       <div class="form-group"><label class="form-label">เวลาผลิต (วัน) เช่น 1-3</label><input class="form-input" id="cms-stat-days" value="${v(content.stats.days)}"></div>
-      <div class="admin-box-header" style="margin-top:1.25rem"><div class="admin-box-title">🎁 แบนเนอร์โปรโมชั่น</div></div>
-      <label style="display:flex;align-items:center;gap:.45rem;cursor:pointer;font-family:var(--font-display);font-size:.85rem;margin-bottom:.85rem">
-        <input type="checkbox" id="cms-promo-active" ${content.promo.active ? 'checked' : ''} style="accent-color:var(--accent)"> แสดงแบนเนอร์โปรโมชั่น
-      </label>
-      <div class="form-group"><label class="form-label">ป้ายกำกับ</label><input class="form-input" id="cms-promo-tag" value="${v(content.promo.tag)}"></div>
-      <div class="form-group"><label class="form-label">หัวข้อโปร</label><input class="form-input" id="cms-promo-title" value="${v(content.promo.title)}"></div>
-      <div class="form-group"><label class="form-label">รายละเอียด</label><input class="form-input" id="cms-promo-desc" value="${v(content.promo.desc)}"></div>
-      <div class="form-group"><label class="form-label">ข้อความปุ่ม</label><input class="form-input" id="cms-promo-btn" value="${v(content.promo.btnText)}"></div>
     </div>
 
     
@@ -259,7 +251,6 @@ async function loadContentCMS(container) {
       announce: { active: !!document.getElementById('cms-announce-active')?.checked, text: g('cms-announce-text') },
       hero: { badge: g('cms-hero-badge'), title1: g('cms-hero-t1'), title2: g('cms-hero-t2'), title3: g('cms-hero-t3'), desc: document.getElementById('cms-hero-desc')?.value.trim() || '' },
       stats: { orders: g('cms-stat-orders'), rating: g('cms-stat-rating'), days: g('cms-stat-days') },
-      promo: { active: !!document.getElementById('cms-promo-active')?.checked, tag: g('cms-promo-tag'), title: g('cms-promo-title'), desc: g('cms-promo-desc'), btnText: g('cms-promo-btn'), btnLink: 'catalog.html' },
       contact: { line: g('cms-ct-line'), lineLabel: g('cms-ct-linelabel'), facebook: g('cms-ct-fb'), instagram: g('cms-ct-ig'), tiktok: g('cms-ct-tiktok'), email: g('cms-ct-email'), phone: g('cms-ct-phone'), hours: g('cms-ct-hours') },
       payment: { promptpayId: g('cms-pay-id'), promptpayName: g('cms-pay-name'), qrImageUrl: g('cms-pay-qrimg'), methods: (window._getPayMethodsCfg ? window._getPayMethodsCfg() : undefined) },
       fees: {

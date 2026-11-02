@@ -81,7 +81,6 @@
     .faq-q:hover { background: var(--glass); }
     .faq-q .arrow { transition: transform .25s; font-size: .75rem; color: var(--text-3); }
     .faq-item[open] .faq-q .arrow { transform: rotate(180deg); }
-    .faq-q:focus-visible { outline: 3px solid color-mix(in srgb,var(--accent) 52%,transparent); outline-offset: -3px; }
     .faq-a { padding: .75rem 1.25rem 1rem; font-size: .87rem; color: var(--text-2); line-height: 1.7; border-top: 1px solid var(--border); }
 
     .cta-box {
@@ -169,7 +168,7 @@
     <div class="info-grid">
       <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="sparkle" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info5Title" data-edit-label="หัวข้อย่อย 5">ระยะเวลาผลิต</div><div class="info-text" data-edit="pages.about.info5Text" data-edit-label="รายละเอียด 5">1-3 วันทำการ (จันทร์-เสาร์) มีบริการด่วนสำหรับงานเร่ง</div></div></div>
       <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="package" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info6Title" data-edit-label="หัวข้อย่อย 6">ขนส่ง</div><div class="info-text" data-edit="pages.about.info6Text" data-edit-label="รายละเอียด 6">Kerry Express, Flash Express, J&T, ไปรษณีย์ไทย</div></div></div>
-      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="card" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info7Title" data-edit-label="หัวข้อย่อย 7">ค่าส่ง</div><div class="info-text" id="about-shipping-summary" data-edit="pages.about.info7Text" data-edit-label="รายละเอียด 7">ดูค่าจัดส่งในหน้าสั่งซื้อ</div></div></div>
+      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="card" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info7Title" data-edit-label="หัวข้อย่อย 7">ค่าส่ง</div><div class="info-text" id="about-shipping-summary" data-edit="pages.about.info7Text" data-edit-label="รายละเอียด 7">แสดงค่าจัดส่งตามข้อมูลล่าสุดของร้าน</div></div></div>
       <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="home" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info8Title" data-edit-label="หัวข้อย่อย 8">ติดตามพัสดุ</div><div class="info-text" data-edit="pages.about.info8Text" data-edit-label="รายละเอียด 8">แจ้งเลขติดตามทาง LINE หลังจัดส่ง ติดตามได้ตลอด 24 ชม.</div></div></div>
     </div>
   </div>
@@ -233,7 +232,6 @@
 <script src="js/utils.js" defer></script>
 <script src="js/analytics.js" defer></script><!-- V37: สถิติผู้เข้าชม -->
 <script src="js/cms.js" defer></script>
-<script src="js/shipping-display.js" defer></script>
 <script src="js/navbar.js" defer></script>
 <script src="js/footer.js" defer></script>
 <script src="js/bottom-nav.js" defer></script>
@@ -243,6 +241,7 @@
 
 <script src="js/sw-register.js" defer></script>
 <script src="js/pwa-install.js" defer></script>
+<script src="js/shipping-display.js" defer></script>
 <script src="js/about-page.js" defer></script>
 </body>
 </html>

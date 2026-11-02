@@ -11,13 +11,13 @@
   'use strict';
 
   var BUILTIN = [
-    { slug:'polaroid',      name:'รูปโพลารอยด์', emoji:'📸', match:['โพลารอยด์','รูปโพลารอยด์','polaroid'] },
-    { slug:'lanyard',       name:'บัตรแขวนคอ',   emoji:'🪪', match:['บัตรแขวนคอ','lanyard'] },
-    { slug:'business-card', name:'นามบัตร',       emoji:'💼', match:['นามบัตร','business-card'] },
-    { slug:'shop-sign',     name:'ป้ายร้านค้า',   emoji:'🏪', match:['ป้ายร้านค้า','shop-sign'] },
-    { slug:'qrcode',        name:'QR Code',       emoji:'📱', match:['qr code','qrcode'] },
-    { slug:'doll-tag',      name:'ป้ายตุ๊กตา',    emoji:'🧸', match:['ป้ายตุ๊กตา','doll-tag'] },
-    { slug:'student-card',  name:'บัตรนักเรียน',  emoji:'🎓', match:['บัตรนักเรียน','student-card'] },
+    { slug:'polaroid',      name:'รูปโพลารอยด์', icon:'image',    emoji:'📸', match:['โพลารอยด์','รูปโพลารอยด์','polaroid'] },
+    { slug:'lanyard',       name:'บัตรแขวนคอ',   icon:'card',     emoji:'🪪', match:['บัตรแขวนคอ','lanyard'] },
+    { slug:'business-card', name:'นามบัตร',       icon:'card',     emoji:'💼', match:['นามบัตร','business-card'] },
+    { slug:'shop-sign',     name:'ป้ายร้านค้า',   icon:'grid',     emoji:'🏪', match:['ป้ายร้านค้า','shop-sign'] },
+    { slug:'qrcode',        name:'QR Code',       icon:'grid',     emoji:'📱', match:['qr code','qrcode'] },
+    { slug:'doll-tag',      name:'ป้ายตุ๊กตา',    icon:'package',  emoji:'🧸', match:['ป้ายตุ๊กตา','doll-tag'] },
+    { slug:'student-card',  name:'บัตรนักเรียน',  icon:'card',     emoji:'🎓', match:['บัตรนักเรียน','student-card'] },
   ];
 
   var _allCache = null;
@@ -41,6 +41,7 @@
         list.push({
           slug:   x.slug || x.id,
           name:   name,
+          icon:   'grid',
           emoji:  x.emoji || '🏷️',
           match:  [String(name).toLowerCase(), String(x.slug || x.id).toLowerCase()],
           custom: true,

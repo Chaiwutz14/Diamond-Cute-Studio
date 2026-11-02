@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 230 76" role="img" aria-labelledby="t"><title id="t">DMC Studio</title><defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#31a7ed"/><stop offset="1" stop-color="#1263ac"/></linearGradient></defs><g transform="translate(3 9)" fill="none" stroke="url(#b)" stroke-width="2.8" stroke-linejoin="round"><path d="M3 15 13 2h25l10 13-22 29Z"/><path d="M3 15h45M13 2l13 42L38 2M13 2 3 15M38 2l10 13"/></g><text x="59" y="39" font-family="Arial,sans-serif" font-size="35" font-weight="800" letter-spacing="2.4" fill="url(#b)">DMC</text><text x="61" y="59" font-family="Arial,sans-serif" font-size="10.5" font-weight="700" letter-spacing="7.5" fill="#214f7d">STUDIO</text><path d="M194 14c6-7 12-7 18 0 0 7-9 13-9 13s-9-6-9-13Z" fill="#f85da6"/><path d="M194 14c6-7 12-7 18 0" fill="none" stroke="#f85da6" stroke-width="1.5"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 154 58" role="img" aria-labelledby="title">
+  <title id="title">DMC Studio</title>
+  <defs><linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#218FDC"/><stop offset="1" stop-color="#14549A"/></linearGradient></defs>
+  <text x="1" y="38" font-family="Arial,sans-serif" font-size="38" font-weight="700" letter-spacing="3" fill="url(#blue)">DMC</text>
+  <g transform="translate(108 9)" fill="none" stroke="#1689D2" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M1 11 9 1h18l8 10-17 22Z"/><path d="M1 11h34M9 1l9 32 9-32M9 1l-8 10M27 1l8 10"/>
+  </g>
+  <text x="3" y="52" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="7.2" fill="#23699F">STUDIO</text>
+</svg>

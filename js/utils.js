@@ -236,13 +236,13 @@ function toast(message, type = 'info', duration = 3500) {
     document.body.appendChild(container);
   }
 
-  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+  const icons = { success: 'check', error: 'close', info: 'info', warning: 'alert' };
 
   const el = document.createElement('div');
   el.className = `toast toast-${type}`;
   // V.fix(A2): message ใช้ textContent (กัน HTML-injection / การแสดงผลเพี้ยนเมื่อข้อความมี < & ' " เช่น โค้ดคูปอง/ชื่อสินค้า)
   const iconSpan = document.createElement('span');
-  iconSpan.textContent = icons[type] || '';
+  iconSpan.innerHTML = DMC.iconSvg(icons[type] || 'info');
   const msgSpan = document.createElement('span');
   msgSpan.textContent = message;
   el.appendChild(iconSpan);
@@ -596,13 +596,12 @@ function initImageFallback() {
         img.src = full;
         return;   // ให้โอกาสโหลดต้นฉบับ (ถ้ายัง error จะวนกลับเข้ามา)
       }
-      // 2) ต้นฉบับก็ยังพัง → แสดงกล่อง emoji แทน
+      // 2) ต้นฉบับก็ยังพัง → แสดงไอคอนรูปภาพแทน
       if (img.dataset.fbApplied) return;
       img.dataset.fbApplied = '1';
-      const ph = img.getAttribute('data-emoji') || '🖼️';
       const box = document.createElement('div');
       box.className = 'img-fallback';
-      box.textContent = ph;
+      box.innerHTML = DMC.iconSvg('image');
       box.style.cssText = 'width:100%;height:100%;min-height:60px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,var(--bg-mid),var(--bg-card2,var(--bg-mid)));color:var(--text-3);border-radius:inherit';
       if (img.parentElement) img.parentElement.replaceChild(box, img);
     });
@@ -626,7 +625,7 @@ function initOfflineBanner() {
     if (document.getElementById('offline-banner')) return;
     const b = document.createElement('div');
     b.id = 'offline-banner';
-    b.innerHTML = '📡 อินเทอร์เน็ตขาดหาย — บางส่วนอาจไม่อัปเดต กำลังลองเชื่อมต่อใหม่...';
+    b.innerHTML = DMC.iconSvg('info') + ' อินเทอร์เน็ตขาดหาย — บางส่วนอาจไม่อัปเดต กำลังลองเชื่อมต่อใหม่...';
     b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9998;background:#1f2937;color:#fff;text-align:center;padding:.6rem 1rem;font-size:.85rem;font-family:var(--font-display,sans-serif)';
     document.body.appendChild(b);
   }
@@ -774,6 +773,60 @@ async function loadReviews(opts) {
   });
 }
 
+// Shared inline SVG set for interface icons. Decorative icons stay hidden from
+// assistive technology; controls provide their own accessible names.
+const DMC_ICON_PATHS = Object.freeze({
+  home: '<path d="m3 10 9-7 9 7"/><path d="M5.5 9v11h5v-6h3v6h5V9"/>',
+  grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.4"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.4"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.4"/>',
+  bag: '<path d="M4 8h16l-1 12H5L4 8Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/>',
+  cart: '<path d="M2.8 4h2.5l2.3 11.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.5l1.6-6.6H6.2"/><circle cx="9.8" cy="20" r="1.4"/><circle cx="17.1" cy="20" r="1.4"/>',
+  package: '<path d="m12 3 8 4v10l-8 4-8-4V7l8-4Z"/><path d="m4.5 7.2 7.5 4 7.5-4M12 11.2V21"/>',
+  document: '<path d="M7 3.5h8l4 4v13H5V5.5a2 2 0 0 1 2-2Z"/><path d="M15 3.8v4h4M8 12h8M8 16h6"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 3 3 3-4 5 6"/>',
+  phone: '<path d="M6.5 3.5h3l1.5 4-2 1.7a14 14 0 0 0 5.8 5.8l1.7-2 4 1.5v3a2 2 0 0 1-2.2 2C10.6 18.6 5.4 13.4 4.5 5.7a2 2 0 0 1 2-2.2Z"/>',
+  chat: '<path d="M20.5 11.5a8 8 0 0 1-8.5 7.7 10 10 0 0 1-3-.45L4 21l1.3-4A7.1 7.1 0 0 1 3.5 11.5 8 8 0 0 1 12 4a8 8 0 0 1 8.5 7.5Z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/>',
+  upload: '<path d="M12 15V4m0 0L8 8m4-4 4 4"/><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/>',
+  edit: '<path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"/><path d="m13.8 6.7 3.5 3.5"/>',
+  card: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.3 1-1.4 2.4-1.6-.6a8 8 0 0 1-1.7 1l-.2 1.7h-2.8l-.2-1.7a8 8 0 0 1-1.7-1l-1.6.6-1.4-2.4 1.3-1a7 7 0 0 1 0-2l-1.3-1 1.4-2.4 1.6.6a8 8 0 0 1 1.7-1l.2-1.7h2.8l.2 1.7a8 8 0 0 1 1.7 1l1.6-.6 1.4 2.4-1.3 1a7 7 0 0 1-.1 2Z"/>',
+  truck: '<path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"/><circle cx="7.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>',
+  shield: '<path d="m12 3 7 3v5c0 4.7-2.9 8-7 10-4.1-2-7-5.3-7-10V6l7-3Z"/><path d="m8.5 12 2.2 2.2 4.8-4.8"/>',
+  heart: '<path d="M20 8.8c0 5.1-8 10.2-8 10.2S4 13.9 4 8.8A4.3 4.3 0 0 1 12 6.4a4.3 4.3 0 0 1 8 2.4Z"/>',
+  search: '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  close: '<path d="m6 6 12 12M18 6 6 18"/>',
+  alert: '<path d="M10.3 3.9 2.9 17a2 2 0 0 0 1.8 3h14.6a2 2 0 0 0 1.8-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 3h.01"/>',
+  copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
+  trash: '<path d="M4 7h16M10 11v6m4-6v6M5.5 7l1 14h11l1-14M9 7V4h6v3"/>',
+  gift: '<rect x="3" y="9" width="18" height="12" rx="1.5"/><path d="M12 9v12M3 13h18M12 9H7.8a2.3 2.3 0 1 1 2.3-2.3V9Zm0 0h4.2a2.3 2.3 0 1 0-2.3-2.3V9Z"/>',
+  refresh: '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6.5L20 12M4 12l2 5.5A7 7 0 0 0 18.4 15"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>',
+  arrowRight: '<path d="M4 12h15m-6-6 6 6-6 6"/>',
+  arrowLeft: '<path d="M20 12H5m6 6-6-6 6-6"/>',
+  arrowUp: '<path d="M12 20V5m-6 6 6-6 6 6"/>',
+  arrowDown: '<path d="M12 4v15m-6-6 6 6 6-6"/>',
+  move: '<path d="M12 3v18m-4-14 4-4 4 4M8 17l4 4 4-4M3 12h18m-4-4 4 4-4 4M7 8l-4 4 4 4"/>',
+  circle: '<circle cx="12" cy="12" r="8.5"/>',
+  play: '<path d="m8 5 11 7-11 7V5Z"/>',
+  pause: '<path d="M8 5v14M16 5v14"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  sparkle: '<path d="m12 3 1.7 6.3L20 11l-6.3 1.7L12 19l-1.7-6.3L4 11l6.3-1.7L12 3Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/>',
+  star: '<path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/>',
+  palette: '<path d="M12 3a9 9 0 1 0 0 18h1.2a1.8 1.8 0 0 0 1.4-3c-.7-.9-.1-2.1 1-2.1h1.3A4.1 4.1 0 0 0 21 11.8C21 7 16.9 3 12 3Z"/><circle cx="7.5" cy="10" r=".8"/><circle cx="11" cy="6.8" r=".8"/><circle cx="16" cy="8" r=".8"/>',
+  ruler: '<path d="m4 17 13-13 4 4-13 13-4-4Z"/><path d="m14 7 3 3m-6 1 2 2m-5 1 2 2"/>',
+  scissors: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="m8 8 12 12M8 16 20 4M12 12l-2 2"/>',
+  file: '<path d="M7 3.5h8l4 4v13H5V5.5a2 2 0 0 1 2-2Z"/><path d="M15 3.8v4h4"/>',
+  box: '<path d="m4 7 8-4 8 4v10l-8 4-8-4V7Z"/><path d="m4.5 7.2 7.5 4 7.5-4M12 11.2V21"/>'
+});
+function dmcIconSvg(name, className) {
+  const paths = DMC_ICON_PATHS[name];
+  if (!paths) return '';
+  const classes = String(className || 'dmc-icon').split(/\s+/).filter(value => /^[a-z0-9_-]+$/i.test(value)).join(' ');
+  return '<svg class="' + classes + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths + '</svg>';
+}
+
 window.DMC = {
   // Firebase
   getFirebaseReady,
@@ -828,6 +881,7 @@ window.DMC = {
   formatPrice,
   // DOM
   $, $$, createElement, show, hide, toggleClass,
+  iconSvg: dmcIconSvg,
   // Cart
   getCart,
   saveCart,
@@ -839,6 +893,14 @@ window.DMC = {
   debounce,
   escapeHtml
 };
+
+// Static pages can use data-dmc-icon slots so decorative marks share this
+// inline SVG set without adding a dependency or changing their accessible text.
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-dmc-icon]').forEach(slot => {
+    slot.innerHTML = DMC.iconSvg(slot.dataset.dmcIcon || '');
+  });
+});
 
 // Init cart badge on load
 document.addEventListener('DOMContentLoaded', () => {
@@ -858,7 +920,7 @@ document.addEventListener('DOMContentLoaded', () => {
       var box = document.createElement('div');
       box.style.cssText = 'background:var(--bg-card,#fff);border:1.5px solid var(--border,#e5e7eb);border-radius:var(--r-2xl,24px);padding:1.75rem;max-width:340px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.3);text-align:center';
       var icon = document.createElement('div');
-      icon.style.cssText = 'font-size:2.4rem;margin-bottom:.55rem'; icon.textContent = opts.icon || '⚠️';
+      icon.style.cssText = 'font-size:2.4rem;margin-bottom:.55rem'; icon.innerHTML = window.DMC.iconSvg(opts.iconName || 'alert');
       var title = document.createElement('div');
       title.style.cssText = 'font-family:var(--font-display),sans-serif;font-weight:700;font-size:1.08rem;color:var(--text-1);margin-bottom:.4rem';
       title.textContent = opts.title || 'ยืนยันการทำรายการ';
