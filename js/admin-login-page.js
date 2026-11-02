@@ -7,6 +7,8 @@
     shown = !shown;
     input.type = shown ? 'text' : 'password';
     btn.textContent = shown ? '🙈' : '👁️';
+    btn.setAttribute('aria-label', shown ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน');
+    btn.setAttribute('aria-pressed', String(shown));
     input.focus();
   });
 })();

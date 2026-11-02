@@ -3,24 +3,35 @@
   var ov = document.getElementById('modal-overlay');
   ov && ov.addEventListener('click', function(e){ if (e.target === this && typeof closeModal === 'function') closeModal(); });
 
-  var lo2 = document.getElementById('logout-btn-2');
-  lo2 && lo2.addEventListener('click', function(){
-    if (confirm('ออกจากระบบ?')) { DMC.clearSession(); window.location.href = 'admin-login.html'; }
-  });
-
   var sidebarToggle = document.getElementById('sidebar-toggle');
   var sidebar       = document.getElementById('admin-sidebar');
   var overlay       = document.getElementById('sidebar-overlay');
   if (!sidebarToggle || !sidebar || !overlay) return;
+  sidebarToggle.setAttribute('aria-expanded', 'false');
 
-  function showToggle(){ sidebarToggle.style.display = (window.innerWidth <= 900) ? '' : 'none'; }
+  function setSidebarOpen(open){
+    sidebar.classList.toggle('open', open);
+    overlay.classList.toggle('visible', open);
+    sidebarToggle.setAttribute('aria-expanded', String(open));
+  }
+  function showToggle(){
+    var mobile = window.innerWidth <= 900;
+    sidebarToggle.style.display = mobile ? '' : 'none';
+    if (!mobile) setSidebarOpen(false);
+  }
   showToggle();
   window.addEventListener('resize', showToggle);
-  sidebarToggle.addEventListener('click', function(){ sidebar.classList.toggle('open'); overlay.classList.toggle('visible'); });
-  overlay.addEventListener('click', function(){ sidebar.classList.remove('open'); overlay.classList.remove('visible'); });
+  sidebarToggle.addEventListener('click', function(){ setSidebarOpen(!sidebar.classList.contains('open')); });
+  overlay.addEventListener('click', function(){ setSidebarOpen(false); });
+  document.addEventListener('keydown', function(event){
+    if (event.key === 'Escape' && sidebar.classList.contains('open')) {
+      setSidebarOpen(false);
+      sidebarToggle.focus();
+    }
+  });
   document.querySelectorAll('.sidebar-item[data-section]').forEach(function(item){
     item.addEventListener('click', function(){
-      if (window.innerWidth <= 900) { sidebar.classList.remove('open'); overlay.classList.remove('visible'); }
+      if (window.innerWidth <= 900) setSidebarOpen(false);
     });
   });
 })();

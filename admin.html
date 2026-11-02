@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th" data-theme="sky">
+<html lang="th">
 <head>
   <script src="js/theme-init.js"></script>
   <!-- V2: ฟอนต์โหลดแบบ non-blocking (preconnect + link) แทน @import -->
@@ -38,7 +38,7 @@
     </a>
     <div style="display:flex;align-items:center;gap:0.75rem">
       <span class="badge badge-rose" style="font-size:0.72rem">⚙️ Admin</span>
-      <button class="btn btn-ghost btn-sm" id="sidebar-toggle" style="display:none">☰</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="sidebar-toggle" aria-controls="admin-sidebar" aria-expanded="false" style="display:none">☰</button>
       <button class="btn btn-danger btn-sm" id="logout-btn">🚪 ออก</button>
     </div>
   </div>
@@ -50,65 +50,65 @@
 
   <!-- Sidebar -->
   <aside class="admin-sidebar" id="admin-sidebar">
-    <div class="admin-sidebar-inner">
+    <nav class="admin-sidebar-inner" aria-label="เมนูผู้ดูแลระบบ">
 
       <div class="sidebar-section">
         <div class="sidebar-section-label">ภาพรวม</div>
-        <div class="sidebar-item active" data-section="overview">
+        <button type="button" class="sidebar-item active" data-section="overview" aria-pressed="true">
           <span class="sidebar-item-icon">📊</span> Dashboard
-        </div>
+        </button>
       </div>
 
       <div class="sidebar-section">
         <div class="sidebar-section-label">ออเดอร์</div>
-        <div class="sidebar-item" data-section="orders">
+        <button type="button" class="sidebar-item" data-section="orders" aria-pressed="false">
           <span class="sidebar-item-icon">📦</span> ออเดอร์ทั้งหมด
           <span class="sidebar-badge" id="pending-badge" style="display:none">0</span>
-        </div>
+        </button>
       </div>
 
       <div class="sidebar-section">
         <div class="sidebar-section-label">สินค้า</div>
-        <div class="sidebar-item" data-section="products">
+        <button type="button" class="sidebar-item" data-section="products" aria-pressed="false">
           <span class="sidebar-item-icon">🛍️</span> จัดการสินค้า
-        </div>
+        </button>
       </div>
 
       <div class="sidebar-section">
         <div class="sidebar-section-label">คอนเทนต์</div>
-        <div class="sidebar-item" data-section="gallery">
+        <button type="button" class="sidebar-item" data-section="gallery" aria-pressed="false">
           <span class="sidebar-item-icon">🖼️</span> ตัวอย่างงาน
-        </div>
-        <div class="sidebar-item" data-section="reviews">
+        </button>
+        <button type="button" class="sidebar-item" data-section="reviews" aria-pressed="false">
           <span class="sidebar-item-icon">⭐</span> รีวิว
-        </div>
-        <div class="sidebar-item" data-section="contacts">
+        </button>
+        <button type="button" class="sidebar-item" data-section="contacts" aria-pressed="false">
           <span class="sidebar-item-icon">📬</span> กล่องข้อความ
           <span class="sidebar-badge" id="contacts-badge" style="display:none">!</span>
-        </div>
+        </button>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-section-label">หน้าเว็บ</div>
-        <div class="sidebar-item" data-section="content">
+        <button type="button" class="sidebar-item" data-section="content" aria-pressed="false">
           <span class="sidebar-item-icon">📝</span> เนื้อหาเว็บไซต์
-        </div>
-        <div class="sidebar-item" data-section="coupons">
+        </button>
+        <button type="button" class="sidebar-item" data-section="coupons" aria-pressed="false">
           <span class="sidebar-item-icon">🎟️</span> คูปองส่วนลด
-        </div>
-        <div class="sidebar-item" data-section="templates">
+        </button>
+        <button type="button" class="sidebar-item" data-section="templates" aria-pressed="false">
           <span class="sidebar-item-icon">🎨</span> เทมเพลต
-        </div>
+        </button>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-section-label">ระบบ</div>
-        <div class="sidebar-item" data-section="settings">
+        <button type="button" class="sidebar-item" data-section="settings" aria-pressed="false">
           <span class="sidebar-item-icon">⚙️</span> ตั้งค่า
-        </div>
-        <div class="sidebar-item danger" id="logout-btn-2">
+        </button>
+        <button type="button" class="sidebar-item danger" id="logout-btn-2">
           <span class="sidebar-item-icon">🚪</span> ออกจากระบบ
-        </div>
+        </button>
       </div>
-    </div>
+    </nav>
 
     <div class="sidebar-user">
       <div class="sidebar-avatar">👤</div>

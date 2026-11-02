@@ -20,6 +20,11 @@
   animation: fadeInUp 0.5s ease both;
 }
 
+@media (max-width: 480px) {
+  .admin-login-page { padding: 1rem; padding-top: max(1rem, env(safe-area-inset-top, 0px)); padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
+  .login-card { padding: 1.5rem 1.15rem; border-radius: var(--r-xl); }
+}
+
 .login-logo {
   text-align: center; margin-bottom: 2rem;
 }
@@ -551,10 +556,13 @@
 .sidebar-item {
   display: flex; align-items: center; gap: .7rem;
   padding: .7rem .85rem; border-radius: var(--r-lg);
+  width: calc(100% - 1rem); min-height: 44px; text-align: left;
+  border: 1px solid transparent; background: transparent;
   cursor: pointer; color: var(--text-2); font-family: var(--font-display);
   font-weight: 600; font-size: .9rem; transition: all .15s; margin-bottom: 2px;
   position: relative;
 }
+.sidebar-item:focus-visible { outline: 3px solid color-mix(in srgb,var(--accent) 52%,transparent); outline-offset: 2px; }
 .sidebar-item:hover { background: var(--bg-mid); color: var(--text-1); }
 .sidebar-item.active {
   background: linear-gradient(135deg, rgba(124,92,255,.12), rgba(124,92,255,.04));

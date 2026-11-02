@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="th" data-theme="sky">
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <!-- V3 Security headers (meta). frame-ancestors/X-Frame-Options ทำงานเฉพาะผ่าน HTTP header — ใช้ frame-buster ใน theme-init.js เสริม -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://apis.google.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://api.imgbb.com https://i.ibb.co https://*.workers.dev https://www.google.com https://www.gstatic.com https://challenges.cloudflare.com; frame-src https://www.google.com https://*.firebaseapp.com https://challenges.cloudflare.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta property="og:title" content="วิธีสั่งซื้อ — Diamond Cute Studio 💎">
-  <meta property="og:description" content="Diamond Cute Studio 💎 — วิธีสั่งซื้อ ขั้นตอนง่ายๆ ส่งทั่วไทย รับประกันคุณภาพ">
+    <meta property="og:title" content="วิธีสั่งซื้อ — Diamond Cute Studio">
+  <meta property="og:description" content="Diamond Cute Studio — วิธีสั่งซื้อ ขั้นตอนง่ายๆ ส่งทั่วไทย รับประกันคุณภาพ">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://chaiwutz14.github.io/Diamond-Cute-Studio/assets/og-image.jpg">
-  <meta name="description" content="Diamond Cute Studio 💎 — วิธีสั่งซื้อ ขั้นตอนง่ายๆ ส่งทั่วไทย รับประกันคุณภาพ">
+  <meta name="description" content="Diamond Cute Studio — วิธีสั่งซื้อ ขั้นตอนง่ายๆ ส่งทั่วไทย รับประกันคุณภาพ">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>วิธีสั่งซื้อ — Diamond Cute Studio 💎</title>
+  <title>วิธีสั่งซื้อ — Diamond Cute Studio</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#7c5cff">
+  <meta name="theme-color" content="#F4F9FE">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="css/core.css">
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/home.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+  <link rel="icon" type="image/png" href="assets/icon-192.png">
   <style>
     .about-wrapper { max-width: 860px; margin: 0 auto; padding: calc(var(--nav-h) + 2.5rem) 1.5rem 4rem; }
     .page-hero { text-align: center; margin-bottom: 3rem; }
@@ -73,14 +73,16 @@
     .faq-item { background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
     .faq-q {
       padding: 1rem 1.25rem; font-family: var(--font-display); font-weight: 600; font-size: .93rem;
+      width: 100%; border: 0; background: transparent; color: inherit; text-align: left;
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      user-select: none;
+      user-select: none; list-style: none;
     }
+    .faq-q::-webkit-details-marker { display: none; }
     .faq-q:hover { background: var(--glass); }
     .faq-q .arrow { transition: transform .25s; font-size: .75rem; color: var(--text-3); }
-    .faq-item.open .faq-q .arrow { transform: rotate(180deg); }
-    .faq-a { display: none; padding: 0 1.25rem 1rem; font-size: .87rem; color: var(--text-2); line-height: 1.7; border-top: 1px solid var(--border); padding-top: .75rem; }
-    .faq-item.open .faq-a { display: block; }
+    .faq-item[open] .faq-q .arrow { transform: rotate(180deg); }
+    .faq-q:focus-visible { outline: 3px solid color-mix(in srgb,var(--accent) 52%,transparent); outline-offset: -3px; }
+    .faq-a { padding: .75rem 1.25rem 1rem; font-size: .87rem; color: var(--text-2); line-height: 1.7; border-top: 1px solid var(--border); }
 
     .cta-box {
       background: linear-gradient(135deg, var(--accent), var(--accent-dark));
@@ -102,48 +104,48 @@
 
 <div class="about-wrapper" id="main-content" tabindex="-1">
   <div class="page-hero anim-fade-up">
-    <div style="font-size:3rem;margin-bottom:.75rem">📋</div>
+    <div style="font-size:3rem;margin-bottom:.75rem"><span class="dmc-icon-slot" data-dmc-icon="document" aria-hidden="true"></span></div>
     <h1 data-edit="pages.about.title" data-edit-label="หัวข้อหน้า">วิธีสั่งซื้อ</h1>
     <p data-edit="pages.about.subtitle" data-edit-label="คำโปรย">สั่งง่าย รวดเร็ว ปลอดภัย ส่งทั่วประเทศไทย</p>
   </div>
 
   <!-- ขั้นตอน -->
   <div class="info-section">
-    <h2 data-edit="pages.about.stepsHead" data-edit-label="หัวข้อขั้นตอน">🚀 ขั้นตอนการสั่งซื้อ</h2>
+    <h2 data-edit="pages.about.stepsHead" data-edit-label="หัวข้อขั้นตอน"><span class="dmc-icon-slot" data-dmc-icon="sparkle" aria-hidden="true"></span> ขั้นตอนการสั่งซื้อ</h2>
     <div class="steps-grid">
       <div class="step-card">
         <div class="step-num">1</div>
-        <div class="step-icon">🛍️</div>
+        <div class="step-icon"><span class="dmc-icon-slot" data-dmc-icon="bag" aria-hidden="true"></span></div>
         <div class="step-title" data-edit="pages.about.step1Title" data-edit-label="ขั้นตอน 1 หัวข้อ">เลือกสินค้า</div>
         <div class="step-desc" data-edit="pages.about.step1Desc" data-edit-label="ขั้นตอน 1 คำอธิบาย">เลือกสินค้าที่ต้องการ กำหนดขนาด วัสดุ และจำนวนที่ต้องการ</div>
       </div>
       <div class="step-card">
         <div class="step-num">2</div>
-        <div class="step-icon">📤</div>
+        <div class="step-icon"><span class="dmc-icon-slot" data-dmc-icon="upload" aria-hidden="true"></span></div>
         <div class="step-title" data-edit="pages.about.step2Title" data-edit-label="ขั้นตอน 2 หัวข้อ">อัพโหลดไฟล์</div>
         <div class="step-desc" data-edit="pages.about.step2Desc" data-edit-label="ขั้นตอน 2 คำอธิบาย">อัพโหลดไฟล์รูปภาพ คุณภาพสูง JPG หรือ PNG ขนาดไม่เกิน 50MB</div>
       </div>
       <div class="step-card">
         <div class="step-num">3</div>
-        <div class="step-icon">📝</div>
+        <div class="step-icon"><span class="dmc-icon-slot" data-dmc-icon="edit" aria-hidden="true"></span></div>
         <div class="step-title" data-edit="pages.about.step3Title" data-edit-label="ขั้นตอน 3 หัวข้อ">กรอกข้อมูล</div>
         <div class="step-desc" data-edit="pages.about.step3Desc" data-edit-label="ขั้นตอน 3 คำอธิบาย">กรอกชื่อ ที่อยู่จัดส่ง และข้อมูลติดต่อให้ครบถ้วน</div>
       </div>
       <div class="step-card">
         <div class="step-num">4</div>
-        <div class="step-icon">💳</div>
+        <div class="step-icon"><span class="dmc-icon-slot" data-dmc-icon="card" aria-hidden="true"></span></div>
         <div class="step-title" data-edit="pages.about.step4Title" data-edit-label="ขั้นตอน 4 หัวข้อ">ชำระเงิน</div>
         <div class="step-desc" data-edit="pages.about.step4Desc" data-edit-label="ขั้นตอน 4 คำอธิบาย">โอนผ่าน PromptPay QR หรือเลือกเก็บเงินปลายทาง (COD)</div>
       </div>
       <div class="step-card">
         <div class="step-num">5</div>
-        <div class="step-icon">⚙️</div>
+        <div class="step-icon"><span class="dmc-icon-slot" data-dmc-icon="settings" aria-hidden="true"></span></div>
         <div class="step-title" data-edit="pages.about.step5Title" data-edit-label="ขั้นตอน 5 หัวข้อ">ดำเนินการ</div>
         <div class="step-desc" data-edit="pages.about.step5Desc" data-edit-label="ขั้นตอน 5 คำอธิบาย">ทีมงานรับออเดอร์และเริ่มผลิตงานทันที 1-3 วันทำการ</div>
       </div>
       <div class="step-card">
         <div class="step-num">6</div>
-        <div class="step-icon">🚚</div>
+        <div class="step-icon"><span class="dmc-icon-slot" data-dmc-icon="truck" aria-hidden="true"></span></div>
         <div class="step-title" data-edit="pages.about.step6Title" data-edit-label="ขั้นตอน 6 หัวข้อ">จัดส่ง</div>
         <div class="step-desc" data-edit="pages.about.step6Desc" data-edit-label="ขั้นตอน 6 คำอธิบาย">จัดส่งพัสดุผ่าน Kerry / Flash / J&T พร้อมแจ้งเลขติดตาม</div>
       </div>
@@ -152,56 +154,56 @@
 
   <!-- ไฟล์ที่รองรับ -->
   <div class="info-section">
-    <h2>🖼️ ข้อกำหนดไฟล์ภาพ</h2>
+    <h2><span class="dmc-icon-slot" data-dmc-icon="image" aria-hidden="true"></span> ข้อกำหนดไฟล์ภาพ</h2>
     <div class="info-grid">
-      <div class="info-card"><div class="info-icon">📐</div><div><div class="info-title" data-edit="pages.about.info1Title" data-edit-label="หัวข้อย่อย 1">ความละเอียด</div><div class="info-text" data-edit="pages.about.info1Text" data-edit-label="รายละเอียด 1">300 DPI ขึ้นไป เพื่อคุณภาพการพิมพ์ที่คมชัดที่สุด</div></div></div>
-      <div class="info-card"><div class="info-icon">📁</div><div><div class="info-title" data-edit="pages.about.info2Title" data-edit-label="หัวข้อย่อย 2">รูปแบบไฟล์</div><div class="info-text" data-edit="pages.about.info2Text" data-edit-label="รายละเอียด 2">JPG, PNG, HEIC รองรับทุกอุปกรณ์ ไม่เกิน 50MB รวม</div></div></div>
-      <div class="info-card"><div class="info-icon">🎨</div><div><div class="info-title" data-edit="pages.about.info3Title" data-edit-label="หัวข้อย่อย 3">โหมดสี</div><div class="info-text" data-edit="pages.about.info3Text" data-edit-label="รายละเอียด 3">RGB หรือ CMYK ได้ทั้งคู่ ทีมงานปรับให้เหมาะกับการพิมพ์</div></div></div>
-      <div class="info-card"><div class="info-icon">✂️</div><div><div class="info-title" data-edit="pages.about.info4Title" data-edit-label="หัวข้อย่อย 4">พื้นที่ตัด</div><div class="info-text" data-edit="pages.about.info4Text" data-edit-label="รายละเอียด 4">ควรเว้นขอบรูป 3-5mm เพื่อป้องกันการตัดติดขอบ</div></div></div>
+      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="ruler" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info1Title" data-edit-label="หัวข้อย่อย 1">ความละเอียด</div><div class="info-text" data-edit="pages.about.info1Text" data-edit-label="รายละเอียด 1">300 DPI ขึ้นไป เพื่อคุณภาพการพิมพ์ที่คมชัดที่สุด</div></div></div>
+      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="file" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info2Title" data-edit-label="หัวข้อย่อย 2">รูปแบบไฟล์</div><div class="info-text" data-edit="pages.about.info2Text" data-edit-label="รายละเอียด 2">JPG, PNG, HEIC รองรับทุกอุปกรณ์ ไม่เกิน 50MB รวม</div></div></div>
+      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="palette" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info3Title" data-edit-label="หัวข้อย่อย 3">โหมดสี</div><div class="info-text" data-edit="pages.about.info3Text" data-edit-label="รายละเอียด 3">RGB หรือ CMYK ได้ทั้งคู่ ทีมงานปรับให้เหมาะกับการพิมพ์</div></div></div>
+      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="scissors" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info4Title" data-edit-label="หัวข้อย่อย 4">พื้นที่ตัด</div><div class="info-text" data-edit="pages.about.info4Text" data-edit-label="รายละเอียด 4">ควรเว้นขอบรูป 3-5mm เพื่อป้องกันการตัดติดขอบ</div></div></div>
     </div>
   </div>
 
   <!-- การจัดส่ง -->
   <div class="info-section">
-    <h2>🚚 การจัดส่ง</h2>
+    <h2><span class="dmc-icon-slot" data-dmc-icon="truck" aria-hidden="true"></span> การจัดส่ง</h2>
     <div class="info-grid">
-      <div class="info-card"><div class="info-icon">⚡</div><div><div class="info-title" data-edit="pages.about.info5Title" data-edit-label="หัวข้อย่อย 5">ระยะเวลาผลิต</div><div class="info-text" data-edit="pages.about.info5Text" data-edit-label="รายละเอียด 5">1-3 วันทำการ (จันทร์-เสาร์) มีบริการด่วนสำหรับงานเร่ง</div></div></div>
-      <div class="info-card"><div class="info-icon">📦</div><div><div class="info-title" data-edit="pages.about.info6Title" data-edit-label="หัวข้อย่อย 6">ขนส่ง</div><div class="info-text" data-edit="pages.about.info6Text" data-edit-label="รายละเอียด 6">Kerry Express, Flash Express, J&T, ไปรษณีย์ไทย</div></div></div>
-      <div class="info-card"><div class="info-icon">💰</div><div><div class="info-title" data-edit="pages.about.info7Title" data-edit-label="หัวข้อย่อย 7">ค่าส่ง</div><div class="info-text" data-edit="pages.about.info7Text" data-edit-label="รายละเอียด 7">ทั่วไทย ฿50 / COD เพิ่ม ฿30 / สั่งเกิน ฿500 ส่งฟรี!</div></div></div>
-      <div class="info-card"><div class="info-icon">📍</div><div><div class="info-title" data-edit="pages.about.info8Title" data-edit-label="หัวข้อย่อย 8">ติดตามพัสดุ</div><div class="info-text" data-edit="pages.about.info8Text" data-edit-label="รายละเอียด 8">แจ้งเลขติดตามทาง LINE หลังจัดส่ง ติดตามได้ตลอด 24 ชม.</div></div></div>
+      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="sparkle" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info5Title" data-edit-label="หัวข้อย่อย 5">ระยะเวลาผลิต</div><div class="info-text" data-edit="pages.about.info5Text" data-edit-label="รายละเอียด 5">1-3 วันทำการ (จันทร์-เสาร์) มีบริการด่วนสำหรับงานเร่ง</div></div></div>
+      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="package" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info6Title" data-edit-label="หัวข้อย่อย 6">ขนส่ง</div><div class="info-text" data-edit="pages.about.info6Text" data-edit-label="รายละเอียด 6">Kerry Express, Flash Express, J&T, ไปรษณีย์ไทย</div></div></div>
+      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="card" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info7Title" data-edit-label="หัวข้อย่อย 7">ค่าส่ง</div><div class="info-text" id="about-shipping-summary" data-edit="pages.about.info7Text" data-edit-label="รายละเอียด 7">ดูค่าจัดส่งในหน้าสั่งซื้อ</div></div></div>
+      <div class="info-card"><div class="info-icon"><span class="dmc-icon-slot" data-dmc-icon="home" aria-hidden="true"></span></div><div><div class="info-title" data-edit="pages.about.info8Title" data-edit-label="หัวข้อย่อย 8">ติดตามพัสดุ</div><div class="info-text" data-edit="pages.about.info8Text" data-edit-label="รายละเอียด 8">แจ้งเลขติดตามทาง LINE หลังจัดส่ง ติดตามได้ตลอด 24 ชม.</div></div></div>
     </div>
   </div>
 
   <!-- FAQ -->
   <div class="info-section" id="faq">
-    <h2>❓ คำถามที่พบบ่อย</h2>
+    <h2><span class="dmc-icon-slot" data-dmc-icon="info" aria-hidden="true"></span> คำถามที่พบบ่อย</h2>
     <div class="faq-list" id="faq-list">
-      <div class="faq-item">
-        <div class="faq-q">ส่งไฟล์ภาพมาแบบไหนได้บ้าง? <span class="arrow">▼</span></div>
+      <details class="faq-item">
+        <summary class="faq-q">ส่งไฟล์ภาพมาแบบไหนได้บ้าง? <span class="arrow" aria-hidden="true">▼</span></summary>
         <div class="faq-a">รองรับ JPG, PNG, HEIC ไฟล์ความละเอียดสูง 300 DPI ขึ้นไป อัพโหลดได้โดยตรงในหน้าสั่งซื้อ หรือส่งผ่าน LINE ก็ได้ครับ</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q">ถ้าไม่พอใจผลงานทำยังไงได้บ้าง? <span class="arrow">▼</span></div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">ถ้าไม่พอใจผลงานทำยังไงได้บ้าง? <span class="arrow" aria-hidden="true">▼</span></summary>
         <div class="faq-a">รับประกันความพอใจ 100% ถ้าผลงานไม่ตรงตามที่สั่ง หรือมีความเสียหายจากการผลิต รีพรินท์ให้ใหม่ฟรีครับ ติดต่อ LINE ได้เลย</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q">สั่งขั้นต่ำกี่ชิ้น? <span class="arrow">▼</span></div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">สั่งขั้นต่ำกี่ชิ้น? <span class="arrow" aria-hidden="true">▼</span></summary>
         <div class="faq-a">ขั้นต่ำ 1 ชิ้นสำหรับทุกสินค้า ยิ่งสั่งเยอะยิ่งประหยัด มีส่วนลดตามปริมาณ</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q">มีบริการออกแบบไหม? <span class="arrow">▼</span></div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">มีบริการออกแบบไหม? <span class="arrow" aria-hidden="true">▼</span></summary>
         <div class="faq-a">มีครับ! บริการออกแบบเพิ่มเติม ติดต่อสอบถามราคาผ่าน LINE ได้เลย</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q">ชำระเงินแล้วจะได้รับสินค้าเมื่อไหร่? <span class="arrow">▼</span></div>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q">ชำระเงินแล้วจะได้รับสินค้าเมื่อไหร่? <span class="arrow" aria-hidden="true">▼</span></summary>
         <div class="faq-a">หลังยืนยันออเดอร์และชำระเงินแล้ว ทีมงานจะเริ่มผลิตทันที ใช้เวลา 1-3 วันทำการ จากนั้นจัดส่งและแจ้งเลขติดตามทาง LINE</div>
-      </div>
+      </details>
     </div>
   </div>
 
   <!-- นโยบาย -->
   <div class="info-section" id="policy">
-    <h2>🔒 นโยบายและเงื่อนไข</h2>
+    <h2><span class="dmc-icon-slot" data-dmc-icon="shield" aria-hidden="true"></span> นโยบายและเงื่อนไข</h2>
     <div style="background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-xl);padding:1.5rem;font-size:.88rem;color:var(--text-2);line-height:1.8">
       <p><strong style="color:var(--text-1)">การคืนและเปลี่ยนสินค้า:</strong> <span data-edit="pages.about.policy1" data-edit-label="นโยบายข้อ 1">รับเปลี่ยนเฉพาะกรณีที่เกิดจากความผิดพลาดของทางร้าน ไม่รับคืนหากเกิดจากไฟล์ภาพที่ลูกค้าส่งมา</span></p>
       <br>
@@ -218,8 +220,8 @@
     <h3>พร้อมสั่งซื้อแล้วหรือยัง?</h3>
     <p>ดูสินค้าทั้งหมดหรือติดต่อเราผ่าน LINE ได้เลย</p>
     <div class="cta-btns">
-      <a href="catalog.html" class="btn-white">🛍️ ดูสินค้า</a>
-      <a href="contact.html" class="btn-outline-white">💬 ติดต่อเรา</a>
+      <a href="catalog.html" class="btn-white"><span class="dmc-icon-slot" data-dmc-icon="bag" aria-hidden="true"></span> ดูสินค้า</a>
+      <a href="contact.html" class="btn-outline-white"><span class="dmc-icon-slot" data-dmc-icon="chat" aria-hidden="true"></span> ติดต่อเรา</a>
     </div>
   </div>
 </div>
@@ -231,10 +233,10 @@
 <script src="js/utils.js" defer></script>
 <script src="js/analytics.js" defer></script><!-- V37: สถิติผู้เข้าชม -->
 <script src="js/cms.js" defer></script>
+<script src="js/shipping-display.js" defer></script>
 <script src="js/navbar.js" defer></script>
 <script src="js/footer.js" defer></script>
 <script src="js/bottom-nav.js" defer></script>
-<script src="js/theme-switcher.js" defer></script>
 <script src="js/admin-access.js" defer></script>
 <script src="js/inline-editor.js" defer></script>
 

@@ -1,25 +1,28 @@
 /* Diamond Cute Studio 💎 — แยกจาก about.html (V15: Separation of Concerns) */
-// FAQ accordion
-  document.querySelectorAll('.faq-q').forEach(function(q){
-    q.addEventListener('click', function(){
-      var item = q.closest('.faq-item');
-      item.classList.toggle('open');
-    });
-  });
+function renderAboutShipping(fees) {
+  var target = document.getElementById('about-shipping-summary');
+  if (!target) return;
+  var config = (window.DMC_CONFIG || {}).SHIPPING || {};
+  target.textContent = DMCShippingDisplay.format(fees, config);
+}
 
 // ── FAQ จากหลังบ้าน (CMS) — มีข้อมูลจึงแทนที่ค่า default ──
 (function(){
-  if (typeof CMS === 'undefined') return;
+  if (typeof CMS === 'undefined') {
+    renderAboutShipping({});
+    return;
+  }
   CMS.get().then(function(c){
+    renderAboutShipping(c.fees || {});
     var faq = c.faq || [];
     if (!faq.length) return;
     var wrap = document.getElementById('faq-list');
     if (!wrap) return;
     wrap.innerHTML = '';
     faq.forEach(function(f){
-      var item = document.createElement('div');
+      var item = document.createElement('details');
       item.className = 'faq-item';
-      var q = document.createElement('div');
+      var q = document.createElement('summary');
       q.className = 'faq-q';
       q.textContent = f.q + ' ';
       var arrow = document.createElement('span');
@@ -29,7 +32,6 @@
       var ans = document.createElement('div');
       ans.className = 'faq-a';
       ans.textContent = f.a;
-      q.addEventListener('click', function(){ item.classList.toggle('open'); });
       item.appendChild(q);
       item.appendChild(ans);
       wrap.appendChild(item);
